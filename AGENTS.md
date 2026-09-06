@@ -23,7 +23,7 @@ This repository's technical decisions are split across the files below. Agents s
 | [GAME_SYSTEMS.md](./GAME_SYSTEMS.md) | City, travel, interiors, search, CCTV, devices, forensics, interrogation, clue board, case close |
 | [GENERATION.md](./GENERATION.md) | Case-generation stages, schemas, repair policy, immutable generation rules |
 | [VALIDATION_EVALS.md](./VALIDATION_EVALS.md) | Deterministic validation, LLM evals, multiplayer tests, acceptance gates |
-| [SECURITY.md](./SECURITY.md) | Hidden solution boundaries, authorization, anonymous users, abuse/rate-limit rules |
+| [SECURITY.md](./SECURITY.md) | Hidden solution boundaries, Clerk authentication, authorization, abuse/rate-limit rules |
 | [TOOLING.md](./TOOLING.md) | Libraries/services chosen and explicitly rejected |
 | [DECISIONS.md](./DECISIONS.md) | Locked decisions, rejected alternatives, unresolved items |
 | [IMPLEMENTATION.md](./IMPLEMENTATION.md) | Recommended implementation sequence and fixture-first strategy |
@@ -60,10 +60,22 @@ This repository's technical decisions are split across the files below. Agents s
 Do not invent answers to these during implementation:
 
 - **Parallel time semantics:** two partners can work simultaneously, but we have not explicitly decided whether concurrent time-consuming actions add to one global clock or overlap in simulated time. This must be resolved before finalizing the time engine.
-- **Investigation access rules:** we have not explicitly decided whether interrogation requires physical co-location, whether forensic submission requires visiting the lab, or what physical/discovery prerequisites apply to CCTV/devices/public-record tools.
-- Exact numeric bounds for generated city travel times and case sizes by difficulty.
-- Exact content-count targets per difficulty/length.
-- Whether users may override the default case deadline in a later version.
-- Final visual representation of CCTV records in the UI; V1 does not require generated video.
+
+## Locked gameplay decisions
+
+- Investigation actions are location-gated: players must go to the relevant place/tool to perform searches, forensics, CCTV review, device inspection, and public-record searches.
+- Interrogation is allowed only when the NPC is present: either the player calls the NPC to the bureau, or the player goes to meet the NPC.
+- City size and case size have no hard upper limit; keep only minimum/solvability constraints and generation/runtime practicality checks.
+- Suspect counts by difficulty: easy has around 3-4 suspects, normal has around 6-7 suspects, and hard has 10 or more suspects.
+- Users may override the default case deadline.
+- CCTV records have no visual representation at all. Use textual/data records only; do not add generated video, stills, thumbnails, or visual playback later.
 
 If a task conflicts with this file or another linked source-of-truth file, stop and surface the conflict instead of silently choosing a new architecture.
+
+# Must Follow rules
+- Plan before you make any change
+- ask necessary questions before working so that you are not working on assumptions
+- Always follow the laziest and fastest path, No over-engineering
+- Avoid using Technical language in UI. Think like a typical user
+- follow YAGNI method
+- use necessary skills of the tools you are working with.
