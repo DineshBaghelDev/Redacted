@@ -10,12 +10,14 @@ export function useRoomSession(nickname: string) {
   const joinRoom = useMutation(api.sessions.join);
   const setReady = useMutation(api.sessions.setReady);
   const startRoom = useMutation(api.sessions.start);
+  const leaveSession = useMutation(api.sessions.leave);
 
   const [screen, setScreen] = useState<Screen>("menu");
   const [roomCode, setRoomCode] = useState("");
   const [joinedRoomCode, setJoinedRoomCode] = useState("");
   const [showRoom, setShowRoom] = useState(false);
   const [freshStartCase, setFreshStartCase] = useState("");
+  const [activeCaseId, setActiveCaseId] = useState("");
   const [error, setError] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
   const [isWorking, setIsWorking] = useState(false);
@@ -66,13 +68,23 @@ export function useRoomSession(nickname: string) {
 
   async function toggleReady() {
     if (!joinedRoomCode) return;
-    await setReady({ roomCode: joinedRoomCode, isReady: !room?.meReady });
+    setError("");
+    try {
+      await setReady({ roomCode: joinedRoomCode, isReady: !room?.meReady });
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update your ready status.");
+    }
   }
 
   async function startInvestigation() {
     if (!joinedRoomCode || !room?.allReady) return;
-    await startRoom({ roomCode: joinedRoomCode });
-    openBrief();
+    setError("");
+    try {
+      await startRoom({ roomCode: joinedRoomCode });
+      openBrief();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not start the investigation.");
+    }
   }
 
   async function copyRoomCode() {
@@ -87,13 +99,21 @@ export function useRoomSession(nickname: string) {
     setError("");
   }
 
-  function leaveRoom() {
-    setShowRoom(false);
-    setJoinedRoomCode("");
-    setRoomCode("");
+  async function leaveRoom() {
+    if (!joinedRoomCode) return;
+    setError("");
+    try {
+      await leaveSession({ roomCode: joinedRoomCode });
+      setShowRoom(false);
+      setJoinedRoomCode("");
+      setRoomCode("");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not leave the room.");
+    }
   }
 
-  function openBrief() {
+  function openBrief(caseId = "") {
+    setActiveCaseId(caseId);
     setShowRoom(false);
     setScreen("loading");
     window.setTimeout(() => setScreen("brief"), 1200);
@@ -109,6 +129,7 @@ export function useRoomSession(nickname: string) {
     showRoom,
     freshStartCase,
     setFreshStartCase,
+    activeCaseId,
     error,
     setError,
     copiedCode,

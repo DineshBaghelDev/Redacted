@@ -44,6 +44,7 @@ export function RoomHub() {
     showRoom,
     freshStartCase,
     setFreshStartCase,
+    activeCaseId,
     error,
     setError,
     copiedCode,
@@ -88,7 +89,7 @@ export function RoomHub() {
   }
 
   if (screen === "brief") {
-    return <CaseBriefScreen />;
+    return <CaseBriefScreen caseId={activeCaseId} />;
   }
 
   return (
@@ -132,7 +133,7 @@ export function RoomHub() {
 
       {screen === "previous" ? (
         <PreviousGamesScreen
-          onContinue={() => openBrief()}
+          onContinue={openBrief}
           onFreshStart={setFreshStartCase}
         />
       ) : null}
@@ -140,6 +141,7 @@ export function RoomHub() {
       {showRoom ? (
         <RoomLobbyModal
           copiedCode={copiedCode}
+          error={error}
           joinedRoomCode={joinedRoomCode}
           nickname={nickname}
           onCopyCode={copyRoomCode}
@@ -151,7 +153,13 @@ export function RoomHub() {
       ) : null}
 
       {freshStartCase ? (
-        <FreshStartModal onCancel={() => setFreshStartCase("")} onConfirm={openBrief} />
+        <FreshStartModal
+          onCancel={() => setFreshStartCase("")}
+          onConfirm={() => {
+            openBrief(freshStartCase);
+            setFreshStartCase("");
+          }}
+        />
       ) : null}
     </div>
   );

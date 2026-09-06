@@ -62,6 +62,9 @@ export const join = mutation({
     if (!session || session.expiresAt < Date.now()) {
       return { ok: false, message: "Room not found." };
     }
+    if (session.status !== "waiting") {
+      return { ok: false, message: "Investigation already started." };
+    }
 
     const players = await ctx.db
       .query("sessionPlayers")
@@ -119,7 +122,7 @@ export const setReady = mutation({
 export const start = mutation({
   args: { roomCode: v.string() },
   handler: async (ctx, { roomCode }) => {
-    await requireUserId(ctx);
+    const authUserId = await requireUserId(ctx);
     const session = await ctx.db
       .query("sessions")
       .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase()))
@@ -134,12 +137,44 @@ export const start = mutation({
       .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
       .collect();
 
+    if (!players.some((player) => player.authUserId === authUserId)) {
+      throw new Error("Join the room first.");
+    }
+
     if (!players.length || players.some((player) => !player.isReady)) {
       throw new Error("Everyone must be ready first.");
     }
 
     await ctx.db.patch(session._id, { status: "playing" });
     return { roomCode: session.roomCode };
+  },
+});
+
+export const leave = mutation({
+  args: { roomCode: v.string() },
+  handler: async (ctx, { roomCode }) => {
+    const authUserId = await requireUserId(ctx);
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase()))
+      .first();
+
+    if (!session) {
+      throw new Error("Room not found.");
+    }
+
+    const player = (
+      await ctx.db
+        .query("sessionPlayers")
+        .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
+        .collect()
+    ).find((row) => row.authUserId === authUserId);
+
+    if (!player) {
+      throw new Error("Join the room first.");
+    }
+
+    await ctx.db.delete(player._id);
   },
 });
 
