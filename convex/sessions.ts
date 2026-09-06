@@ -92,6 +92,9 @@ export const join = mutation({
       nickname: nickname.trim() || "Detective",
       joinedAt: Date.now(),
     });
+    if (players.length + 1 === MAX_PLAYERS) {
+      await ctx.db.patch(session._id, { status: "playing" });
+    }
 
     return { sessionId: session._id, playerId, roomCode: session.roomCode };
   },
