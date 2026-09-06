@@ -26,7 +26,9 @@ This repository's technical decisions are split across the files below. Agents s
 | [SECURITY.md](./SECURITY.md) | Hidden solution boundaries, Clerk authentication, authorization, abuse/rate-limit rules |
 | [TOOLING.md](./TOOLING.md) | Libraries/services chosen and explicitly rejected |
 | [DECISIONS.md](./DECISIONS.md) | Locked decisions, rejected alternatives, unresolved items |
-| [IMPLEMENTATION.md](./IMPLEMENTATION.md) | Recommended implementation sequence and fixture-first strategy |
+|  |
+| [progress.md](./docs/progress.md) | Current implementation progress and latest shipped UI/backend changes |
+| [design decisions.md](./docs/design decisions.md) | Product and UI decisions made during implementation |
 
 ## Non-negotiable product rules
 
@@ -78,4 +80,7 @@ If a task conflicts with this file or another linked source-of-truth file, stop 
 - Always follow the laziest and fastest path, No over-engineering
 - Avoid using Technical language in UI. Think like a typical user
 - follow YAGNI method
+- keep the codebase readable, modular, simple, clean and structured.
+- Always make the smallest possible part as client component, rest as server.
 - use necessary skills of the tools you are working with.
+- Keep `docs/progress.md` and `docs/design decisions.md` updated when making implementation or product/design changes.
