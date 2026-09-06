@@ -4,7 +4,7 @@ import {
   SignUpButton,
   UserButton,
 } from "@clerk/nextjs";
-import { RoomHub } from "@/components/room-hub";
+import { RoomHub } from "@/components/room-hub/room-hub";
 
 export default function Home() {
   return (

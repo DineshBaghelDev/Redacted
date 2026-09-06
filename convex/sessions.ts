@@ -42,6 +42,7 @@ export const create = mutation({
       sessionId,
       authUserId,
       nickname: nickname.trim() || "Detective",
+      isReady: false,
       joinedAt: now,
     });
 
@@ -59,7 +60,7 @@ export const join = mutation({
       .first();
 
     if (!session || session.expiresAt < Date.now()) {
-      throw new Error("Room not found.");
+      return { ok: false, message: "Room not found." };
     }
 
     const players = await ctx.db
@@ -69,27 +70,83 @@ export const join = mutation({
     const existingPlayer = players.find((player) => player.authUserId === authUserId);
 
     if (existingPlayer) {
-      return { sessionId: session._id, playerId: existingPlayer._id, roomCode: session.roomCode };
+      return { ok: true, sessionId: session._id, playerId: existingPlayer._id, roomCode: session.roomCode };
     }
     if (players.length >= MAX_PLAYERS) {
-      throw new Error("Room is full.");
+      return { ok: false, message: "Room is full." };
     }
 
     const playerId = await ctx.db.insert("sessionPlayers", {
       sessionId: session._id,
       authUserId,
       nickname: nickname.trim() || "Detective",
+      isReady: false,
       joinedAt: Date.now(),
     });
 
-    return { sessionId: session._id, playerId, roomCode: session.roomCode };
+    return { ok: true, sessionId: session._id, playerId, roomCode: session.roomCode };
+  },
+});
+
+export const setReady = mutation({
+  args: { roomCode: v.string(), isReady: v.boolean() },
+  handler: async (ctx, { roomCode, isReady }) => {
+    const authUserId = await requireUserId(ctx);
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase()))
+      .first();
+
+    if (!session || session.expiresAt < Date.now()) {
+      throw new Error("Room not found.");
+    }
+
+    const player = (
+      await ctx.db
+        .query("sessionPlayers")
+        .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
+        .collect()
+    ).find((row) => row.authUserId === authUserId);
+
+    if (!player) {
+      throw new Error("Join the room first.");
+    }
+
+    await ctx.db.patch(player._id, { isReady });
+  },
+});
+
+export const start = mutation({
+  args: { roomCode: v.string() },
+  handler: async (ctx, { roomCode }) => {
+    await requireUserId(ctx);
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase()))
+      .first();
+
+    if (!session || session.expiresAt < Date.now()) {
+      throw new Error("Room not found.");
+    }
+
+    const players = await ctx.db
+      .query("sessionPlayers")
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
+      .collect();
+
+    if (!players.length || players.some((player) => !player.isReady)) {
+      throw new Error("Everyone must be ready first.");
+    }
+
+    await ctx.db.patch(session._id, { status: "playing" });
+    return { roomCode: session.roomCode };
   },
 });
 
 export const get = query({
   args: { roomCode: v.string() },
   handler: async (ctx, { roomCode }) => {
-    await requireUserId(ctx);
+    const authUserId = await requireUserId(ctx);
     const session = await ctx.db
       .query("sessions")
       .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase()))
@@ -108,7 +165,12 @@ export const get = query({
       roomCode: session.roomCode,
       status: session.status,
       playerCount: players.length,
-      players: players.map((player) => player.nickname),
+      allReady: players.length > 0 && players.every((player) => player.isReady),
+      meReady: players.some((player) => player.authUserId === authUserId && player.isReady),
+      players: players.map((player) => ({
+        name: player.nickname,
+        isReady: player.isReady ?? false,
+      })),
     };
   },
 });

@@ -14,6 +14,7 @@ export default defineSchema({
     sessionId: v.id("sessions"),
     authUserId: v.string(),
     nickname: v.string(),
+    isReady: v.optional(v.boolean()),
     joinedAt: v.number(),
   })
     .index("by_sessionId", ["sessionId"])
