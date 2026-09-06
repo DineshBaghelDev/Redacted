@@ -2,6 +2,7 @@
 
 ## 2026-09-06
 
+- Use the supplied office skyline art as the home-screen background and present the main actions as a left-side pixel-game menu.
 - Use Pixelify Sans across the entire website for a simple pixel-game feel.
 - Show signed-in users a minimal room hub with `My rooms`, `Create Room`, and `join room`.
 - Match the provided sketch with a white screen, blue outline, circular logo placeholder, and outlined buttons.

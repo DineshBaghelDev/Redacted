@@ -2,6 +2,7 @@
 
 ## 2026-09-06
 
+- Restyled the signed-in and signed-out home screen as a pixel-noir title menu using the supplied city-office background.
 - Added the signed-in home screen with logo placeholder and room action buttons.
 - Applied Pixelify Sans as the global site font.
 - Kept room actions as UI-only buttons until room flows exist.
