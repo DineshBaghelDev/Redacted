@@ -25,7 +25,7 @@ This repository's technical decisions are split across the files below. Agents s
 | [VALIDATION_EVALS.md](./VALIDATION_EVALS.md) | Deterministic validation, LLM evals, multiplayer tests, acceptance gates |
 | [SECURITY.md](./SECURITY.md) | Hidden solution boundaries, Clerk authentication, authorization, abuse/rate-limit rules |
 | [TOOLING.md](./TOOLING.md) | Libraries/services chosen and explicitly rejected |
-| [DECISIONS.md](./DECISIONS.md) | Locked decisions, rejected alternatives, unresolved items |
+[DECISIONS.md](./DECISIONS.md) | Locked decisions, rejected alternatives, unresolved items |
 |  |
 | [progress.md](./docs/progress.md) | Current implementation progress and latest shipped UI/backend changes |
 | [design decisions.md](./docs/design decisions.md) | Product and UI decisions made during implementation |
