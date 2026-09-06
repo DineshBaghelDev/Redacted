@@ -80,5 +80,7 @@ If a task conflicts with this file or another linked source-of-truth file, stop 
 - Always follow the laziest and fastest path, No over-engineering
 - Avoid using Technical language in UI. Think like a typical user
 - follow YAGNI method
+- keep the codebase readable, modular, simple, clean and structured.
+- Always make the smallest possible part as client component, rest as server.
 - use necessary skills of the tools you are working with.
 - Keep `docs/progress.md` and `docs/design decisions.md` updated when making implementation or product/design changes.

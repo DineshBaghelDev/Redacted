@@ -4,8 +4,7 @@ import {
   SignUpButton,
   UserButton,
 } from "@clerk/nextjs";
-
-const roomActions = ["My rooms", "Create Room", "join room"];
+import { RoomHub } from "@/components/room-hub";
 
 export default function Home() {
   return (
@@ -32,22 +31,7 @@ export default function Home() {
           <div className="absolute right-6 top-6">
             <UserButton />
           </div>
-          <div className="flex w-full max-w-60 flex-col items-center gap-8">
-            <div className="grid size-17 place-items-center rounded-full border-[3px] border-[#1976d2] text-base">
-              logo
-            </div>
-            <div className="flex w-full flex-col gap-3">
-              {roomActions.map((action) => (
-                <button
-                  className="h-10 rounded-lg border-[3px] border-[#1976d2] bg-background text-base text-[#1976d2]"
-                  key={action}
-                  type="button"
-                >
-                  {action}
-                </button>
-              ))}
-            </div>
-          </div>
+          <RoomHub />
         </section>
       </Show>
     </main>
