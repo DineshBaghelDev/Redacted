@@ -108,6 +108,7 @@ export const get = query({
       roomCode: session.roomCode,
       status: session.status,
       playerCount: players.length,
+      players: players.map((player) => player.nickname),
     };
   },
 });

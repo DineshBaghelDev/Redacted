@@ -7,3 +7,4 @@
 - Applied Pixelify Sans as the global site font.
 - Kept room actions as UI-only buttons until room flows exist.
 - Added the first Convex room flow: signed-in players can create a room, join by code, and see the joined room indicator.
+- Reworked the signed-in start flow: detective name, menu, create-room modal, join-room form, previous-games cards, loading screen, fresh-start confirmation, and empty case brief.
