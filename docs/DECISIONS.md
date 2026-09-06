@@ -59,7 +59,7 @@ This file records decisions from the technical design discussion so agents do no
 - `caseItems` means physical objects, not forensic conclusions.
 - Inventory is game-controlled; players cannot manually invent items.
 - CCTV data is generated upfront.
-- V1 does not require actual generated CCTV video.
+- CCTV records have no visual representation at all. Use textual/data records only; do not add generated video, stills, thumbnails, or visual playback later.
 - Devices: phone/laptop.
 - Digital data: call logs + messages.
 - Call logs must include timestamp, incoming/outgoing, duration.
@@ -100,6 +100,7 @@ This file records decisions from the technical design discussion so agents do no
 - Both players may message same NPC concurrently.
 - Same-NPC messages are server-ordered and processed sequentially.
 - Different NPC conversations may run simultaneously.
+- Interrogation is allowed only when the NPC is present: either the player calls the NPC to the bureau, or the player goes to meet the NPC.
 
 ## Game time
 
@@ -110,6 +111,7 @@ This file records decisions from the technical design discussion so agents do no
 - Travel uses city-edge travel cost.
 - Reports/forensics may become available after elapsed game time.
 - Default deadline = AI-estimated optimal investigation time + one in-game day (1440 minutes).
+- Users may override the default case deadline.
 - Difficulty changes case complexity, not arbitrary action-time multipliers.
 
 ## Case close
@@ -146,14 +148,14 @@ Five independent stars:
 - LLM-generated building graphs: rejected as unnecessary and fragile.
 
 
-## Explicitly unresolved gameplay access semantics
+## Gameplay access semantics
 
-Do not infer these from architecture:
+Investigation actions are location-gated:
 
-- whether an NPC must be physically present/co-located for interrogation,
-- whether forensic requests require visiting the forensic lab,
-- whether CCTV access requires visiting a camera/security terminal or is globally queryable,
-- when a phone/laptop becomes inspectable,
-- whether public-record search is globally available or tied to a location/tool.
+- search requires being at the searched location,
+- forensic requests require visiting the forensic lab,
+- CCTV review requires visiting the relevant security/CCTV access point,
+- phones/laptops require physical access to the discovered device,
+- public-record search requires visiting the bureau/public-record terminal.
 
 These are gameplay rules, not backend constraints.

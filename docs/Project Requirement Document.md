@@ -80,7 +80,7 @@ We can press a button to finally report our findings and on each correct thing r
 
 \- Travelling, getting reports from doctor or other helpers takes time
 
-\- It can be difficulty based of let users choose their own time
+\- Users can choose their own case deadline instead of the default time.
 
 
 
@@ -93,6 +93,16 @@ Players can create notes and attach strings to show connections. basically it is
 \## Generation Plan
 
 we start by deciding the type of case and a complex story based on difficulty chosen. Then we decide all the key roles, NPCs, clues, location. Then we prepare a cool timeline. scattering cameras, and other stuff.
+
+Suspect count by difficulty:
+
+\- Easy: around 3-4 suspects
+
+\- Normal: around 6-7 suspects
+
+\- Hard: 10 or more suspects
+
+There is no hard upper limit on city size or case size; generation should be limited only by solvability and practical runtime constraints.
 
 Preparing expected way of solving the case.
 
@@ -212,9 +222,7 @@ You will get information like:
 
 \# CCTV System
 
-There will be a date picker and after selecting a date you get a timeline which you can drag and based on that time instant you see images/faces of the people or cars that were there. we don't show the real place or image or background. just the people who where there.
-
-For plots, we might have gray silhouette for people with covered faces (we can hover to see their clothings)
+CCTV has no visual representation at all, ever. It is only textual/data records for cameras, time windows, observed people, vehicles, and events.
 
 
 
@@ -240,7 +248,7 @@ Inspiration : Shadows of doubt
 
 Just the image of the suspect and a chat dialog box on the right side, where we can discuss things.
 
-Players have a call option to call suspects and interrogate if they don't reply we might have to go to their house.
+Players have two interrogation scenarios: call the suspect/NPC to the bureau, or go meet them at their location.
 
 Conversations will be recorded so we can just come back and see it again
 

@@ -7,7 +7,7 @@ This file defines application behavior that should remain deterministic unless e
 Every session-scoped function should compose these guards rather than reimplementing ad hoc checks.
 
 ```ts
-requireAnonymousIdentity(ctx)
+requireAccountIdentity(ctx)
 requireSessionMember(ctx, sessionId)
 requireCaseReady(ctx, caseId)
 requireSessionActive(ctx, sessionId)
@@ -27,14 +27,14 @@ requireBeforeDeadline(session)
 5. Create first player.
 6. Start durable case-generation workflow.
 7. Return room code + raw reconnect secret once without waiting for generation.
-8. When generation freezes the case as `ready`, initialize game clock/deadline/location from generated case data and transition the room into playable state.
+8. When generation freezes the case as `ready`, initialize game clock/location and the default or user-overridden deadline from generated case data, then transition the room into playable state.
 
 ### `createReplaySession(caseId, identity, nickname)`
 
 1. Verify existing case `ready`.
 2. Generate new room/session and reconnect secret.
 3. Set session `gameTime` to canonical case starting time/minute origin.
-4. Set `deadline = gameTime + estimatedOptimalMinutes + 1440`.
+4. Set default `deadline = gameTime + estimatedOptimalMinutes + 1440`, unless the user supplied an override.
 5. Spawn first player at the initial case location.
 6. Create fresh state snapshot version 1.
 7. Return room code + raw reconnect secret once.
@@ -54,7 +54,7 @@ Transactionally:
 
 - hash/verify secret,
 - resolve exact player slot,
-- bind current anonymous identity if reconnect policy allows,
+- bind current Clerk user identity if reconnect policy allows,
 - never create a third player.
 
 ### `resetSession(sessionId)`
@@ -153,7 +153,7 @@ Deterministic template library.
 LLM may choose/assign:
 
 - building type/template,
-- number of floors/rooms within allowed bounds,
+- number of floors/rooms within practical generation/runtime limits,
 - semantic names/owners,
 - which generated rooms are story-relevant.
 
@@ -202,6 +202,8 @@ If progressive/multiple searches per room are later desired, add deterministic s
 - charge fixed action time,
 - return matching pre-generated CCTV records,
 - never fabricate missing footage.
+
+CCTV output is textual/data only and never visual media.
 
 ## Devices
 

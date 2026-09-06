@@ -34,6 +34,10 @@ Available systems:
 - build shared clue board,
 - manage limited in-game time.
 
+Investigation actions are location-gated. Players must go to the relevant place/tool to perform searches, forensics, CCTV review, device inspection, and public-record searches.
+
+Interrogation is allowed only when the NPC is present: either the player calls the NPC to the bureau, or the player goes to meet the NPC.
+
 ### Case close
 
 Players submit five findings:
@@ -63,7 +67,6 @@ Examples of place types:
 - residences,
 - offices,
 - hospital,
-- police station,
 - shops,
 - restaurants,
 - hotel,
@@ -136,9 +139,9 @@ CCTV consists of:
 - cameras tied to locations/rooms,
 - pre-generated records/events tied to time ranges,
 - observed NPCs/vehicles,
-- textual/visual UI representation.
+- textual/data UI representation.
 
-V1 does not need generated video.
+CCTV records have no visual representation at all. Do not add generated video, stills, thumbnails, or visual playback later.
 
 Players choose camera/time windows. The game returns stored matching records.
 
@@ -304,7 +307,7 @@ starting game time
 + 1440 minutes
 ```
 
-The optimal estimate is generated once during case generation. Runtime costs remain deterministic.
+The optimal estimate is generated once during case generation. Users may override the default deadline. Runtime costs remain deterministic.
 
 Difficulty changes case complexity, not arbitrary action-time multipliers.
 
@@ -318,6 +321,14 @@ Difficulty should affect real investigative complexity, for example:
 - number of places that matter,
 - ambiguity/indirection of evidence,
 - amount of irrelevant but plausible information.
+
+Suspect counts by difficulty:
+
+- easy: around 3-4 suspects,
+- normal: around 6-7 suspects,
+- hard: 10 or more suspects.
+
+City size and case size have no hard upper limit. Keep minimum/solvability constraints and generation/runtime practicality checks.
 
 There is no V1 hint system.
 

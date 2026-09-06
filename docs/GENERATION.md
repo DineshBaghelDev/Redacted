@@ -78,6 +78,12 @@ Generate:
 - reporter,
 - supporting NPCs needed by the case.
 
+Suspect counts by difficulty:
+
+- easy: around 3-4 suspects,
+- normal: around 6-7 suspects,
+- hard: 10 or more suspects.
+
 For every NPC generate:
 
 - public profile,
@@ -192,9 +198,9 @@ Output:
 }
 ```
 
-Clamp result to configured sanity bounds.
+Do not impose hard upper bounds on city size or case size. Validators should enforce minimums, solvability, referential integrity, and practical generation/runtime safety.
 
-Runtime deadline becomes `optimal + 1440` minutes.
+Default runtime deadline becomes `optimal + 1440` minutes. Users may override it.
 
 ## Stage 10 — Deterministic validation
 

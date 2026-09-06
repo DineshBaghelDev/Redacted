@@ -423,6 +423,7 @@ There is no social-post table in V1.
   status: "generating" | "waiting" | "playing" | "judging" | "completed" | "expired",
   gameTime: number,
   deadline: number,
+  deadlineOverrideMinutes?: number,
   createdAt: number,
   expiresAt: number,
   endedAt?: number,

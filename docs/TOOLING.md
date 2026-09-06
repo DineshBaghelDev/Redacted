@@ -120,11 +120,11 @@ Role:
 
 ### Rate limiter
 
-Use Convex-compatible rate limiting for expensive anonymous operations.
+Use Convex-compatible rate limiting for expensive authenticated operations.
 
 ### Cloudflare Turnstile
 
-Add before public launch to expensive anonymous case creation if abuse becomes externally reachable.
+Add before public launch to expensive public case creation if abuse becomes externally reachable.
 
 ## Explicitly not chosen for V1
 

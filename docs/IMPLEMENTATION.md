@@ -46,7 +46,7 @@ Use a seed and deterministic interior generator even for the fixture topology.
 
 Implement:
 
-- anonymous identity,
+- Clerk authentication,
 - room creation/join/reconnect,
 - 1–2 player limit,
 - shared reactive session state,
@@ -127,7 +127,7 @@ Generalize deterministic world generation:
 - seeded city graph,
 - >=10 places,
 - connectedness,
-- travel bounds,
+- positive deterministic travel times,
 - building templates,
 - floors/rooms/connections,
 - reproducibility tests.
@@ -162,7 +162,7 @@ Generated case is accepted only if it can be loaded by the exact same game engin
 
 V1 is technically ready when:
 
-- two anonymous players can join/reconnect reliably,
+- two authenticated players can join/reconnect reliably,
 - both can investigate different locations simultaneously,
 - all shared state converges in realtime,
 - same-NPC concurrent messages remain ordered,

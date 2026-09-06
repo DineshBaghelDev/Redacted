@@ -122,13 +122,13 @@ A new generated game creates the room/session immediately and generates its case
 - Both players subscribe to the same persisted NPC stream and see it live.
 - Both players can perform session-level actions. Destructive actions such as reset/end should require UI confirmation.
 
-## Anonymous identity model
+## Clerk identity model
 
-No accounts required.
+Use Clerk for player authentication.
 
 A player has:
 
-1. an anonymous backend identity/token for authorization and rate limiting,
+1. a Clerk user identity for authorization and rate limiting,
 2. a nickname for display,
 3. a room code to join the session,
 4. a separate reconnect secret to reclaim the same player slot.

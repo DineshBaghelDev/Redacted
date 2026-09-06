@@ -30,11 +30,11 @@ The NPC LLM must never receive the full case solution.
 
 Never include another NPC's private script.
 
-## Anonymous users
+## Clerk users
 
-No account requirement in V1.
+Use Clerk for player authentication in V1.
 
-Use an anonymous backend identity/token for:
+Use the Clerk user identity for:
 
 - authorization,
 - ownership/membership checks,
@@ -56,7 +56,7 @@ Display identity is a user-chosen nickname.
 
 Every session-scoped client call:
 
-1. authenticate anonymous identity,
+1. authenticate Clerk user identity,
 2. verify membership/reconnect state,
 3. verify requested entity belongs to the session's case,
 4. verify visibility/discovery rules,
@@ -96,7 +96,7 @@ Sanitize rendering; do not render user HTML.
 
 ## Rate limiting / abuse
 
-Anonymous public access can burn LLM budget.
+Public sign-up can burn LLM budget.
 
 At minimum rate-limit:
 
@@ -105,9 +105,9 @@ At minimum rate-limit:
 - case-close judging,
 - reconnect/join attempts.
 
-Use per-anonymous-user and global limits.
+Use per-Clerk-user and global limits.
 
-Before public launch, add bot protection such as Cloudflare Turnstile to expensive anonymous entry points, especially case creation.
+Before public launch, add bot protection such as Cloudflare Turnstile to expensive public entry points, especially case creation.
 
 ## Secrets
 

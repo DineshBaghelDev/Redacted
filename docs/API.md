@@ -2,7 +2,7 @@
 
 Core application API is composed of **typed Convex queries, mutations, and actions**. Do not create REST endpoints for ordinary game operations.
 
-Every client-callable function must authenticate the anonymous user and enforce session/case authorization.
+Every client-callable function must authenticate the Clerk user and enforce session/case authorization.
 
 ## Public queries
 
@@ -57,6 +57,7 @@ forensics.getRequest({ sessionId, requestId })
 ```
 
 Public-record search must search only the pre-generated public-record corpus for the case.
+Public-record search requires access to the bureau/public-record terminal.
 
 ### NPC/interrogation
 
@@ -98,6 +99,7 @@ games.create({
   difficulty,
   expectedLength,
   nickname,
+  deadlineMinutes?,
 })
 ```
 
@@ -111,7 +113,7 @@ Creates in one logical flow:
 Returns room code, reconnect secret, case/session identifiers, and generation status immediately. The second player may join while generation is running. Investigation starts only after the case becomes `ready`.
 
 ```ts
-sessions.createReplay({ caseCode, nickname })
+sessions.createReplay({ caseCode, nickname, deadlineMinutes? })
 sessions.join({ roomCode, nickname })
 sessions.reconnect({ roomCode, reconnectSecret })
 sessions.reset({ sessionId })
@@ -152,6 +154,7 @@ cctv.inspectWindow({ sessionId, cameraId, startTime, endTime })
 ```
 
 This advances game time and returns/stores access to matching pre-generated records.
+CCTV review requires access to the relevant security/CCTV access point. Returned records are textual/data only and never visual media.
 
 ### Devices and records
 
@@ -161,6 +164,7 @@ publicRecords.performSearch({ sessionId, query })
 ```
 
 These advance game time according to the fixed rules table.
+Device inspection requires physical access to the discovered device. Public-record search requires access to the bureau/public-record terminal.
 
 ### Forensics
 
@@ -170,6 +174,7 @@ forensics.markViewed({ sessionId, requestId })
 ```
 
 `request` records `readyAtGameTime`; it does not call an LLM.
+Forensic requests require visiting the forensic lab.
 
 ### NPC messages
 
@@ -184,10 +189,11 @@ npcConversations.sendMessage({
 The mutation:
 
 1. validates membership and NPC/case relation,
-2. assigns the next sequence number transactionally,
-3. persists/queues the message,
-4. schedules processing if the conversation is idle,
-5. advances game time by the interrogation-question cost.
+2. verifies the NPC is present because the player called them to the bureau or went to meet them,
+3. assigns the next sequence number transactionally,
+4. persists/queues the message,
+5. schedules processing if the conversation is idle,
+6. advances game time by the interrogation-question cost.
 
 It does not generate the reply inside the mutation.
 

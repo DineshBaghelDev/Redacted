@@ -61,7 +61,7 @@ Check:
 - floors/rooms reference valid parent records,
 - required search locations are reachable,
 - no invalid room edge across unrelated buildings,
-- travel times are positive and within configured bounds,
+- travel times are positive and deterministic,
 - same seed produces same deterministic topology.
 
 ## Investigation accessibility checks
@@ -72,9 +72,11 @@ Check:
 
 - every required evidence item is discoverable through an available search/location,
 - every required forensic output has an obtainable source,
-- every required CCTV fact is queryable through an existing camera/time range,
+- every required forensic output can be requested from the forensic lab,
+- every required CCTV fact is queryable through an existing camera/time range from a reachable CCTV access point,
 - required device records are attached to an accessible device,
-- required public record exists in the searchable corpus,
+- required public record exists in the searchable corpus and is available through the bureau/public-record terminal,
+- required NPC interrogation is possible by calling the NPC to the bureau or visiting the NPC,
 - no grading-required evidence depends on inaccessible data,
 - no required chain depends on a nonexistent/hidden action.
 
