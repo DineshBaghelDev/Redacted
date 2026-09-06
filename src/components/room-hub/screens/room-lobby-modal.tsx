@@ -14,6 +14,7 @@ type RoomLobbyModalProps = {
   nickname: string;
   joinedRoomCode: string;
   copiedCode: boolean;
+  error: string;
   onCopyCode: () => void;
   onToggleReady: () => void;
   onStart: () => void;
@@ -25,6 +26,7 @@ export function RoomLobbyModal({
   nickname,
   joinedRoomCode,
   copiedCode,
+  error,
   onCopyCode,
   onToggleReady,
   onStart,
@@ -84,6 +86,7 @@ export function RoomLobbyModal({
               : `${room.playerCount}/2 detectives connected. Waiting for ready.`}
           </p>
         ) : null}
+        {error ? <p className="mt-3 text-center text-sm text-red-300">{error}</p> : null}
       </div>
     </div>
   );

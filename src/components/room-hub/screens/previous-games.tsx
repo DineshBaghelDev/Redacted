@@ -6,7 +6,7 @@ type PreviousGame = {
 };
 
 type PreviousGamesScreenProps = {
-  onContinue: () => void;
+  onContinue: (caseId: string) => void;
   onFreshStart: (caseId: string) => void;
 };
 
@@ -49,7 +49,7 @@ export function PreviousGamesScreen({ onContinue, onFreshStart }: PreviousGamesS
           <p className="text-lg uppercase">{game.progress}</p>
           <button
             className="mt-5 h-11 w-full border-2 border-cyan-300 bg-[#06142d] text-lg uppercase text-yellow-200"
-            onClick={onContinue}
+            onClick={() => onContinue(game.caseId)}
             type="button"
           >
             Continue

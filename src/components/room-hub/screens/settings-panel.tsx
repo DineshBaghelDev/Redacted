@@ -14,7 +14,13 @@ export function SettingsPanel({
   onSave,
 }: SettingsPanelProps) {
   return (
-    <form className={`${panel} w-full max-w-md`} onSubmit={(event) => event.preventDefault()}>
+    <form
+      className={`${panel} w-full max-w-md`}
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSave();
+      }}
+    >
       <h2 className="mb-5 text-3xl uppercase text-cyan-50">Detective profile</h2>
       <label className="mb-3 block text-xl uppercase text-cyan-100" htmlFor="profile-name">
         Detective name
@@ -28,7 +34,6 @@ export function SettingsPanel({
       <button
         className={`${menuButton} mt-4 w-full text-yellow-200`}
         disabled={!canSave}
-        onClick={onSave}
         type="submit"
       >
         Save

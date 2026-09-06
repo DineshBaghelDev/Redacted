@@ -13,3 +13,4 @@
 - Require every connected room player to mark ready before enabling `Start investigation`.
 - Main-menu options render as plain text and only reveal their bordered pixel-noir styling on hover or keyboard focus.
 - The join-room dialog takes the room code as six single-character OTP-style boxes and shows join errors inside the dialog.
+- Only waiting rooms accept joins, and room actions require an authenticated session-player membership.

@@ -13,10 +13,11 @@ export function LoadingScreen() {
   );
 }
 
-export function CaseBriefScreen() {
+export function CaseBriefScreen({ caseId }: { caseId?: string }) {
   return (
     <div className="mx-auto w-full max-w-3xl border border-cyan-300 bg-[#06142d]/90 p-8 text-cyan-100 shadow-[0_0_28px_rgba(34,211,238,0.22)]">
       <h1 className="text-4xl uppercase text-cyan-50">Case Brief</h1>
+      {caseId ? <p className="mt-4 text-xl uppercase">Case {caseId}</p> : null}
     </div>
   );
 }
