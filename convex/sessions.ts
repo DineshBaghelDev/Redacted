@@ -4,10 +4,21 @@ import { v } from "convex/values";
 const MAX_PLAYERS = 2;
 const ROOM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * Generates a six-character uppercase alphanumeric room code.
+ *
+ * @returns A randomly generated room code
+ */
 function makeRoomCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
+/**
+ * Retrieves the authenticated user's identity.
+ *
+ * @returns The authenticated user's subject identifier.
+ * @throws If no authenticated user is present.
+ */
 async function requireUserId(ctx: MutationCtx | QueryCtx) {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) {
@@ -83,6 +94,9 @@ export const join = mutation({
       isReady: false,
       joinedAt: Date.now(),
     });
+    if (players.length + 1 === MAX_PLAYERS) {
+      await ctx.db.patch(session._id, { status: "playing" });
+    }
 
     return { ok: true, sessionId: session._id, playerId, roomCode: session.roomCode };
   },
@@ -152,7 +166,7 @@ export const get = query({
       .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase()))
       .first();
 
-    if (!session) {
+    if (!session || session.expiresAt < Date.now()) {
       return null;
     }
 

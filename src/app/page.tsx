@@ -6,6 +6,11 @@ import {
 } from "@clerk/nextjs";
 import { RoomHub } from "@/components/room-hub/room-hub";
 
+/**
+ * Renders the authentication-dependent home page.
+ *
+ * @returns The home page with sign-in and sign-up controls for signed-out users, or the room hub and user menu for signed-in users.
+ */
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#050712] p-2 text-cyan-100 sm:p-3">
