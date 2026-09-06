@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * Provides the root HTML structure and application providers for the page content.
+ * Provides the root HTML structure and application providers for page content.
  *
  * @param children - The content rendered within the application layout
  */

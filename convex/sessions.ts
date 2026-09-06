@@ -14,10 +14,10 @@ function makeRoomCode() {
 }
 
 /**
- * Retrieves the authenticated user's identity.
+ * Retrieves the authenticated user's subject identifier.
  *
  * @returns The authenticated user's subject identifier.
- * @throws If no authenticated user is present.
+ * @throws Error if no authenticated user is present.
  */
 async function requireUserId(ctx: MutationCtx | QueryCtx) {
   const identity = await ctx.auth.getUserIdentity();
