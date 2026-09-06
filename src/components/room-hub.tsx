@@ -5,6 +5,9 @@ import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 
+/**
+ * Provides controls for creating or joining a room and displays the joined room status.
+ */
 export function RoomHub() {
   const { user } = useUser();
   const [roomCode, setRoomCode] = useState("");
