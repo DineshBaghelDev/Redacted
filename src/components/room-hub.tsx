@@ -1,7 +1,7 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
-import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { useAuth, useUser } from "@clerk/nextjs";
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 
@@ -11,7 +11,7 @@ export function RoomHub() {
   const [joinedRoomCode, setJoinedRoomCode] = useState("");
   const [error, setError] = useState("");
   const [isWorking, setIsWorking] = useState(false);
-  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { isLoaded, isSignedIn } = useAuth();
   const createRoom = useMutation(api.sessions.create);
   const joinRoom = useMutation(api.sessions.join);
   const room = useQuery(
@@ -21,7 +21,7 @@ export function RoomHub() {
   const nickname = user?.firstName || user?.username || "Detective";
 
   async function run(action: "create" | "join") {
-    if (!isAuthenticated) {
+    if (!isLoaded || !isSignedIn) {
       setError("Still signing in. Try again in a moment.");
       return;
     }
@@ -51,7 +51,7 @@ export function RoomHub() {
       <div className="flex w-full flex-col gap-3">
         <button
           className="h-10 rounded-lg border-[3px] border-[#1976d2] bg-background text-base text-[#1976d2]"
-          disabled={isWorking || isLoading || !isAuthenticated}
+          disabled={isWorking || !isLoaded || !isSignedIn}
           onClick={() => run("create")}
           type="button"
         >
@@ -68,7 +68,7 @@ export function RoomHub() {
           />
           <button
             className="h-10 rounded-lg border-[3px] border-[#1976d2] bg-background px-3 text-base text-[#1976d2]"
-            disabled={isWorking || isLoading || !isAuthenticated || !roomCode.trim()}
+            disabled={isWorking || !isLoaded || !isSignedIn || !roomCode.trim()}
             onClick={() => run("join")}
             type="button"
           >
@@ -81,7 +81,7 @@ export function RoomHub() {
             {room ? ` (${room.playerCount}/2)` : ""}
           </p>
         ) : null}
-        {!isLoading && !isAuthenticated ? (
+        {isLoaded && !isSignedIn ? (
           <p className="text-center text-sm">Still signing in.</p>
         ) : null}
         {error ? <p className="text-center text-sm">{error}</p> : null}
