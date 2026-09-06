@@ -109,7 +109,7 @@ export const get = query({
       .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase()))
       .first();
 
-    if (!session) {
+    if (!session || session.expiresAt < Date.now()) {
       return null;
     }
 
