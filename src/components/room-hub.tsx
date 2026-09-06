@@ -23,6 +23,11 @@ export function RoomHub() {
   );
   const nickname = user?.firstName || user?.username || "Detective";
 
+  /**
+   * Creates a new room or joins an existing room based on the requested action.
+   *
+   * @param action - Whether to create a room or join the entered room
+   */
   async function run(action: "create" | "join") {
     if (!isAuthenticated) {
       setError("Still signing in. Try again in a moment.");
