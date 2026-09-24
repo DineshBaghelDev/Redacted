@@ -2,12 +2,17 @@ import type { EvidenceSet } from "./evidence/types";
 import type { Cast, CrimeCore, Lie, Lies, Story } from "./schemas";
 
 // Lie rules: the same text goes into the AI prompt, and checkLies enforces it.
+/** Most innocent people who may lie in a case; a ceiling, not a target. */
+export const MAX_INNOCENT_LIARS = { easy: 2, normal: 3, hard: 4 } as const;
+
 export const LIE_RULES = [
-  "Lies come from personality and what the person protects, never at random. Innocent people lie about their secrets and embarrassing moments; the killer lies about the crime.",
+  "Nobody has to lie. Innocent people tell the truth, because they want to clear themselves. An innocent lies only when telling the truth would do them real damage: arrest, losing their job, a ruined reputation, a broken marriage or family, or exposing someone they protect. Embarrassment, awkwardness or a small rule broken at work is not enough.",
+  "A secret alone is not a reason to lie: they lie about it only if police questions about this case would touch it and the truth would do that kind of damage.",
+  "The killer always lies to clear themselves, with a convincing cover story. Only the killer's whereabouts lie is required; any other lie must be earned by the story.",
   "The killer must have a \"whereabouts\" lie whose truthIds include the murder event.",
   "truthIds are ids of story events, messages/calls or purchases the lie hides (may be empty for a secret with no event).",
   "disprovingEvidenceIds are evidence ids from the list. Each must be about the liar or come from something the lie hides. Never a background item, and never the liar's own statement.",
-  "whenCaught follows personality: nervous people tell the full truth (\"full-truth\"), stubborn ones admit only what the proof shows (\"admit-shown\"), cunning ones switch to a backup lie (\"backup-lie\"), which then must exist and needs at least one piece of proof the first lie doesn't use.",
+  "whenCaught is what this person would do once shown proof, judged from their personality and situation: tell the whole truth (\"full-truth\"), admit only what the proof shows (\"admit-shown\"), or switch to a backup lie (\"backup-lie\"), which then must exist and needs at least one piece of proof the first lie doesn't use.",
   "Lie ids are unique. The victim can't lie.",
 ];
 
@@ -67,6 +72,15 @@ export function checkLies(crime: CrimeCore, cast: Cast, story: Story, set: Evide
   const ids = lies.map((l) => l.id);
   for (const id of new Set(ids)) if (ids.filter((x) => x === id).length > 1) problems.push(`Two lies share the id "${id}".`);
   return problems;
+}
+
+/** Too many innocent liars makes a case noise, not challenge. */
+export function liarCountProblems(crime: CrimeCore, cast: Cast, { lies }: Lies, difficulty: keyof typeof MAX_INNOCENT_LIARS) {
+  const liars = new Set(lies.map((l) => l.npcId).filter((id) => id !== crime.killerId && id !== crime.accomplice?.id));
+  const max = MAX_INNOCENT_LIARS[difficulty];
+  if (liars.size <= max) return [];
+  const names = [...liars].map((id) => cast.characters.find((c) => c.id === id)?.name ?? id).join(", ");
+  return [`${liars.size} innocent people lie (${names}); a ${difficulty} case allows at most ${max}. Keep only the ones with the most to lose.`];
 }
 
 /**

@@ -45,3 +45,10 @@ describe("AI tries and repairs", () => {
     expect(await runAiAttempt(getStage("lies"), inputs, job, 0)).toMatchObject({ retry: false });
   });
 });
+
+describe("crime clean-up", () => {
+  it("drops a camera switch-off the AI never named", () => {
+    const out = getStage("crime").finalize!({ ...crimeCore, coverUp: ["wipe-prints", "disable-camera"], disabledCamera: null }, {}, job) as typeof crimeCore;
+    expect(out.coverUp).toEqual(["wipe-prints"]);
+  });
+});

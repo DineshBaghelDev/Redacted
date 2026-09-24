@@ -40,7 +40,7 @@ export function buildEvidence(
     return found ? `${found.place.name}, ${found.room.name}` : id;
   };
 
-  const { cameras, rows } = buildCctv(city, people, timeline, difficulty, createRng(seed), crime.disabledCamera);
+  const { cameras, rows } = buildCctv(city, people, timeline, difficulty, createRng(seed), crime.disabledCamera ?? undefined);
   const evidence: Evidence[] = [...rows];
 
   // Phone records: both phones keep a copy.

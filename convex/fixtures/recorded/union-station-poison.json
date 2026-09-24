@@ -56,7 +56,7 @@
               {
                 "kind": "debt",
                 "proves": [],
-                "summary": "Owes roughly £4,200 on a store card, mostly behind on minimum payments."
+                "summary": "Owes roughly \u00a34,200 on a store card, mostly behind on minimum payments."
               }
             ],
             "relationshipToVictim": "the victim",
@@ -142,7 +142,7 @@
               {
                 "kind": "debt",
                 "proves": [],
-                "summary": "Payday loan of £900 outstanding, taken out the week after his demotion."
+                "summary": "Payday loan of \u00a3900 outstanding, taken out the week after his demotion."
               },
               {
                 "kind": "complaint",
@@ -173,7 +173,7 @@
               "height": "5'6\"",
               "shoes": "low black heels"
             },
-            "fakeMotive": "Stands to collect £120,000 on Martin's life insurance policy.",
+            "fakeMotive": "Stands to collect \u00a3120,000 on Martin's life insurance policy.",
             "gender": "female",
             "homeUnitId": "carver-towers:unit-3b",
             "id": "sandra",
@@ -188,7 +188,7 @@
               {
                 "kind": "insurance",
                 "proves": [],
-                "summary": "Martin's life policy, £120,000, still lists Sandra Holloway as sole beneficiary; premiums paid to date."
+                "summary": "Martin's life policy, \u00a3120,000, still lists Sandra Holloway as sole beneficiary; premiums paid to date."
               },
               {
                 "kind": "property",
@@ -219,7 +219,7 @@
               "height": "5'9\"",
               "shoes": "canvas trainers with a split sole"
             },
-            "fakeMotive": "Martin owed him £2,500 from their grey-market parts deal and had stopped paying.",
+            "fakeMotive": "Martin owed him \u00a32,500 from their grey-market parts deal and had stopped paying.",
             "gender": "male",
             "homeUnitId": "linden-court:unit-3a",
             "id": "caleb",
@@ -234,7 +234,7 @@
               {
                 "kind": "debt",
                 "proves": [],
-                "summary": "Text messages and a handwritten IOU recovered in a past civil dispute mention £2,500 owed by 'Holloway' to Rusk."
+                "summary": "Text messages and a handwritten IOU recovered in a past civil dispute mention \u00a32,500 owed by 'Holloway' to Rusk."
               },
               {
                 "kind": "criminal",
@@ -261,7 +261,7 @@
             "age": 29,
             "appearance": {
               "build": "petite",
-              "clothing": "denim jacket over a café apron, chunky rings",
+              "clothing": "denim jacket over a caf\u00e9 apron, chunky rings",
               "height": "5'3\"",
               "shoes": "black ankle boots"
             },
@@ -367,7 +367,7 @@
             "relationshipToVictim": "no connection; found Martin collapsed on the concourse",
             "role": "witness",
             "routine": "office",
-            "secret": "She had stepped away from her booth to chat with the café vendor when Martin collapsed, which breaches station rules.",
+            "secret": "She had stepped away from her booth to chat with the caf\u00e9 vendor when Martin collapsed, which breaches station rules.",
             "traits": [
               "observant",
               "motherly",
@@ -396,13 +396,13 @@
               {
                 "kind": "other",
                 "proves": [],
-                "summary": "His incident report claims a continuous patrol, but a café loyalty-app purchase timestamps him at Ember Café at 7.14am."
+                "summary": "His incident report claims a continuous patrol, but a caf\u00e9 loyalty-app purchase timestamps him at Ember Caf\u00e9 at 7.14am."
               }
             ],
             "relationshipToVictim": "no connection; first security officer on scene",
             "role": "witness",
             "routine": "office",
-            "secret": "He left the concourse unattended to buy a coffee at Ember Café across the road shortly before the collapse.",
+            "secret": "He left the concourse unattended to buy a coffee at Ember Caf\u00e9 across the road shortly before the collapse.",
             "traits": [
               "eager",
               "careful",
@@ -506,14 +506,16 @@
           "name": "fentanyl-laced coffee",
           "originRoomId": "st-clare-clinic:pharmacy-store"
         },
-        "windowStart": 0
+        "windowStart": 0,
+        "accomplice": null,
+        "disabledCamera": null
       },
       "source": "llm"
     },
     "estimate": {
       "output": {
-        "estimatedOptimalMinutes": 215,
-        "reasoningSummary": "A competent pair should avoid the worst blind alleys but still lose time to confirming camera windows, eliminating innocents, and sequencing lab/records results. Estimate uses roughly 2.3× the perfect-information 94-minute route rather than the 4× worst-case bound."
+        "estimatedOptimalMinutes": 224,
+        "reasoningSummary": "The fixed optimal path is 89 minutes, but real play adds false CCTV windows, records dead ends, innocent interviews, sequencing mistakes, and waiting/handoff between the pair. For a normal case with competent detectives, a roughly 2.5x overhead is fair without being punitive."
       },
       "source": "llm"
     },
@@ -522,187 +524,104 @@
         "lies": [
           {
             "backupLie": {
-              "claim": "Fine, there was no dental appointment. I left early to buy a train ticket for a day trip to clear my head — I was on the concourse buying a ticket but I went nowhere near Martin.",
+              "claim": "She admits she skipped the fake dental appointment and passed through Union Station to buy a ticket and use the restrooms, but insists she never spoke to or touched Martin.",
               "disprovingEvidenceIds": [
                 "forensic/martin-cup/prints",
-                "forensic/elena-cardigan/prints"
+                "witness/margo/elena-on-concourse",
+                "witness/orian/elena-on-concourse",
+                "cctv/38"
               ]
             },
-            "claim": "I left the clinic early for a genuine dental appointment, and after it I went straight home. I was never at Union Station near Martin when he collapsed.",
+            "claim": "She left the clinic early for a real dental appointment at 8.10 and was in the dentist's waiting room when Martin collapsed; she never went anywhere near Union Station.",
             "disprovingEvidenceIds": [
+              "cctv/36",
+              "cctv/37",
+              "cctv/38",
+              "card/buy-elena-ticket",
               "record/elena/2",
-              "cctv/38"
+              "message/elena-clinic-lie/elena",
+              "witness/margo/elena-on-concourse",
+              "witness/orian/elena-on-concourse"
             ],
             "id": "lie-elena-whereabouts",
             "npcId": "elena",
-            "reason": "As the killer, Elena must conceal that she was on the concourse spiking Martin's coffee and then cleaning up in the restrooms; the fake dental cover hides the whole murder window.",
+            "reason": "She is the killer and must place herself away from the concourse at the time of the poisoning; the dental appointment cover was pre-planned for exactly this.",
             "topic": "whereabouts",
             "truthIds": [
+              "elena-leaves-clinic",
+              "elena-on-concourse",
               "the-poisoning",
               "elena-hides-vial",
-              "elena-clinic-lie"
+              "buy-elena-ticket",
+              "elena-clinic-lie",
+              "elena-dental-fake"
             ],
             "whenCaught": "backup-lie"
           },
           {
-            "claim": "Martin and I were barely acquainted. He cleared himself at the inquest, sure, but I made my complaint years ago and moved on — I hold no grudge over my brother's death.",
+            "claim": "She has only ever handled the normal dispensary stock and has no access to the controlled drug store room, so she could not have got hold of fentanyl.",
             "disprovingEvidenceIds": [
-              "record/elena/0",
-              "message/elena-marta-message/elena"
+              "cctv/26",
+              "record/elena/employment"
             ],
-            "id": "lie-elena-motive",
+            "id": "lie-elena-stock-access",
             "npcId": "elena",
-            "reason": "Her composed, guarded nature makes her minimise the two-year obsession with Tomas's death and her belief Martin falsified the report, because admitting it hands the police her motive.",
-            "topic": "motive",
+            "reason": "Admitting her unsupervised controlled-stock access would expose the vial theft, the falsified ledger entry, and her means to kill; it would cost her career and her liberty.",
+            "topic": "secret",
             "truthIds": [
-              "elena-marta-message",
-              "the-poisoning"
+              "elena-takes-stock"
             ],
             "whenCaught": "admit-shown"
           },
           {
-            "claim": "I never threatened Martin. We had words about pay like anyone, but I never said he'd get what was coming — people exaggerate what they heard.",
-            "disprovingEvidenceIds": [
-              "record/derek/1",
-              "message/derek-martin-shift-text/derek"
-            ],
-            "id": "lie-derek-threat",
-            "npcId": "derek",
-            "reason": "Derek is loud and hot-tempered but loyal to himself; he knows the public threat and the text make him the obvious suspect, so he flatly denies them and digs in.",
-            "topic": "motive",
-            "truthIds": [
-              "derek-threat",
-              "derek-martin-shift-text"
-            ],
-            "whenCaught": "admit-shown"
-          },
-          {
-            "claim": "Martin and I were finished in every sense. Any insurance paperwork from the marriage was settled long ago — I have no financial stake in his death whatsoever.",
-            "disprovingEvidenceIds": [
-              "record/sandra/0",
-              "message/martin-sandra-property/sandra"
-            ],
-            "id": "lie-sandra-beneficiary",
-            "npcId": "sandra",
-            "reason": "Precise and controlled, Sandra protects the secret that she is still the £120,000 beneficiary — damning motive and an embarrassment in front of her new partner — so she denies it calmly until shown the policy itself.",
-            "topic": "motive",
-            "truthIds": [
-              "martin-sandra-property"
-            ],
-            "whenCaught": "admit-shown"
-          },
-          {
-            "backupLie": {
-              "claim": "Alright, I lent Martin some money once, friend to friend, and he was slow paying it back. But there was never any parts deal — it was a personal loan, nothing criminal.",
-              "disprovingEvidenceIds": [
-                "record/caleb/1",
-                "record/caleb/2"
-              ]
-            },
-            "claim": "Martin Holloway? Knew him to nod at, that's all. No debts between us, no business — whoever says otherwise is stirring trouble.",
-            "disprovingEvidenceIds": [
-              "call/caleb-martin-debt-call/caleb",
-              "record/caleb/0"
-            ],
-            "id": "lie-caleb-dealings",
-            "npcId": "caleb",
-            "reason": "Scheming and jumpy, Caleb denies any connection at all because the truth leads straight to the stolen-parts racket and a prison sentence; when caught he pivots to a softer version rather than confessing.",
-            "topic": "relationship",
-            "truthIds": [
-              "caleb-debt-row",
-              "caleb-martin-debt-call"
-            ],
-            "whenCaught": "backup-lie"
-          },
-          {
-            "claim": "I handed Martin's things back the night we broke up. I don't have his wallet or any key to his flat — search my place if you like, there's nothing of his here.",
+            "claim": "She gave Martin his wallet and spare key back days ago and had nothing of his on the morning he died.",
             "disprovingEvidenceIds": [
               "forensic/martin-wallet/prints",
               "message/nadia-martin-row-texts/nadia"
             ],
             "id": "lie-nadia-wallet",
             "npcId": "nadia",
-            "reason": "Defensive and impulsive, Nadia denies keeping the wallet and spare key because holding the dead man's property on the morning he died makes her look like a thief with access; she only concedes what the evidence forces.",
+            "reason": "Having the dead man's wallet and flat key would make her look like a thief with access to his home; admitting it risks a theft accusation on top of the murder enquiry.",
             "topic": "item",
             "truthIds": [
               "nadia-keeps-wallet",
-              "nadia-martin-row-texts"
-            ],
-            "whenCaught": "admit-shown"
-          },
-          {
-            "claim": "I was awake on every patrol that night, logs are accurate to the minute. Martin never caught me sleeping — we got on fine and he had no complaint with me.",
-            "disprovingEvidenceIds": [
-              "record/george/0",
-              "cctv/116"
-            ],
-            "id": "lie-george-sleeping",
-            "npcId": "george",
-            "reason": "Gruff and secretive, George protects the falsified patrol logs and the sleeping incident, because admitting Martin was about to report him gives him motive and costs him his licence.",
-            "topic": "secret",
-            "truthIds": [
-              "george-caught-sleeping"
-            ],
-            "whenCaught": "admit-shown"
-          },
-          {
-            "claim": "I was at my booth the whole morning, never left it. I saw Martin on the concourse from my window right up until he fell.",
-            "disprovingEvidenceIds": [
-              "record/ruth/0",
-              "witness/farid/ruth-finds-body"
-            ],
-            "id": "lie-ruth-booth",
-            "npcId": "ruth",
-            "reason": "Nervous and motherly, Ruth hides her eleven-minute absence chatting with the café vendor because it breaches station rules; once confronted she blurts the full truth.",
-            "topic": "whereabouts",
-            "truthIds": [
-              "ruth-finds-body"
+              "nadia-martin-row-texts",
+              "nadia-harlow-row"
             ],
             "whenCaught": "full-truth"
           },
           {
-            "claim": "My patrol was continuous all morning, exactly as my incident report says. I never left the concourse unattended.",
+            "claim": "She was at her concourse booth the entire morning and only left it when she saw Martin collapse.",
+            "disprovingEvidenceIds": [
+              "record/ruth/0",
+              "cctv/129"
+            ],
+            "id": "lie-ruth-booth",
+            "npcId": "ruth",
+            "reason": "Her eleven-minute absence from the booth breaches station rules and could cost her the job, so she claims she was posted the whole time.",
+            "topic": "whereabouts",
+            "truthIds": [
+              "ruth-finds-body"
+            ],
+            "whenCaught": "admit-shown"
+          },
+          {
+            "claim": "He maintained a continuous patrol of the concourse from the start of his shift, exactly as written in his incident report.",
             "disprovingEvidenceIds": [
               "card/buy-farid-coffee",
-              "record/farid/0"
+              "record/farid/0",
+              "cctv/141",
+              "witness/nadia/farid-coffee-run"
             ],
             "id": "lie-farid-patrol",
             "npcId": "farid",
-            "reason": "Anxious and eager to please, Farid covered up his coffee run in his report and sticks to the story; the loyalty-app timestamp breaks him and he confesses everything.",
+            "reason": "His incident report already falsifies a continuous patrol; admitting he left post for coffee before a death on his patch could cost him his job.",
             "topic": "whereabouts",
             "truthIds": [
               "farid-coffee-run",
               "buy-farid-coffee"
             ],
-            "whenCaught": "full-truth"
-          },
-          {
-            "claim": "I'm just passing through — a traveller between engagements, staying with friends in town. No sense troubling yourselves over my situation.",
-            "disprovingEvidenceIds": [
-              "record/margo/0"
-            ],
-            "id": "lie-margo-hotel",
-            "npcId": "margo",
-            "reason": "Lonely and dramatic, Margo maintains her traveller persona to hide six weeks of unpaid hotel bills and how precarious her life really is; she collapses into the truth with theatrical relief when caught.",
-            "topic": "secret",
-            "truthIds": [],
-            "whenCaught": "full-truth"
-          },
-          {
-            "claim": "I was at my morning lectures and only passed through the station briefly afterwards. I barely saw anything.",
-            "disprovingEvidenceIds": [
-              "card/buy-orian-coffee",
-              "record/orian/0"
-            ],
-            "id": "lie-orian-lectures",
-            "npcId": "orian",
-            "reason": "Honest but jittery, Orian lies only to keep his truancy from reaching his parents via police enquiries; caught out by the card receipt and attendance record, he admits the lot.",
-            "topic": "whereabouts",
-            "truthIds": [
-              "orian-buys-coffee",
-              "buy-orian-coffee"
-            ],
-            "whenCaught": "full-truth"
+            "whenCaught": "admit-shown"
           }
         ]
       },
@@ -759,7 +678,7 @@
           {
             "durationMinutes": 6,
             "from": "caleb",
-            "gist": "Caleb demands the £2,500 Martin owes from the parts deal; Martin laughs and says a suspended sentence means Caleb cannot go near the police.",
+            "gist": "Caleb demands the \u00a32,500 Martin owes from the parts deal; Martin laughs and says a suspended sentence means Caleb cannot go near the police.",
             "id": "caleb-martin-debt-call",
             "proves": [],
             "time": 810,
@@ -791,7 +710,7 @@
             "visibility": "public"
           },
           {
-            "action": "Caleb confronts Martin over the missing £2,500 from their parts deal, and Martin tells him he will pay when he feels like it.",
+            "action": "Caleb confronts Martin over the missing \u00a32,500 from their parts deal, and Martin tells him he will pay when he feels like it.",
             "actors": [
               "martin",
               "caleb"
@@ -894,7 +813,7 @@
             "visibility": "public"
           },
           {
-            "action": "Nadia works the morning rush at Ember Café, pulling shots and calling out orders for a room full of commuters.",
+            "action": "Nadia works the morning rush at Ember Caf\u00e9, pulling shots and calling out orders for a room full of commuters.",
             "actors": [
               "nadia"
             ],
@@ -1025,7 +944,7 @@
             "visibility": "private"
           },
           {
-            "action": "Returning from her unauthorised chat with the café vendor, Ruth finds Martin collapsed and unresponsive near the departure board and screams for help; Farid runs over and radios for an ambulance.",
+            "action": "Returning from her unauthorised chat with the caf\u00e9 vendor, Ruth finds Martin collapsed and unresponsive near the departure board and screams for help; Farid runs over and radios for an ambulance.",
             "actors": [
               "ruth",
               "farid"
@@ -1193,11 +1112,11 @@
           },
           {
             "id": "elena-clinic-lie",
-            "text": "Sorry, I need to leave early on Thursday morning — I've got a dental appointment I can't move."
+            "text": "Sorry, I need to leave early on Thursday morning \u2014 I've got a dental appointment I can't move."
           },
           {
             "id": "martin-sandra-property",
-            "text": "Martin, you still haven't signed the Harlow Lane deed transfer. It'd be a shame if someone found out you never updated your policy paperwork. — I don't know what you mean, and please stop bringing this up."
+            "text": "Martin, you still haven't signed the Harlow Lane deed transfer. It'd be a shame if someone found out you never updated your policy paperwork. \u2014 I don't know what you mean, and please stop bringing this up."
           },
           {
             "id": "nadia-martin-row-texts",
@@ -1209,7 +1128,7 @@
           },
           {
             "id": "file/elena-phone/0",
-            "text": "Photo — Tomas on the Pier 9 loading bay. Private caption: 'Two years. Still nothing.'"
+            "text": "Photo \u2014 Tomas on the Pier 9 loading bay. Private caption: 'Two years. Still nothing.'"
           },
           {
             "id": "file/elena-phone/1",
@@ -1217,15 +1136,15 @@
           },
           {
             "id": "witness/derek/derek-threat",
-            "text": "He told me my demotion stands, just like that. I lost it — I shouted in front of the whole loading crew that Martin would get what's coming to him."
+            "text": "He told me my demotion stands, just like that. I lost it \u2014 I shouted in front of the whole loading crew that Martin would get what's coming to him."
           },
           {
             "id": "witness/caleb/caleb-debt-row",
-            "text": "I confronted him about the £2,500 from our parts deal that's gone missing. He just shrugged and said he'd pay when he feels like it."
+            "text": "I confronted him about the \u00a32,500 from our parts deal that's gone missing. He just shrugged and said he'd pay when he feels like it."
           },
           {
             "id": "witness/nadia/nadia-harlow-row",
-            "text": "We argued on the doorstep about his texts to Sandra. I told him I'm keeping his wallet and spare key until he apologises — one of the neighbours must have heard me."
+            "text": "We argued on the doorstep about his texts to Sandra. I told him I'm keeping his wallet and spare key until he apologises \u2014 one of the neighbours must have heard me."
           },
           {
             "id": "witness/derek/george-quikstop-breakfast",
@@ -1237,7 +1156,7 @@
           },
           {
             "id": "witness/farid/nadia-opens-cafe",
-            "text": "Nadia worked the morning rush at Ember Café — pulling shots and calling out orders for a room full of commuters."
+            "text": "Nadia worked the morning rush at Ember Caf\u00e9 \u2014 pulling shots and calling out orders for a room full of commuters."
           },
           {
             "id": "witness/nadia/farid-coffee-run",
@@ -1253,11 +1172,11 @@
           },
           {
             "id": "witness/margo/orian-buys-coffee",
-            "text": "I saw Orian queuing at the coffee kiosk behind a heavyset man in a navy work jacket — he was meant to be at a lecture. Then he drifted towards the departure board."
+            "text": "I saw Orian queuing at the coffee kiosk behind a heavyset man in a navy work jacket \u2014 he was meant to be at a lecture. Then he drifted towards the departure board."
           },
           {
             "id": "witness/elena/orian-buys-coffee",
-            "text": "I saw Orian queuing at the coffee kiosk behind a heavyset man in a navy work jacket — he was meant to be at a lecture. Then he drifted towards the departure board."
+            "text": "I saw Orian queuing at the coffee kiosk behind a heavyset man in a navy work jacket \u2014 he was meant to be at a lecture. Then he drifted towards the departure board."
           },
           {
             "id": "witness/margo/elena-on-concourse",
@@ -1269,23 +1188,23 @@
           },
           {
             "id": "witness/margo/martin-gets-coffee",
-            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train — the one for the freight managers' meeting."
+            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train \u2014 the one for the freight managers' meeting."
           },
           {
             "id": "witness/elena/martin-gets-coffee",
-            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train — the one for the freight managers' meeting."
+            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train \u2014 the one for the freight managers' meeting."
           },
           {
             "id": "witness/orian/martin-gets-coffee",
-            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train — the one for the freight managers' meeting."
+            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train \u2014 the one for the freight managers' meeting."
           },
           {
             "id": "witness/ruth/ruth-finds-body",
-            "text": "I'd popped out to chat with the café vendor, which I shouldn't have done. When I came back I found Martin collapsed and unresponsive near the departure board. I screamed for help, and Farid ran over and radioed for an ambulance."
+            "text": "I'd popped out to chat with the caf\u00e9 vendor, which I shouldn't have done. When I came back I found Martin collapsed and unresponsive near the departure board. I screamed for help, and Farid ran over and radioed for an ambulance."
           },
           {
             "id": "witness/farid/ruth-finds-body",
-            "text": "Ruth had been off chatting with the café vendor when she should have been on duty. When she came back she found Martin collapsed and unresponsive near the departure board — she screamed for help, and I ran over and radioed for an ambulance."
+            "text": "Ruth had been off chatting with the caf\u00e9 vendor when she should have been on duty. When she came back she found Martin collapsed and unresponsive near the departure board \u2014 she screamed for help, and I ran over and radioed for an ambulance."
           }
         ]
       },

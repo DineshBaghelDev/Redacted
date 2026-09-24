@@ -39,3 +39,6 @@
 - When AI output fails the checks, the AI gets its answer back with the exact problems, up to 2 times; lies and written texts that still fail are dropped rather than failing the case.
 - The case brief tells players only who died, where, when, who reported it, and the weapon only if it was left at the scene.
 - The time estimate must be between the minimum a perfect investigation needs and 4 times that.
+- Lying isn't compulsory: innocent people tell the truth to clear themselves and lie only when the truth would do real damage (arrest, job, reputation, family). The killer always has a cover story. At most 2/3/4 innocent liars on easy/normal/hard.
+- Innocent suspects don't need a provable alibi; some cases leave people unaccounted for. Nothing decisive may point at an innocent.
+- Not everyone has a secret.

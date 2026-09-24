@@ -136,7 +136,8 @@ export function factProblems(facts: Facts) {
   const problems: string[] = [];
   if (facts.decisiveIds.length === 0) problems.push("No decisive evidence: nothing ties the killer to the crime beyond doubt.");
   for (const f of facts.facts) {
-    if (f.evidenceIds.length === 0 && f.id !== "killer-near-scene" && f.id !== "killer-contact") {
+    // Near-scene, contact and alibis are optional: an innocent may have no provable alibi.
+    if (f.evidenceIds.length === 0 && f.id !== "killer-near-scene" && f.id !== "killer-contact" && f.kind !== "alibi") {
       problems.push(`Nothing proves: ${f.text}.`);
     }
   }

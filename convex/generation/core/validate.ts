@@ -1,7 +1,7 @@
 import { findRoom, type City } from "./city";
 import type { Evidence, EvidenceSet } from "./evidence/types";
 import type { Facts } from "./facts";
-import { checkLies } from "./lies";
+import { checkLies, liarCountProblems } from "./lies";
 import type { Cast, CrimeCore, Lies, Story } from "./schemas";
 
 export type CaseCheck = {
@@ -60,6 +60,27 @@ export function validateCase(
 
   const innocents = cast.characters.filter((c) => c.role === "suspect" && c.id !== crime.killerId && c.id !== crime.accomplice?.id);
 
+  // Innocents may lack an alibi (a difficulty choice), but no decisive-type evidence may point at them:
+  // the victim's blood on their things, their prints on a weapon they don't own, or them on the scene camera at the death.
+  const weaponOwner = story.items.find((i) => i.id === "weapon")?.ownerId;
+  const pointsAt = (id: string) =>
+    set.evidence.filter((e) => {
+      if (e.type === "forensic") {
+        const itemId = e.data.subjectId.replace("item:", "");
+        const owner = story.items.find((i) => i.id === itemId)?.ownerId;
+        if (e.data.bloodOf === crime.victimId && owner === id && itemId !== "weapon") return true;
+        if (e.data.subjectId === "item:weapon" && e.data.test === "fingerprints" && e.data.printsOf?.includes(id) && weaponOwner !== id) return true;
+      }
+      return (
+        e.type === "cctv" &&
+        e.aboutIds.includes(id) &&
+        e.access.tool === "cctv" &&
+        e.access.cameraId === `cam:${crime.sceneRoomId}` &&
+        e.time! <= crime.timeOfDeath + 15 &&
+        e.end! >= crime.timeOfDeath - 15
+      );
+    });
+
   const checks = [
     check("killer", "Killer can be placed at the scene", killerIds, killerTypes.size >= 2 ? [] : [`Only ${killerTypes.size} kind(s) of evidence place ${nameOf(crime.killerId)} at the scene; need 2.`]),
     check("motive", "Motive is backed by evidence", fact("motive"), atLeast(fact("motive"), 2, "for the motive")),
@@ -71,15 +92,16 @@ export function validateCase(
     check("evidence", "Decisive evidence exists", facts.decisiveIds, atLeast(facts.decisiveIds, difficulty === "easy" ? 2 : 1, "that is decisive")),
     check(
       "unique",
-      "Every innocent suspect can be cleared",
+      "Nothing decisive points at an innocent",
       innocents.flatMap((c) => fact(`alibi:${c.id}`)),
-      innocents.filter((c) => !fact(`alibi:${c.id}`).some(reachable)).map((c) => `Nothing clears ${c.name}.`),
+      innocents.flatMap((c) => pointsAt(c.id).map((e) => `"${e.title}" points at ${c.name} as strongly as at the killer.`)),
     ),
     ...(crime.accomplice
       ? [check("accomplice", "Accomplice can be linked", fact("accomplice-link"), atLeast(fact("accomplice-link"), 1, "linking the accomplice"))]
       : []),
     check("lies", "Every lie can be caught", lies.lies.flatMap((l) => l.disprovingEvidenceIds), [
       ...checkLies(crime, cast, story, set, lies),
+      ...liarCountProblems(crime, cast, lies, difficulty),
       ...lies.lies.flatMap((l) => [...l.disprovingEvidenceIds, ...(l.backupLie?.disprovingEvidenceIds ?? [])]).filter((id) => byId.has(id) && !reachable(id)).map((id) => `Lie proof "${byId.get(id)!.title}" can't be reached.`),
     ]),
     check(

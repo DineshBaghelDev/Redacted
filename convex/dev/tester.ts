@@ -158,7 +158,10 @@ export const aiAttempt = internalAction({
         ms: call.ms,
         attempt,
       });
-      if (call.error) return;
+      if (call.error) {
+        await ctx.runMutation(internal.dev.tester.setRunning, { jobId });
+        return;
+      }
       await ctx.runMutation(internal.dev.tester.saveDraft, { jobId, stage: stage.name, output: result.output, checkErrors: result.problems, source: "llm" });
       if (result.retry) {
         await ctx.runMutation(internal.dev.tester.setRunning, { jobId, running: { stage: stage.name, attempt: attempt + 1 } });

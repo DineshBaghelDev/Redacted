@@ -60,7 +60,9 @@ Output shape: `crimeCoreSchema` in `core/schemas.ts` — victim/killer/accomplic
 
 Rules and checks live together in `core/crimeCast.ts` (`CRIME_RULES` goes into the prompt word for word; `crimeProblems` enforces it): rooms exist and the scene allows crimes; victim, killer, accomplice and finder are different people; windowStart is Day 1 00:00; death on Day 2; body found after the death and by the end of Day 3; AI output follows the brief (the hand-written case is exempt from the brief).
 
-One crime per case. Accomplice optional.
+One crime per case. Accomplice optional and usually absent: most killers act alone.
+
+`accomplice` and `disabledCamera` are required fields that may be `null`: when they were optional, the AI silently skipped `disabledCamera` three tries in a row even when its cover-up said "disable-camera". If it still names no camera after repairs, the crime's clean-up drops the "disable-camera" step.
 
 ## Stage 2 — Cast (LLM, implemented)
 
@@ -68,7 +70,7 @@ Input: crime core, difficulty, every home id with its address, workplaces with f
 
 Suspect counts: easy 3–4, normal 6–7, hard 10–12 (the killer included). Plus 3–6 witnesses (bartender, neighbour, clerk…).
 
-Per character (`characterSchema`): name, age, gender, role, home, job, routine type, hangout, appearance (height, build, clothing, shoes), traits, relationship to victim, secret, what they protect, fake motive (innocent suspects), public records.
+Per character (`characterSchema`): name, age, gender, role, home, job, routine type, hangout, appearance (height, build, clothing, shoes), traits, relationship to victim, secret, what they protect, fake motive (innocent suspects: a motive, a grudge or just being near at the wrong time), public records. Secret and "protects" are optional: many people have nothing to hide.
 
 Checks (`castProblems`, rules in `castRules` go into the prompt): the crime's people exist with the right roles; counts match difficulty; ids unique; homes exist; jobs are free slots at that place and work rooms belong to it; unemployed people and students have a public hangout; the killer has no fake motive.
 
@@ -98,7 +100,7 @@ Checks on the merged timeline:
 - victim has no events after death,
 - weapon path (origin → scene → disposal) is covered by events,
 - accomplice (if any) has ≥ 1 coordination event with the killer,
-- every suspect's whereabouts at time of death are defined — some provable, some not (difficulty knob),
+- where suspects were at the time of death is up to the story — some provable, some not (difficulty knob); being on the road is fine,
 - killer's alibi is breakable.
 
 Repair: exact violations are sent back to the LLM.
@@ -157,11 +159,13 @@ lie: {
 
 A lie breaks during play only when a player shows found evidence (any kind) listed in `disprovingEvidenceIds` (see `GAME_SYSTEMS.md`).
 
+Nobody has to lie. Innocent people tell the truth to clear themselves; an innocent lies only when the truth would do them real damage (arrest, losing their job, a ruined reputation, a broken marriage or family, exposing someone they protect). Embarrassment or a small rule broken at work is not enough. The killer always lies, with a convincing cover story; their whereabouts lie is the only required one. How someone reacts when caught is judged from personality and situation, not a fixed mapping. A secret alone isn't a reason to lie; it has to come up in questions about this case. At most 2/3/4 innocent liars on easy/normal/hard (`MAX_INNOCENT_LIARS`, a ceiling enforced by the lies check and the final check; the prompt says "usually fewer, often none").
+
 Checks (`core/lies.ts`, implemented): the person exists and isn't the victim; truth ids exist; every disproving piece exists, isn't background clutter, isn't the liar's own statement, and is about the liar or comes from what the lie hides; `backup-lie` needs a backup lie whose proof isn't only the first lie's proof; the killer must have a whereabouts lie hiding the murder. For AI output, failing lies will be dropped or repaired (chunk E). Innocents lying to protect their own secrets are the natural red herrings.
 
 A witness who lies about an event never counts as telling what they saw of it, so their statement can't clear anyone.
 
-AI version (`prompts/lies.ts`): gets `LIE_RULES`, each person's traits/secret/what they protect, the story, and the evidence cut down to what can prove something (no clutter, no everyday camera rows, no phone entries). After repairs run out, lies that still fail are dropped (`keepValidLies`); a lie whose only problem is its backup lie keeps the main lie and switches to "admit-shown". A missing killer whereabouts lie stays a problem. `truthIds` is required in the shape (the AI skipped it when it was optional).
+AI version (`prompts/lies.ts`): gets `LIE_RULES` and, per person, only their traits, secret (if any), why police might suspect them, what they did, and the evidence about them (no clutter, no everyday camera rows, no phone entries). After repairs run out, lies that still fail are dropped (`keepValidLies`); a lie whose only problem is its backup lie keeps the main lie and switches to "admit-shown". A missing killer whereabouts lie stays a problem. `truthIds` is required in the shape (the AI skipped it when it was optional).
 
 ## Stage 7 — Text writing (LLM, fenced)
 
@@ -174,7 +178,7 @@ Implemented (`core/text.ts`): rewrites each message (once, applied to both phone
 - Knowledge = events the NPC took part in + events they **witnessed** (same place, same time, public visibility — computed by code).
 - Script = personality, knowledge, lies, secret, relationships, speaking style.
 - Never includes solution fields or other NPCs' private events.
-- Implemented in `core/scripts.ts`: profile (age, gender, job, home, personality, relationship, secret, what they protect), knowledge (events they took part in or saw, their calls/messages, purchases, and the public news of the death), their lies, and fixed rules. Only the killer gets "never confess"; innocents get "you don't know who killed the victim". A leak check rejects private events the NPC wasn't in and the crime's hidden method/motive text.
+- Implemented in `core/scripts.ts`: profile (age, gender, job, home, personality, relationship, secret, what they protect), knowledge (events they took part in or saw, their calls/messages, purchases, and the public news of the death), their lies, and fixed rules. Only the killer gets "never confess"; the accomplice gets "never reveal the killer, admit your own part only as exposed lies force you"; innocents get "you don't know who killed the victim". A leak check rejects private events the NPC wasn't in and the crime's hidden method/motive text.
 
 **Things older than the window:** NPCs may improvise small backstory details older than 2 days while talking. These are persisted to NPC session memory so both players see the same thing. They are **talk only** — never new evidence, records, CCTV, or forensics.
 
@@ -199,7 +203,7 @@ No LLM judge in V1. Implemented in `core/validate.ts`; returns a pass/fail list 
 - **weapon:** ≥ 1 item links weapon to scene and ≥ 1 links it to the killer,
 - **method:** supported by forensics,
 - **evidence:** decisive set has ≥ 1 reachable item (≥ 2 on easy),
-- **unique answer:** every innocent suspect is cleared by ≥ 1 item (alibi or no access),
+- **unique answer:** nothing decisive points at an innocent (the victim's blood on their things, their prints on a weapon they don't own, them on the scene camera at the death). Innocents don't need a provable alibi; alibis are still listed as facts when they exist,
 - **accomplice:** ≥ 1 linking item if present,
 - **red herrings:** every lie and fake motive is refutable,
 - **reachable:** every required item is obtainable at a city place/tool,

@@ -4,7 +4,7 @@ import { city } from "../../fixtures/city";
 import { buildEvidence } from "./evidence";
 import type { EvidenceSet } from "./evidence/types";
 import { buildFacts } from "./facts";
-import { checkLies } from "./lies";
+import { checkLies, liarCountProblems } from "./lies";
 import type { Lie, Lies } from "./schemas";
 import { buildScripts, scriptProblems } from "./scripts";
 import { buildTimeline } from "./timeline";
@@ -27,7 +27,7 @@ describe("lies", () => {
 
   it("rejects proof that doesn't exist, background items and the liar's own statement", () => {
     const clutter = set.evidence.find((e) => e.type === "item" && e.data.clutter)!.id;
-    const problems = checkLies(crimeCore, cast, story, set, withLie("lena-debt", { disprovingEvidenceIds: ["nope", clutter, "witness/lena/cafe-argument"] }));
+    const problems = checkLies(crimeCore, cast, story, set, withLie("tom-garage", { disprovingEvidenceIds: ["nope", clutter, "witness/tom/doorstep-argument"] }));
     expect(problems.join("\n")).toMatch(/"nope" doesn't exist/);
     expect(problems.join("\n")).toMatch(/background item/);
     expect(problems.join("\n")).toMatch(/liar's own statement/);
@@ -35,6 +35,12 @@ describe("lies", () => {
 
   it("rejects proof unrelated to the liar", () => {
     expect(checkLies(crimeCore, cast, story, set, withLie("nora-pills", { disprovingEvidenceIds: ["record/tom/0"] }))[0]).toMatch(/isn't about Nora/);
+  });
+
+  it("too many innocent liars is a problem", () => {
+    const extra = (npcId: string) => ({ ...lies.lies.find((l) => l.id === "tom-garage")!, id: `x-${npcId}`, npcId });
+    expect(liarCountProblems(crimeCore, cast, lies, "easy")).toEqual([]);
+    expect(liarCountProblems(crimeCore, cast, { lies: [...lies.lies, extra("lena")] }, "easy")[0]).toMatch(/3 innocent people lie .* at most 2/);
   });
 
   it("the killer needs a whereabouts lie hiding the murder", () => {
@@ -90,23 +96,15 @@ describe("can the case be solved", () => {
     expect(validate(s).join("\n")).toMatch(/place Victor Hale at the scene/);
   });
 
-  it("fails when an innocent can't be cleared", () => {
+  it("an innocent without a provable alibi is fine", () => {
     const s = without((id) => id === "card/tom-beer" || (id.startsWith("cctv/") && set.evidence.find((e) => e.id === id)!.aboutIds.includes("tom")));
-    expect(validate(s)).toContain("Every innocent suspect can be cleared: Nothing clears Tom Rusk.");
+    expect(validate(s)).toEqual([]);
   });
 
-  it("a witness lying about what they saw can't clear anyone", () => {
-    const samuelLie: Lie = {
-      id: "samuel-shift",
-      npcId: "samuel",
-      topic: "whereabouts",
-      claim: "I worked alone that night.",
-      truthIds: ["nora-shift"],
-      reason: "test",
-      disprovingEvidenceIds: ["witness/nora/nora-shift"],
-      whenCaught: "full-truth",
-    };
-    expect(validate(set, { lies: [...lies.lies, samuelLie] })).toContain("Every innocent suspect can be cleared: Nothing clears Nora Reyes.");
+  it("fails when decisive-type evidence points at an innocent", () => {
+    const prints = set.evidence.find((e) => e.id === "forensic/weapon/prints")!;
+    const s = { ...set, evidence: set.evidence.map((e) => (e.id === prints.id && e.type === "forensic" ? { ...e, data: { ...e.data, printsOf: ["lena"] } } : e)) };
+    expect(validate(s)).toContain('Nothing decisive points at an innocent: "Fingerprints · Cast-iron doorstop" points at Lena Ortiz as strongly as at the killer.');
   });
 
   it("fails when a lie's proof is missing", () => {

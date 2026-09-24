@@ -24,9 +24,19 @@ describe("story check", () => {
     expect(prompt).toContain("keel-14:back-door Back door [entrance]");
   });
 
-  it("goes past the timeline: a story that leaves an innocent without an alibi fails", () => {
-    const broken = { ...story, events: story.events.filter((e) => e.id !== "lena-bar") };
-    expect(storyProblems(city, crimeCore, cast, broken, "easy", SEED).join("\n")).toMatch(/Nothing clears Lena Ortiz/);
+  it("goes past the timeline: a story that loses the decisive evidence fails", () => {
+    // Victor doesn't take the ledger or wear the coat: nothing decisive is left.
+    const broken = {
+      ...story,
+      events: story.events.filter((e) => e.id !== "take-ledger").map((e) => ({ ...e, itemsUsed: e.itemsUsed.filter((i) => i !== "overcoat" && i !== "ledger") })),
+      items: story.items.filter((i) => i.id !== "ledger"),
+    };
+    expect(storyProblems(city, crimeCore, cast, broken, "easy", SEED).join("\n")).toMatch(/decisive/);
+  });
+
+  it("an innocent without an alibi is fine", () => {
+    const noBar = { ...story, events: story.events.filter((e) => e.id !== "lena-bar") };
+    expect(storyProblems(city, crimeCore, cast, noBar, "easy", SEED)).toEqual([]);
   });
 
   it("catches duplicate ids", () => {

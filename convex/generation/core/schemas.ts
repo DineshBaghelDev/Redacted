@@ -11,9 +11,8 @@ const proves = z.array(z.enum(["motive", "accomplice"])).default([]);
 export const crimeCoreSchema = z.object({
   victimId: id,
   killerId: id,
-  accomplice: z
-    .object({ id, role: z.enum(["fake-alibi", "weapon-disposal", "distraction"]) })
-    .optional(),
+  /** null when the killer acts alone (most cases). Required-but-null so the AI decides instead of skipping it. */
+  accomplice: z.object({ id, role: z.enum(["fake-alibi", "weapon-disposal", "distraction"]) }).nullable(),
   motive: z.object({
     type: z.enum(["money", "jealousy", "revenge", "cover-up", "power"]),
     details: z.string(),
@@ -29,7 +28,7 @@ export const crimeCoreSchema = z.object({
   windowStart: z.number().int(),
   discovery: z.object({ time: z.number().int(), byId: id }),
   /** Required when coverUp includes "disable-camera": which camera went dark and when. */
-  disabledCamera: z.object({ cameraId: id, from: z.number().int(), to: z.number().int() }).optional(),
+  disabledCamera: z.object({ cameraId: id, from: z.number().int(), to: z.number().int() }).nullable(),
   coverUp: z.array(z.enum(["wipe-prints", "hide-weapon", "move-body", "disable-camera", "remove-item"])).max(5),
 });
 
@@ -56,8 +55,10 @@ export const characterSchema = z.object({
   }),
   traits: z.array(z.string()),
   relationshipToVictim: z.string(),
-  secret: z.string(),
-  protects: z.string(),
+  /** Only if they have one; many people don't. */
+  secret: z.string().optional(),
+  /** Who or what they would protect, if anyone. */
+  protects: z.string().optional(),
   fakeMotive: z.string().optional(),
   /** Public records about this person (insurance, debts, complaints, companies...). */
   records: z

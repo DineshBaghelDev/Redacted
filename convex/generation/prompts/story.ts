@@ -20,7 +20,7 @@ How code turns your story into evidence (plan the case so it can be solved, but 
 ${EVIDENCE_NOTES.map((r) => `- ${r}`).join("\n")}
 
 What to write:
-- events: the murder and cover-up, earlier conflicts that give suspects motives, alibi moments for innocents at the time of death, the discovery. Usually 10–20 events. action is one plain sentence.
+- events: the murder and cover-up, earlier conflicts that give suspects motives, where people really were around the time of death (some provable, some not), the discovery. Usually 10–20 events. action is one plain sentence.
 - comms: calls and messages that matter (gist = what was said). durationMinutes for calls.
 - purchases: things bought that matter (card or cash).
 - items: the weapon, clothing the killer wore, documents and devices that matter. Devices (laptops, tablets) can hold files in contents.

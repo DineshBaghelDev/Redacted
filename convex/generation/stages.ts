@@ -34,7 +34,7 @@ import { textPrompt } from "./prompts/text";
 import { buildEvidence, evidenceProblems } from "./core/evidence";
 import type { EvidenceSet } from "./core/evidence/types";
 import { buildFacts, factProblems, type Facts } from "./core/facts";
-import { checkLies, keepValidLies } from "./core/lies";
+import { checkLies, keepValidLies, liarCountProblems } from "./core/lies";
 import { buildScripts, scriptProblems } from "./core/scripts";
 import { buildTimeline, checkTimeline, type Timeline } from "./core/timeline";
 import { validateCase, validationProblems } from "./core/validate";
@@ -98,6 +98,11 @@ export const stages: StageDef[] = [
     prompt: (_inputs, job) => ({ system: SYSTEM, prompt: crimePrompt(city, job.seed, job.difficulty) }),
     // The seeded brief only binds AI output; the hand-written case predates it.
     check: (output, _inputs, job, fromAi) => crimeProblems(city, output as CrimeCore, fromAi ? crimeBrief(city, job.seed) : undefined),
+    // A switched-off camera the AI never names: drop that cover-up step rather than fail the case.
+    finalize: (output) => {
+      const crime = output as CrimeCore;
+      return crime.disabledCamera ? crime : { ...crime, coverUp: crime.coverUp.filter((c) => c !== "disable-camera") };
+    },
   },
   {
     name: "cast",
@@ -166,13 +171,13 @@ export const stages: StageDef[] = [
     inputs: ["crime", "cast", "story", "evidence"],
     schema: liesSchema,
     handWritten: easyCase.lies,
-    prompt: (inputs) => {
+    prompt: (inputs, job) => {
       const { crime, cast, story, evidence } = get(inputs);
-      return { system: SYSTEM, prompt: liesPrompt(crime, cast, story, evidence) };
+      return { system: SYSTEM, prompt: liesPrompt(crime, cast, story, evidence, job.difficulty) };
     },
-    check: (output, inputs) => {
+    check: (output, inputs, job) => {
       const { crime, cast, story, evidence } = get(inputs);
-      return checkLies(crime, cast, story, evidence, output as Lies);
+      return [...checkLies(crime, cast, story, evidence, output as Lies), ...liarCountProblems(crime, cast, output as Lies, job.difficulty)];
     },
     finalize: (output, inputs) => {
       const { crime, cast, story, evidence } = get(inputs);

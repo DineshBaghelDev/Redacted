@@ -31,7 +31,7 @@ export const EVIDENCE_NOTES = [
   "The weapon links to the killer through their prints on it (not with wipe-prints), fibers from their clothing, or the killer caught on camera in the weapon's origin room during a story event there that uses the weapon (e.g. taking poison from a pharmacy store with a camera).",
   "Anyone at the same place during a public event becomes a witness to it.",
   "Decisive evidence (at least 2 pieces on easy): the victim's blood on the killer's clothing, the killer's prints on the weapon, the killer on the scene room's camera at the time of death, or something taken from the scene that ends up in the killer's home.",
-  "Every innocent suspect needs an alibi at the time of death: a public event far enough away that others see them, a camera, or a card purchase.",
+  "Innocent suspects may or may not have a provable alibi (a public event elsewhere that others see, a camera, a card purchase); the story decides. Nothing decisive may point at an innocent.",
 ];
 
 /**

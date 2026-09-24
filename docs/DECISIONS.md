@@ -39,7 +39,7 @@ This file records decisions from the technical design discussion so agents do no
 - Evidence records (CCTV, calls, card records, forensics, items) are derived by code from timeline events; the LLM only writes wording.
 - Timeline window is picked by the LLM, max 2 days before the crime. Daily routine is code-generated; the LLM writes only story events.
 - One crime per case; an optional accomplice may exist.
-- NPC lies are driven by personality and what the NPC protects, never random; every lie must be refutable by at least one evidence item.
+- NPC lies are driven by the story, personality and what the NPC protects, never random and never compulsory: innocents mostly tell the truth; only the killer's cover story is required. Every lie must be refutable by at least one evidence item.
 - NPCs may improvise backstory older than the window while talking (saved to NPC memory). Talk only, never new evidence.
 - Targeted repair of invalid sections, then revalidate.
 - Deterministic structural/consistency checks; no extra LLM solvability call in V1.

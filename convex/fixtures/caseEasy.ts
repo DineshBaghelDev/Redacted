@@ -6,6 +6,7 @@ import { at, type Brief, type Cast, type CrimeCore, type Estimate, type Lies, ty
 export const crimeCore: CrimeCore = {
   victimId: "daniel",
   killerId: "victor",
+  accomplice: null,
   motive: {
     type: "cover-up",
     details:
@@ -18,6 +19,7 @@ export const crimeCore: CrimeCore = {
   windowStart: at(1, "00:00"),
   discovery: { time: at(3, "08:15"), byId: "rosa" },
   coverUp: ["wipe-prints", "hide-weapon", "remove-item"],
+  disabledCamera: null,
 };
 
 export const cast: Cast = {
@@ -436,16 +438,6 @@ export const lies: Lies = {
       truthIds: ["office-confrontation"],
       reason: "Any trouble with Daniel points straight at his stealing.",
       disprovingEvidenceIds: ["record/victor/0", "forensic/ledger/prints"],
-      whenCaught: "admit-shown",
-    },
-    {
-      id: "lena-debt",
-      npcId: "lena",
-      topic: "relationship",
-      claim: "Daniel and I split up on good terms. I don't owe him a thing.",
-      truthIds: ["cafe-argument", "debt-message"],
-      reason: "She is ashamed of the debt and knows the fight makes her look guilty.",
-      disprovingEvidenceIds: ["message/debt-message/lena", "witness/eli/cafe-argument"],
       whenCaught: "admit-shown",
     },
     {

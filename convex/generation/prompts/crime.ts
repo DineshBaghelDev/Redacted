@@ -23,8 +23,8 @@ Field notes:
 - motive.details: 1–2 sentences, the real reason, naming victim and killer by first name.
 - method: one sentence on how the victim died.
 - weapon.originRoomId: where the weapon was before the crime, copied exactly from the room list (e.g. a kitchen or garage at the scene, or a room at a home or workplace). Never invent ids; homes aren't assigned to people yet.
-- disabledCamera: { cameraId, from, to } (minutes). Only if coverUp includes "disable-camera", and then it is required. Most cases don't switch off a camera.
-- accomplice: only if it makes the case better (more likely on hard); role is fake-alibi, weapon-disposal or distraction.
+- disabledCamera: { cameraId, from, to } (minutes) if coverUp includes "disable-camera", otherwise null. Most cases don't switch off a camera.
+- accomplice: usually null — most killers act alone. Add one only when this story needs a helper; role is fake-alibi, weapon-disposal or distraction.
 
 City rooms (id Name):
 ${roomsText(city)}

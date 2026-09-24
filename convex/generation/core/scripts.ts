@@ -22,8 +22,8 @@ export type NpcScript = {
   home: string;
   personality: string[];
   relationshipToVictim: string;
-  secret: string;
-  protects: string;
+  secret?: string;
+  protects?: string;
   knowledge: Knowledge[];
   lies: Lie[];
   rules: string[];
@@ -35,6 +35,7 @@ const RULES = [
   "When a lie is exposed, react as its 'whenCaught' says.",
 ];
 const KILLER_RULE = "Never confess to the killing, even after your lies are exposed.";
+const ACCOMPLICE_RULE = "You helped the killer. Never reveal the killer; admit your own part only as far as exposed lies force you.";
 const INNOCENT_RULE = "You don't know who killed the victim.";
 
 /**
@@ -96,7 +97,7 @@ export function buildScripts(city: City, crime: CrimeCore, cast: Cast, story: St
         protects: c.protects,
         knowledge,
         lies: lies.filter((l) => l.npcId === c.id),
-        rules: [...RULES, c.id === crime.killerId ? KILLER_RULE : INNOCENT_RULE],
+        rules: [...RULES, c.id === crime.killerId ? KILLER_RULE : c.id === crime.accomplice?.id ? ACCOMPLICE_RULE : INNOCENT_RULE],
       };
     });
 }

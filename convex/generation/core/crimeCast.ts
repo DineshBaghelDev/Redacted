@@ -29,7 +29,8 @@ export const castRules = (difficulty: Difficulty) => [
   "homeUnitId must be a home id from the list. People may share a home only if they live together.",
   "job is null or uses a place id and a job title from that place's free jobs; each job title can be filled as many times as it is listed. job.roomId, if given, is a room of that place.",
   "routine is one of: office, night-shift, shop, unemployed, student. Unemployed people and students need a hangoutPlaceId (a public place id).",
-  "Every innocent suspect gets a believable fakeMotive and a secret they protect. The killer has no fakeMotive.",
+  "Innocent suspects need a reason police would look at them (fakeMotive: a motive, a grudge, or just being near at the wrong time). The killer has no fakeMotive.",
+  "secret and protects only where the person really has something serious to hide (it could get them arrested, fired, or ruin their reputation or family) or someone to shield; leave them out otherwise. Most people have none.",
   "appearance is what a camera would see: height, build, usual clothing, and shoes for anyone who might leave footprints.",
 ];
 

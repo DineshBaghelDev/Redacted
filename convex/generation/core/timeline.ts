@@ -212,9 +212,6 @@ export function checkTimeline(city: City, crime: CrimeCore, cast: Cast, story: S
     if (!linked) problems.push("The killer and accomplice never talk or meet.");
   }
 
-  for (const c of cast.characters.filter((c) => c.role === "suspect")) {
-    if (covering(c.id, tod).length === 0) problems.push(`Nobody knows where ${c.name} is at the time of death.`);
-  }
 
   const finder = crime.discovery.byId;
   if (!covering(finder, crime.discovery.time).some((e) => e.roomId === crime.sceneRoomId)) {
