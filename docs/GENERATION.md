@@ -9,7 +9,7 @@ A stronger model handles primary generation. A cheaper model may handle targeted
 ## Principles
 
 1. Generate the crime core first; everything else derives from it.
-2. The city is a hand-made fixture in V1; interiors are deterministic code (template + seed).
+2. The city is a permanent hand-made fixture in V1, buildings included; every case reuses it with new characters.
 3. The LLM never does time, distance, or who-saw-what math. Code does.
 4. Evidence (CCTV, calls, card records, forensics, items, records) is **derived by code** from timeline events. The LLM only writes wording for facts that already exist.
 5. Every stage emits strict structured output validated immediately.
@@ -40,9 +40,17 @@ City fixture contains:
 - **street cameras** attached to specific edges,
 - which interior camera spots are active per building.
 
-Interiors are built from templates + seed before any LLM stage, because timeline events reference rooms. Templates define rooms and camera spots (entrance, stairs, lift, corridor, lobby). Which spots have working cameras is set per building in the city fixture.
+Buildings use 5 templates (house, apartment/hotel, office, shop, public place) with **fixed per-building settings** — no seed, so every building is identical in every case. Templates define rooms, doors, camera spots and item slots.
+
+The city holds **no people**: places are named by address or business, never by family. Each workplace lists job slots (bar: owner, bartender, …) and homes list home units (house, Flat 3B). Cases fill these with new characters. Rooms list item slots (drawer, bin, wardrobe); each case decides what goes in them.
+
+Ids are permanent because cases store them. The city is versioned (`city.version = 1`) and never edited in place; a changed city becomes version 2 and each case records its version. A snapshot test catches accidental edits.
+
+Faulty cameras: code marks some working cameras as faulty for a case, based on difficulty and seed. A faulty camera records nothing for the whole case, and its records show it as offline. This is separate from the killer's "disable-camera" cover-up.
 
 The LLM never builds or edits topology.
+
+Code: `convex/fixtures/city.ts`, `convex/generation/core/{buildings,city}.ts`.
 
 ## Stage 1 — Crime core (LLM)
 
@@ -200,6 +208,7 @@ When all gates pass, `case.status = ready`. After this: no generated record is m
 - evidence redundancy per fact (high / medium / low),
 - lies per NPC,
 - share of key moments on camera,
+- number of faulty cameras,
 - number of innocents without a provable alibi.
 
 ## Build order

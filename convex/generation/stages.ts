@@ -1,4 +1,5 @@
-import { createRng } from "./core/rng";
+import { city } from "../fixtures/city";
+import { checkCity, cityCapacity } from "./core/city";
 
 export type Difficulty = "easy" | "normal" | "hard";
 
@@ -20,15 +21,11 @@ export type StageDef = {
  */
 export const stages: StageDef[] = [
   {
-    // Placeholder to prove the tester plumbing; replaced by the city stage.
-    name: "ping",
-    label: "Ping (plumbing test)",
+    name: "city",
+    label: "0 · City and buildings",
     kind: "code",
     inputs: [],
-    run: (_inputs, job) => {
-      const rng = createRng(job.seed);
-      return { output: { seed: job.seed, difficulty: job.difficulty, dice: [rng.int(1, 6), rng.int(1, 6)] }, checkErrors: [] };
-    },
+    run: () => ({ output: { capacity: cityCapacity(city), ...city }, checkErrors: checkCity(city) }),
   },
 ];
 

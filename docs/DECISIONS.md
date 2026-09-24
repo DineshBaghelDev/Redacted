@@ -53,6 +53,10 @@ This file records decisions from the technical design discussion so agents do no
 
 - City is a graph, not an open-world street simulation.
 - At least 10 places per city. V1 uses one ready-made city with 20 places, reused across cases.
+- The city and its buildings are permanent and hold no people; places are named by address/business. Cases fill job slots and home units with new characters and put items into fixed item slots.
+- City is versioned; v1 is never edited in place because cases store its ids.
+- Travel times are 2–8 minutes per street (about 25 minutes across the city).
+- Generation can mark some cameras faulty per case (difficulty knob) so players get less information.
 - CCTV cameras exist on streets (graph edges) and at interior spots (entrance, stairs, lift, corridor, lobby); coverage is set per building in the city fixture.
 - CCTV rows describe appearance, not names.
 - Players can travel to any reachable place.
@@ -159,6 +163,7 @@ Five independent stars:
 - Liveblocks for clue board: rejected as duplicate realtime/persistence.
 - LLM-generated building graphs: rejected as unnecessary and fragile.
 - Procedurally generated city per case: superseded by one ready-made city for V1.
+- Seed-varied building interiors per case: rejected; buildings are fixed so the city is identical in every case.
 - Free city simulation to produce the story: rejected; cannot guarantee a solvable clue trail or difficulty control.
 
 

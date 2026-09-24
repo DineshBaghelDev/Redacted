@@ -4,6 +4,8 @@ import { useAction, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import type { City } from "../../../../convex/generation/core/city";
+import { CityView } from "./city-view";
 
 const button = "border border-cyan-300 px-3 py-1 hover:text-yellow-200 disabled:opacity-50";
 
@@ -49,6 +51,11 @@ export function JobView({ jobId }: { jobId: Id<"generationJobs"> }) {
                 </span>
               )}
             </div>
+            {draft?.stage === "city" && (
+              <div className="mt-3">
+                <CityView city={draft.output as City} />
+              </div>
+            )}
             {draft && (
               <details className="mt-2">
                 <summary className="cursor-pointer opacity-80">Output</summary>

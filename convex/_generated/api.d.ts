@@ -9,6 +9,9 @@
  */
 
 import type * as dev_tester from "../dev/tester.js";
+import type * as fixtures_city from "../fixtures/city.js";
+import type * as generation_core_buildings from "../generation/core/buildings.js";
+import type * as generation_core_city from "../generation/core/city.js";
 import type * as generation_core_rng from "../generation/core/rng.js";
 import type * as generation_stages from "../generation/stages.js";
 import type * as lib_auth from "../lib/auth.js";
@@ -22,6 +25,9 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "dev/tester": typeof dev_tester;
+  "fixtures/city": typeof fixtures_city;
+  "generation/core/buildings": typeof generation_core_buildings;
+  "generation/core/city": typeof generation_core_city;
   "generation/core/rng": typeof generation_core_rng;
   "generation/stages": typeof generation_stages;
   "lib/auth": typeof lib_auth;

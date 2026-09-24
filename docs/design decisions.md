@@ -27,3 +27,5 @@
 - NPC lies break only when players show proof, never from repeated pushing; the killer never confesses the murder.
 - Use NVIDIA NIM with Kimi K3 for case generation and Kimi K2.6 for NPC conversations.
 - Allow one dev-only, read-only case viewer page for inspecting generated cases until the game UI exists.
+- The city and buildings never change between cases; places use addresses or business names so any new cast can live and work there.
+- Some cameras can be faulty in a case, so camera coverage is not the same every time.
