@@ -73,3 +73,13 @@ describe("an unusable repair", () => {
     expect(mid).toMatchObject({ output: lies, problems: ["one small problem"], retry: true });
   });
 });
+
+describe("the last try", () => {
+  it("never goes back to an unusable earlier answer, even one with fewer problems", async () => {
+    fakeAi.mockReset();
+    fakeAi.mockResolvedValueOnce(reply({ lies: [...lies.lies, badLie] }));
+    const unusable = { output: null, problems: ["The reply wasn't valid JSON."] };
+    const last = await runAiAttempt(getStage("lies"), inputs, job, 2, unusable);
+    expect(last.output).not.toBeNull();
+  });
+});

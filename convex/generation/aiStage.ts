@@ -65,8 +65,8 @@ export async function runAiAttempt(
   if (call.problems.length && previous && stage.schema.safeParse(previous.output).success) ({ output, problems } = previous);
   const retry = problems.length > 0 && attempt < MAX_REPAIRS;
   if (!retry && problems.length > 0) {
-    // A repair can make things worse: keep the earlier answer if it had fewer problems.
-    if (previous && previous.problems.length < problems.length) ({ output, problems } = previous);
+    // A repair can make things worse: keep the earlier answer if it had fewer problems (and was usable).
+    if (previous && stage.schema.safeParse(previous.output).success && previous.problems.length < problems.length) ({ output, problems } = previous);
     if (stage.finalize && stage.schema.safeParse(output).success) {
       output = stage.finalize(stage.schema.parse(output), inputs, job);
       problems = checkOutput(stage, output, inputs, job, true);
