@@ -47,6 +47,9 @@
 
 - Cases looked alike (6 AI cases: Elena killer in 3, Marcus/Martin victims, affair/inheritance/old-testimony plots, two poisoned coffees at Union Station). The crime prompt now gets one-line summaries of the 10 newest AI crimes from other jobs and must pick a clearly different premise (new `by_stage` index on drafts). Also not deployed until the baseline run ends.
 
+- Providers: `llm.ts` now reaches NIM, Gemini, Groq and OpenRouter (model written `provider:model`), and each AI stage has an ordered model list with fallback on failed calls (`STAGE_MODELS`). Side-by-side run of crime → cast → story (seed 4242, easy): OpenRouter's free Nemotron 3 Super did all three in about 4 min (cast first try); Groq gpt-oss-120b did crime in 3 s but hit its free token-per-minute cap on cast; Gemini Flash models were overloaded (503) and 3.1 Pro isn't in the free quota. NIM reference from the test run: about 18 min for the same stages. Now: Groq for crime/text/brief, Nemotron for cast/story, NIM for lies and as backup. `GROQ_API_KEY` and `OPENROUTER_API_KEY` set in Convex dev.
+- Baseline test run so far: easy passed (25 min, 11 AI calls; cast and story needed 2 repairs each), easy passed, normal failed at story (the weapon was left in a spot the stairs don't have, 3 times; the check message now lists the room's spots, or says it has none). The baseline mixes old and new code because `convex dev` pushes saved files. 94 tests.
+
 ## Pending
 
 ### Case generation — remaining chunks

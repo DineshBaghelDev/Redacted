@@ -285,9 +285,13 @@ Testing:
 
 ## Model strategy
 
-- `GENERATION_MODEL`: `moonshotai/kimi-k3` on NVIDIA NIM,
+- Generation models are set per AI stage in `convex/generation/llm.ts` (`STAGE_MODELS`) as a fixed, ordered list written `provider:model` (providers: NIM, Gemini, Groq, OpenRouter, all through their OpenAI-compatible APIs). When a call fails (rate limit, daily quota, overload) the next model in the list takes over. Current lists (from a side-by-side run on 2026-09-25):
+  - crime, text, brief: Groq `openai/gpt-oss-120b` (a few seconds; Groq's free per-minute token cap only fits these small prompts), then NIM `moonshotai/kimi-k3`.
+  - cast, story: OpenRouter `nvidia/nemotron-3-super-120b-a12b:free` (cast right first try in 82 s, story in 137 s with 2 repairs; free tier is 50 calls a day), then NIM.
+  - lies: NIM only (about 16k-token prompt).
+  - Tried and not used: Gemini 3.8/3.7/3.5 Flash (overloaded, 503 on full prompts that day), Gemini 3.1 Pro (not in the free quota), Gemini 2.5 (no longer offered to new keys). Moonshot's own API is paid, so not used.
 - `NPC_MODEL`: `moonshotai/kimi-k2.6` on NVIDIA NIM,
 - `REPAIR_MODEL`: cheaper structured-output model,
 - `JUDGE_MODEL`: grader for motive/method at case close; may equal NPC or generation model initially.
 
-No automatic dynamic model router in V1.
+No automatic dynamic model router in V1: the per-stage lists are fixed; the next model is used only when a call fails.

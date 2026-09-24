@@ -1,4 +1,4 @@
-import { generateJson, type LlmCall } from "./llm";
+import { generateJson, modelsFor, type LlmCall } from "./llm";
 import { checkOutput, type StageDef, type StageJob } from "./stages";
 
 /** Repairs allowed after the first try. */
@@ -44,7 +44,12 @@ export async function runAiAttempt(
   if (!stage.prompt || !stage.schema) throw new Error("The AI version of this stage isn't built yet. Use the hand-written one.");
   const { system, prompt: base } = stage.prompt(inputs, job);
   const prompt = repairPrompt(base, previous);
-  const call = await generateJson({ schema: stage.schema, system, prompt, model });
+  // A failed call (rate limit, quota, overload) moves on to the stage's next model.
+  let call!: LlmCall;
+  for (const next of model ? [model] : modelsFor(stage.name)) {
+    call = await generateJson({ schema: stage.schema, system, prompt, model: next });
+    if (!call.error) break;
+  }
   if (call.error) return { call, system, prompt, output: previous?.output ?? null, problems: call.problems, retry: false };
 
   let output = call.output;

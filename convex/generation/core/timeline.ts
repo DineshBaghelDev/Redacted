@@ -165,7 +165,12 @@ export function checkTimeline(city: City, crime: CrimeCore, cast: Cast, story: S
   for (const item of story.items) {
     if (!roomOk(item.startRoomId) || !roomOk(item.finalRoomId)) problems.push(`Item "${item.id}" is in an unknown room.`);
     const finalRoom = findRoom(city, item.finalRoomId)?.room;
-    if (finalRoom && !finalRoom.itemSlots.includes(item.finalSlot)) problems.push(`Item "${item.id}" ends in slot "${item.finalSlot}", which ${finalRoom.name} doesn't have.`);
+    if (finalRoom && !finalRoom.itemSlots.includes(item.finalSlot)) {
+      const choices = finalRoom.itemSlots.length
+        ? `Use one of: ${finalRoom.itemSlots.map((s) => `"${s}"`).join(", ")}.`
+        : `${finalRoom.name} has nowhere to leave an item; end it in another room.`;
+      problems.push(`Item "${item.id}" ends in slot "${item.finalSlot}", which ${finalRoom.name} (${finalRoom.id}) doesn't have. ${choices}`);
+    }
     if (item.startRoomId !== item.finalRoomId && !story.events.some((e) => e.roomId === item.finalRoomId && e.itemsUsed.includes(item.id))) {
       problems.push(`Nothing in the story takes "${item.name}" to where it ends up.`);
     }

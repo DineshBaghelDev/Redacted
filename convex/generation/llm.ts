@@ -20,6 +20,27 @@ export const MODELS = {
   npc: "moonshotai/kimi-k2.6",
 } as const;
 
+const GROQ_FAST = "groq:openai/gpt-oss-120b";
+const NEMOTRON_FREE = "openrouter:nvidia/nemotron-3-super-120b-a12b:free";
+
+/**
+ * Models per AI stage, tried in order: the next one takes over when a call fails (rate limit, daily
+ * quota, overload). Groq's free token-per-minute cap only fits the small prompts; OpenRouter's free
+ * tier allows 50 calls a day. NIM is the backup everywhere. Picked from a side-by-side run (2026-09-25).
+ */
+const STAGE_MODELS: Record<string, string[]> = {
+  crime: [GROQ_FAST, MODELS.main],
+  cast: [NEMOTRON_FREE, MODELS.main],
+  story: [NEMOTRON_FREE, MODELS.main],
+  text: [GROQ_FAST, MODELS.main],
+  brief: [GROQ_FAST, MODELS.main],
+};
+
+/** The models to try for a stage, in order. */
+export function modelsFor(stage: string) {
+  return STAGE_MODELS[stage] ?? [MODELS.main];
+}
+
 /** Stop waiting before Convex's 10-minute action limit kills the try with no log. */
 const TIMEOUT_MS = 9 * 60 * 1000;
 

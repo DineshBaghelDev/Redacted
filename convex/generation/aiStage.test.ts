@@ -4,11 +4,12 @@ import { city } from "../fixtures/city";
 import { runAiAttempt } from "./aiStage";
 import { buildEvidence } from "./core/evidence";
 import { buildTimeline } from "./core/timeline";
-import { generateJson } from "./llm";
+import { generateJson, modelsFor } from "./llm";
 import { getStage } from "./stages";
 
-vi.mock("./llm", () => ({ generateJson: vi.fn() }));
+vi.mock("./llm", () => ({ generateJson: vi.fn(), modelsFor: vi.fn(() => ["fake"]) }));
 const fakeAi = vi.mocked(generateJson);
+const fakeModels = vi.mocked(modelsFor);
 const reply = (output: unknown) => ({ output, problems: [], model: "fake", mode: "strict" as const, rawText: JSON.stringify(output), ms: 1 });
 
 const job = { seed: 1234, difficulty: "easy" as const };
@@ -43,6 +44,15 @@ describe("AI tries and repairs", () => {
   it("an AI failure doesn't retry", async () => {
     fakeAi.mockResolvedValueOnce({ ...reply(null), problems: ["The AI call failed."], error: "boom" });
     expect(await runAiAttempt(getStage("lies"), inputs, job, 0)).toMatchObject({ retry: false });
+  });
+
+  it("a failed call moves on to the stage's next model", async () => {
+    fakeModels.mockReturnValueOnce(["busy", "backup"]);
+    fakeAi.mockResolvedValueOnce({ ...reply(null), problems: ["The AI call failed."], error: "rate limit" });
+    fakeAi.mockResolvedValueOnce(reply(lies));
+    const result = await runAiAttempt(getStage("lies"), inputs, job, 0);
+    expect(fakeAi.mock.calls.map((c) => c[0].model)).toEqual(["busy", "backup"]);
+    expect(result).toMatchObject({ retry: false, problems: [] });
   });
 });
 
