@@ -190,3 +190,26 @@ export function castProblems(city: City, crime: CrimeCore, cast: Cast, difficult
   }
   return problems;
 }
+
+/**
+ * Last clean-up for an AI cast whose counts are still off after repairs: extra innocent suspects become
+ * witnesses (without their fake motive), then extra witnesses are removed. People the crime names are
+ * never touched. Safe because nothing is built on the cast yet.
+ */
+export function trimCast(crime: CrimeCore, cast: Cast, seed: number, difficulty: Difficulty): Cast {
+  const named = new Set([crime.victimId, crime.killerId, crime.accomplice?.id, crime.discovery.byId]);
+  const { suspects } = castBrief(seed, difficulty);
+  let extraSuspects = cast.characters.filter((c) => c.role === "suspect").length - suspects;
+  let characters = cast.characters.map((c) => {
+    if (extraSuspects <= 0 || c.role !== "suspect" || named.has(c.id)) return c;
+    extraSuspects--;
+    return { ...c, role: "witness" as const, fakeMotive: undefined };
+  });
+  let extraWitnesses = characters.filter((c) => c.role === "witness").length - WITNESSES[1];
+  characters = [...characters].reverse().filter((c) => {
+    if (extraWitnesses <= 0 || c.role !== "witness" || named.has(c.id)) return true;
+    extraWitnesses--;
+    return false;
+  }).reverse();
+  return { characters };
+}

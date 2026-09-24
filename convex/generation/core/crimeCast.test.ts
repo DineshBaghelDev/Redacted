@@ -4,7 +4,7 @@ import { city } from "../../fixtures/city";
 import { parseJson } from "../llm";
 import { castPrompt } from "../prompts/cast";
 import { crimePrompt } from "../prompts/crime";
-import { castBrief, castProblems, castRules, CRIME_RULES, crimeBrief, crimeProblems } from "./crimeCast";
+import { castBrief, castProblems, castRules, CRIME_RULES, crimeBrief, crimeProblems, trimCast } from "./crimeCast";
 
 describe("crime core checks", () => {
   it("hand-written crime passes", () => {
@@ -113,5 +113,21 @@ describe("innocent suspects", () => {
   it("need a reason police would look at them", () => {
     const noReason = { characters: cast.characters.map((c) => (c.id === "tom" ? { ...c, fakeMotive: undefined } : c)) };
     expect(castProblems(city, crimeCore, noReason).join(" | ")).toMatch(/Tom .* is a suspect with no reason police would look at them/);
+  });
+});
+
+describe("trimming an AI cast to the exact counts", () => {
+  it("turns extra innocent suspects into witnesses and drops extra witnesses, never touching the crime's people", () => {
+    const seed = 3;
+    const target = castBrief(seed, "easy").suspects;
+    const extra = (id: string, role: "suspect" | "witness") => ({ ...cast.characters.find((c) => c.id === "tom")!, id, name: `${id} Test`, role });
+    const big = { characters: [...cast.characters, extra("s1", "suspect"), extra("s2", "suspect"), ...["w1", "w2", "w3", "w4", "w5", "w6"].map((id) => extra(id, "witness"))] };
+    const trimmed = trimCast(crimeCore, big, seed, "easy");
+    expect(trimmed.characters.filter((c) => c.role === "suspect")).toHaveLength(target);
+    expect(trimmed.characters.filter((c) => c.role === "witness").length).toBeLessThanOrEqual(6);
+    for (const id of [crimeCore.victimId, crimeCore.killerId, crimeCore.discovery.byId]) {
+      expect(trimmed.characters.find((c) => c.id === id)?.role).toBe(big.characters.find((c) => c.id === id)?.role);
+    }
+    expect(trimmed.characters.filter((c) => c.role === "witness").every((c) => !c.fakeMotive)).toBe(true);
   });
 });

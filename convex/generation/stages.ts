@@ -2,7 +2,7 @@ import type { z } from "zod";
 import * as easyCase from "../fixtures/caseEasy";
 import { city } from "../fixtures/city";
 import { checkCity, cityCapacity } from "./core/city";
-import { castProblems, crimeBrief, crimeProblems } from "./core/crimeCast";
+import { castProblems, crimeBrief, crimeProblems, trimCast } from "./core/crimeCast";
 import { castPrompt } from "./prompts/cast";
 import { crimePrompt, SYSTEM } from "./prompts/crime";
 import { briefInput, briefProblems } from "./core/brief";
@@ -112,6 +112,8 @@ export const stages: StageDef[] = [
     prompt: (inputs, job) => ({ system: SYSTEM, prompt: castPrompt(city, inputs.crime as CrimeCore, job.difficulty, job.seed) }),
     // The seeded brief only binds AI output; the hand-written case predates it.
     check: (output, inputs, job, fromAi) => castProblems(city, inputs.crime as CrimeCore, output as Cast, job.difficulty, fromAi ? job.seed : undefined),
+    // Counts still off after repairs: turn extra suspects into witnesses and drop extra witnesses.
+    finalize: (output, inputs, job) => trimCast(inputs.crime as CrimeCore, output as Cast, job.seed, job.difficulty),
   },
   {
     name: "story",
