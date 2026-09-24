@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { cast, crimeCore, story } from "../../fixtures/caseEasy";
 import { city } from "../../fixtures/city";
 import { at, castSchema, crimeCoreSchema, schemaProblems, storySchema, type Cast, type CrimeCore, type Story } from "./schemas";
+import { buildEvidence } from "./evidence";
+import { findRoom } from "./city";
 import { buildTimeline, checkTimeline } from "./timeline";
 
 const SEED = 1234;
@@ -73,5 +75,27 @@ describe("checkTimeline catches broken cases", () => {
   it("story window longer than 2 days", () => {
     const broken = { ...crimeCore, windowStart: at(1, "00:00") - 1440 };
     expect(problemsFor(broken)).toContain("windowStart must be 0 (Day 1 00:00).");
+  });
+});
+
+describe("item spots", () => {
+  const withWeapon = (change: Partial<Story["items"][number]>): Story => ({
+    ...story,
+    items: story.items.map((i) => (i.id === "weapon" ? { ...i, ...change } : i)),
+  });
+
+  it("a spot the room doesn't have is replaced by the room's first spot, not sent back", () => {
+    const moved = withWeapon({ finalSlot: "under the piano" });
+    expect(problemsFor(crimeCore, cast, moved)).toEqual([]);
+    const weapon = moved.items.find((i) => i.id === "weapon")!;
+    const set = buildEvidence(city, crimeCore, cast, moved, buildTimeline(city, crimeCore, cast, moved, SEED), "easy", SEED);
+    const found = set.evidence.find((e) => e.id === "item/weapon")!;
+    expect(found.access).toMatchObject({ tool: "search", slot: findRoom(city, weapon.finalRoomId)!.room.itemSlots[0] });
+  });
+
+  it("a room with nowhere to leave things is still a problem", () => {
+    const stairs = city.places.flatMap((p) => p.building.rooms).find((r) => r.itemSlots.length === 0)!;
+    const problems = problemsFor(crimeCore, cast, withWeapon({ finalRoomId: stairs.id, finalSlot: "floor" }));
+    expect(problems.join(" | ")).toMatch(/has nowhere to leave an item/);
   });
 });

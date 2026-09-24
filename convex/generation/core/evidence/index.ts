@@ -128,14 +128,16 @@ export function buildEvidence(
     );
   }
 
-  // Story items where they end up.
+  // Story items where they end up. A spot the room doesn't have becomes the room's first spot: which
+  // drawer doesn't change the case, so it isn't worth a repair.
   for (const item of story.items) {
+    const slots = findRoom(city, item.finalRoomId)?.room.itemSlots ?? [];
     evidence.push({
       id: `item/${item.id}`,
       type: "item",
       title: item.name,
       summary: item.description,
-      access: { tool: "search", roomId: item.finalRoomId, slot: item.finalSlot },
+      access: { tool: "search", roomId: item.finalRoomId, slot: slots.includes(item.finalSlot) ? item.finalSlot : (slots[0] ?? item.finalSlot) },
       aboutIds: item.ownerId ? [item.ownerId] : [],
       sourceIds: [item.id],
       data: { itemId: item.id, ownerId: item.ownerId, proves: item.proves },

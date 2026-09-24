@@ -7,7 +7,7 @@ import { estimateInput, estimateTime } from "./estimate";
 import { buildEvidence } from "./evidence";
 import { buildFacts } from "./facts";
 import { keepValidLies } from "./lies";
-import { decisivePlan, STORY_RULES, storyProblems } from "./story";
+import { evidencePlan, STORY_RULES, storyProblems } from "./story";
 import { applyTexts, textProblems, textTargets } from "./text";
 import { buildTimeline } from "./timeline";
 
@@ -110,19 +110,24 @@ describe("lies clean-up keeps a good main lie", () => {
   });
 });
 
-describe("decisive evidence plan", () => {
+describe("evidence plan", () => {
   it("offers only the routes this crime allows", () => {
-    const plan = decisivePlan(city, crimeCore, "easy");
+    const plan = evidencePlan(city, crimeCore, "easy");
     expect(plan.needed).toBe(2);
-    expect(plan.routes.join("\n")).toMatch(/blood on the killer's clothing/);
-    const wiped = decisivePlan(city, { ...crimeCore, coverUp: ["wipe-prints"], weapon: { ...crimeCore.weapon, category: "firearm" } }, "hard");
+    expect(plan.decisive.join(" | ")).toMatch(/blood on the killer's clothing/);
+    expect(plan.accomplice).toEqual([]);
+    const wiped = evidencePlan(city, { ...crimeCore, coverUp: ["wipe-prints"], weapon: { ...crimeCore.weapon, category: "firearm" } }, "hard");
     expect(wiped.needed).toBe(1);
-    expect(wiped.routes.join("\n")).not.toMatch(/prints on the weapon|blood on the killer's clothing/);
-    expect(wiped.routes.join("\n")).toMatch(/killer's home/);
+    expect(wiped.decisive.join(" | ")).not.toMatch(/prints on the weapon|blood on the killer's clothing/);
+    expect(wiped.decisive.join(" | ")).toMatch(/killer's home/);
+    expect(wiped.weaponToKiller.join(" | ")).not.toMatch(/prints/);
+    expect(wiped.weaponToKiller.join(" | ")).toMatch(/ownerId set to the killer/);
   });
 
   it("goes into the story prompt", () => {
-    expect(storyPrompt(city, crimeCore, cast, "easy")).toContain("needs at least 2 decisive piece(s)");
+    const prompt = storyPrompt(city, crimeCore, cast, "easy");
+    expect(prompt).toContain("Decisive evidence: at least 2 piece(s)");
+    expect(prompt).toContain("Link the weapon to the killer");
   });
 });
 

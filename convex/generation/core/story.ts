@@ -37,21 +37,32 @@ export const EVIDENCE_NOTES = [
 ];
 
 /**
- * How many decisive pieces this case needs and the ways to get them that this crime allows, so the
- * story can plan them instead of finding out from the checks.
+ * The ways this crime allows to meet the evidence checks the story is most often short of (decisive
+ * evidence, linking the weapon to the killer, linking the accomplice), so the story can plan them
+ * instead of finding out from the checks.
  */
-export function decisivePlan(city: City, crime: CrimeCore, difficulty: Difficulty) {
-  const cameraRooms = findRoom(city, crime.sceneRoomId)?.place.building.cameraRoomIds ?? [];
-  const sceneCamera = cameraRooms.includes(crime.sceneRoomId) && crime.disabledCamera?.cameraId !== `cam:${crime.sceneRoomId}`;
-  const routes = [
-    ...(["blunt", "sharp"].includes(crime.weapon.category)
-      ? ["the victim's blood on the killer's clothing: list a clothing item the killer owns in the murder event's itemsUsed"]
-      : []),
-    ...(crime.coverUp.includes("wipe-prints") ? [] : ["the killer's prints on the weapon: the killer handles the weapon in the murder event"]),
-    ...(sceneCamera ? ["the killer on the scene room's camera at the time of death: the killer is in the scene room then"] : []),
+export function evidencePlan(city: City, crime: CrimeCore, difficulty: Difficulty) {
+  const hasCamera = (roomId: string) =>
+    !!findRoom(city, roomId)?.place.building.cameraRoomIds.includes(roomId) && crime.disabledCamera?.cameraId !== `cam:${roomId}`;
+  const wiped = crime.coverUp.includes("wipe-prints");
+  const clothing = "a clothing item with ownerId set to the killer, listed in the murder event's itemsUsed together with \"weapon\"";
+  const decisive = [
+    ...(["blunt", "sharp"].includes(crime.weapon.category) ? [`the victim's blood on the killer's clothing: ${clothing}`] : []),
+    ...(wiped ? [] : ["the killer's prints on the weapon: the killer handles the weapon in the murder event"]),
+    ...(hasCamera(crime.sceneRoomId) ? ["the killer on the scene room's camera at the time of death: the killer is in the scene room then"] : []),
     "something taken from the scene building that ends up in the killer's home: an item starting in the scene building, not owned by the killer, whose final room is in the killer's home, with an event there that uses it",
   ];
-  return { needed: difficulty === "easy" ? 2 : 1, routes };
+  const weaponToKiller = [
+    ...(wiped ? [] : ["the killer's prints on the weapon: the killer is an actor in an event that uses the weapon"]),
+    `fibers from the killer's clothing on the weapon: ${clothing}`,
+    ...(hasCamera(crime.weapon.originRoomId)
+      ? [`the killer on camera where the weapon came from: an event in ${crime.weapon.originRoomId} with the killer as an actor and "weapon" in itemsUsed`]
+      : []),
+  ];
+  const accomplice = crime.accomplice
+    ? ["a call or message between the killer and the accomplice", 'a message, item or device file tagged proves ["accomplice"]']
+    : [];
+  return { needed: difficulty === "easy" ? 2 : 1, decisive, weaponToKiller, accomplice };
 }
 
 /**
@@ -78,9 +89,11 @@ export function storyProblems(city: City, crime: CrimeCore, cast: Cast, story: S
   const facts = buildFacts(city, crime, cast, story, set);
   const checks = validateCase(city, crime, cast, story, set, facts, { lies: [] }, difficulty).filter((c) => c.id !== "lies");
   const problems = validationProblems(checks);
-  // The general "decisive means" list doesn't say which ways this crime allows; the repair needs that.
-  if (checks.some((c) => c.id === "evidence" && !c.ok)) {
-    problems.push(`Ways to get decisive evidence in this case: ${decisivePlan(city, crime, difficulty).routes.join("; ")}.`);
-  }
+  // The general messages don't say which ways this crime allows; the repair needs that.
+  const plan = evidencePlan(city, crime, difficulty);
+  const failed = (id: string) => checks.some((c) => c.id === id && !c.ok);
+  if (failed("evidence")) problems.push(`Ways to get decisive evidence in this case: ${plan.decisive.join("; ")}.`);
+  if (failed("weapon")) problems.push(`Ways to link the weapon to the killer in this case: ${plan.weaponToKiller.join("; ")}.`);
+  if (failed("accomplice")) problems.push(`Ways to link the accomplice: ${plan.accomplice.join("; ")}.`);
   return problems;
 }
