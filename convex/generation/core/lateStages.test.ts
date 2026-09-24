@@ -8,6 +8,7 @@ import { buildEvidence } from "./evidence";
 import { buildFacts } from "./facts";
 import { keepValidLies } from "./lies";
 import { evidencePlan, STORY_RULES, storyProblems } from "./story";
+import { buildScripts, scriptProblems } from "./scripts";
 import { applyTexts, textProblems, textTargets } from "./text";
 import { buildTimeline } from "./timeline";
 
@@ -21,7 +22,7 @@ describe("story check", () => {
     expect(storyProblems(city, crimeCore, cast, story, "easy", SEED)).toEqual([]);
     const prompt = storyPrompt(city, crimeCore, cast, "easy");
     for (const rule of STORY_RULES) expect(prompt).toContain(rule);
-    expect(prompt).toContain("keel-14:back-door Back door [entrance]");
+    expect(prompt).toContain("keel-14:back-door [entrance] [no items]");
   });
 
   it("goes past the timeline: a story that loses the decisive evidence fails", () => {
@@ -126,7 +127,7 @@ describe("evidence plan", () => {
 
   it("goes into the story prompt", () => {
     const prompt = storyPrompt(city, crimeCore, cast, "easy");
-    expect(prompt).toContain("Decisive evidence: at least 2 piece(s)");
+    expect(prompt).toContain("Decisive evidence: at least 2 piece(s). Use these 2:");
     expect(prompt).toContain("Link the weapon to the killer");
   });
 });
@@ -135,5 +136,16 @@ describe("story copying the solution", () => {
   it("a story that copies the method word for word goes back for a repair", () => {
     const copied = { ...story, events: story.events.map((e, i) => (i === 0 ? { ...e, action: crimeCore.method } : e)) };
     expect(storyProblems(city, crimeCore, cast, copied, "easy", 1234)).toEqual(["The story copies the crime core's method word for word; describe it in your own words."]);
+  });
+});
+
+describe("script leak check", () => {
+  it("everyone may hear the body was found, even when the finding was private", () => {
+    const privateFind = {
+      ...story,
+      events: story.events.map((e) => (e.actors.includes(crimeCore.discovery.byId) && e.roomId === crimeCore.sceneRoomId ? { ...e, visibility: "private" as const } : e)),
+    };
+    const scripts = buildScripts(city, crimeCore, cast, privateFind, set, lies);
+    expect(scriptProblems(crimeCore, privateFind, scripts)).toEqual([]);
   });
 });

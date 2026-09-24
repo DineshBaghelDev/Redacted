@@ -22,8 +22,8 @@ How code turns your story into evidence (plan the case so it can be solved, but 
 ${EVIDENCE_NOTES.map((r) => `- ${r}`).join("\n")}
 
 Plan these on purpose; they are what cases most often lack:
-- Decisive evidence: at least ${plan.needed} piece(s). ${plan.decisive.length <= plan.needed ? "Only these ways work for this crime, so the story must use them:" : "Ways that work for this crime:"}
-${plan.decisive.map((r) => `  - ${r}`).join("\n")}
+- Decisive evidence: at least ${plan.needed} piece(s). Use ${plan.needed === 1 ? "this one" : `these ${plan.needed}`}:
+${plan.decisive.slice(0, plan.needed).map((r) => `  - ${r}`).join("\n")}${plan.decisive.length > plan.needed ? `\n  Other ways that also work for this crime, if the story needs them:\n${plan.decisive.slice(plan.needed).map((r) => `  - ${r}`).join("\n")}` : ""}
 - Link the weapon to the killer (at least 1):
 ${plan.weaponToKiller.map((r) => `  - ${r}`).join("\n")}${plan.accomplice.length ? `\n- Link the accomplice to the killer (at least 1):\n${plan.accomplice.map((r) => `  - ${r}`).join("\n")}` : ""}
 
@@ -33,9 +33,9 @@ What to write:
 - purchases: things bought that matter (card or cash).
 - items: the weapon, clothing the killer wore, documents and devices that matter. Devices (laptops, tablets) can hold files in contents.
 
-Rooms (id Name [entrance] {search spots}):
+Rooms by place (id, name if it adds anything, [entrance], [no items]):
 ${storyRoomsText(city)}
 
-Travel minutes between places:
+Travel minutes between places (same both ways; each pair listed once):
 ${travelText(city)}`;
 }

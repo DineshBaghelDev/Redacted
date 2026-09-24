@@ -286,6 +286,7 @@ Testing:
 ## Model strategy
 
 - Generation models are set per AI stage in `convex/generation/llm.ts` (`STAGE_MODELS`) as a fixed, ordered list written `provider:model` (providers: NIM, Gemini, Groq, OpenRouter, all through their OpenAI-compatible APIs). When a call fails (rate limit, daily quota, overload) the next model in the list takes over. Current lists (from a side-by-side run on 2026-09-25):
+  - Gemini `gemini-3.5-flash` first for crime, cast, story and lies (fastest; free tier is 20 requests a day per model, so the next model takes over once it's used up).
   - crime, text, brief: Groq `openai/gpt-oss-120b` (a few seconds; Groq's free per-minute token cap only fits these small prompts), then NIM `moonshotai/kimi-k3`.
   - cast, story: OpenRouter `nvidia/nemotron-3-super-120b-a12b:free` (cast right first try in 82 s, story in 137 s with 2 repairs; free tier is 50 calls a day), then NIM.
   - lies: NIM only (about 16k-token prompt).

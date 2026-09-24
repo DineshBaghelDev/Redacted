@@ -150,7 +150,7 @@ export function checkTimeline(city: City, crime: CrimeCore, cast: Cast, story: S
       const door = findRoom(city, via);
       if (!door?.room.isEntrance || door.place.id !== where?.place.id) problems.push(`Event "${e.id}" uses ${via}, which isn't an entrance of that building.`);
     }
-    for (const a of e.actors) if (!people.has(a)) problems.push(`Event "${e.id}" has unknown person ${a}.`);
+    for (const a of e.actors) if (!people.has(a)) problems.push(`Event "${e.id}" has "${a}", who isn't a cast id. Use one of: ${[...people.keys()].join(", ")}.`);
     for (const i of e.itemsUsed) if (!itemIds.has(i)) problems.push(`Event "${e.id}" uses unknown item ${i}.`);
     if (e.end <= e.start) {
       problems.push(`Event "${e.id}" (start ${e.start}, end ${e.end}) must last at least 1 minute: end has to be after start, e.g. a quick action lasts 2–5 minutes.`);
@@ -158,10 +158,12 @@ export function checkTimeline(city: City, crime: CrimeCore, cast: Cast, story: S
     if (e.start < timeline.windowStart || e.start > timeline.windowEnd) problems.push(`Event "${e.id}" is outside the story window.`);
   }
   for (const c of story.comms) {
-    if (!people.has(c.from) || !people.has(c.to)) problems.push(`Call/message "${c.id}" has an unknown person.`);
+    for (const who of [c.from, c.to]) {
+      if (!people.has(who)) problems.push(`Call/message "${c.id}" has "${who}", who isn't a cast id. Use one of: ${[...people.keys()].join(", ")}.`);
+    }
   }
   for (const p of story.purchases) {
-    if (!people.has(p.who)) problems.push(`Purchase "${p.id}" has an unknown person.`);
+    if (!people.has(p.who)) problems.push(`Purchase "${p.id}" has "${p.who}", who isn't a cast id. Use one of: ${[...people.keys()].join(", ")}.`);
     if (!city.places.some((pl) => pl.id === p.placeId)) problems.push(`Purchase "${p.id}" is at an unknown place.`);
   }
   for (const item of story.items) {

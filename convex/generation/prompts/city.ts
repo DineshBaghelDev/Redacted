@@ -41,16 +41,24 @@ export function publicPlacesText(city: City) {
     .join("\n");
 }
 
-/** Rooms with entrances marked and search spots, for writing story events. */
+/**
+ * Rooms for writing story events, kept short: the name only when it says more than the id, entrances
+ * marked, and rooms where nothing can be left marked [no items]. Wrong search spots are fixed by code.
+ */
 export function storyRoomsText(city: City) {
-  const room = (r: City["places"][number]["building"]["rooms"][number]) =>
-    `  ${r.id} ${r.name}${r.isEntrance ? " [entrance]" : ""}${r.itemSlots.length ? ` {spots: ${r.itemSlots.join(", ")}}` : ""}`;
-  return city.places.map((p) => `${p.id} · ${p.name}:\n${p.building.rooms.map(room).join("\n")}`).join("\n");
+  const plain = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const room = (r: City["places"][number]["building"]["rooms"][number]) => {
+    const name = plain(r.name) === plain(r.id.split(":")[1]) ? "" : ` ${r.name}`;
+    return `${r.id}${name}${r.isEntrance ? " [entrance]" : ""}${r.itemSlots.length ? "" : " [no items]"}`;
+  };
+  return city.places.map((p) => `${p.id} · ${p.name}: ${p.building.rooms.map(room).join(", ")}`).join("\n");
 }
 
 /** Travel minutes between every pair of places (shortest street route). */
 export function travelText(city: City) {
+  // Routes take the same time both ways, so each pair is listed once (under the earlier place).
   return city.places
-    .map((a) => `${a.id}: ${city.places.filter((b) => b.id !== a.id).map((b) => `${b.id} ${streetRoute(city, a.id, b.id)?.minutes ?? "?"}`).join(", ")}`)
+    .slice(0, -1)
+    .map((a, i) => `${a.id}: ${city.places.slice(i + 1).map((b) => `${b.id} ${streetRoute(city, a.id, b.id)?.minutes ?? "?"}`).join(", ")}`)
     .join("\n");
 }

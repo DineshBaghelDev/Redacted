@@ -14,7 +14,7 @@ export const STORY_RULES = [
   "Every roomId is copied from the room list. enteredVia/leftVia, when given, is an [entrance] room of the same building.",
   "Nobody is in two events at once, and there is enough travel time between events at different places (see travel minutes). Everyday routines are added by code around your events; you only write what matters.",
   "The murder is one event in the crime scene room with the killer and the victim, covering the time of death, with \"weapon\" in itemsUsed. The victim does nothing after it (no events, messages or purchases).",
-  "Exactly one item has id \"weapon\" and kind \"weapon\", starting in the crime's weapon origin room. An item that ends in a different room from where it starts needs an event in its final room that uses it. finalSlot is one of that room's search spots.",
+  "Exactly one item has id \"weapon\" and kind \"weapon\", starting in the crime's weapon origin room. An item that ends in a different room from where it starts needs an event in its final room that uses it. finalSlot is where in the room it ends up (e.g. a drawer, the bin); rooms marked [no items] can't hold one.",
   "Whoever finds the body has an event in the crime scene room starting at the discovery time.",
   "If there is an accomplice, the killer and accomplice must meet or talk in the story.",
   "Write every action, gist and file in your own words; never copy the crime core's method or motive text (NPC scripts are built from the story and must not contain it).",
@@ -46,10 +46,11 @@ export function evidencePlan(city: City, crime: CrimeCore, difficulty: Difficult
     !!findRoom(city, roomId)?.place.building.cameraRoomIds.includes(roomId) && crime.disabledCamera?.cameraId !== `cam:${roomId}`;
   const wiped = crime.coverUp.includes("wipe-prints");
   const clothing = "a clothing item with ownerId set to the killer, listed in the murder event's itemsUsed together with \"weapon\"";
+  // Simplest first: the prompt tells the story to use the first ones it needs.
   const decisive = [
-    ...(["blunt", "sharp"].includes(crime.weapon.category) ? [`the victim's blood on the killer's clothing: ${clothing}`] : []),
     ...(wiped ? [] : ["the killer's prints on the weapon: the killer handles the weapon in the murder event"]),
     ...(hasCamera(crime.sceneRoomId) ? ["the killer on the scene room's camera at the time of death: the killer is in the scene room then"] : []),
+    ...(["blunt", "sharp"].includes(crime.weapon.category) ? [`the victim's blood on the killer's clothing: ${clothing}`] : []),
     "something taken from the scene building that ends up in the killer's home: an item starting in the scene building, not owned by the killer, whose final room is in the killer's home, with an event there that uses it",
   ];
   const weaponToKiller = [

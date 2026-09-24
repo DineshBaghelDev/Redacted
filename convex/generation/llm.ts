@@ -20,20 +20,23 @@ export const MODELS = {
   npc: "moonshotai/kimi-k2.6",
 } as const;
 
+const GEMINI_FLASH = "gemini:gemini-3.5-flash";
 const GROQ_FAST = "groq:openai/gpt-oss-120b";
 const NEMOTRON_FREE = "openrouter:nvidia/nemotron-3-super-120b-a12b:free";
 
 /**
  * Models per AI stage, tried in order: the next one takes over when a call fails (rate limit, daily
- * quota, overload). Groq's free token-per-minute cap only fits the small prompts; OpenRouter's free
- * tier allows 50 calls a day. NIM is the backup everywhere. Picked from a side-by-side run (2026-09-25).
+ * quota, overload). Gemini Flash is the fastest by far (cast in ~20 s) but is sometimes overloaded;
+ * Groq's free cap is 8k tokens a minute, so it only fits the small prompts; OpenRouter's free tier
+ * allows 50 calls a day. NIM is the backup everywhere. Picked from side-by-side runs (2026-09-25).
  */
 const STAGE_MODELS: Record<string, string[]> = {
-  crime: [GROQ_FAST, MODELS.main],
-  cast: [NEMOTRON_FREE, MODELS.main],
-  story: [NEMOTRON_FREE, MODELS.main],
-  text: [GROQ_FAST, MODELS.main],
-  brief: [GROQ_FAST, MODELS.main],
+  crime: [GEMINI_FLASH, GROQ_FAST, MODELS.main],
+  cast: [GEMINI_FLASH, NEMOTRON_FREE, MODELS.main],
+  story: [GEMINI_FLASH, NEMOTRON_FREE, MODELS.main],
+  lies: [GEMINI_FLASH, MODELS.main],
+  text: [GROQ_FAST, GEMINI_FLASH, MODELS.main],
+  brief: [GROQ_FAST, GEMINI_FLASH, MODELS.main],
 };
 
 /** The models to try for a stage, in order. */
@@ -77,7 +80,7 @@ function describeError(error: unknown) {
   const inner = (error as { lastError?: unknown }).lastError ?? error.cause;
   const api = APICallError.isInstance(error) ? error : APICallError.isInstance(inner) ? inner : undefined;
   if (!api) return error.message;
-  return `${error.message} [status ${api.statusCode ?? "?"}] ${(api.responseBody ?? "").slice(0, 300)}`;
+  return `${error.message} [status ${api.statusCode ?? "?"}] ${(api.responseBody ?? "").slice(0, 1000)}`;
 }
 
 /** Pulls JSON out of a reply that may be wrapped in a ``` fence or have text around it. */

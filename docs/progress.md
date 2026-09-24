@@ -56,6 +56,9 @@
 
 - Third test run (3 cases, all earlier fixes in from the start): 2 of 3 passed, about 8–9 min per case (was 18–33 min). Normal 8 min (8 AI calls), hard 8 min (7), easy failed at story after 9 min: the killer's suit was in the murder event but had no owner, so no fibers linked the weapon to him. Per stage first-try: crime 3/3, cast 2/3, lies 2/2, text 2/2, brief 2/2, story 0/3 (1.7 repairs). Fixes: the story plan (`evidencePlan`, was `decisivePlan`) now also lists this crime's ways to link the weapon to the killer and to link an accomplice, and each failed check sends its ways to the repair; a wrong item spot in a room that has spots is replaced by the room's first spot instead of costing a repair (only rooms with no spots, like stairs, are still flagged). 99 tests.
 
+- Fourth test run: easy passed (5 min), hard passed (7 min), normal failed at scripts from a checker bug (it passes once fixed: the story marked the body's discovery private, and every script gets the "News: … was found dead" line by design). Fixes: the scripts check allows that news item; the story's decisive routes are ordered simplest first and the prompt says "use these N"; unknown-person messages name the id and list valid ids; story prompt cut from ~7.7k to ~5.9k tokens (room list without repeated names or search spots, rooms with nowhere to leave items marked [no items]; travel table lists each pair once since routes are symmetric).
+- Models: Gemini 3.5 Flash added first for crime, cast, story and lies (crime 8 s, cast 20 s, lies 24 s in tests). Its free tier is 20 requests a day per model (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`), so it covers only ~2–3 cases a day; the fallback chain (Groq / Nemotron / NIM) takes over when it's used up. On free tiers the steady state is ~5–9 min per case; ~2–3 min needs a paid Gemini key. Error logs now keep 1,000 characters of the provider reply. 100 tests.
+
 ## Pending
 
 ### Case generation — remaining chunks

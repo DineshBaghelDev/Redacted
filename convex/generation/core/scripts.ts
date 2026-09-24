@@ -110,10 +110,14 @@ export function buildScripts(city: City, crime: CrimeCore, cast: Cast, story: St
  */
 export function scriptProblems(crime: CrimeCore, story: Story, scripts: NpcScript[]) {
   const problems: string[] = [];
+  // Everyone hears that the body was found (the "News:" line), even when the finding itself was private.
+  const discoveryId = story.events.find((e) => e.actors.includes(crime.discovery.byId) && e.roomId === crime.sceneRoomId)?.id;
   for (const s of scripts) {
     for (const k of s.knowledge) {
       const e = story.events.find((x) => x.id === k.id);
-      if (e?.visibility === "private" && !e.actors.includes(s.npcId)) problems.push(`${s.name} knows about private event "${e.id}" without being in it.`);
+      if (e?.visibility === "private" && e.id !== discoveryId && !e.actors.includes(s.npcId)) {
+        problems.push(`${s.name} knows about private event "${e.id}" without being in it.`);
+      }
     }
     const text = JSON.stringify(s);
     if (text.includes(crime.method)) problems.push(`${s.name}'s script contains the hidden method.`);
