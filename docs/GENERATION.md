@@ -54,25 +54,25 @@ Code: `convex/fixtures/city.ts`, `convex/generation/core/{buildings,city}.ts`.
 
 ## Stage 1 — Crime core (LLM, implemented)
 
-Input: difficulty, a **seeded brief** (motive type, weapon category, crime-scene place, picked by code from the seed so cases vary), every city room id, every camera id.
+Input: difficulty, a **seeded brief** (motive type, weapon category, crime-scene place, accomplice yes/no (about 1 case in 5), the part of Day 2 the death falls in (night, morning, afternoon, evening), and 24 first names plus 20 surnames from `core/names.ts`; all picked by code from the seed so cases vary), every city room id, every camera id.
 
 Output shape: `crimeCoreSchema` in `core/schemas.ts` — victim/killer/accomplice ids (short lowercase first names), motive, weapon, method, scene room, time of death, windowStart, discovery, cover-up, optional switched-off camera.
 
 Rules and checks live together in `core/crimeCast.ts` (`CRIME_RULES` goes into the prompt word for word; `crimeProblems` enforces it): rooms exist and the scene allows crimes; victim, killer, accomplice and finder are different people; windowStart is Day 1 00:00; death on Day 2; body found after the death and by the end of Day 3; AI output follows the brief (the hand-written case is exempt from the brief).
 
-One crime per case. Accomplice optional and usually absent: most killers act alone.
+One crime per case. Whether there is an accomplice comes from the seed (about 1 case in 5): left to the AI it never chose one, so that path went untested.
 
 `accomplice` and `disabledCamera` are required fields that may be `null`: when they were optional, the AI silently skipped `disabledCamera` three tries in a row even when its cover-up said "disable-camera". If it still names no camera after repairs, the crime's clean-up drops the "disable-camera" step.
 
 ## Stage 2 — Cast (LLM, implemented)
 
-Input: crime core, difficulty, every home id with its address, workplaces with free job titles and room ids, public places for hangouts.
+Input: crime core, difficulty, a seeded cast brief (exact number of suspects within the difficulty's range, the victim's routine, the case's name lists), every home id with its address, workplaces with free job titles and room ids, public places for hangouts.
 
 Suspect counts: easy 3–4, normal 6–7, hard 10–12 (the killer included). Plus 3–6 witnesses (bartender, neighbour, clerk…).
 
 Per character (`characterSchema`): name, age, gender, role, home, job, routine type, hangout, appearance (height, build, clothing, shoes), traits, relationship to victim, secret, what they protect, fake motive (innocent suspects: a motive, a grudge or just being near at the wrong time), public records. Secret and "protects" are optional: many people have nothing to hide.
 
-Checks (`castProblems`, rules in `castRules` go into the prompt): the crime's people exist with the right roles; counts match difficulty; ids unique; homes exist; jobs are free slots at that place and work rooms belong to it; unemployed people and students have a public hangout; the killer has no fake motive.
+Checks (`castProblems`, rules in `castRules` go into the prompt): the crime's people exist with the right roles; counts match difficulty; ids unique; homes exist; jobs are free slots at that place and work rooms belong to it; unemployed people and students have a public hangout; the killer has no fake motive. AI casts also follow the brief: exact suspect count, victim's routine, names from the lists, id = lowercase first name. Replay tests skip the seeded-brief rules because older recordings predate them.
 
 ## Stage 3 — Timeline (code routine + LLM story events)
 
@@ -188,11 +188,11 @@ Only what investigators legitimately receive at start: where, when, what, who re
 
 Implemented (`core/brief.ts`): code hands the AI only victim, place, time found, who reported it, and the weapon if it was left at the scene. Output `{ title, summary, initialFacts }`. Leak check: no killer/accomplice name (surnames shared with the victim or finder are fine), no weapon that isn't at the scene, no copied method or motive text; must name the victim; 3–5 facts.
 
-## Stage 10 — Optimal-time estimate
+## Stage 10 — Optimal-time estimate (code, no LLM)
 
-A model receives only what's needed to estimate a competent investigation route (relevant places, travel graph, required searches, likely interrogations, forensic waits, complexity) and outputs `{ estimatedOptimalMinutes, reasoningSummary }`. Default deadline = `optimal + 1440`. Users may override.
+Code estimates a competent investigation and outputs `{ estimatedOptimalMinutes, reasoningSummary }` plus the steps behind it. Default deadline = `optimal + 1440`. Users may override.
 
-Implemented (`core/estimate.ts`): code lists the steps a perfect investigation needs (decisive evidence, one piece per fact, two for motive, each alibi, proof for the killer's lies, plus items that must be found before a lab test or device read), prices them with the fixed action costs from `GAME_SYSTEMS.md`, adds a nearest-place-first route from the police bureau and back, and gives the total as a lower bound. The AI adds time for dead ends; the estimate must be 1–4 times the lower bound.
+Implemented (`core/estimate.ts`): code lists the steps a perfect investigation needs (decisive evidence, one piece per fact, two for motive, each alibi, proof for the killer's lies, plus items that must be found before a lab test or device read), prices them with the fixed action costs from `GAME_SYSTEMS.md`, adds a nearest-place-first route from the police bureau and back, and gives the total as a lower bound. The estimate is the lower bound times a dead-end factor (easy ×2, normal ×2.5, hard ×3), rounded up to 15 minutes. It was an AI stage until 2026-09-24; replaced because code bounded it anyway and it cost a slow call.
 
 ## Stage 11 — Solvability validation (code)
 
@@ -254,7 +254,9 @@ Code layout:
 - `convex/generation/stages.ts` — stage list: inputs, output schema, hand-written output, code `run`, AI `prompt`, `check`.
 - `convex/generation/prompts/` — prompt builders; city lists and rule text come from the same data the checks use.
 - `convex/generation/llm.ts` — `generateJson`: NIM call through the AI SDK, strict schema first, JSON mode fallback; bad output is returned as problems, never thrown.
-- `convex/generation/workflow.ts` — fixed stage order + repair loop (Convex workflow component).
+- `convex/generation/workflow.ts` — fixed stage order + repair loop (Convex workflow component). Implemented: `generateCase` (one case) and `generateBatch` (a test run, cases one after another).
+- `convex/generation/jobs.ts` — running one code stage or one AI try for a job, shared by the tester and the workflow.
+- `convex/generation/core/stats.ts` — test-run stats per case and per AI stage, and the time-left prediction.
 - `convex/fixtures/` — V1 city and the hand-written case.
 
 Tables:
@@ -278,7 +280,7 @@ Testing:
 - **Vitest + `convex-test`** — workflow with stubbed LLM stages: order, repair loop, retries, cancel, publish.
 - **Promptfoo** — per-stage prompt evals whose assertion calls the same core validator; NPC evals (holds lie under pressure, breaks on proof, never leaks solution). Run manually/scheduled, not per push.
 - **Record and replay** — AI cases worth keeping are saved to `convex/fixtures/recorded/` (`npx convex run dev/tester:exportJob`); `replay.test.ts` reruns all code stages and checks on them and snapshots the problems.
-- **Smoke script** — full pipeline on the dev deployment over ~10 seeds; reports pass rate, time, cost.
+- **Test runs** — "Run 5 test cases" in the tester (2 easy, 2 normal, 1 hard, random seeds, one after another); the stats view shows pass rate, time and tokens per case, and per AI stage: first-try passes, repairs, time, tokens, failed calls and the most common problems. Cost is added once the provider is chosen.
 - **Dev case viewer** — dev-only read-only page to inspect generated cases.
 
 ## Model strategy

@@ -23,9 +23,11 @@ function replay(rec: Recorded) {
   const problems: Record<string, string[]> = {};
   for (const stage of stages) {
     if (!stage.inputs.every((name) => name in drafts)) continue;
-    const saved = rec.outputs[stage.name];
+    // Only AI outputs are replayed; code stages always rerun (older recordings may hold an AI estimate).
+    const saved = stage.kind === "llm" ? rec.outputs[stage.name] : undefined;
     if (saved) {
-      problems[stage.name] = checkOutput(stage, saved.output, drafts, job, saved.source === "llm");
+      // Seeded-brief rules are skipped: they change over time and older recordings predate them (unit tests cover them).
+      problems[stage.name] = checkOutput(stage, saved.output, drafts, job, false);
       const parsed = stage.schema ? stage.schema.safeParse(saved.output) : { success: true, data: saved.output };
       // Later stages can't run on output with the wrong shape.
       if (parsed.success) drafts[stage.name] = parsed.data;

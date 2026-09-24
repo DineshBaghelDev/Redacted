@@ -1,6 +1,9 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+/** Where a "Run all" generation job is. */
+export const jobStatus = v.union(v.literal("queued"), v.literal("running"), v.literal("passed"), v.literal("failed"), v.literal("stopped"));
+
 export default defineSchema({
   sessions: defineTable({
     roomCode: v.string(),
@@ -28,7 +31,16 @@ export default defineSchema({
     createdAt: v.number(),
     /** Set while an AI stage runs in the background: which stage and which try (0 = first, then repairs). */
     running: v.optional(v.object({ stage: v.string(), attempt: v.number() })),
-  }),
+    /** "Run all" only; single-stage tester runs leave these empty. */
+    status: v.optional(jobStatus),
+    failedStage: v.optional(v.string()),
+    error: v.optional(v.string()),
+    startedAt: v.optional(v.number()),
+    finishedAt: v.optional(v.number()),
+    workflowId: v.optional(v.string()),
+    /** Test runs: the jobs started together share this label. */
+    batch: v.optional(v.string()),
+  }).index("by_batch", ["batch"]),
   generationDrafts: defineTable({
     jobId: v.id("generationJobs"),
     stage: v.string(),

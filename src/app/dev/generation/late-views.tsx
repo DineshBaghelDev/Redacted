@@ -1,5 +1,6 @@
 import type { EvidenceSet } from "../../../../convex/generation/core/evidence/types";
-import type { Brief, Estimate, Story, Texts } from "../../../../convex/generation/core/schemas";
+import type { Estimate } from "../../../../convex/generation/core/estimate";
+import type { Brief, Story, Texts } from "../../../../convex/generation/core/schemas";
 
 /** Each rewritten piece next to the plain wording it replaces. */
 export function TextsView({ texts, story, set }: { texts: Texts; story?: Story; set?: EvidenceSet }) {

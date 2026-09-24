@@ -6,12 +6,11 @@ import { castProblems, crimeBrief, crimeProblems } from "./core/crimeCast";
 import { castPrompt } from "./prompts/cast";
 import { crimePrompt, SYSTEM } from "./prompts/crime";
 import { briefInput, briefProblems } from "./core/brief";
-import { estimateInput, estimateProblems } from "./core/estimate";
+import { estimateTime } from "./core/estimate";
 import {
   briefSchema,
   castSchema,
   crimeCoreSchema,
-  estimateSchema,
   liesSchema,
   schemaProblems,
   storySchema,
@@ -19,7 +18,6 @@ import {
   type Brief,
   type Cast,
   type CrimeCore,
-  type Estimate,
   type Lies,
   type Story,
   type Texts,
@@ -27,7 +25,6 @@ import {
 import { storyProblems } from "./core/story";
 import { textProblems, textTargets } from "./core/text";
 import { briefPrompt } from "./prompts/brief";
-import { estimatePrompt } from "./prompts/estimate";
 import { liesPrompt } from "./prompts/lies";
 import { storyPrompt } from "./prompts/story";
 import { textPrompt } from "./prompts/text";
@@ -111,8 +108,9 @@ export const stages: StageDef[] = [
     inputs: ["crime"],
     schema: castSchema,
     handWritten: easyCase.cast,
-    prompt: (inputs, job) => ({ system: SYSTEM, prompt: castPrompt(city, inputs.crime as CrimeCore, job.difficulty) }),
-    check: (output, inputs, job) => castProblems(city, inputs.crime as CrimeCore, output as Cast, job.difficulty),
+    prompt: (inputs, job) => ({ system: SYSTEM, prompt: castPrompt(city, inputs.crime as CrimeCore, job.difficulty, job.seed) }),
+    // The seeded brief only binds AI output; the hand-written case predates it.
+    check: (output, inputs, job, fromAi) => castProblems(city, inputs.crime as CrimeCore, output as Cast, job.difficulty, fromAi ? job.seed : undefined),
   },
   {
     name: "story",
@@ -236,17 +234,11 @@ export const stages: StageDef[] = [
   {
     name: "estimate",
     label: "10 · Time estimate",
-    kind: "llm",
+    kind: "code",
     inputs: ["crime", "evidence", "facts", "lies"],
-    schema: estimateSchema,
-    handWritten: easyCase.estimate,
-    prompt: (inputs, job) => {
+    run: (inputs, job) => {
       const { crime, evidence, facts, lies } = get(inputs);
-      return { system: SYSTEM, prompt: estimatePrompt(estimateInput(city, evidence, facts, lies, crime.killerId), job.difficulty) };
-    },
-    check: (output, inputs) => {
-      const { crime, evidence, facts, lies } = get(inputs);
-      return estimateProblems(estimateInput(city, evidence, facts, lies, crime.killerId).lowerBound, output as Estimate);
+      return { output: estimateTime(city, evidence, facts, lies, crime.killerId, job.difficulty), checkErrors: [] };
     },
   },
   {

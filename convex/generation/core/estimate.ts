@@ -1,13 +1,16 @@
 import { findRoom, streetRoute, type City } from "./city";
 import type { Evidence, EvidenceSet } from "./evidence/types";
 import type { Facts } from "./facts";
-import type { Estimate, Lies } from "./schemas";
+import type { Difficulty } from "./crimeCast";
+import type { Lies } from "./schemas";
 
-// Stage 10 input: the evidence a good investigation needs, where it is and what it costs in game
-// minutes (fixed action costs from GAME_SYSTEMS.md). The AI turns this into an estimate; code bounds it.
+// Stage 10: the evidence a good investigation needs, where it is and what it costs in game minutes
+// (fixed action costs from GAME_SYSTEMS.md), times a difficulty factor for dead ends.
 
 const BUREAU = "police-bureau";
 const LAB = "forensic-lab";
+/** Real players don't know where to look: dead ends, wrong camera windows, questioning innocents. */
+const DEAD_ENDS: Record<Difficulty, number> = { easy: 2, normal: 2.5, hard: 3 };
 const COST = { search: 15 + 2, cctv: 5, lab: 5, records: 10, phone: 3 + 5, device: 5, interrogation: 9 } as const;
 
 export type EstimateStep = { evidenceId: string; title: string; placeId: string; action: string; minutes: number };
@@ -70,10 +73,16 @@ export function estimateInput(city: City, set: EvidenceSet, facts: Facts, lies: 
   return { steps, travelMinutes, lowerBound };
 }
 
-/** The estimate must be at least the lower bound and at most 4 times it. */
-export function estimateProblems(lowerBound: number, estimate: Estimate) {
-  const m = estimate.estimatedOptimalMinutes;
-  if (m < lowerBound) return [`Estimate ${m} min is below the minimum of ${lowerBound} min.`];
-  if (m > lowerBound * 4) return [`Estimate ${m} min is more than 4 times the minimum of ${lowerBound} min.`];
-  return [];
+export type Estimate = ReturnType<typeof estimateTime>;
+
+/**
+ * How long a good investigation should take: the shortest one times the difficulty's dead-end factor,
+ * rounded up to 15 minutes.
+ */
+export function estimateTime(city: City, set: EvidenceSet, facts: Facts, lies: Lies, killerId: string, difficulty: Difficulty) {
+  const input = estimateInput(city, set, facts, lies, killerId);
+  const factor = DEAD_ENDS[difficulty];
+  const estimatedOptimalMinutes = Math.ceil((input.lowerBound * factor) / 15) * 15;
+  const reasoningSummary = `A perfect investigation takes ${input.lowerBound} min (${input.steps.length} steps, ${input.travelMinutes} min travel). Times ${factor} for dead ends on ${difficulty}.`;
+  return { ...input, estimatedOptimalMinutes, reasoningSummary };
 }

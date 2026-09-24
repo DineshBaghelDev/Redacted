@@ -1,4 +1,4 @@
-import { at, type Brief, type Cast, type CrimeCore, type Estimate, type Lies, type Story, type Texts } from "../generation/core/schemas";
+import { at, type Brief, type Cast, type CrimeCore, type Lies, type Story, type Texts } from "../generation/core/schemas";
 
 // Hand-written easy case ("The Keel Street Ledger"). Used to build and test the game UI and every
 // code stage without spending LLM tokens. It stands in for the outputs of every AI stage.
@@ -484,10 +484,4 @@ export const brief: Brief = {
     "Reported by: Rosa Delgado, his housekeeper.",
     "Head wound; no weapon at the scene.",
   ],
-};
-
-export const estimate: Estimate = {
-  estimatedOptimalMinutes: 540,
-  reasoningSummary:
-    "About 3 hours of steps if you knew where to look. Real players will also chase Lena, Tom and Nora and watch the wrong camera windows first, so roughly 9 hours.",
 };

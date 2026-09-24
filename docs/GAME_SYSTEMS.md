@@ -314,7 +314,7 @@ Deadline:
 
 ```text
 starting game time
-+ AI-estimated optimal investigation minutes
++ code-estimated optimal investigation minutes
 + 1440 minutes
 ```
 

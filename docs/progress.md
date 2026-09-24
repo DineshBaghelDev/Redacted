@@ -40,11 +40,16 @@
 - Removed forced behaviour found in a review of all rules and prompts: lies are no longer demanded from every suspect (only the killer's cover story is required; others lie only when the story gives a reason), secrets are optional, innocents no longer need a provable alibi (the final check now asks that nothing decisive points at an innocent), a suspect on the road at the time of death is fine, and the accomplice's script no longer says they don't know the killer. The lies prompt now sends each person only their own story and evidence. Rerun on the Union Station case: 11 lies became 6 (the killer's 2 plus 4 innocents); ~4 min over 2 tries, with the prompt down from ~16k to ~11k tokens. Also added: a secret alone isn't a reason to lie, and at most 2/3/4 innocent liars on easy/normal/hard (a checked ceiling, not a target). An innocent lies only when the truth would do real damage (arrest, job, reputation, family); embarrassment isn't enough. Secrets in the cast only when serious. Hand-written case dropped Lena's lie (only embarrassment); Tom (fraud) and Nora (theft) keep theirs. Union Station case rerun: 5 lies (killer 2, 3 innocents).
 - Crime: the AI never filled the optional `disabledCamera` (3 tries), so `accomplice` and `disabledCamera` are now required-but-nullable, and a leftover unnamed camera switch-off is dropped. Crime prompt says most killers act alone. Fixed: a failed AI call (e.g. timeout) left the job stuck on "AI is working". That cast was made under the old "everyone has a secret" rule, so new casts should give fewer liars.
 
+- Time estimate (stage 10) is now pure code: the minimum a perfect investigation needs × 2 / 2.5 / 3 for easy / normal / hard, rounded up to 15 min. One AI call fewer per case; the estimate prompt and hand-written estimate are gone. Replay tests now rerun every code stage even when an older recording holds its output.
+- Chunk F (part 1): "Run all" as a Convex workflow (`convex/generation/workflow.ts`): every stage in order with the repair loop, failed AI calls retried 3 times with backoff, the case stops at the first stage still failing. Stage running moved from the tester into `convex/generation/jobs.ts` so both share it. Jobs now have a status (waiting, running, passed, failed, stopped), start/finish times and a test-run label. Tester: "Run all" / "Stop" per job, "Run 5 test cases" (2 easy, 2 normal, 1 hard, one after another), and a stats view per test run (per case: result, time, AI calls, tokens; per AI stage: first-try passes, final passes, repairs, time, tokens, failed calls, most common problems). A running job shows the predicted AI time left from the last 5 passed cases of its difficulty. The 200-seed timeline tests got a 30 s limit (they hit vitest's 5 s default on a busy machine). 90 tests.
+
+- Seeding for variety: the seed now also picks accomplice or not (about 1 case in 5), the part of Day 2 the death falls in, 24 first names and 20 surnames for the case (`core/names.ts`), the exact suspect count and the victim's routine. Prompts state them; crime and cast checks enforce them on AI output. Replay tests no longer apply seeded-brief rules to old recordings. 93 tests. Not deployed yet: waiting for the first 5-case NIM baseline run to finish so it measures the old pipeline.
+
 ## Pending
 
 ### Case generation — remaining chunks
 
-- **F.** Full workflow ("Run all", retries, repair loop), Promptfoo evals, 10-seed smoke run.
+- **F.** ~~Full workflow ("Run all", retries, repair loop)~~ done; first real 5-case test run, cost per case (after provider choice), parallel stages, Promptfoo evals.
 
 ### Making AI-generated cases trustworthy
 
@@ -66,7 +71,7 @@ Planned fixes:
 - [x] **Invariant tests (start of chunk B):** run the timeline builder over ~200 seeds and randomly tweaked copies of the case; whenever the checker says "no problems", assert the basic rules really hold (no overlaps, travel possible). Catches checker gaps and crashes.
 - [x] **One source for rules (chunk D):** prompts get the exact allowed ids (rooms, homes, jobs) and the same rule list the checker uses (crime and cast done; story and lies in chunk E).
 - [x] **Record and replay (chunk D):** save AI cases, passing or failing, as test fixtures so each real case becomes a permanent regression test. Saving is a manual command for now.
-- [ ] **Smoke pass rate (chunk F):** 10-seed run reporting pass rate, time and cost — the real measure of "it works for AI".
+- [ ] **Smoke pass rate (chunk F):** 5-case run reporting pass rate, time and cost — the real measure of "it works for AI".
 
 ### Open questions
 

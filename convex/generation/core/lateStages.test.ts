@@ -3,7 +3,7 @@ import { brief, cast, crimeCore, lies, story } from "../../fixtures/caseEasy";
 import { city } from "../../fixtures/city";
 import { storyPrompt } from "../prompts/story";
 import { briefProblems } from "./brief";
-import { estimateInput, estimateProblems } from "./estimate";
+import { estimateInput, estimateTime } from "./estimate";
 import { buildEvidence } from "./evidence";
 import { buildFacts } from "./facts";
 import { keepValidLies } from "./lies";
@@ -88,13 +88,15 @@ describe("brief", () => {
 });
 
 describe("time estimate", () => {
-  it("builds steps with a lower bound and keeps the estimate within 1–4 times it", () => {
+  it("builds steps with a lower bound and scales it by difficulty", () => {
     const input = estimateInput(city, set, facts, lies, "victor");
     expect(input.steps.map((s) => s.evidenceId)).toEqual(expect.arrayContaining(facts.decisiveIds));
     expect(input.lowerBound).toBeGreaterThan(input.travelMinutes);
-    expect(estimateProblems(input.lowerBound, { estimatedOptimalMinutes: input.lowerBound - 1, reasoningSummary: "" })[0]).toMatch(/below/);
-    expect(estimateProblems(input.lowerBound, { estimatedOptimalMinutes: input.lowerBound * 5, reasoningSummary: "" })[0]).toMatch(/4 times/);
-    expect(estimateProblems(input.lowerBound, { estimatedOptimalMinutes: input.lowerBound * 2, reasoningSummary: "" })).toEqual([]);
+    const easy = estimateTime(city, set, facts, lies, "victor", "easy").estimatedOptimalMinutes;
+    const hard = estimateTime(city, set, facts, lies, "victor", "hard").estimatedOptimalMinutes;
+    expect(easy % 15).toBe(0);
+    expect(easy).toBeGreaterThanOrEqual(input.lowerBound * 2);
+    expect(hard).toBeGreaterThan(easy);
   });
 });
 

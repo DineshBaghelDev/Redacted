@@ -124,7 +124,7 @@ This file records decisions from the technical design discussion so agents do no
 - Exact overlap/addition semantics for two simultaneous players are intentionally unresolved and must be reviewed before the time engine is finalized.
 - Travel uses city-edge travel cost.
 - Reports/forensics may become available after elapsed game time.
-- Default deadline = AI-estimated optimal investigation time + one in-game day (1440 minutes).
+- Default deadline = code-estimated optimal investigation time + one in-game day (1440 minutes).
 - Users may override the default case deadline.
 - Difficulty changes case complexity, not arbitrary action-time multipliers.
 

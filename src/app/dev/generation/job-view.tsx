@@ -3,11 +3,12 @@
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import type { City } from "../../../../convex/generation/core/city";
 import type { EvidenceSet } from "../../../../convex/generation/core/evidence/types";
+import type { Estimate } from "../../../../convex/generation/core/estimate";
 import type { Facts } from "../../../../convex/generation/core/facts";
-import type { Brief, Cast, CrimeCore, Estimate, Lies, Story, Texts } from "../../../../convex/generation/core/schemas";
+import type { Brief, Cast, CrimeCore, Lies, Story, Texts } from "../../../../convex/generation/core/schemas";
 import type { NpcScript } from "../../../../convex/generation/core/scripts";
 import type { Timeline } from "../../../../convex/generation/core/timeline";
 import type { CaseCheck } from "../../../../convex/generation/core/validate";
@@ -29,11 +30,24 @@ export function JobView({ jobId }: { jobId: Id<"generationJobs"> }) {
   const logs = useQuery(api.dev.tester.listLogs, { jobId });
   const job = useQuery(api.dev.tester.getJob, { jobId });
   const stopWaiting = useMutation(api.dev.tester.stopWaiting);
+  const runAll = useMutation(api.dev.tester.runAll);
+  const stopRun = useMutation(api.dev.tester.stopRun);
+  const prediction = useQuery(api.dev.tester.predictTime, { jobId });
   const runStage = useAction(api.dev.tester.runStage);
   const recheckStage = useAction(api.dev.tester.recheckStage);
   const [running, setRunning] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const busy = running !== null || !!job?.running;
+  const generating = job?.status === "queued" || job?.status === "running";
+  const busy = running !== null || !!job?.running || generating;
+
+  async function act(fn: () => Promise<unknown>) {
+    setError("");
+    try {
+      await fn();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
 
   async function run(stage: string, handWritten = false, recheck = false) {
     setRunning(stage);
@@ -89,6 +103,23 @@ export function JobView({ jobId }: { jobId: Id<"generationJobs"> }) {
   return (
     <div className="flex flex-col gap-4">
       {error && <p className="text-red-400">{error}</p>}
+      <div className="flex items-center gap-3">
+        {generating ? (
+          <button className={button} onClick={() => act(() => stopRun({ jobId }))}>
+            Stop{job?.batch ? " test run" : ""}
+          </button>
+        ) : (
+          <button className={button} disabled={busy} onClick={() => act(() => runAll({ jobId }))}>
+            Run all
+          </button>
+        )}
+        {job?.status && <RunStatus job={job} />}
+        {prediction && (
+          <span className="opacity-80">
+            about {prediction.minutesLeft} min of AI time left (average of the last {prediction.basedOn} {job?.difficulty} cases)
+          </span>
+        )}
+      </div>
       {job?.running && (
         <p className="border border-yellow-200/60 p-2 text-yellow-200">
           AI is working on &quot;{job.running.stage}&quot;
@@ -156,5 +187,19 @@ export function JobView({ jobId }: { jobId: Id<"generationJobs"> }) {
         );
       })}
     </div>
+  );
+}
+
+/** Where "Run all" is for this job. */
+function RunStatus({ job }: { job: Doc<"generationJobs"> }) {
+  const color = { queued: "", running: "text-yellow-200", passed: "text-green-400", failed: "text-red-400", stopped: "opacity-60" }[job.status!];
+  const minutes = job.startedAt && job.finishedAt ? Math.round((job.finishedAt - job.startedAt) / 60000) : undefined;
+  return (
+    <span className={color}>
+      {job.status === "queued" ? "waiting its turn" : job.status}
+      {job.failedStage && ` at ${job.failedStage}`}
+      {minutes !== undefined && ` · ${minutes} min`}
+      {job.error && <span className="block text-xs">{job.error}</span>}
+    </span>
   );
 }

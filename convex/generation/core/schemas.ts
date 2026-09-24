@@ -163,16 +163,9 @@ export const briefSchema = z.object({
   initialFacts: z.array(z.string()),
 });
 
-/** Stage 10: how long a good investigation should take, in game minutes. */
-export const estimateSchema = z.object({
-  estimatedOptimalMinutes: z.number().int(),
-  reasoningSummary: z.string(),
-});
-
 export type CrimeCore = z.infer<typeof crimeCoreSchema>;
 export type Texts = z.infer<typeof textsSchema>;
 export type Brief = z.infer<typeof briefSchema>;
-export type Estimate = z.infer<typeof estimateSchema>;
 export type Lie = z.infer<typeof lieSchema>;
 export type Lies = z.infer<typeof liesSchema>;
 export type Character = z.infer<typeof characterSchema>;

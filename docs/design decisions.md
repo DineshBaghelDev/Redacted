@@ -38,7 +38,12 @@
 - Witnesses per case: 3–6.
 - When AI output fails the checks, the AI gets its answer back with the exact problems, up to 2 times; lies and written texts that still fail are dropped rather than failing the case.
 - The case brief tells players only who died, where, when, who reported it, and the weapon only if it was left at the scene.
-- The time estimate must be between the minimum a perfect investigation needs and 4 times that.
+- The time estimate is worked out by code, not AI: the minimum a perfect investigation needs × 2 (easy), 2.5 (normal) or 3 (hard) for dead ends, rounded up to 15 minutes.
+- "Run all" stops a case at the first stage that still has problems after its repairs (no new-seed restart yet). Failed AI calls (network, rate limit, timeout) are retried up to 3 times with a growing wait; failed checks go to repairs instead.
+- Test runs are 5 cases (2 easy, 2 normal, 1 hard), generated one after another so each case's time isn't slowed by the others.
+- Generation time left is predicted from the average AI time per stage over the last 5 passed cases of the same difficulty.
+- For variety the seed also picks: accomplice or not (about 1 in 5), the part of Day 2 the death happens in, the exact number of suspects, the victim's daily routine, and the names the case may use. The cover-up stays the AI's choice because it depends on the story.
+- V1 cases are murders only. Other crimes would need a different case-close scoring.
 - Lying isn't compulsory: innocent people tell the truth to clear themselves and lie only when the truth would do real damage (arrest, job, reputation, family). The killer always has a cover story. At most 2/3/4 innocent liars on easy/normal/hard.
 - Innocent suspects don't need a provable alibi; some cases leave people unaccounted for. Nothing decisive may point at an innocent.
 - Not everyone has a secret.

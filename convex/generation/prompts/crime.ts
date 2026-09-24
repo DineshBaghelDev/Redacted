@@ -15,6 +15,9 @@ Brief (must follow):
 - motive type: ${brief.motiveType}
 - weapon category: ${brief.weaponCategory}
 - crime scene place: ${brief.scenePlaceId}
+- accomplice: ${brief.accomplice ? "yes, the killer has a helper" : "none, the killer acts alone"}
+- time of death: Day 2, ${brief.deathTime.label}
+- first names to pick ids from: ${brief.firstNames.join(", ")}
 
 Rules:
 ${CRIME_RULES.map((r) => `- ${r}`).join("\n")}
@@ -24,7 +27,7 @@ Field notes:
 - method: one sentence on how the victim died.
 - weapon.originRoomId: where the weapon was before the crime, copied exactly from the room list (e.g. a kitchen or garage at the scene, or a room at a home or workplace). Never invent ids; homes aren't assigned to people yet.
 - disabledCamera: { cameraId, from, to } (minutes) if coverUp includes "disable-camera", otherwise null. Most cases don't switch off a camera.
-- accomplice: usually null — most killers act alone. Add one only when this story needs a helper; role is fake-alibi, weapon-disposal or distraction.
+- accomplice: null unless the brief says there is one; then pick the role that fits the story: fake-alibi, weapon-disposal or distraction.
 
 City rooms (id Name):
 ${roomsText(city)}

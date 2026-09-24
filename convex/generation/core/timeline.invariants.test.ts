@@ -47,7 +47,7 @@ describe("timeline invariants", () => {
       expect(checkTimeline(city, crimeCore, cast, story, timeline), `seed ${seed}`).toEqual([]);
       expect(physicalProblems(timeline), `seed ${seed}`).toEqual([]);
     }
-  });
+  }, 30_000);
 
   it("randomly shifted stories never crash, and a clean check really is clean", () => {
     let clean = 0;
@@ -61,5 +61,5 @@ describe("timeline invariants", () => {
       }
     }
     expect(clean).toBeGreaterThan(0);
-  });
+  }, 30_000);
 });

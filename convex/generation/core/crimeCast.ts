@@ -1,7 +1,8 @@
 import { findRoom, type City } from "./city";
 import { listCameras } from "./evidence/cctv";
+import { FIRST_NAMES, SURNAMES } from "./names";
 import { createRng } from "./rng";
-import { crimeCoreSchema, type Cast, type CrimeCore } from "./schemas";
+import { crimeCoreSchema, routineTypes, type Cast, type CrimeCore } from "./schemas";
 
 // Rules for the crime core and cast. The same text goes into the AI prompts and the checks below
 // enforce it, so the AI is told exactly what the checker will reject.
@@ -14,12 +15,12 @@ export const SUSPECTS: Record<Difficulty, [number, number]> = { easy: [3, 4], no
 export const WITNESSES: [number, number] = [3, 6];
 
 export const CRIME_RULES = [
-  "Ids are short lowercase first names (e.g. \"daniel\"). The cast stage creates these people later.",
+  "Ids are lowercase first names from the brief's name list (e.g. \"amara\"). The cast stage creates these people later.",
   "The victim, killer, accomplice and whoever finds the body are all different people. Nobody finds their own crime.",
   "Times are whole minutes from Day 1 00:00 (Day 2 00:00 = 1440). windowStart is 0.",
   "The death happens on Day 2 (1440–2879). The body is found after the death, before the end of Day 3 (4319).",
   "sceneRoomId and weapon.originRoomId must be room ids from the city list; the scene must be at the place given in the brief.",
-  "Use the motive type and weapon category from the brief.",
+  "Follow the brief: motive type, weapon category, whether there is an accomplice, and the part of Day 2 the death happens in.",
   "coverUp lists only what the killer really does, each step once. If it includes \"disable-camera\", fill disabledCamera with a camera id from the list; otherwise leave it out.",
 ];
 
@@ -34,13 +35,43 @@ export const castRules = (difficulty: Difficulty) => [
   "appearance is what a camera would see: height, build, usual clothing, and shoes for anyone who might leave footprints.",
 ];
 
-/** Motive type, weapon category and crime-scene place picked from the seed, so cases vary. */
+/** Parts of Day 2 the death can fall in, as [from, to) game minutes. */
+const DEATH_TIMES = [
+  { label: "night (00:00–06:00)", from: DAY, to: DAY + 360 },
+  { label: "morning (06:00–12:00)", from: DAY + 360, to: DAY + 720 },
+  { label: "afternoon (12:00–18:00)", from: DAY + 720, to: DAY + 1080 },
+  { label: "evening (18:00–24:00)", from: DAY + 1080, to: 2 * DAY },
+];
+
+/** Share of cases with an accomplice. Left to the AI, it never picks one. */
+const ACCOMPLICE_SHARE = 0.2;
+
+/**
+ * The seed's choices for the crime, so cases vary: motive type, weapon category, crime-scene place,
+ * accomplice or not, the part of Day 2 the death falls in, and the names this case may use.
+ */
 export function crimeBrief(city: City, seed: number) {
   const rng = createRng(seed + 7);
   const motives = crimeCoreSchema.shape.motive.shape.type.options;
   const weapons = crimeCoreSchema.shape.weapon.shape.category.options;
   const scenes = city.places.filter((p) => p.crimeSceneAllowed);
-  return { motiveType: rng.pick(motives), weaponCategory: rng.pick(weapons), scenePlaceId: rng.pick(scenes).id };
+  // New picks go after the old ones so existing seeds keep their motive, weapon and scene.
+  return {
+    motiveType: rng.pick(motives),
+    weaponCategory: rng.pick(weapons),
+    scenePlaceId: rng.pick(scenes).id,
+    accomplice: rng.next() < ACCOMPLICE_SHARE,
+    deathTime: rng.pick(DEATH_TIMES),
+    firstNames: rng.shuffle(FIRST_NAMES).slice(0, 24),
+    surnames: rng.shuffle(SURNAMES).slice(0, 20),
+  };
+}
+
+/** The seed's choices for the cast: the exact number of suspects and the victim's daily routine. */
+export function castBrief(seed: number, difficulty: Difficulty) {
+  const rng = createRng(seed + 11);
+  const [min, max] = SUSPECTS[difficulty];
+  return { suspects: rng.int(min, max), victimRoutine: rng.pick(routineTypes) };
 }
 
 /**
@@ -75,6 +106,11 @@ export function crimeProblems(city: City, crime: CrimeCore, brief?: ReturnType<t
     if (crime.motive.type !== brief.motiveType) problems.push(`Motive type must be "${brief.motiveType}".`);
     if (crime.weapon.category !== brief.weaponCategory) problems.push(`Weapon category must be "${brief.weaponCategory}".`);
     if (scene && scene.place.id !== brief.scenePlaceId) problems.push(`The crime must happen at ${brief.scenePlaceId}.`);
+    if (!!crime.accomplice !== brief.accomplice) problems.push(brief.accomplice ? "This case needs an accomplice." : "This case has no accomplice.");
+    const { deathTime } = brief;
+    if (crime.timeOfDeath < deathTime.from || crime.timeOfDeath >= deathTime.to) problems.push(`The death must happen on Day 2 in the ${deathTime.label}.`);
+    const names = new Set(brief.firstNames.map((n) => n.toLowerCase()));
+    for (const id of people) if (!names.has(id!)) problems.push(`"${id}" isn't a lowercase first name from the name list.`);
   }
   return problems;
 }
@@ -84,7 +120,7 @@ export function crimeProblems(city: City, crime: CrimeCore, brief?: ReturnType<t
  *
  * @returns Plain problem descriptions; empty when fine.
  */
-export function castProblems(city: City, crime: CrimeCore, cast: Cast, difficulty?: Difficulty) {
+export function castProblems(city: City, crime: CrimeCore, cast: Cast, difficulty?: Difficulty, seed?: number) {
   const problems: string[] = [];
   const people = new Map(cast.characters.map((c) => [c.id, c]));
 
@@ -100,6 +136,21 @@ export function castProblems(city: City, crime: CrimeCore, cast: Cast, difficult
   if (difficulty) {
     const [min, max] = SUSPECTS[difficulty];
     if (count("suspect") < min || count("suspect") > max) problems.push(`Need ${min}–${max} suspects for ${difficulty} (found ${count("suspect")}).`);
+  }
+  // The seeded brief (only for AI output; the hand-written case predates it).
+  if (seed !== undefined && difficulty) {
+    const { suspects, victimRoutine } = castBrief(seed, difficulty);
+    if (count("suspect") !== suspects) problems.push(`This case needs exactly ${suspects} suspects (found ${count("suspect")}).`);
+    const victim = people.get(crime.victimId);
+    if (victim && victim.routine !== victimRoutine) problems.push(`The victim's routine must be "${victimRoutine}".`);
+    const { firstNames, surnames } = crimeBrief(city, seed);
+    for (const c of cast.characters) {
+      const parts = c.name.split(" ");
+      const [first, last] = [parts[0], parts[parts.length - 1]];
+      if (!firstNames.includes(first as (typeof firstNames)[number])) problems.push(`${c.name}: the first name must come from the name list.`);
+      if (parts.length < 2 || !surnames.includes(last as (typeof surnames)[number])) problems.push(`${c.name}: the surname must come from the surname list.`);
+      if (c.id !== first.toLowerCase()) problems.push(`${c.name}'s id must be "${first.toLowerCase()}".`);
+    }
   }
   if (count("witness") < WITNESSES[0] || count("witness") > WITNESSES[1]) {
     problems.push(`Need ${WITNESSES[0]}–${WITNESSES[1]} witnesses (found ${count("witness")}).`);

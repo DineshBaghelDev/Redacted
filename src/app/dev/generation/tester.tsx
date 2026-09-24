@@ -5,6 +5,7 @@ import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { JobView } from "./job-view";
+import { StatsView } from "./stats-view";
 
 const box = "border border-cyan-300/60 p-3";
 const button = "border border-cyan-300 px-3 py-1 hover:text-yellow-200 disabled:opacity-50";
@@ -28,6 +29,9 @@ export function Tester() {
 function Jobs() {
   const jobs = useQuery(api.dev.tester.listJobs);
   const createJob = useMutation(api.dev.tester.createJob);
+  const runTestBatch = useMutation(api.dev.tester.runTestBatch);
+  const batches = useQuery(api.dev.tester.listBatches);
+  const [batch, setBatch] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<"easy" | "normal" | "hard">("easy");
   const [seed, setSeed] = useState("");
   const [selected, setSelected] = useState<Id<"generationJobs"> | null>(null);
@@ -35,6 +39,12 @@ function Jobs() {
   async function create() {
     const id = await createJob({ difficulty, seed: seed ? Number(seed) : undefined });
     setSelected(id);
+    setBatch(null);
+  }
+
+  async function startTestRun() {
+    setBatch(await runTestBatch());
+    setSelected(null);
   }
 
   return (
@@ -60,17 +70,40 @@ function Jobs() {
             New job
           </button>
         </div>
+        <button className={button} onClick={startTestRun}>
+          Run 5 test cases (2 easy, 2 normal, 1 hard)
+        </button>
+        {batches && batches.length > 0 && <p className="mt-2 opacity-60">Test runs</p>}
+        {batches?.map((b) => (
+          <button
+            key={b}
+            className={`text-left ${batch === b ? "text-yellow-200" : ""}`}
+            onClick={() => {
+              setBatch(b);
+              setSelected(null);
+            }}
+          >
+            {b}
+          </button>
+        ))}
+        <p className="mt-2 opacity-60">Jobs</p>
         {jobs?.map((job) => (
           <button
             key={job._id}
             className={`text-left ${selected === job._id ? "text-yellow-200" : ""}`}
-            onClick={() => setSelected(job._id)}
+            onClick={() => {
+              setSelected(job._id);
+              setBatch(null);
+            }}
           >
             {new Date(job.createdAt).toLocaleString()} · {job.difficulty} · seed {job.seed}
+            {job.status && ` · ${job.status === "queued" ? "waiting" : job.status}`}
           </button>
         ))}
       </aside>
-      <section className={box}>{selected ? <JobView jobId={selected} /> : <p>Pick or create a job.</p>}</section>
+      <section className={box}>
+        {selected ? <JobView jobId={selected} /> : batch ? <StatsView batch={batch} /> : <p>Pick or create a job.</p>}
+      </section>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { city } from "../../fixtures/city";
 import { parseJson } from "../llm";
 import { castPrompt } from "../prompts/cast";
 import { crimePrompt } from "../prompts/crime";
-import { castProblems, castRules, CRIME_RULES, crimeBrief, crimeProblems } from "./crimeCast";
+import { castBrief, castProblems, castRules, CRIME_RULES, crimeBrief, crimeProblems } from "./crimeCast";
 
 describe("crime core checks", () => {
   it("hand-written crime passes", () => {
@@ -30,6 +30,28 @@ describe("crime core checks", () => {
     const other = { ...brief, motiveType: brief.motiveType === "money" ? ("revenge" as const) : ("money" as const) };
     expect(crimeProblems(city, crimeCore, other).join("\n")).toMatch(/Motive type must be/);
   });
+
+  it("the brief also fixes accomplice, time of death and names", () => {
+    const brief = {
+      ...crimeBrief(city, 42),
+      accomplice: true,
+      deathTime: { label: "night (00:00–06:00)", from: 1440, to: 1800 },
+      firstNames: ["Amara"] as ReturnType<typeof crimeBrief>["firstNames"],
+    };
+    const problems = crimeProblems(city, crimeCore, brief).join("\n");
+    expect(problems).toMatch(/needs an accomplice/);
+    expect(problems).toMatch(/night/);
+    expect(problems).toMatch(/"victor" isn't a lowercase first name/);
+  });
+
+  it("seeds spread across accomplices, death times and names", () => {
+    const briefs = Array.from({ length: 500 }, (_, seed) => crimeBrief(city, seed));
+    const withAccomplice = briefs.filter((b) => b.accomplice).length;
+    expect(withAccomplice).toBeGreaterThan(50);
+    expect(withAccomplice).toBeLessThan(150);
+    expect(new Set(briefs.map((b) => b.deathTime.label)).size).toBe(4);
+    expect(new Set(briefs.map((b) => b.firstNames[0])).size).toBeGreaterThan(30);
+  });
 });
 
 describe("cast checks", () => {
@@ -48,6 +70,20 @@ describe("cast checks", () => {
     expect(problems.join("\n")).toMatch(/unknown home nowhere:1/);
     expect(problems.join("\n")).toMatch(/no free "executive" job/);
   });
+
+  it("AI casts must follow the seeded brief: suspect count, victim routine, names", () => {
+    for (let seed = 0; seed < 50; seed++) {
+      const { suspects } = castBrief(seed, "normal");
+      expect(suspects).toBeGreaterThanOrEqual(6);
+      expect(suspects).toBeLessThanOrEqual(7);
+    }
+    const seed = 3;
+    const { victimRoutine } = castBrief(seed, "easy");
+    const problems = castProblems(city, crimeCore, cast, "easy", seed).join("\n");
+    // The hand-written names aren't from the seeded pool.
+    expect(problems).toMatch(/Daniel .*: the first name must come from the name list/);
+    if (victimRoutine !== "office") expect(problems).toMatch(/victim's routine must be/);
+  });
 });
 
 describe("prompts", () => {
@@ -56,9 +92,11 @@ describe("prompts", () => {
     for (const rule of CRIME_RULES) expect(crime).toContain(rule);
     expect(crime).toContain(crimeBrief(city, 7).scenePlaceId);
     expect(crime).toContain("keel-14:kitchen");
-    const castText = castPrompt(city, crimeCore, "normal");
+    const castText = castPrompt(city, crimeCore, "normal", 7);
     for (const rule of castRules("normal")) expect(castText).toContain(rule);
     expect(castText).toContain("carver-towers:unit-5a");
+    expect(castText).toContain(`exactly ${castBrief(7, "normal").suspects} suspects`);
+    expect(crime).toContain(crimeBrief(city, 7).firstNames.join(", "));
   });
 });
 
