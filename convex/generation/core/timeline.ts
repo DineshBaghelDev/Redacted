@@ -183,16 +183,19 @@ export function checkTimeline(city: City, crime: CrimeCore, cast: Cast, story: S
   // Each person: no double booking, enough travel time
   for (const c of cast.characters) {
     const mine = timeline.entries.filter((e) => e.actorId === c.id).sort((a, b) => a.start - b.start);
+    const what = (e: TimelineEntry) => `"${e.action}" (${e.storyEventId ?? "everyday routine"}, ${formatTime(e.start)}–${formatTime(e.end)})`;
     for (let i = 0; i + 1 < mine.length; i++) {
       const [a, b] = [mine[i], mine[i + 1]];
       if (b.start < a.end) {
-        const what = (e: TimelineEntry) => `"${e.action}" (${e.storyEventId ?? "everyday routine"}, ${formatTime(e.start)}–${formatTime(e.end)})`;
         problems.push(`${c.name} is in two places at once: ${what(a)} overlaps ${what(b)}. Move or shorten one of your events.`);
         continue;
       }
       const need = travelMinutes(city, a.placeId, b.placeId);
       if (b.start - a.end < need) {
-        problems.push(`${c.name} can't get from ${a.placeId} to ${b.placeId} by ${formatTime(b.start)} (needs ${need} min, has ${b.start - a.end}).`);
+        // Exact target times: repairs fix this far more reliably than from the shortfall alone.
+        problems.push(
+          `${c.name} can't get from ${a.placeId} to ${b.placeId} in time (needs ${need} min, has ${b.start - a.end}): ${what(a)} then ${what(b)}. Start the second at ${formatTime(a.end + need)} or later, or end the first by ${formatTime(b.start - need)}.`,
+        );
       }
     }
   }
