@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
   dsn: "https://08ec195526e48202b0e04ad2b7305203@o4512041425436672.ingest.de.sentry.io/4512041438740560",
+  enableLogs: true,
 
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
@@ -22,10 +23,8 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
 
   dataCollection: {
-    // To disable sending user data and HTTP bodies, uncomment the lines below. For more info visit:
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#dataCollection
-    // userInfo: false,
-    // httpBodies: [],
+    userInfo: false,
+    httpBodies: [],
   },
 });
 

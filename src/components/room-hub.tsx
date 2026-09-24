@@ -37,6 +37,14 @@ export function RoomHub() {
         action === "create"
           ? await createRoom({ nickname })
           : await joinRoom({ roomCode, nickname });
+      if ("ok" in result && !result.ok) {
+        setError(result.message);
+        return;
+      }
+      if (!result.roomCode) {
+        setError("Room unavailable.");
+        return;
+      }
       setJoinedRoomCode(result.roomCode);
       setRoomCode(result.roomCode);
     } catch (caught) {
@@ -80,8 +88,11 @@ export function RoomHub() {
         </div>
         {joinedRoomCode ? (
           <p className="rounded-lg border-[3px] border-[#1976d2] px-3 py-2 text-center text-sm">
-            Joined room {joinedRoomCode}
-            {room ? ` (${room.playerCount}/2)` : ""}
+            {room === null
+              ? `Room ${joinedRoomCode} unavailable`
+              : room
+                ? `Joined room ${joinedRoomCode} (${room.playerCount}/2)`
+                : "Loading room..."}
           </p>
         ) : null}
         {!isLoading && !isAuthenticated ? (
