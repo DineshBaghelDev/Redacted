@@ -63,3 +63,13 @@ describe("crime clean-up", () => {
     expect(out.coverUp).toEqual(["wipe-prints"]);
   });
 });
+
+describe("an unusable repair", () => {
+  it("keeps the earlier usable answer for the next repair and at the end", async () => {
+    fakeAi.mockReset();
+    fakeAi.mockResolvedValueOnce({ ...reply(null), problems: ["The reply wasn't valid JSON."] });
+    const earlier = { output: lies, problems: ["one small problem"] };
+    const mid = await runAiAttempt(getStage("lies"), inputs, job, 1, earlier);
+    expect(mid).toMatchObject({ output: lies, problems: ["one small problem"], retry: true });
+  });
+});

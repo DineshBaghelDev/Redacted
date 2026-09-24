@@ -60,6 +60,9 @@ export async function runAiAttempt(
 
   let output = call.output;
   let problems = call.problems.length ? call.problems : checkOutput(stage, output, inputs, job, true);
+  // An unusable reply (not JSON, wrong shape) never replaces a usable earlier answer: the next repair
+  // works on that answer again, and it's what's kept if the repairs run out.
+  if (call.problems.length && previous && stage.schema.safeParse(previous.output).success) ({ output, problems } = previous);
   const retry = problems.length > 0 && attempt < MAX_REPAIRS;
   if (!retry && problems.length > 0) {
     // A repair can make things worse: keep the earlier answer if it had fewer problems.
