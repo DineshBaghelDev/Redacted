@@ -12,6 +12,9 @@ export const MODELS = {
   npc: "moonshotai/kimi-k2.6",
 } as const;
 
+/** Stop waiting before Convex's 10-minute action limit kills the try with no log. */
+const TIMEOUT_MS = 9 * 60 * 1000;
+
 export type LlmCall = {
   output: unknown;
   /** Schema problems; empty when the output has the right shape. */
@@ -64,6 +67,7 @@ export async function generateJson(args: { schema: z.ZodType; system: string; pr
         system: args.system,
         prompt,
         output: Output.object({ schema: args.schema }),
+        abortSignal: AbortSignal.timeout(TIMEOUT_MS - (Date.now() - started)),
       });
       return {
         ...base,

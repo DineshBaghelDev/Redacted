@@ -5,11 +5,36 @@ import { checkCity, cityCapacity } from "./core/city";
 import { castProblems, crimeBrief, crimeProblems } from "./core/crimeCast";
 import { castPrompt } from "./prompts/cast";
 import { crimePrompt, SYSTEM } from "./prompts/crime";
-import { castSchema, crimeCoreSchema, liesSchema, schemaProblems, storySchema, type Cast, type CrimeCore, type Lies, type Story } from "./core/schemas";
+import { briefInput, briefProblems } from "./core/brief";
+import { estimateInput, estimateProblems } from "./core/estimate";
+import {
+  briefSchema,
+  castSchema,
+  crimeCoreSchema,
+  estimateSchema,
+  liesSchema,
+  schemaProblems,
+  storySchema,
+  textsSchema,
+  type Brief,
+  type Cast,
+  type CrimeCore,
+  type Estimate,
+  type Lies,
+  type Story,
+  type Texts,
+} from "./core/schemas";
+import { storyProblems } from "./core/story";
+import { textProblems, textTargets } from "./core/text";
+import { briefPrompt } from "./prompts/brief";
+import { estimatePrompt } from "./prompts/estimate";
+import { liesPrompt } from "./prompts/lies";
+import { storyPrompt } from "./prompts/story";
+import { textPrompt } from "./prompts/text";
 import { buildEvidence, evidenceProblems } from "./core/evidence";
 import type { EvidenceSet } from "./core/evidence/types";
 import { buildFacts, factProblems, type Facts } from "./core/facts";
-import { checkLies } from "./core/lies";
+import { checkLies, keepValidLies } from "./core/lies";
 import { buildScripts, scriptProblems } from "./core/scripts";
 import { buildTimeline, checkTimeline, type Timeline } from "./core/timeline";
 import { validateCase, validationProblems } from "./core/validate";
@@ -38,7 +63,19 @@ export type StageDef = {
   check?: (output: unknown, inputs: Record<string, unknown>, job: StageJob, fromAi: boolean) => string[];
   /** LLM stages with AI built: the prompt for this job. */
   prompt?: (inputs: Record<string, unknown>, job: StageJob) => { system: string; prompt: string };
+  /** LLM stages: last clean-up after repairs run out (e.g. drop lies that still can't be caught). */
+  finalize?: (output: unknown, inputs: Record<string, unknown>, job: StageJob) => unknown;
 };
+
+type In = Record<string, unknown>;
+const get = (inputs: In) => ({
+  crime: inputs.crime as CrimeCore,
+  cast: inputs.cast as Cast,
+  story: inputs.story as Story,
+  evidence: inputs.evidence as EvidenceSet,
+  facts: inputs.facts as Facts,
+  lies: inputs.lies as Lies,
+});
 
 /**
  * Pipeline stages in run order. Each stage reads earlier drafts and returns its output plus check errors.
@@ -79,6 +116,14 @@ export const stages: StageDef[] = [
     inputs: ["crime", "cast"],
     schema: storySchema,
     handWritten: easyCase.story,
+    prompt: (inputs, job) => {
+      const { crime, cast } = get(inputs);
+      return { system: SYSTEM, prompt: storyPrompt(city, crime, cast, job.difficulty) };
+    },
+    check: (output, inputs, job) => {
+      const { crime, cast } = get(inputs);
+      return storyProblems(city, crime, cast, output as Story, job.difficulty, job.seed);
+    },
   },
   {
     name: "timeline",
@@ -121,8 +166,40 @@ export const stages: StageDef[] = [
     inputs: ["crime", "cast", "story", "evidence"],
     schema: liesSchema,
     handWritten: easyCase.lies,
-    check: (output, inputs) =>
-      checkLies(inputs.crime as CrimeCore, inputs.cast as Cast, inputs.story as Story, inputs.evidence as EvidenceSet, output as Lies),
+    prompt: (inputs) => {
+      const { crime, cast, story, evidence } = get(inputs);
+      return { system: SYSTEM, prompt: liesPrompt(crime, cast, story, evidence) };
+    },
+    check: (output, inputs) => {
+      const { crime, cast, story, evidence } = get(inputs);
+      return checkLies(crime, cast, story, evidence, output as Lies);
+    },
+    finalize: (output, inputs) => {
+      const { crime, cast, story, evidence } = get(inputs);
+      return keepValidLies(crime, cast, story, evidence, output as Lies);
+    },
+  },
+  {
+    name: "text",
+    label: "7 · Written text (messages, files, statements)",
+    kind: "llm",
+    inputs: ["cast", "story", "evidence"],
+    schema: textsSchema,
+    handWritten: easyCase.texts,
+    prompt: (inputs) => {
+      const { cast, story, evidence } = get(inputs);
+      return { system: SYSTEM, prompt: textPrompt(textTargets(cast, story, evidence)) };
+    },
+    check: (output, inputs) => {
+      const { cast, story, evidence } = get(inputs);
+      return textProblems(city, cast, textTargets(cast, story, evidence), output as Texts);
+    },
+    // Texts that still add facts are dropped; the plain wording stays for those.
+    finalize: (output, inputs) => {
+      const { cast, story, evidence } = get(inputs);
+      const targets = textTargets(cast, story, evidence);
+      return { texts: (output as Texts).texts.filter((t) => textProblems(city, cast, targets, { texts: [t] }).length === 0) };
+    },
   },
   {
     name: "scripts",
@@ -133,6 +210,38 @@ export const stages: StageDef[] = [
       const [crime, story] = [inputs.crime as CrimeCore, inputs.story as Story];
       const output = buildScripts(city, crime, inputs.cast as Cast, story, inputs.evidence as EvidenceSet, inputs.lies as Lies);
       return { output, checkErrors: scriptProblems(crime, story, output) };
+    },
+  },
+  {
+    name: "brief",
+    label: "9 · Case brief",
+    kind: "llm",
+    inputs: ["crime", "cast", "story"],
+    schema: briefSchema,
+    handWritten: easyCase.brief,
+    prompt: (inputs) => {
+      const { crime, cast, story } = get(inputs);
+      return { system: SYSTEM, prompt: briefPrompt(briefInput(city, crime, cast, story)) };
+    },
+    check: (output, inputs) => {
+      const { crime, cast, story } = get(inputs);
+      return briefProblems(crime, cast, story, output as Brief);
+    },
+  },
+  {
+    name: "estimate",
+    label: "10 · Time estimate",
+    kind: "llm",
+    inputs: ["crime", "evidence", "facts", "lies"],
+    schema: estimateSchema,
+    handWritten: easyCase.estimate,
+    prompt: (inputs, job) => {
+      const { crime, evidence, facts, lies } = get(inputs);
+      return { system: SYSTEM, prompt: estimatePrompt(estimateInput(city, evidence, facts, lies, crime.killerId), job.difficulty) };
+    },
+    check: (output, inputs) => {
+      const { crime, evidence, facts, lies } = get(inputs);
+      return estimateProblems(estimateInput(city, evidence, facts, lies, crime.killerId).lowerBound, output as Estimate);
     },
   },
   {

@@ -26,6 +26,8 @@ export default defineSchema({
     difficulty: v.union(v.literal("easy"), v.literal("normal"), v.literal("hard")),
     createdBy: v.string(),
     createdAt: v.number(),
+    /** Set while an AI stage runs in the background: which stage and which try (0 = first, then repairs). */
+    running: v.optional(v.object({ stage: v.string(), attempt: v.number() })),
   }),
   generationDrafts: defineTable({
     jobId: v.id("generationJobs"),
@@ -49,6 +51,8 @@ export default defineSchema({
     inputTokens: v.optional(v.number()),
     outputTokens: v.optional(v.number()),
     ms: v.number(),
+    /** 0 = first try, then 1, 2 for repairs. */
+    attempt: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_job", ["jobId"]),
 });

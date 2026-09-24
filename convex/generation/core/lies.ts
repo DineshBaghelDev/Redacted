@@ -1,6 +1,16 @@
 import type { EvidenceSet } from "./evidence/types";
 import type { Cast, CrimeCore, Lie, Lies, Story } from "./schemas";
 
+// Lie rules: the same text goes into the AI prompt, and checkLies enforces it.
+export const LIE_RULES = [
+  "Lies come from personality and what the person protects, never at random. Innocent people lie about their secrets and embarrassing moments; the killer lies about the crime.",
+  "The killer must have a \"whereabouts\" lie whose truthIds include the murder event.",
+  "truthIds are ids of story events, messages/calls or purchases the lie hides (may be empty for a secret with no event).",
+  "disprovingEvidenceIds are evidence ids from the list. Each must be about the liar or come from something the lie hides. Never a background item, and never the liar's own statement.",
+  "whenCaught follows personality: nervous people tell the full truth (\"full-truth\"), stubborn ones admit only what the proof shows (\"admit-shown\"), cunning ones switch to a backup lie (\"backup-lie\"), which then must exist and needs at least one piece of proof the first lie doesn't use.",
+  "Lie ids are unique. The victim can't lie.",
+];
+
 /**
  * Checks each lie can be caught in play: it hides something real, and evidence that exists and is
  * about the liar (or comes from what the lie hides) disproves it. The killer must have a whereabouts
@@ -57,4 +67,22 @@ export function checkLies(crime: CrimeCore, cast: Cast, story: Story, set: Evide
   const ids = lies.map((l) => l.id);
   for (const id of new Set(ids)) if (ids.filter((x) => x === id).length > 1) problems.push(`Two lies share the id "${id}".`);
   return problems;
+}
+
+/**
+ * Drops lies that can't be caught in play (as the design says), keeping the rest. The killer's
+ * required whereabouts lie is reported by checkLies, not fixed here.
+ */
+export function keepValidLies(crime: CrimeCore, cast: Cast, story: Story, set: EvidenceSet, lies: Lies): Lies {
+  const ok = (lie: Lie) => checkLies(crime, cast, story, set, { lies: [lie] }).filter((p) => !p.includes("needs a whereabouts lie")).length === 0;
+  const kept: Lie[] = [];
+  for (const lie of lies.lies) {
+    if (ok(lie)) kept.push(lie);
+    else if (lie.backupLie) {
+      // A broken backup lie shouldn't cost the main one: drop the backup, admit what the proof shows.
+      const simpler = { ...lie, backupLie: undefined, whenCaught: lie.whenCaught === "backup-lie" ? ("admit-shown" as const) : lie.whenCaught };
+      if (ok(simpler)) kept.push(simpler);
+    }
+  }
+  return { lies: kept };
 }

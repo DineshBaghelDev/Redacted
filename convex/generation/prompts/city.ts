@@ -1,4 +1,4 @@
-import type { City } from "../core/city";
+import { streetRoute, type City } from "../core/city";
 import { listCameras } from "../core/evidence/cctv";
 
 // Compact city descriptions for prompts. Built from the same city data the checks use.
@@ -35,5 +35,19 @@ export function publicPlacesText(city: City) {
   return city.places
     .filter((p) => p.kind === "public")
     .map((p) => `${p.id} · ${p.name}`)
+    .join("\n");
+}
+
+/** Rooms with entrances marked and search spots, for writing story events. */
+export function storyRoomsText(city: City) {
+  const room = (r: City["places"][number]["building"]["rooms"][number]) =>
+    `  ${r.id} ${r.name}${r.isEntrance ? " [entrance]" : ""}${r.itemSlots.length ? ` {spots: ${r.itemSlots.join(", ")}}` : ""}`;
+  return city.places.map((p) => `${p.id} · ${p.name}:\n${p.building.rooms.map(room).join("\n")}`).join("\n");
+}
+
+/** Travel minutes between every pair of places (shortest street route). */
+export function travelText(city: City) {
+  return city.places
+    .map((a) => `${a.id}: ${city.places.filter((b) => b.id !== a.id).map((b) => `${b.id} ${streetRoute(city, a.id, b.id)?.minutes ?? "?"}`).join(", ")}`)
     .join("\n");
 }

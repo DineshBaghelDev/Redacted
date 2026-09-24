@@ -2,6 +2,20 @@
   "difficulty": "normal",
   "jobId": "jh7c2cbm48vr4srbks1zfp9wx98f1b1m",
   "outputs": {
+    "brief": {
+      "output": {
+        "initialFacts": [
+          "Victim: Martin Holloway, 47, works as a foreman.",
+          "Body found on the main concourse of Union Station.",
+          "Body discovered at 08:18 on Day 2.",
+          "Reported by Ruth Calder, a commuter with no known connection to the victim.",
+          "No weapon was found at the scene."
+        ],
+        "summary": "Martin Holloway, 47, a construction foreman, was found dead on the main concourse of Union Station on the morning of Day 2. His body was discovered at 08:18 by commuter Ruth Calder, who spotted him collapsed near the ticket gates and alerted station staff. Police responded and cordoned off the area; no weapon was recovered at the scene.",
+        "title": "Union Station Death"
+      },
+      "source": "llm"
+    },
     "cast": {
       "output": {
         "characters": [
@@ -493,6 +507,787 @@
           "originRoomId": "st-clare-clinic:pharmacy-store"
         },
         "windowStart": 0
+      },
+      "source": "llm"
+    },
+    "estimate": {
+      "output": {
+        "estimatedOptimalMinutes": 215,
+        "reasoningSummary": "A competent pair should avoid the worst blind alleys but still lose time to confirming camera windows, eliminating innocents, and sequencing lab/records results. Estimate uses roughly 2.3× the perfect-information 94-minute route rather than the 4× worst-case bound."
+      },
+      "source": "llm"
+    },
+    "lies": {
+      "output": {
+        "lies": [
+          {
+            "backupLie": {
+              "claim": "Fine, there was no dental appointment. I left early to buy a train ticket for a day trip to clear my head — I was on the concourse buying a ticket but I went nowhere near Martin.",
+              "disprovingEvidenceIds": [
+                "forensic/martin-cup/prints",
+                "forensic/elena-cardigan/prints"
+              ]
+            },
+            "claim": "I left the clinic early for a genuine dental appointment, and after it I went straight home. I was never at Union Station near Martin when he collapsed.",
+            "disprovingEvidenceIds": [
+              "record/elena/2",
+              "cctv/38"
+            ],
+            "id": "lie-elena-whereabouts",
+            "npcId": "elena",
+            "reason": "As the killer, Elena must conceal that she was on the concourse spiking Martin's coffee and then cleaning up in the restrooms; the fake dental cover hides the whole murder window.",
+            "topic": "whereabouts",
+            "truthIds": [
+              "the-poisoning",
+              "elena-hides-vial",
+              "elena-clinic-lie"
+            ],
+            "whenCaught": "backup-lie"
+          },
+          {
+            "claim": "Martin and I were barely acquainted. He cleared himself at the inquest, sure, but I made my complaint years ago and moved on — I hold no grudge over my brother's death.",
+            "disprovingEvidenceIds": [
+              "record/elena/0",
+              "message/elena-marta-message/elena"
+            ],
+            "id": "lie-elena-motive",
+            "npcId": "elena",
+            "reason": "Her composed, guarded nature makes her minimise the two-year obsession with Tomas's death and her belief Martin falsified the report, because admitting it hands the police her motive.",
+            "topic": "motive",
+            "truthIds": [
+              "elena-marta-message",
+              "the-poisoning"
+            ],
+            "whenCaught": "admit-shown"
+          },
+          {
+            "claim": "I never threatened Martin. We had words about pay like anyone, but I never said he'd get what was coming — people exaggerate what they heard.",
+            "disprovingEvidenceIds": [
+              "record/derek/1",
+              "message/derek-martin-shift-text/derek"
+            ],
+            "id": "lie-derek-threat",
+            "npcId": "derek",
+            "reason": "Derek is loud and hot-tempered but loyal to himself; he knows the public threat and the text make him the obvious suspect, so he flatly denies them and digs in.",
+            "topic": "motive",
+            "truthIds": [
+              "derek-threat",
+              "derek-martin-shift-text"
+            ],
+            "whenCaught": "admit-shown"
+          },
+          {
+            "claim": "Martin and I were finished in every sense. Any insurance paperwork from the marriage was settled long ago — I have no financial stake in his death whatsoever.",
+            "disprovingEvidenceIds": [
+              "record/sandra/0",
+              "message/martin-sandra-property/sandra"
+            ],
+            "id": "lie-sandra-beneficiary",
+            "npcId": "sandra",
+            "reason": "Precise and controlled, Sandra protects the secret that she is still the £120,000 beneficiary — damning motive and an embarrassment in front of her new partner — so she denies it calmly until shown the policy itself.",
+            "topic": "motive",
+            "truthIds": [
+              "martin-sandra-property"
+            ],
+            "whenCaught": "admit-shown"
+          },
+          {
+            "backupLie": {
+              "claim": "Alright, I lent Martin some money once, friend to friend, and he was slow paying it back. But there was never any parts deal — it was a personal loan, nothing criminal.",
+              "disprovingEvidenceIds": [
+                "record/caleb/1",
+                "record/caleb/2"
+              ]
+            },
+            "claim": "Martin Holloway? Knew him to nod at, that's all. No debts between us, no business — whoever says otherwise is stirring trouble.",
+            "disprovingEvidenceIds": [
+              "call/caleb-martin-debt-call/caleb",
+              "record/caleb/0"
+            ],
+            "id": "lie-caleb-dealings",
+            "npcId": "caleb",
+            "reason": "Scheming and jumpy, Caleb denies any connection at all because the truth leads straight to the stolen-parts racket and a prison sentence; when caught he pivots to a softer version rather than confessing.",
+            "topic": "relationship",
+            "truthIds": [
+              "caleb-debt-row",
+              "caleb-martin-debt-call"
+            ],
+            "whenCaught": "backup-lie"
+          },
+          {
+            "claim": "I handed Martin's things back the night we broke up. I don't have his wallet or any key to his flat — search my place if you like, there's nothing of his here.",
+            "disprovingEvidenceIds": [
+              "forensic/martin-wallet/prints",
+              "message/nadia-martin-row-texts/nadia"
+            ],
+            "id": "lie-nadia-wallet",
+            "npcId": "nadia",
+            "reason": "Defensive and impulsive, Nadia denies keeping the wallet and spare key because holding the dead man's property on the morning he died makes her look like a thief with access; she only concedes what the evidence forces.",
+            "topic": "item",
+            "truthIds": [
+              "nadia-keeps-wallet",
+              "nadia-martin-row-texts"
+            ],
+            "whenCaught": "admit-shown"
+          },
+          {
+            "claim": "I was awake on every patrol that night, logs are accurate to the minute. Martin never caught me sleeping — we got on fine and he had no complaint with me.",
+            "disprovingEvidenceIds": [
+              "record/george/0",
+              "cctv/116"
+            ],
+            "id": "lie-george-sleeping",
+            "npcId": "george",
+            "reason": "Gruff and secretive, George protects the falsified patrol logs and the sleeping incident, because admitting Martin was about to report him gives him motive and costs him his licence.",
+            "topic": "secret",
+            "truthIds": [
+              "george-caught-sleeping"
+            ],
+            "whenCaught": "admit-shown"
+          },
+          {
+            "claim": "I was at my booth the whole morning, never left it. I saw Martin on the concourse from my window right up until he fell.",
+            "disprovingEvidenceIds": [
+              "record/ruth/0",
+              "witness/farid/ruth-finds-body"
+            ],
+            "id": "lie-ruth-booth",
+            "npcId": "ruth",
+            "reason": "Nervous and motherly, Ruth hides her eleven-minute absence chatting with the café vendor because it breaches station rules; once confronted she blurts the full truth.",
+            "topic": "whereabouts",
+            "truthIds": [
+              "ruth-finds-body"
+            ],
+            "whenCaught": "full-truth"
+          },
+          {
+            "claim": "My patrol was continuous all morning, exactly as my incident report says. I never left the concourse unattended.",
+            "disprovingEvidenceIds": [
+              "card/buy-farid-coffee",
+              "record/farid/0"
+            ],
+            "id": "lie-farid-patrol",
+            "npcId": "farid",
+            "reason": "Anxious and eager to please, Farid covered up his coffee run in his report and sticks to the story; the loyalty-app timestamp breaks him and he confesses everything.",
+            "topic": "whereabouts",
+            "truthIds": [
+              "farid-coffee-run",
+              "buy-farid-coffee"
+            ],
+            "whenCaught": "full-truth"
+          },
+          {
+            "claim": "I'm just passing through — a traveller between engagements, staying with friends in town. No sense troubling yourselves over my situation.",
+            "disprovingEvidenceIds": [
+              "record/margo/0"
+            ],
+            "id": "lie-margo-hotel",
+            "npcId": "margo",
+            "reason": "Lonely and dramatic, Margo maintains her traveller persona to hide six weeks of unpaid hotel bills and how precarious her life really is; she collapses into the truth with theatrical relief when caught.",
+            "topic": "secret",
+            "truthIds": [],
+            "whenCaught": "full-truth"
+          },
+          {
+            "claim": "I was at my morning lectures and only passed through the station briefly afterwards. I barely saw anything.",
+            "disprovingEvidenceIds": [
+              "card/buy-orian-coffee",
+              "record/orian/0"
+            ],
+            "id": "lie-orian-lectures",
+            "npcId": "orian",
+            "reason": "Honest but jittery, Orian lies only to keep his truancy from reaching his parents via police enquiries; caught out by the card receipt and attendance record, he admits the lot.",
+            "topic": "whereabouts",
+            "truthIds": [
+              "orian-buys-coffee",
+              "buy-orian-coffee"
+            ],
+            "whenCaught": "full-truth"
+          }
+        ]
+      },
+      "source": "llm"
+    },
+    "story": {
+      "output": {
+        "comms": [
+          {
+            "from": "elena",
+            "gist": "Elena saves a private note after reading the inquest coverage again: two years on, and Tomas's file still says worker error, and nothing has been done.",
+            "id": "elena-marta-message",
+            "proves": [],
+            "time": 600,
+            "to": "elena",
+            "type": "message"
+          },
+          {
+            "from": "elena",
+            "gist": "Elena sets a phone reminder labelled 'dental 8.10 Thursday' as cover, three days before the morning in question.",
+            "id": "elena-dental-fake",
+            "proves": [],
+            "time": 560,
+            "to": "elena",
+            "type": "message"
+          },
+          {
+            "from": "elena",
+            "gist": "Elena texts the clinic rota group that she must leave early for a dental appointment; the dental practice has no booking under her name.",
+            "id": "elena-clinic-lie",
+            "proves": [],
+            "time": 1860,
+            "to": "elena",
+            "type": "message"
+          },
+          {
+            "from": "sandra",
+            "gist": "Sandra presses Martin to sign the Harlow Lane deed transfer and hints she knows he never updated his policy paperwork, which he brushes off.",
+            "id": "martin-sandra-property",
+            "proves": [],
+            "time": 500,
+            "to": "martin",
+            "type": "message"
+          },
+          {
+            "from": "nadia",
+            "gist": "Nadia tells Martin they are done because he is still texting Sandra, and that she has his wallet and key until he apologises properly.",
+            "id": "nadia-martin-row-texts",
+            "proves": [],
+            "time": 1155,
+            "to": "martin",
+            "type": "message"
+          },
+          {
+            "durationMinutes": 6,
+            "from": "caleb",
+            "gist": "Caleb demands the £2,500 Martin owes from the parts deal; Martin laughs and says a suspended sentence means Caleb cannot go near the police.",
+            "id": "caleb-martin-debt-call",
+            "proves": [],
+            "time": 810,
+            "to": "martin",
+            "type": "call"
+          },
+          {
+            "from": "derek",
+            "gist": "Derek texts Martin that doubling his shifts without the supervisor pay will not be forgotten, and Martin does not reply.",
+            "id": "derek-martin-shift-text",
+            "proves": [],
+            "time": 1350,
+            "to": "martin",
+            "type": "message"
+          }
+        ],
+        "events": [
+          {
+            "action": "Martin tells Derek his demotion stands; Derek shouts in front of the loading crew that Martin will 'get what's coming to him'.",
+            "actors": [
+              "martin",
+              "derek"
+            ],
+            "end": 555,
+            "id": "derek-threat",
+            "itemsUsed": [],
+            "roomId": "pier-9:bay-2",
+            "start": 545,
+            "visibility": "public"
+          },
+          {
+            "action": "Caleb confronts Martin over the missing £2,500 from their parts deal, and Martin tells him he will pay when he feels like it.",
+            "actors": [
+              "martin",
+              "caleb"
+            ],
+            "end": 795,
+            "id": "caleb-debt-row",
+            "itemsUsed": [],
+            "roomId": "rusk-garage:workshop",
+            "start": 780,
+            "visibility": "public"
+          },
+          {
+            "action": "Working alone in the pharmacy store, Elena palms a vial of fentanyl and pencils a false entry into the controlled stock ledger to cover the gap.",
+            "actors": [
+              "elena"
+            ],
+            "end": 920,
+            "id": "elena-takes-stock",
+            "itemsUsed": [
+              "weapon"
+            ],
+            "roomId": "st-clare-clinic:pharmacy-store",
+            "start": 905,
+            "visibility": "private"
+          },
+          {
+            "action": "Nadia argues with Martin on the doorstep over his texts to Sandra, and a neighbour overhears her say she is keeping his wallet and spare key until he apologises.",
+            "actors": [
+              "martin",
+              "nadia"
+            ],
+            "end": 1150,
+            "id": "nadia-harlow-row",
+            "itemsUsed": [],
+            "roomId": "harlow-3:front-door",
+            "start": 1135,
+            "visibility": "public"
+          },
+          {
+            "action": "Back home, Nadia shoves Martin's wallet and his spare door key into her desk drawer and tells herself she will give them back when he grovels.",
+            "actors": [
+              "nadia"
+            ],
+            "end": 1210,
+            "id": "nadia-keeps-wallet",
+            "itemsUsed": [
+              "martin-wallet"
+            ],
+            "roomId": "linden-court:unit-1b",
+            "start": 1200,
+            "visibility": "private"
+          },
+          {
+            "action": "Doing a late check, Martin finds George asleep on shift and warns him one more falsified patrol log and he is finished at the port.",
+            "actors": [
+              "martin",
+              "george"
+            ],
+            "end": 1310,
+            "id": "george-caught-sleeping",
+            "itemsUsed": [],
+            "roomId": "pier-9:office",
+            "start": 1300,
+            "visibility": "private"
+          },
+          {
+            "action": "After clocking off his night shift, George buys a pasty and a tea at the Quik Stop and lingers at the counter chatting with the cashier about the cold.",
+            "actors": [
+              "george"
+            ],
+            "end": 1928,
+            "id": "george-quikstop-breakfast",
+            "itemsUsed": [],
+            "roomId": "quik-stop:counter",
+            "start": 1905,
+            "visibility": "public"
+          },
+          {
+            "action": "Coming off the night shift, Derek buys cigarettes and an energy drink and stays by the tills grumbling to the cashier about his foreman while George is at the next till.",
+            "actors": [
+              "derek"
+            ],
+            "end": 1928,
+            "id": "derek-quikstop-smokes",
+            "itemsUsed": [],
+            "roomId": "quik-stop:counter",
+            "start": 1908,
+            "visibility": "public"
+          },
+          {
+            "action": "Sandra serves a steady queue of morning customers at her teller window without leaving the banking hall.",
+            "actors": [
+              "sandra"
+            ],
+            "end": 1935,
+            "id": "sandra-opens-till",
+            "itemsUsed": [],
+            "roomId": "civic-bank:banking-hall",
+            "start": 1890,
+            "visibility": "public"
+          },
+          {
+            "action": "Nadia works the morning rush at Ember Café, pulling shots and calling out orders for a room full of commuters.",
+            "actors": [
+              "nadia"
+            ],
+            "end": 1935,
+            "id": "nadia-opens-cafe",
+            "itemsUsed": [],
+            "roomId": "ember-cafe:counter",
+            "start": 1860,
+            "visibility": "public"
+          },
+          {
+            "action": "Farid slips across the road from the station to buy a black coffee from Nadia before his patrol is due to start.",
+            "actors": [
+              "farid"
+            ],
+            "end": 1878,
+            "id": "farid-coffee-run",
+            "itemsUsed": [],
+            "roomId": "ember-cafe:counter",
+            "start": 1872,
+            "visibility": "public"
+          },
+          {
+            "action": "Caleb opens the garage, takes a card payment for an exhaust job and works on a Ford in full view of the customer waiting out front.",
+            "actors": [
+              "caleb"
+            ],
+            "end": 1935,
+            "id": "caleb-opens-garage",
+            "itemsUsed": [],
+            "roomId": "rusk-garage:workshop",
+            "start": 1885,
+            "visibility": "public"
+          },
+          {
+            "action": "Elena signs out ten minutes early, telling the receptionist she has a dental appointment, and walks briskly towards Union Station.",
+            "actors": [
+              "elena"
+            ],
+            "end": 1885,
+            "id": "elena-leaves-clinic",
+            "itemsUsed": [],
+            "roomId": "st-clare-clinic:reception",
+            "start": 1880,
+            "visibility": "public"
+          },
+          {
+            "action": "Margo settles on bench three with her wheeled suitcase, nursing a tea and watching the concourse come alive.",
+            "actors": [
+              "margo"
+            ],
+            "end": 1938,
+            "id": "margo-on-bench",
+            "itemsUsed": [],
+            "roomId": "union-station:concourse",
+            "start": 1865,
+            "visibility": "public"
+          },
+          {
+            "action": "Skipping his lecture, Orian queues at the concourse coffee kiosk behind a heavyset man in a navy work jacket, then drifts towards the departure board.",
+            "actors": [
+              "orian"
+            ],
+            "end": 1912,
+            "id": "orian-buys-coffee",
+            "itemsUsed": [],
+            "roomId": "union-station:concourse",
+            "start": 1900,
+            "visibility": "public"
+          },
+          {
+            "action": "Elena buys a day single from the ticket machine and waits near the coffee kiosk, watching the board, in view of the concourse cameras.",
+            "actors": [
+              "elena"
+            ],
+            "end": 1914,
+            "id": "elena-on-concourse",
+            "itemsUsed": [],
+            "roomId": "union-station:concourse",
+            "start": 1896,
+            "visibility": "public"
+          },
+          {
+            "action": "Martin buys his usual large black coffee at the kiosk and stands checking the departure board for the 8.20 freight managers' meeting train.",
+            "actors": [
+              "martin"
+            ],
+            "end": 1913,
+            "id": "martin-gets-coffee",
+            "itemsUsed": [
+              "martin-cup"
+            ],
+            "roomId": "union-station:concourse",
+            "start": 1904,
+            "visibility": "public"
+          },
+          {
+            "action": "Elena approaches Martin as he studies the departure board, offers a tight apology for old grievances as a distraction, and tips the fentanyl from the vial into his coffee lid gap; Martin drinks, and within minutes he sways and collapses on the concourse.",
+            "actors": [
+              "elena",
+              "martin"
+            ],
+            "end": 1922,
+            "id": "the-poisoning",
+            "itemsUsed": [
+              "weapon",
+              "martin-cup",
+              "elena-cardigan"
+            ],
+            "roomId": "union-station:concourse",
+            "start": 1914,
+            "visibility": "private"
+          },
+          {
+            "action": "In the empty restrooms Elena wipes the vial clean with a paper towel, wipes the coffee cup she scooped up from beside Martin, and buries both deep in the sanitary bin before slipping out the side exit.",
+            "actors": [
+              "elena"
+            ],
+            "end": 1927,
+            "id": "elena-hides-vial",
+            "itemsUsed": [
+              "weapon",
+              "martin-cup",
+              "elena-cardigan"
+            ],
+            "roomId": "union-station:restrooms",
+            "start": 1923,
+            "visibility": "private"
+          },
+          {
+            "action": "Returning from her unauthorised chat with the café vendor, Ruth finds Martin collapsed and unresponsive near the departure board and screams for help; Farid runs over and radios for an ambulance.",
+            "actors": [
+              "ruth",
+              "farid"
+            ],
+            "end": 1952,
+            "id": "ruth-finds-body",
+            "itemsUsed": [],
+            "roomId": "union-station:concourse",
+            "start": 1938,
+            "visibility": "public"
+          }
+        ],
+        "items": [
+          {
+            "contents": [],
+            "description": "A glass vial of fentanyl skimmed from St. Clare's controlled stock and wiped of prints, but a grey woollen fibre is caught in the cap thread; fentanyl residue and traces from Martin's cup are still inside. It matches the fentanyl found in Martin's system.",
+            "finalRoomId": "union-station:restrooms",
+            "finalSlot": "bin",
+            "id": "weapon",
+            "kind": "weapon",
+            "name": "Fentanyl vial, 100mcg",
+            "proves": [],
+            "startRoomId": "st-clare-clinic:pharmacy-store"
+          },
+          {
+            "contents": [],
+            "description": "The kiosk cup Martin drank from, wiped of prints and dumped with the vial; residue tests positive for fentanyl.",
+            "finalRoomId": "union-station:restrooms",
+            "finalSlot": "bin",
+            "id": "martin-cup",
+            "kind": "other",
+            "name": "Martin's coffee cup",
+            "proves": [],
+            "startRoomId": "union-station:concourse"
+          },
+          {
+            "contents": [],
+            "description": "The grey woollen cardigan Elena wore over her scrubs at the station; its fibres match the fibre caught in the vial's cap thread and the fibres found on the coffee cup rim.",
+            "finalRoomId": "linden-court:unit-2b",
+            "finalSlot": "wardrobe",
+            "id": "elena-cardigan",
+            "kind": "clothing",
+            "name": "Grey cardigan",
+            "proves": [],
+            "startRoomId": "linden-court:unit-2b"
+          },
+          {
+            "contents": [],
+            "description": "Martin's wallet with his cards and spare flat key tucked inside, kept by Nadia after their breakup row.",
+            "finalRoomId": "linden-court:unit-1b",
+            "finalSlot": "desk",
+            "id": "martin-wallet",
+            "kind": "other",
+            "name": "Martin's wallet",
+            "proves": [],
+            "startRoomId": "harlow-3:living"
+          },
+          {
+            "contents": [],
+            "description": "The real 2022 incident form describing faulty harness anchoring, hidden by Martin after he filed a falsified report blaming the loader who died.",
+            "finalRoomId": "harlow-3:bedroom-1",
+            "finalSlot": "under the bed",
+            "id": "incident-form",
+            "kind": "document",
+            "name": "Original Pier 9 incident form",
+            "proves": [],
+            "startRoomId": "harlow-3:bedroom-1"
+          },
+          {
+            "contents": [
+              {
+                "proves": [],
+                "text": "A kept photo of her brother Tomas on the Pier 9 loading bay, captioned privately: 'Two years. Still nothing.'",
+                "title": "Tomas, inquest photo"
+              },
+              {
+                "proves": [
+                  "motive"
+                ],
+                "text": "Notes comparing the published accident report with leaked details of the original incident form, ending with 'he wrote it himself, of course he cleared himself'.",
+                "title": "Draft complaint notes"
+              }
+            ],
+            "description": "Elena's smartphone holding her personal files and correspondence.",
+            "finalRoomId": "linden-court:unit-2b",
+            "finalSlot": "desk",
+            "id": "elena-phone",
+            "kind": "device",
+            "name": "Elena's phone",
+            "proves": [],
+            "startRoomId": "linden-court:unit-2b"
+          }
+        ],
+        "purchases": [
+          {
+            "id": "buy-martin-coffee",
+            "item": "Large black coffee, kiosk",
+            "payment": "card",
+            "placeId": "union-station",
+            "time": 1905,
+            "who": "martin"
+          },
+          {
+            "id": "buy-george-breakfast",
+            "item": "Pasty and tea",
+            "payment": "card",
+            "placeId": "quik-stop",
+            "time": 1908,
+            "who": "george"
+          },
+          {
+            "id": "buy-derek-smokes",
+            "item": "Cigarettes and energy drink",
+            "payment": "card",
+            "placeId": "quik-stop",
+            "time": 1910,
+            "who": "derek"
+          },
+          {
+            "id": "buy-farid-coffee",
+            "item": "Black coffee, loyalty app",
+            "payment": "card",
+            "placeId": "ember-cafe",
+            "time": 1874,
+            "who": "farid"
+          },
+          {
+            "id": "buy-orian-coffee",
+            "item": "Flat white, kiosk",
+            "payment": "card",
+            "placeId": "union-station",
+            "time": 1902,
+            "who": "orian"
+          },
+          {
+            "id": "buy-calebs-customer",
+            "item": "Exhaust repair, card settlement",
+            "payment": "card",
+            "placeId": "rusk-garage",
+            "time": 1925,
+            "who": "caleb"
+          },
+          {
+            "id": "buy-elena-ticket",
+            "item": "Day single ticket she never uses",
+            "payment": "card",
+            "placeId": "union-station",
+            "time": 1897,
+            "who": "elena"
+          }
+        ]
+      },
+      "source": "llm"
+    },
+    "text": {
+      "output": {
+        "texts": [
+          {
+            "id": "elena-marta-message",
+            "text": "Tomas's file still says worker error. Two years on, and nothing has been done."
+          },
+          {
+            "id": "elena-dental-fake",
+            "text": "Reminder: dental 8.10 Thursday"
+          },
+          {
+            "id": "elena-clinic-lie",
+            "text": "Sorry, I need to leave early on Thursday morning — I've got a dental appointment I can't move."
+          },
+          {
+            "id": "martin-sandra-property",
+            "text": "Martin, you still haven't signed the Harlow Lane deed transfer. It'd be a shame if someone found out you never updated your policy paperwork. — I don't know what you mean, and please stop bringing this up."
+          },
+          {
+            "id": "nadia-martin-row-texts",
+            "text": "We're done. You're still texting Sandra, and I'm not stupid. I've got your wallet and your key, and you're getting them back when you apologise properly."
+          },
+          {
+            "id": "derek-martin-shift-text",
+            "text": "Doubling my shifts without supervisor pay won't be forgotten, Martin. (No reply)"
+          },
+          {
+            "id": "file/elena-phone/0",
+            "text": "Photo — Tomas on the Pier 9 loading bay. Private caption: 'Two years. Still nothing.'"
+          },
+          {
+            "id": "file/elena-phone/1",
+            "text": "Draft complaint notes: The published accident report doesn't match the leaked details of the original incident form... 'He wrote it himself, of course he cleared himself.'"
+          },
+          {
+            "id": "witness/derek/derek-threat",
+            "text": "He told me my demotion stands, just like that. I lost it — I shouted in front of the whole loading crew that Martin would get what's coming to him."
+          },
+          {
+            "id": "witness/caleb/caleb-debt-row",
+            "text": "I confronted him about the £2,500 from our parts deal that's gone missing. He just shrugged and said he'd pay when he feels like it."
+          },
+          {
+            "id": "witness/nadia/nadia-harlow-row",
+            "text": "We argued on the doorstep about his texts to Sandra. I told him I'm keeping his wallet and spare key until he apologises — one of the neighbours must have heard me."
+          },
+          {
+            "id": "witness/derek/george-quikstop-breakfast",
+            "text": "After clocking off the night shift, George bought a pasty and a tea at the Quik Stop and hung about the counter chatting with the cashier about the cold."
+          },
+          {
+            "id": "witness/george/derek-quikstop-smokes",
+            "text": "Coming off the night shift, Derek bought cigarettes and an energy drink and stayed by the tills grumbling to the cashier about his foreman. I was at the next till."
+          },
+          {
+            "id": "witness/farid/nadia-opens-cafe",
+            "text": "Nadia worked the morning rush at Ember Café — pulling shots and calling out orders for a room full of commuters."
+          },
+          {
+            "id": "witness/nadia/farid-coffee-run",
+            "text": "Farid slipped across the road from the station and bought a black coffee from me before his patrol was due to start."
+          },
+          {
+            "id": "witness/elena/margo-on-bench",
+            "text": "Margo settled on bench three with her wheeled suitcase, nursing a tea and watching the concourse come alive."
+          },
+          {
+            "id": "witness/orian/margo-on-bench",
+            "text": "Margo settled on bench three with her wheeled suitcase, nursing a tea and watching the concourse come alive."
+          },
+          {
+            "id": "witness/margo/orian-buys-coffee",
+            "text": "I saw Orian queuing at the coffee kiosk behind a heavyset man in a navy work jacket — he was meant to be at a lecture. Then he drifted towards the departure board."
+          },
+          {
+            "id": "witness/elena/orian-buys-coffee",
+            "text": "I saw Orian queuing at the coffee kiosk behind a heavyset man in a navy work jacket — he was meant to be at a lecture. Then he drifted towards the departure board."
+          },
+          {
+            "id": "witness/margo/elena-on-concourse",
+            "text": "Elena bought a day single from the ticket machine and waited near the coffee kiosk, watching the board. She was in view of the concourse cameras."
+          },
+          {
+            "id": "witness/orian/elena-on-concourse",
+            "text": "Elena bought a day single from the ticket machine and waited near the coffee kiosk, watching the board. She was in view of the concourse cameras."
+          },
+          {
+            "id": "witness/margo/martin-gets-coffee",
+            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train — the one for the freight managers' meeting."
+          },
+          {
+            "id": "witness/elena/martin-gets-coffee",
+            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train — the one for the freight managers' meeting."
+          },
+          {
+            "id": "witness/orian/martin-gets-coffee",
+            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train — the one for the freight managers' meeting."
+          },
+          {
+            "id": "witness/ruth/ruth-finds-body",
+            "text": "I'd popped out to chat with the café vendor, which I shouldn't have done. When I came back I found Martin collapsed and unresponsive near the departure board. I screamed for help, and Farid ran over and radioed for an ambulance."
+          },
+          {
+            "id": "witness/farid/ruth-finds-body",
+            "text": "Ruth had been off chatting with the café vendor when she should have been on duty. When she came back she found Martin collapsed and unresponsive near the departure board — she screamed for help, and I ran over and radioed for an ambulance."
+          }
+        ]
       },
       "source": "llm"
     }

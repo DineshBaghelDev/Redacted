@@ -14,10 +14,11 @@ export type CaseCheck = {
   evidenceIds: string[];
 };
 
-type Difficulty = "easy" | "normal" | "hard";
+import type { Difficulty } from "./crimeCast";
 
-// Words that, next to the killer's name, would hand players the answer.
-const GIVEAWAY = /\b(killed|murdered|murderer|killer|did it)\b/i;
+// "<killer> killed <victim>" in one sentence would hand players the answer.
+const KILL_WORDS = "killed|murdered|shot|stabbed|poisoned|strangled|pushed";
+const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * Final solvability check: can players reach every star, is the answer unique, and can every lie be
@@ -96,8 +97,8 @@ export function validateCase(
       [],
       set.evidence
         .filter((e) => {
-          const text = `${e.title} ${e.summary}`;
-          return text.includes(nameOf(crime.killerId)) && GIVEAWAY.test(text);
+          const [killer, victim] = [crime.killerId, crime.victimId].map((id) => escape(nameOf(id).split(" ")[0]));
+          return new RegExp(`\\b${killer}\\b(\\s+[\\w']+){0,2}\\s+(${KILL_WORDS})(\\s+[\\w']+){0,3}?\\s+${victim}\\b`, "i").test(e.summary);
         })
         .map((e) => `"${e.title}" names the killer outright.`),
     ),

@@ -140,7 +140,7 @@ export const lieSchema = claimSchema.extend({
   npcId: id,
   topic: z.enum(["whereabouts", "relationship", "motive", "item", "secret"]),
   /** Story events, messages/calls or purchases the lie hides. */
-  truthIds: z.array(id).default([]),
+  truthIds: z.array(id),
   /** Why this person lies, from their personality and what they protect. */
   reason: z.string(),
   /** What they do once shown proof: tell the whole truth, admit only what the proof shows, or switch to a backup lie. */
@@ -150,7 +150,28 @@ export const lieSchema = claimSchema.extend({
 
 export const liesSchema = z.object({ lies: z.array(lieSchema) });
 
+/** Stage 7: player-facing wording for messages, device files and witness statements. */
+export const textsSchema = z.object({
+  texts: z.array(z.object({ id, text: z.string().min(1) })),
+});
+
+/** Stage 9: what investigators are told at the start. */
+export const briefSchema = z.object({
+  title: z.string(),
+  summary: z.string(),
+  initialFacts: z.array(z.string()),
+});
+
+/** Stage 10: how long a good investigation should take, in game minutes. */
+export const estimateSchema = z.object({
+  estimatedOptimalMinutes: z.number().int(),
+  reasoningSummary: z.string(),
+});
+
 export type CrimeCore = z.infer<typeof crimeCoreSchema>;
+export type Texts = z.infer<typeof textsSchema>;
+export type Brief = z.infer<typeof briefSchema>;
+export type Estimate = z.infer<typeof estimateSchema>;
 export type Lie = z.infer<typeof lieSchema>;
 export type Lies = z.infer<typeof liesSchema>;
 export type Character = z.infer<typeof characterSchema>;

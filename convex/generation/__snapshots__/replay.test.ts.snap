@@ -2,8 +2,18 @@
 
 exports[`replay > union-station-poison.json gives the same problems as before 1`] = `
 {
+  "brief": [],
   "cast": [],
+  "check": [],
   "city": [],
   "crime": [],
+  "estimate": [],
+  "evidence": [],
+  "facts": [],
+  "lies": [],
+  "scripts": [],
+  "story": [],
+  "text": [],
+  "timeline": [],
 }
 `;

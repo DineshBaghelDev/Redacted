@@ -55,6 +55,14 @@ export function buildFacts(city: City, crime: CrimeCore, cast: Cast, story: Stor
     ...decisive,
     ...forensic.filter((e) => e.data.subjectId === `room:${crime.sceneRoomId}` && (e.data.printsOf?.includes(killer) || killerItems.has(e.data.fibersFromItemId ?? ""))),
     ...forensic.filter((e) => e.data.test === "footprints" && e.data.printsOf?.includes(killer)),
+    // Seen at the scene place, or paid by card there, within an hour of the death.
+    ...evidence.filter(
+      (e) =>
+        e.time !== undefined &&
+        Math.abs(e.time - tod) <= NEAR_MINUTES &&
+        ((e.type === "witness" && e.aboutIds.includes(killer) && e.data.placeId === scenePlace) ||
+          (e.type === "card" && e.data.who === killer && e.data.placeId === scenePlace)),
+    ),
   ];
   const killerNearScene = cctv.filter(
     (e) => e.aboutIds.includes(killer) && Math.abs(e.time! - tod) <= NEAR_MINUTES && travelToScene(e.data.placeId) <= Math.abs(e.time! - tod) + 5,
@@ -73,7 +81,14 @@ export function buildFacts(city: City, crime: CrimeCore, cast: Cast, story: Stor
       ["toxicology", "ballistics", "ligature"].includes(e.data.test) ||
       (crime.weapon.category === "fall" && e.data.test === "autopsy"),
   );
-  const weaponToKiller = [...killerPrintsOnWeapon, ...forensic.filter((e) => e.data.subjectId === "item:weapon" && killerItems.has(e.data.fibersFromItemId ?? ""))];
+  // The killer on camera where the weapon came from, in a story event that uses it (e.g. taking poison from a pharmacy).
+  const weaponEvents = new Set(story.events.filter((e) => e.roomId === crime.weapon.originRoomId && e.actors.includes(killer) && e.itemsUsed.includes("weapon")).map((e) => e.id));
+  const killerAtWeaponOrigin = cctv.filter((e) => e.aboutIds.includes(killer) && weaponEvents.has(e.sourceIds[0]));
+  const weaponToKiller = [
+    ...killerPrintsOnWeapon,
+    ...forensic.filter((e) => e.data.subjectId === "item:weapon" && killerItems.has(e.data.fibersFromItemId ?? "")),
+    ...killerAtWeaponOrigin,
+  ];
 
   const facts: Fact[] = [
     { id: "killer-at-scene", kind: "killer", text: `${nameOf(killer)} was at the scene`, evidenceIds: ids(killerAtScene) },

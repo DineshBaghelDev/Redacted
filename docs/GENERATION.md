@@ -103,6 +103,8 @@ Checks on the merged timeline:
 
 Repair: exact violations are sent back to the LLM.
 
+Implemented (`core/story.ts`, prompt `prompts/story.ts`): the AI gets the crime core, cast, every room (entrances and search spots marked), travel minutes between all places, `STORY_RULES`, and `EVIDENCE_NOTES` (how code turns the story into evidence, so it can plan a solvable case). The story check runs end to end: duplicate ids, then the timeline checks, then, if those pass, evidence + facts + the stage 11 checks (except lies, not written yet). So repairs aim at "nothing clears Lena", not only at timing.
+
 ## Stage 4 — Evidence derivation (code, no LLM)
 
 - **CCTV:** code routes each movement — shortest street path between places, and entrance → stairs/lift → corridor → room inside buildings. Every active camera on the route emits a row with time, direction and an **appearance description, not a name**. Players match appearance to people. A `disable-camera` cover-up produces a gap plus an outage/maintenance record.
@@ -131,7 +133,7 @@ Implemented rules (`convex/generation/core/evidence/`):
 
 ## Stage 5 — Fact links and decisive set (code, implemented)
 
-`convex/generation/core/facts.ts` turns evidence into facts: killer at scene, killer near scene (camera within 60 min and able to reach the scene), killer contacted victim, motive (anything tagged `proves: ["motive"]`), weapon used on victim, weapon linked to killer (prints or killer-clothing fibers), method (autopsy), accomplice link, and one alibi fact per innocent suspect (camera, card payment or witness placing them too far away to reach the scene at the time of death).
+`convex/generation/core/facts.ts` turns evidence into facts: killer at scene (forensics, footprints, scene camera, or a witness/card payment at the scene place within an hour of the death), killer near scene (camera within 60 min and able to reach the scene), killer contacted victim, motive (anything tagged `proves: ["motive"]`), weapon used on victim, weapon linked to killer (prints, killer-clothing fibers, or the killer on camera in the weapon's origin room during a story event that uses the weapon), method (autopsy), accomplice link, and one alibi fact per innocent suspect (camera, card payment or witness placing them too far away to reach the scene at the time of death).
 
 Decisive = victim's blood on an item the killer owns, killer's prints on the weapon, the killer on a camera in the scene room at the time of death, or an item taken from the scene building that ends up in the killer's home. Cover-ups change this (wiped prints are not decisive). The evidence star is earned by selecting any item from the decisive set.
 
@@ -159,9 +161,13 @@ Checks (`core/lies.ts`, implemented): the person exists and isn't the victim; tr
 
 A witness who lies about an event never counts as telling what they saw of it, so their statement can't clear anyone.
 
+AI version (`prompts/lies.ts`): gets `LIE_RULES`, each person's traits/secret/what they protect, the story, and the evidence cut down to what can prove something (no clutter, no everyday camera rows, no phone entries). After repairs run out, lies that still fail are dropped (`keepValidLies`); a lie whose only problem is its backup lie keeps the main lie and switches to "admit-shown". A missing killer whereabouts lie stays a problem. `truthIds` is required in the shape (the AI skipped it when it was optional).
+
 ## Stage 7 — Text writing (LLM, fenced)
 
 Writes message bodies, notes, record wording, witness phrasing. Input is the fact; output must not add facts. Every name, place and time in the text must come from an allowed list, otherwise regenerate.
+
+Implemented (`core/text.ts`): rewrites each message (once, applied to both phones), device file and witness statement. Output `{ texts: [{ id, text }] }`. Check: known ids; no cast name, place name or clock time that isn't in that piece's source. Texts still failing after repairs are dropped and keep the plain wording. Records keep their code wording.
 
 ## Stage 8 — NPC scripts (code assembles)
 
@@ -176,9 +182,13 @@ Writes message bodies, notes, record wording, witness phrasing. Input is the fac
 
 Only what investigators legitimately receive at start: where, when, what, who reported it, minimal necessary facts. Explicit leakage checks against solution fields.
 
+Implemented (`core/brief.ts`): code hands the AI only victim, place, time found, who reported it, and the weapon if it was left at the scene. Output `{ title, summary, initialFacts }`. Leak check: no killer/accomplice name (surnames shared with the victim or finder are fine), no weapon that isn't at the scene, no copied method or motive text; must name the victim; 3–5 facts.
+
 ## Stage 10 — Optimal-time estimate
 
 A model receives only what's needed to estimate a competent investigation route (relevant places, travel graph, required searches, likely interrogations, forensic waits, complexity) and outputs `{ estimatedOptimalMinutes, reasoningSummary }`. Default deadline = `optimal + 1440`. Users may override.
+
+Implemented (`core/estimate.ts`): code lists the steps a perfect investigation needs (decisive evidence, one piece per fact, two for motive, each alibi, proof for the killer's lies, plus items that must be found before a lab test or device read), prices them with the fixed action costs from `GAME_SYSTEMS.md`, adds a nearest-place-first route from the police bureau and back, and gives the total as a lower bound. The AI adds time for dead ends; the estimate must be 1–4 times the lower bound.
 
 ## Stage 11 — Solvability validation (code)
 
@@ -193,13 +203,15 @@ No LLM judge in V1. Implemented in `core/validate.ts`; returns a pass/fail list 
 - **accomplice:** ≥ 1 linking item if present,
 - **red herrings:** every lie and fake motive is refutable,
 - **reachable:** every required item is obtainable at a city place/tool,
-- **no shortcut:** no single item names the killer outright (killer's name next to words like "killed" or "murderer").
+- **no shortcut:** no single item names the killer outright ("<killer> … killed/shot/poisoned … <victim>" in a few words; the killer's name next to other deaths is fine).
 
 "Killer" counts evidence kinds across: at the scene, near the scene, and proof that breaks the killer's whereabouts lie. "Reachable" means: search spots exist in the room ("on the body" only at the scene), cameras exist, lab subjects and devices are themselves found, phones exist, and the person to question is alive and not lying about that event.
 
 ## Stage 12 — Targeted repair
 
 Each failed check maps to the earliest stage that caused it; rerun from that stage down.
+
+Implemented per stage (`convex/generation/aiStage.ts`): after a try, the stage's checks run; if they fail and repairs are left (max 2), the next try gets the first prompt plus the previous answer and the exact problems. After the last repair, the runner keeps whichever of the last two tries had fewer problems (a repair once made things worse), then the stage's `finalize` step drops what can't be fixed (lies, texts). Each try is its own background action with a 9-minute AI timeout, so a slow model can't hit Convex's 10-minute action limit silently. The tester's "Recheck" reruns a stage's checks on its saved output after the checks change. Restarting from an earlier stage and new seeds are chunk F (workflow).
 
 ```ts
 { brokenSection, relevantCanonicalFacts, exactValidationErrors, allowedReferences }

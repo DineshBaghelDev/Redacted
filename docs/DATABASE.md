@@ -693,7 +693,13 @@ case
 ### `generationJobs`
 
 ```ts
-{ seed: number, difficulty: "easy" | "normal" | "hard", createdBy: string, createdAt: number }
+{
+  seed: number,
+  difficulty: "easy" | "normal" | "hard",
+  createdBy: string,
+  createdAt: number,
+  running?: { stage: string, attempt: number }, // set while an AI stage runs in the background
+}
 ```
 
 ### `generationDrafts`
@@ -731,6 +737,7 @@ One document per AI call made while generating. Dev-tool/internal only.
   inputTokens?: number,
   outputTokens?: number,
   ms: number,
+  attempt?: number, // 0 = first try, 1–2 = repairs
   createdAt: number,
 }
 ```

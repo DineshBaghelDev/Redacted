@@ -32,11 +32,15 @@
 - Chunk D: AI connection (`convex/generation/llm.ts`: NIM via AI SDK, strict JSON schema with JSON-mode fallback, bad output returned as problems), every AI call logged in a new `generationLogs` table, AI crime core stage (seeded brief for motive, weapon and scene so cases vary) and AI cast stage. Crime and cast rules now live in one file whose rule text goes into the prompts word for word, with matching checks. Record and replay: `exportJob` saves a job's AI outputs to `convex/fixtures/recorded/`, and a replay test reruns every code stage and check on them. Tester: "Run with AI" button, AI call panel (model, mode, time, tokens, prompt, reply), and bad output no longer breaks the page. Updated `ai` to 7.0.113 to match the NIM provider package.
 - First real AI runs (NIM, `moonshotai/kimi-k3`): strict JSON schema mode works, so no fallback needed so far. Crime core takes ~60 s, cast ~150 s (the model thinks before answering). Fixes from what the checks caught: weapon rooms must be copied from the list, the cover-up can't repeat steps (max 5), and a switched-off camera must name the camera. API key is `NIM_API_KEY` in Convex (pushed from `.env.local`). First recorded case: `convex/fixtures/recorded/union-station-poison.json` (crime + cast).
 
+- Chunk E: AI versions of story events (3a), lies (6), written text (7), case brief (9) and time estimate (10), each with rules shared by prompt and checks. The story check now runs end to end (timeline, then evidence and the "can it be solved?" checks) so repairs target real problems. Repair loop: failing output goes back to the AI with the exact problems, up to 2 times; each try runs as its own background step; lies and texts that still fail are dropped. New checks: written text can't add people, places or times; the brief can't name the killer or leak the weapon, motive or method; the estimate must be 1–4 times a code-computed minimum. Hand-written case got a brief, an estimate and two hand-written messages. Tester: "AI is working" banner with "Stop waiting", repair number on each AI call, and views for written text (plain vs written), the brief (as a case file) and the estimate (with default deadline). 81 tests.
+
+- First full AI case run (normal, seed 7, Union Station poisoning): story needed 2 repairs (first try 559 s with timing mistakes, then solvability gaps). The real run exposed checker gaps, now fixed: "gives the answer away" flagged the killer's name next to an unrelated death; poison cases had no way to link the weapon to the killer (now: killer on camera where the weapon came from); a witness or card payment at the scene now places the killer there. Added a 9-minute AI timeout and a "Recheck" button. Lies run exposed more: the last repair returned 1 lie with missing fields and the clean-up then dropped everything; fixed by keeping the better of the last two tries, making `truthIds` required, and keeping a main lie when only its backup lie is broken.
+- **First fully AI-generated case passes every stage** (Union Station poisoning, normal): 20 story events, 321 pieces of evidence, 11 lies, 26 written texts, brief, estimate (215 min against a 94-min minimum), final check all green. Saved to `convex/fixtures/recorded/union-station-poison.json` as a replay test. This run's AI totals, including the failed tries before the fixes: 16 calls, 45 min, 139k tokens in, 32k out. Lies were the heaviest prompt (~16k tokens per try).
+
 ## Pending
 
 ### Case generation — remaining chunks
 
-- **E.** AI story events (with repair), lies, written text, case brief, time estimate.
 - **F.** Full workflow ("Run all", retries, repair loop), Promptfoo evals, 10-seed smoke run.
 
 ### Making AI-generated cases trustworthy
@@ -47,8 +51,9 @@ Today the same code path and checks run for hand-written and AI output, but that
 - **Story sense not checked.** Only later evals (chunk F) judge whether a case makes sense.
 - **Only one test case, written alongside the checker.** Untested paths: accomplice, unemployed/student routines and hangouts, hotel guests, events crossing midnight, 3+ people meeting, firearm/strangulation/fall cases end to end (poison lab test is covered), public-place crime scenes.
 - **Repair via plain-English problems is untested.** Unknown whether the AI can fix its output from the checker's messages.
+- **Brief can add small invented details** (seen: "construction foreman" for a warehouse foreman, "near the ticket gates"). The leak check only blocks the solution; a check or eval for added facts is still missing.
 - **Checks can't catch text that contradicts the data.** Seen in a real cast: a witness described as "Elliot's neighbour at Carver Towers" whose home is 14 Keel Street. Needs a later text-vs-data check or eval.
-- **AI is slow.** ~60 s crime, ~150 s cast; a full case will take several minutes. Fine for generation in the background, but worth watching.
+- **AI is slow.** ~60 s crime, ~150 s cast, story first try ~9 min (right at the 10-minute Convex action limit; now cut off at 9). A full case takes 20+ minutes. Consider a faster model for the story or generating cases ahead of time.
 - **NPC model id `moonshotai/kimi-k2.6` not tried yet.**
 
 Planned fixes:

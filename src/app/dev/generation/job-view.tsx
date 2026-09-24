@@ -1,19 +1,20 @@
 "use client";
 
-import { useAction, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { City } from "../../../../convex/generation/core/city";
 import type { EvidenceSet } from "../../../../convex/generation/core/evidence/types";
 import type { Facts } from "../../../../convex/generation/core/facts";
-import type { Cast, CrimeCore, Lies, Story } from "../../../../convex/generation/core/schemas";
+import type { Brief, Cast, CrimeCore, Estimate, Lies, Story, Texts } from "../../../../convex/generation/core/schemas";
 import type { NpcScript } from "../../../../convex/generation/core/scripts";
 import type { Timeline } from "../../../../convex/generation/core/timeline";
 import type { CaseCheck } from "../../../../convex/generation/core/validate";
 import { AiLog } from "./ai-log";
 import { CheckView, LiesView, ScriptsView } from "./case-views";
 import { CityView } from "./city-view";
+import { BriefView, EstimateView, TextsView } from "./late-views";
 import { EvidenceView, FactsView } from "./evidence-views";
 import { CastView, CrimeView, namesFrom, StoryView } from "./story-views";
 import { TimelineView } from "./timeline-view";
@@ -26,15 +27,20 @@ export function JobView({ jobId }: { jobId: Id<"generationJobs"> }) {
   const stages = useQuery(api.dev.tester.listStages);
   const drafts = useQuery(api.dev.tester.listDrafts, { jobId });
   const logs = useQuery(api.dev.tester.listLogs, { jobId });
+  const job = useQuery(api.dev.tester.getJob, { jobId });
+  const stopWaiting = useMutation(api.dev.tester.stopWaiting);
   const runStage = useAction(api.dev.tester.runStage);
+  const recheckStage = useAction(api.dev.tester.recheckStage);
   const [running, setRunning] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const busy = running !== null || !!job?.running;
 
-  async function run(stage: string, handWritten = false) {
+  async function run(stage: string, handWritten = false, recheck = false) {
     setRunning(stage);
     setError("");
     try {
-      await runStage({ jobId, stage, handWritten });
+      if (recheck) await recheckStage({ jobId, stage });
+      else await runStage({ jobId, stage, handWritten });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -65,6 +71,12 @@ export function JobView({ jobId }: { jobId: Id<"generationJobs"> }) {
         return <FactsView facts={output as Facts} set={evidence} names={names} />;
       case "lies":
         return <LiesView lies={output as Lies} story={outputOf("story") as Story | undefined} set={evidence} names={names} />;
+      case "text":
+        return <TextsView texts={output as Texts} story={outputOf("story") as Story | undefined} set={evidence} />;
+      case "brief":
+        return <BriefView brief={output as Brief} />;
+      case "estimate":
+        return <EstimateView estimate={output as Estimate} />;
       case "scripts":
         return <ScriptsView scripts={output as NpcScript[]} />;
       case "check":
@@ -77,6 +89,16 @@ export function JobView({ jobId }: { jobId: Id<"generationJobs"> }) {
   return (
     <div className="flex flex-col gap-4">
       {error && <p className="text-red-400">{error}</p>}
+      {job?.running && (
+        <p className="border border-yellow-200/60 p-2 text-yellow-200">
+          AI is working on &quot;{job.running.stage}&quot;
+          {job.running.attempt > 0 ? ` (fixing problems, try ${job.running.attempt + 1} of 3)` : " (first try)"}. This can take a few minutes; the
+          page updates by itself.{" "}
+          <button className="underline opacity-70" onClick={() => stopWaiting({ jobId })}>
+            Stop waiting
+          </button>
+        </p>
+      )}
       {stages?.map((stage) => {
         const draft = drafts?.find((d) => d.stage === stage.name);
         const log = logs?.find((l) => l.stage === stage.name);
@@ -84,13 +106,18 @@ export function JobView({ jobId }: { jobId: Id<"generationJobs"> }) {
           <div key={stage.name} className="border-b border-cyan-300/30 pb-3">
             <div className="flex items-center gap-3">
               {stage.canRun && (
-                <button className={button} disabled={running !== null} onClick={() => run(stage.name)}>
+                <button className={button} disabled={busy} onClick={() => run(stage.name)}>
                   {running === stage.name ? "Running…" : stage.kind === "llm" ? "Run with AI" : "Run"}
                 </button>
               )}
               {stage.hasHandWritten && (
-                <button className={button} disabled={running !== null} onClick={() => run(stage.name, true)}>
+                <button className={button} disabled={busy} onClick={() => run(stage.name, true)}>
                   Use hand-written
+                </button>
+              )}
+              {stage.kind === "llm" && draft && (
+                <button className={button} disabled={busy} onClick={() => run(stage.name, false, true)}>
+                  Recheck
                 </button>
               )}
               <span className="text-yellow-200">{stage.label}</span>

@@ -1,0 +1,61 @@
+import { generateJson, type LlmCall } from "./llm";
+import { checkOutput, type StageDef, type StageJob } from "./stages";
+
+/** Repairs allowed after the first try. */
+export const MAX_REPAIRS = 2;
+
+export type AiAttempt = {
+  call: LlmCall;
+  system: string;
+  prompt: string;
+  output: unknown;
+  problems: string[];
+  /** True when this try's problems should go back to the AI for another try. */
+  retry: boolean;
+};
+
+/** The first prompt, or, for a repair, the first prompt plus the previous answer and its problems. */
+function repairPrompt(prompt: string, previous?: { output: unknown; problems: string[] }) {
+  if (!previous) return prompt;
+  return `${prompt}
+
+Your previous answer:
+${JSON.stringify(previous.output)}
+
+The checker found these problems:
+${previous.problems.map((p) => `- ${p}`).join("\n")}
+
+Return the whole corrected JSON. Fix every problem and keep everything else the same.`;
+}
+
+/**
+ * One AI try at a stage: builds the prompt (with the last answer and its problems on a repair), calls
+ * the model and checks the output. After the last repair, the stage's finalize step cleans up what's
+ * left (e.g. drops lies that still can't be caught).
+ */
+export async function runAiAttempt(
+  stage: StageDef,
+  inputs: Record<string, unknown>,
+  job: StageJob,
+  attempt: number,
+  previous?: { output: unknown; problems: string[] },
+): Promise<AiAttempt> {
+  if (!stage.prompt || !stage.schema) throw new Error("The AI version of this stage isn't built yet. Use the hand-written one.");
+  const { system, prompt: base } = stage.prompt(inputs, job);
+  const prompt = repairPrompt(base, previous);
+  const call = await generateJson({ schema: stage.schema, system, prompt });
+  if (call.error) return { call, system, prompt, output: previous?.output ?? null, problems: call.problems, retry: false };
+
+  let output = call.output;
+  let problems = call.problems.length ? call.problems : checkOutput(stage, output, inputs, job, true);
+  const retry = problems.length > 0 && attempt < MAX_REPAIRS;
+  if (!retry && problems.length > 0) {
+    // A repair can make things worse: keep the earlier answer if it had fewer problems.
+    if (previous && previous.problems.length < problems.length) ({ output, problems } = previous);
+    if (stage.finalize && stage.schema.safeParse(output).success) {
+      output = stage.finalize(stage.schema.parse(output), inputs, job);
+      problems = checkOutput(stage, output, inputs, job, true);
+    }
+  }
+  return { call, system, prompt, output, problems, retry };
+}

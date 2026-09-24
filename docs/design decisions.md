@@ -36,3 +36,6 @@
 - Any evidence the players have found can be shown to break a lie, not only physical items they picked up.
 - For variety, code picks each AI case's motive type, weapon type and crime-scene place from the seed; the AI builds the case around them.
 - Witnesses per case: 3–6.
+- When AI output fails the checks, the AI gets its answer back with the exact problems, up to 2 times; lies and written texts that still fail are dropped rather than failing the case.
+- The case brief tells players only who died, where, when, who reported it, and the weapon only if it was left at the scene.
+- The time estimate must be between the minimum a perfect investigation needs and 4 times that.

@@ -1,0 +1,33 @@
+import type { City } from "../core/city";
+import { EVIDENCE_NOTES, STORY_RULES } from "../core/story";
+import { formatTime, type Cast, type CrimeCore } from "../core/schemas";
+import { storyRoomsText, travelText } from "./city";
+
+/** Prompt for stage 3a: the story events around the crime. */
+export function storyPrompt(city: City, crime: CrimeCore, cast: Cast, difficulty: string) {
+  return `Write the story events for this ${difficulty} case: everything that matters in the two days up to the discovery of the body.
+
+Crime core (death at ${formatTime(crime.timeOfDeath)}, found at ${formatTime(crime.discovery.time)}):
+${JSON.stringify(crime, null, 2)}
+
+Cast:
+${JSON.stringify(cast, null, 2)}
+
+Rules:
+${STORY_RULES.map((r) => `- ${r}`).join("\n")}
+
+How code turns your story into evidence (plan the case so it can be solved, but not trivially):
+${EVIDENCE_NOTES.map((r) => `- ${r}`).join("\n")}
+
+What to write:
+- events: the murder and cover-up, earlier conflicts that give suspects motives, alibi moments for innocents at the time of death, the discovery. Usually 10–20 events. action is one plain sentence.
+- comms: calls and messages that matter (gist = what was said). durationMinutes for calls.
+- purchases: things bought that matter (card or cash).
+- items: the weapon, clothing the killer wore, documents and devices that matter. Devices (laptops, tablets) can hold files in contents.
+
+Rooms (id Name [entrance] {search spots}):
+${storyRoomsText(city)}
+
+Travel minutes between places:
+${travelText(city)}`;
+}

@@ -1,7 +1,7 @@
-import { at, type Cast, type CrimeCore, type Lies, type Story } from "../generation/core/schemas";
+import { at, type Brief, type Cast, type CrimeCore, type Estimate, type Lies, type Story, type Texts } from "../generation/core/schemas";
 
 // Hand-written easy case ("The Keel Street Ledger"). Used to build and test the game UI and every
-// code stage without spending LLM tokens. It stands in for the outputs of the crime, cast, story and lies stages.
+// code stage without spending LLM tokens. It stands in for the outputs of every AI stage.
 
 export const crimeCore: CrimeCore = {
   victimId: "daniel",
@@ -469,4 +469,33 @@ export const lies: Lies = {
       whenCaught: "full-truth",
     },
   ],
+};
+
+// Only a few pieces are rewritten by hand; the rest keep the plain code-made wording.
+export const texts: Texts = {
+  texts: [
+    { id: "debt-message", text: "Hey Lena. I need the $5,000 back by Friday. I'm not asking again." },
+    {
+      id: "warning-message",
+      text: "Nora, something's wrong at work and I can't say more yet. If anything happens to me, the copy is in my bedside drawer. Love, Dad.",
+    },
+  ],
+};
+
+export const brief: Brief = {
+  title: "The Keel Street Kitchen",
+  summary:
+    "Daniel Reyes, 52, an accountant, was found dead in the kitchen of his house at 14 Keel Street on Thursday morning. His housekeeper, Rosa Delgado, found him when she came in to clean and called the police. He had a head wound. No weapon was found in the house.",
+  initialFacts: [
+    "Victim: Daniel Reyes, 52, accountant at Meridian Tower.",
+    "Found: Day 3 08:15, kitchen of 14 Keel Street.",
+    "Reported by: Rosa Delgado, his housekeeper.",
+    "Head wound; no weapon at the scene.",
+  ],
+};
+
+export const estimate: Estimate = {
+  estimatedOptimalMinutes: 540,
+  reasoningSummary:
+    "About 3 hours of steps if you knew where to look. Real players will also chase Lena, Tom and Nora and watch the wrong camera windows first, so roughly 9 hours.",
 };

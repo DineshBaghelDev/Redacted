@@ -118,6 +118,12 @@ describe("can the case be solved", () => {
     expect(validate(s).join("\n")).toMatch(/names the killer outright/);
   });
 
+  it("mentioning the killer next to other deaths is fine", () => {
+    const record = set.evidence.find((e) => e.id === "record/victor/0")!;
+    const s = { ...set, evidence: [...set.evidence, { ...record, id: "x", summary: "Victor Hale's brother was killed in a crash; Daniel sent flowers." }] };
+    expect(validate(s)).toEqual([]);
+  });
+
   it("easy needs two decisive pieces", () => {
     expect(validate(without((id) => id === "item/ledger")).join("\n")).toMatch(/Only 1 reachable piece\(s\) of evidence that is decisive/);
   });
