@@ -63,7 +63,7 @@ Provider: **NVIDIA NIM** (OpenAI-compatible, `https://integrate.api.nvidia.com/v
 - Generation (and repair/judge initially): `moonshotai/kimi-k3`
 - NPC roleplay: `moonshotai/kimi-k2.6`
 
-Structured output uses `generateText` + `Output.object` with Zod. Whether NIM honours `json_schema` for these models must be verified on first use; if not, fall back to `json_object` mode and rely on Zod parsing + repair.
+Structured output uses `generateText` + `Output.object` with Zod (`convex/generation/llm.ts`). Each call first asks NIM for strict `json_schema`; if NIM rejects the request, it retries in JSON mode with the schema written into the prompt, and Zod checks the reply. The mode used is logged per call; as of the first runs, strict mode works for `moonshotai/kimi-k3`. `ai` and `@ai-sdk/openai-compatible` must share the same `@ai-sdk/provider` version (bump them together). Needs `NIM_API_KEY` in the Convex environment.
 
 No dynamic model router in V1.
 

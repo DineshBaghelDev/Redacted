@@ -29,12 +29,13 @@
 - Finished chunk B's leftovers: laptops as optional story items with readable files, background clutter items for searches, weapon-specific lab tests (toxicology, ballistics, ligature), footprints at side doors the killer used, and the "camera switched off" cover-up with its checks. Hand-written case gained Daniel's laptop (a spreadsheet of payments to Hale Consulting) and Victor's shoes. Tester shows laptop files and marks clutter as background items.
 - Chunk C: lies stage shape and checks (each lie hides something real and is broken by existing evidence about the liar; backup lies need different proof; the killer must lie about where he was), NPC scripts built by code (profile, what they took part in or saw, their messages and purchases, lies, rules; leak check), and the final "can the case be solved?" check (killer, motive, weapon, method, decisive evidence, every innocent cleared, accomplice, every lie catchable, everything reachable, no giveaway). Hand-written case got 5 lies, Nora's stolen painkillers, and passes every check with no AI. New decisive rule: something taken from the scene found in the killer's home. Tester shows lies with their proof, each NPC's script, and a pass/fail checklist. 59 tests.
 - Docs: any found evidence (not only picked-up items) can be shown to break a lie.
+- Chunk D: AI connection (`convex/generation/llm.ts`: NIM via AI SDK, strict JSON schema with JSON-mode fallback, bad output returned as problems), every AI call logged in a new `generationLogs` table, AI crime core stage (seeded brief for motive, weapon and scene so cases vary) and AI cast stage. Crime and cast rules now live in one file whose rule text goes into the prompts word for word, with matching checks. Record and replay: `exportJob` saves a job's AI outputs to `convex/fixtures/recorded/`, and a replay test reruns every code stage and check on them. Tester: "Run with AI" button, AI call panel (model, mode, time, tokens, prompt, reply), and bad output no longer breaks the page. Updated `ai` to 7.0.113 to match the NIM provider package.
+- First real AI runs (NIM, `moonshotai/kimi-k3`): strict JSON schema mode works, so no fallback needed so far. Crime core takes ~60 s, cast ~150 s (the model thinks before answering). Fixes from what the checks caught: weapon rooms must be copied from the list, the cover-up can't repeat steps (max 5), and a switched-off camera must name the camera. API key is `NIM_API_KEY` in Convex (pushed from `.env.local`). First recorded case: `convex/fixtures/recorded/union-station-poison.json` (crime + cast).
 
 ## Pending
 
 ### Case generation — remaining chunks
 
-- **D.** AI setup (NIM, logs) + AI crime core and cast stages.
 - **E.** AI story events (with repair), lies, written text, case brief, time estimate.
 - **F.** Full workflow ("Run all", retries, repair loop), Promptfoo evals, 10-seed smoke run.
 
@@ -46,13 +47,15 @@ Today the same code path and checks run for hand-written and AI output, but that
 - **Story sense not checked.** Only later evals (chunk F) judge whether a case makes sense.
 - **Only one test case, written alongside the checker.** Untested paths: accomplice, unemployed/student routines and hangouts, hotel guests, events crossing midnight, 3+ people meeting, firearm/strangulation/fall cases end to end (poison lab test is covered), public-place crime scenes.
 - **Repair via plain-English problems is untested.** Unknown whether the AI can fix its output from the checker's messages.
-- **NIM strict JSON support for Kimi is unknown.** Verify on the first AI call; fall back to JSON mode + Zod if needed.
+- **Checks can't catch text that contradicts the data.** Seen in a real cast: a witness described as "Elliot's neighbour at Carver Towers" whose home is 14 Keel Street. Needs a later text-vs-data check or eval.
+- **AI is slow.** ~60 s crime, ~150 s cast; a full case will take several minutes. Fine for generation in the background, but worth watching.
+- **NPC model id `moonshotai/kimi-k2.6` not tried yet.**
 
 Planned fixes:
 
 - [x] **Invariant tests (start of chunk B):** run the timeline builder over ~200 seeds and randomly tweaked copies of the case; whenever the checker says "no problems", assert the basic rules really hold (no overlaps, travel possible). Catches checker gaps and crashes.
-- [ ] **One source for rules (chunk D):** prompts get the exact allowed ids (rooms, homes, jobs) and the same rule list the checker uses.
-- [ ] **Record and replay (chunk D):** save every AI case, passing or failing, as a test fixture so each real case becomes a permanent regression test.
+- [x] **One source for rules (chunk D):** prompts get the exact allowed ids (rooms, homes, jobs) and the same rule list the checker uses (crime and cast done; story and lies in chunk E).
+- [x] **Record and replay (chunk D):** save AI cases, passing or failing, as test fixtures so each real case becomes a permanent regression test. Saving is a manual command for now.
 - [ ] **Smoke pass rate (chunk F):** 10-seed run reporting pass rate, time and cost — the real measure of "it works for AI".
 
 ### Open questions

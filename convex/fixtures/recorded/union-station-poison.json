@@ -1,0 +1,501 @@
+{
+  "difficulty": "normal",
+  "jobId": "jh7c2cbm48vr4srbks1zfp9wx98f1b1m",
+  "outputs": {
+    "cast": {
+      "output": {
+        "characters": [
+          {
+            "age": 47,
+            "appearance": {
+              "build": "heavyset",
+              "clothing": "navy work jacket over a checked shirt, warehouse ID on a lanyard",
+              "height": "5'11\"",
+              "shoes": "steel-toe work boots, mud dried on the soles"
+            },
+            "gender": "male",
+            "homeUnitId": "harlow-3:home",
+            "id": "martin",
+            "job": {
+              "placeId": "pier-9",
+              "roomId": "pier-9:office",
+              "title": "foreman"
+            },
+            "name": "Martin Holloway",
+            "protects": "His role in covering up the Pier 9 accident that killed a young loader.",
+            "records": [
+              {
+                "kind": "complaint",
+                "proves": [],
+                "summary": "Two formal complaints from load workers about unsafe conditions at Pier 9, both dismissed after Martin's rebuttal."
+              },
+              {
+                "kind": "insurance",
+                "proves": [],
+                "summary": "Martin was a named respondent in the insurer's probe of the 2022 fatal accident; he was cleared based on the report he wrote himself."
+              },
+              {
+                "kind": "property",
+                "proves": [],
+                "summary": "Owns 3 Harlow Lane jointly with his ex-wife; the deed transfer after divorce is still incomplete."
+              },
+              {
+                "kind": "debt",
+                "proves": [],
+                "summary": "Owes roughly £4,200 on a store card, mostly behind on minimum payments."
+              }
+            ],
+            "relationshipToVictim": "the victim",
+            "role": "victim",
+            "routine": "office",
+            "secret": "He falsified the safety report on a fatal warehouse accident two years ago and kept the original incident form hidden at home.",
+            "traits": [
+              "brusque",
+              "charming",
+              "evasive"
+            ]
+          },
+          {
+            "age": 34,
+            "appearance": {
+              "build": "slim",
+              "clothing": "grey cardigan over clinic scrubs, hair pinned back",
+              "height": "5'5\"",
+              "shoes": "white trainers"
+            },
+            "gender": "female",
+            "homeUnitId": "linden-court:unit-2b",
+            "id": "elena",
+            "job": {
+              "placeId": "st-clare-clinic",
+              "roomId": "st-clare-clinic:pharmacy-store",
+              "title": "pharmacist"
+            },
+            "name": "Elena Vasquez",
+            "protects": "Her access to the fentanyl stocks and a stock ledger discrepancy she never reported.",
+            "records": [
+              {
+                "kind": "complaint",
+                "proves": [
+                  "motive"
+                ],
+                "summary": "Elena filed a formal complaint in 2023 accusing Martin Holloway of falsifying the accident report that killed her brother Tomas; it was rejected for lack of evidence."
+              },
+              {
+                "kind": "other",
+                "proves": [
+                  "motive"
+                ],
+                "summary": "Tomas Vasquez, her brother, is listed in public inquest papers as the deceased in the 2022 Pier 9 accident that Martin's report attributed to worker error."
+              },
+              {
+                "kind": "other",
+                "proves": [],
+                "summary": "Signed out of St. Clare Clinic ten minutes early on the morning of the murder, citing a dental appointment that the practice has no record of."
+              }
+            ],
+            "relationshipToVictim": "sister of the loader who died in Martin's warehouse accident",
+            "role": "suspect",
+            "routine": "office",
+            "secret": "She requested a transfer to the pharmacy store room three months ago, which gave her unsupervised access to controlled stock.",
+            "traits": [
+              "composed",
+              "patient",
+              "guarded",
+              "bitter"
+            ]
+          },
+          {
+            "age": 41,
+            "appearance": {
+              "build": "broad and muscular",
+              "clothing": "hi-vis vest over a hooded sweatshirt",
+              "height": "6'2\"",
+              "shoes": "heavy work boots with oil-stained toes"
+            },
+            "fakeMotive": "Blames Martin for tanking his pay and his chance at a supervisor post.",
+            "gender": "male",
+            "homeUnitId": "gable-row:unit-2a",
+            "id": "derek",
+            "job": {
+              "placeId": "pier-9",
+              "roomId": "pier-9:bay-2",
+              "title": "loader"
+            },
+            "name": "Derek Okafor",
+            "protects": "That he was docked two days' pay and demoted, and that he threatened Martin in front of witnesses.",
+            "records": [
+              {
+                "kind": "debt",
+                "proves": [],
+                "summary": "Payday loan of £900 outstanding, taken out the week after his demotion."
+              },
+              {
+                "kind": "complaint",
+                "proves": [],
+                "summary": "HR incident log at Pier 9 records Derek's verbal threat against Martin four weeks before the murder."
+              },
+              {
+                "kind": "criminal",
+                "proves": [],
+                "summary": "One prior: a bar brawl conviction from 2016, fine only."
+              }
+            ],
+            "relationshipToVictim": "Martin's warehouse subordinate",
+            "role": "suspect",
+            "routine": "night-shift",
+            "secret": "Martin demoted him last month after a shouting match over late pay, and Derek told coworkers Martin would 'get what's coming'.",
+            "traits": [
+              "hot-tempered",
+              "loyal",
+              "loud"
+            ]
+          },
+          {
+            "age": 45,
+            "appearance": {
+              "build": "average",
+              "clothing": "tailored blazer and bank scarf, neat bob haircut",
+              "height": "5'6\"",
+              "shoes": "low black heels"
+            },
+            "fakeMotive": "Stands to collect £120,000 on Martin's life insurance policy.",
+            "gender": "female",
+            "homeUnitId": "carver-towers:unit-3b",
+            "id": "sandra",
+            "job": {
+              "placeId": "civic-bank",
+              "roomId": "civic-bank:banking-hall",
+              "title": "teller"
+            },
+            "name": "Sandra Holloway",
+            "protects": "Her status as life insurance beneficiary, which she does not want the police or her new partner to know about.",
+            "records": [
+              {
+                "kind": "insurance",
+                "proves": [],
+                "summary": "Martin's life policy, £120,000, still lists Sandra Holloway as sole beneficiary; premiums paid to date."
+              },
+              {
+                "kind": "property",
+                "proves": [],
+                "summary": "Joint ownership of 3 Harlow Lane never fully transferred; her solicitor wrote to Martin twice this year about it."
+              },
+              {
+                "kind": "other",
+                "proves": [],
+                "summary": "Bank timekeeping confirms she was at her teller window continuously from 7.30am through the morning."
+              }
+            ],
+            "relationshipToVictim": "Martin's ex-wife",
+            "role": "suspect",
+            "routine": "office",
+            "secret": "She is still a beneficiary on Martin's life insurance because he never updated the paperwork after the divorce.",
+            "traits": [
+              "precise",
+              "resentful",
+              "controlled"
+            ]
+          },
+          {
+            "age": 38,
+            "appearance": {
+              "build": "lean and wiry",
+              "clothing": "oil-smeared overalls, baseball cap worn backwards",
+              "height": "5'9\"",
+              "shoes": "canvas trainers with a split sole"
+            },
+            "fakeMotive": "Martin owed him £2,500 from their grey-market parts deal and had stopped paying.",
+            "gender": "male",
+            "homeUnitId": "linden-court:unit-3a",
+            "id": "caleb",
+            "job": {
+              "placeId": "rusk-garage",
+              "roomId": "rusk-garage:workshop",
+              "title": "mechanic"
+            },
+            "name": "Caleb Rusk",
+            "protects": "The stolen-parts racket, not the murder, since admitting it means a prison sentence.",
+            "records": [
+              {
+                "kind": "debt",
+                "proves": [],
+                "summary": "Text messages and a handwritten IOU recovered in a past civil dispute mention £2,500 owed by 'Holloway' to Rusk."
+              },
+              {
+                "kind": "criminal",
+                "proves": [],
+                "summary": "Suspended sentence in 2021 for handling stolen vehicle parts."
+              },
+              {
+                "kind": "company",
+                "proves": [],
+                "summary": "Registered a shell company, 'CR Auto Spares Ltd', quietly dissolved in 2023 after a tax probe."
+              }
+            ],
+            "relationshipToVictim": "Martin's former business associate",
+            "role": "suspect",
+            "routine": "shop",
+            "secret": "He sold Martin stolen forklift parts two years ago, and Martin has been shorting him on their side deal ever since.",
+            "traits": [
+              "jumpy",
+              "talkative",
+              "scheming"
+            ]
+          },
+          {
+            "age": 29,
+            "appearance": {
+              "build": "petite",
+              "clothing": "denim jacket over a café apron, chunky rings",
+              "height": "5'3\"",
+              "shoes": "black ankle boots"
+            },
+            "fakeMotive": "A humiliating breakup and the rumour that Martin was going back to his ex-wife.",
+            "gender": "female",
+            "homeUnitId": "linden-court:unit-1b",
+            "id": "nadia",
+            "job": {
+              "placeId": "ember-cafe",
+              "roomId": "ember-cafe:counter",
+              "title": "barista"
+            },
+            "name": "Nadia Ferreira",
+            "protects": "That she still had Martin's flat key and wallet on the morning he died, which would make her look like a thief.",
+            "records": [
+              {
+                "kind": "other",
+                "proves": [],
+                "summary": "Social media posts show the relationship ended publicly ten days before the murder, with mutual friends taking sides."
+              },
+              {
+                "kind": "complaint",
+                "proves": [],
+                "summary": "A neighbour logged a noise complaint during her row with Martin outside Harlow Lane last week."
+              }
+            ],
+            "relationshipToVictim": "Martin's recent girlfriend",
+            "role": "suspect",
+            "routine": "shop",
+            "secret": "She ended things with Martin the week before because he was still texting his ex-wife, and she kept his spare key and his wallet after an argument.",
+            "traits": [
+              "flirtatious",
+              "defensive",
+              "impulsive"
+            ]
+          },
+          {
+            "age": 60,
+            "appearance": {
+              "build": "stooped and wiry",
+              "clothing": "dark quilted coat with 'SECURITY' on the back",
+              "height": "5'8\"",
+              "shoes": "rubber-soled patrol shoes"
+            },
+            "fakeMotive": "Martin was about to get him sacked for sleeping on duty.",
+            "gender": "male",
+            "homeUnitId": "marlow-27:home",
+            "id": "george",
+            "job": {
+              "placeId": "pier-9",
+              "roomId": "pier-9:front",
+              "title": "night guard"
+            },
+            "name": "George Pelling",
+            "protects": "That he routinely sleeps through his nights and falsifies his patrol log, and that Martin knew.",
+            "records": [
+              {
+                "kind": "other",
+                "proves": [],
+                "summary": "Pier 9 patrol logs show long gaps George cannot account for; management was flagged for review."
+              },
+              {
+                "kind": "debt",
+                "proves": [],
+                "summary": "Council tax arrears of two years; a bailiff letter is filed against him."
+              }
+            ],
+            "relationshipToVictim": "Martin's night guard at the warehouse",
+            "role": "suspect",
+            "routine": "night-shift",
+            "secret": "Martin caught him sleeping on shift and threatened to report him; George would lose his licence and only income.",
+            "traits": [
+              "gruff",
+              "secretive",
+              "weary"
+            ]
+          },
+          {
+            "age": 52,
+            "appearance": {
+              "build": "sturdy",
+              "clothing": "station uniform with a fleece over the shoulders, glasses on a chain",
+              "height": "5'4\"",
+              "shoes": "practical flat shoes"
+            },
+            "gender": "female",
+            "homeUnitId": "keel-14:home",
+            "id": "ruth",
+            "job": {
+              "placeId": "union-station",
+              "roomId": "union-station:ticket-hall",
+              "title": "ticket clerk"
+            },
+            "name": "Ruth Calder",
+            "protects": "Her absence from the booth at the critical moment, which could cost her the job.",
+            "records": [
+              {
+                "kind": "other",
+                "proves": [],
+                "summary": "Staff rota confirms Ruth was due on the concourse booth from 7.00am; her till was idle for eleven minutes around the collapse."
+              }
+            ],
+            "relationshipToVictim": "no connection; found Martin collapsed on the concourse",
+            "role": "witness",
+            "routine": "office",
+            "secret": "She had stepped away from her booth to chat with the café vendor when Martin collapsed, which breaches station rules.",
+            "traits": [
+              "observant",
+              "motherly",
+              "nervous"
+            ]
+          },
+          {
+            "age": 26,
+            "appearance": {
+              "build": "athletic",
+              "clothing": "black security jacket and earpiece",
+              "height": "6'0\"",
+              "shoes": "black tactical boots"
+            },
+            "gender": "male",
+            "homeUnitId": "carver-towers:unit-5a",
+            "id": "farid",
+            "job": {
+              "placeId": "union-station",
+              "roomId": "union-station:concourse",
+              "title": "security guard"
+            },
+            "name": "Farid Haddad",
+            "protects": "His absence from post, which he covered up in his incident report.",
+            "records": [
+              {
+                "kind": "other",
+                "proves": [],
+                "summary": "His incident report claims a continuous patrol, but a café loyalty-app purchase timestamps him at Ember Café at 7.14am."
+              }
+            ],
+            "relationshipToVictim": "no connection; first security officer on scene",
+            "role": "witness",
+            "routine": "office",
+            "secret": "He left the concourse unattended to buy a coffee at Ember Café across the road shortly before the collapse.",
+            "traits": [
+              "eager",
+              "careful",
+              "anxious"
+            ]
+          },
+          {
+            "age": 58,
+            "appearance": {
+              "build": "thin",
+              "clothing": "long raincoat over a patterned dress, carrying a wheeled suitcase",
+              "height": "5'7\"",
+              "shoes": "worn walking sandals"
+            },
+            "gender": "female",
+            "hangoutPlaceId": "union-station",
+            "homeUnitId": "regent-hotel:unit-2b",
+            "id": "margo",
+            "job": null,
+            "name": "Margo Ellison",
+            "protects": "Her hotel arrears and her fragile living situation.",
+            "records": [
+              {
+                "kind": "debt",
+                "proves": [],
+                "summary": "Owes the Regent Hotel six weeks of room charges; management is threatening eviction."
+              },
+              {
+                "kind": "other",
+                "proves": [],
+                "summary": "Was seated on bench three, in clear view of the coffee kiosk, from about 7.05am."
+              }
+            ],
+            "relationshipToVictim": "no connection; was waiting for a train nearby",
+            "role": "witness",
+            "routine": "unemployed",
+            "secret": "She has been living in the Regent Hotel on unpaid bills and pretends to be a traveller to avoid questions.",
+            "traits": [
+              "chatty",
+              "dramatic",
+              "lonely"
+            ]
+          },
+          {
+            "age": 22,
+            "appearance": {
+              "build": "lanky",
+              "clothing": "university hoodie, backpack with a laptop sleeve",
+              "height": "5'10\"",
+              "shoes": "white skate shoes"
+            },
+            "gender": "male",
+            "hangoutPlaceId": "union-station",
+            "homeUnitId": "gable-row:unit-3b",
+            "id": "orian",
+            "job": null,
+            "name": "Orian Beck",
+            "protects": "His truancy and whereabouts most mornings.",
+            "records": [
+              {
+                "kind": "other",
+                "proves": [],
+                "summary": "University attendance system shows a pattern of missed 9am lectures on Tuesdays and Thursdays."
+              }
+            ],
+            "relationshipToVictim": "no connection; commuting student who bought coffee near Martin",
+            "role": "witness",
+            "routine": "student",
+            "secret": "He skips his morning lectures and does not want his parents to find out via police enquiries.",
+            "traits": [
+              "distracted",
+              "honest",
+              "jittery"
+            ]
+          }
+        ]
+      },
+      "source": "llm"
+    },
+    "crime": {
+      "output": {
+        "coverUp": [
+          "wipe-prints",
+          "hide-weapon"
+        ],
+        "discovery": {
+          "byId": "ruth",
+          "time": 1938
+        },
+        "killerId": "elena",
+        "method": "Elena slipped a stolen dose of fentanyl into Martin's morning coffee while he checked the departure board, and he collapsed on the concourse minutes later.",
+        "motive": {
+          "details": "Elena blamed Martin for her brother's death after Martin, his supervisor at the warehouse, falsified a safety report that freed him of blame for a fatal accident. She spent two years waiting for a chance to make him pay.",
+          "type": "revenge"
+        },
+        "sceneRoomId": "union-station:concourse",
+        "timeOfDeath": 1920,
+        "victimId": "martin",
+        "weapon": {
+          "category": "poison",
+          "name": "fentanyl-laced coffee",
+          "originRoomId": "st-clare-clinic:pharmacy-store"
+        },
+        "windowStart": 0
+      },
+      "source": "llm"
+    }
+  },
+  "seed": 7
+}

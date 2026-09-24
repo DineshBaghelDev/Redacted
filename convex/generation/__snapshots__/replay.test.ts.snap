@@ -1,0 +1,9 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`replay > union-station-poison.json gives the same problems as before 1`] = `
+{
+  "cast": [],
+  "city": [],
+  "crime": [],
+}
+`;

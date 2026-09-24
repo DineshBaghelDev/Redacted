@@ -1,9 +1,9 @@
 import { findRoom, streetRoute, type City } from "./city";
 import { createRng } from "./rng";
+import { castProblems, crimeProblems } from "./crimeCast";
 import { buildRoutine } from "./routine";
 import { formatTime, type Cast, type CrimeCore, type Story } from "./schemas";
 
-const MAX_WINDOW = 2 * 1440;
 const MIN_BLOCK = 5;
 
 export type TimelineEntry = {
@@ -138,41 +138,8 @@ export function checkTimeline(city: City, crime: CrimeCore, cast: Cast, story: S
   const covering = (actorId: string, time: number) =>
     timeline.entries.filter((e) => e.actorId === actorId && e.start <= time && time <= e.end);
 
-  // Crime core
-  const victim = people.get(crime.victimId);
-  const killer = people.get(crime.killerId);
-  if (victim?.role !== "victim") problems.push("The victim is missing from the cast or not marked as the victim.");
-  if (killer?.role !== "suspect") problems.push("The killer is missing from the cast or not marked as a suspect.");
-  const scene = findRoom(city, crime.sceneRoomId);
-  if (!scene) problems.push(`Crime scene room ${crime.sceneRoomId} doesn't exist.`);
-  else if (!scene.place.crimeSceneAllowed) problems.push(`${scene.place.name} can't be a crime scene.`);
-  if (!roomOk(crime.weapon.originRoomId)) problems.push(`Weapon starts in unknown room ${crime.weapon.originRoomId}.`);
-  if (!people.has(crime.discovery.byId)) problems.push("Whoever finds the body is not in the cast.");
-  if (crime.accomplice && people.get(crime.accomplice.id)?.role !== "suspect") problems.push("The accomplice must be a suspect.");
-  if (crime.timeOfDeath < crime.windowStart) problems.push("Time of death is before the story starts.");
-  if (crime.timeOfDeath - crime.windowStart > MAX_WINDOW) problems.push("The story starts more than 2 days before the death.");
-  if (crime.discovery.time <= crime.timeOfDeath) problems.push("The body is found before the death.");
-
-  // Cast
-  const homeIds = new Set(city.places.flatMap((p) => p.building.homeUnits.map((u) => u.id)));
-  const jobsTaken = new Map<string, number>();
-  for (const c of cast.characters) {
-    if (!homeIds.has(c.homeUnitId)) problems.push(`${c.name} lives in unknown home ${c.homeUnitId}.`);
-    if (c.job) {
-      const place = city.places.find((p) => p.id === c.job!.placeId);
-      if (!place) problems.push(`${c.name} works at unknown place ${c.job.placeId}.`);
-      else {
-        const key = `${place.id}/${c.job.title}`;
-        jobsTaken.set(key, (jobsTaken.get(key) ?? 0) + 1);
-        const slots = place.jobSlots.filter((s) => s === c.job!.title).length;
-        if (jobsTaken.get(key)! > slots) problems.push(`${place.name} has no free "${c.job.title}" job for ${c.name}.`);
-      }
-      if (c.job.roomId && !c.job.roomId.startsWith(`${c.job.placeId}:`)) problems.push(`${c.name}'s work room isn't in their workplace.`);
-    }
-    if ((c.routine === "unemployed" || c.routine === "student") && !c.hangoutPlaceId) {
-      problems.push(`${c.name} needs a place to spend the afternoon.`);
-    }
-  }
+  // Crime core and cast on their own
+  problems.push(...crimeProblems(city, crime), ...castProblems(city, crime, cast));
 
   // Story references
   for (const e of story.events) {

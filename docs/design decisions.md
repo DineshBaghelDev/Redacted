@@ -34,3 +34,5 @@
 - Finding something taken from the victim's home inside the killer's home counts as decisive evidence.
 - The victim's phone is found "on the body" at the scene.
 - Any evidence the players have found can be shown to break a lie, not only physical items they picked up.
+- For variety, code picks each AI case's motive type, weapon type and crime-scene place from the seed; the AI builds the case around them.
+- Witnesses per case: 3–6.

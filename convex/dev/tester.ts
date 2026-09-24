@@ -1,8 +1,8 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { action, internalMutation, internalQuery, mutation, query } from "../_generated/server";
-import { schemaProblems } from "../generation/core/schemas";
-import { getStage, stages, type StageResult } from "../generation/stages";
+import { generateJson } from "../generation/llm";
+import { checkOutput, getStage, stages, type StageResult } from "../generation/stages";
 import { isDevUser, requireDevUser } from "../lib/auth";
 
 // Dev-only generation tester. Every public function here checks the DEV_TOOL_USER_IDS allowlist.
@@ -23,12 +23,13 @@ export const listStages = query({
   args: {},
   handler: async (ctx) => {
     await requireDevUser(ctx);
-    return stages.map(({ name, label, kind, inputs, handWritten }) => ({
+    return stages.map(({ name, label, kind, inputs, handWritten, run, prompt }) => ({
       name,
       label,
       kind,
       inputs,
       hasHandWritten: handWritten !== undefined,
+      canRun: run !== undefined || prompt !== undefined,
     }));
   },
 });
@@ -84,21 +85,37 @@ export const runStage = action({
       throw new Error(`Run these stages first: ${missing.join(", ")}`);
     }
 
+    const stageJob = { seed: job.seed, difficulty: job.difficulty };
     let result: StageResult;
     if (handWritten) {
       if (stage.handWritten === undefined) throw new Error("This stage has no hand-written version.");
-      result = { output: stage.handWritten, checkErrors: [] };
+      result = { output: stage.handWritten, checkErrors: checkOutput(stage, stage.handWritten, drafts, stageJob, false) };
     } else if (stage.run) {
-      result = stage.run(drafts, { seed: job.seed, difficulty: job.difficulty });
+      result = stage.run(drafts, stageJob);
+    } else if (stage.prompt && stage.schema) {
+      const { system, prompt } = stage.prompt(drafts, stageJob);
+      const call = await generateJson({ schema: stage.schema, system, prompt });
+      await ctx.runMutation(internal.dev.tester.saveLog, {
+        jobId,
+        stage: stage.name,
+        model: call.model,
+        mode: call.mode,
+        system,
+        prompt,
+        rawText: call.rawText,
+        problems: call.problems,
+        error: call.error,
+        inputTokens: call.inputTokens,
+        outputTokens: call.outputTokens,
+        ms: call.ms,
+      });
+      if (call.error) throw new Error(`AI call failed: ${call.error}`);
+      result = {
+        output: call.output,
+        checkErrors: call.problems.length ? call.problems : checkOutput(stage, call.output, drafts, stageJob, true),
+      };
     } else {
       throw new Error("The AI version of this stage isn't built yet. Use the hand-written one.");
-    }
-    if (stage.schema) {
-      const shapeProblems = schemaProblems(stage.schema, result.output);
-      result.checkErrors.unshift(...shapeProblems);
-      if (shapeProblems.length === 0 && stage.check) {
-        result.checkErrors.push(...stage.check(result.output, drafts, { seed: job.seed, difficulty: job.difficulty }));
-      }
     }
 
     await ctx.runMutation(internal.dev.tester.saveDraft, {
@@ -109,6 +126,57 @@ export const runStage = action({
       source: handWritten ? "hand-written" : stage.kind,
     });
     return result.checkErrors;
+  },
+});
+
+export const listLogs = query({
+  args: { jobId: v.id("generationJobs") },
+  handler: async (ctx, { jobId }) => {
+    await requireDevUser(ctx);
+    return await ctx.db
+      .query("generationLogs")
+      .withIndex("by_job", (q) => q.eq("jobId", jobId))
+      .order("desc")
+      .collect();
+  },
+});
+
+export const saveLog = internalMutation({
+  args: {
+    jobId: v.id("generationJobs"),
+    stage: v.string(),
+    model: v.string(),
+    mode: v.union(v.literal("strict"), v.literal("json")),
+    system: v.string(),
+    prompt: v.string(),
+    rawText: v.string(),
+    problems: v.array(v.string()),
+    error: v.optional(v.string()),
+    inputTokens: v.optional(v.number()),
+    outputTokens: v.optional(v.number()),
+    ms: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("generationLogs", { ...args, createdAt: Date.now() });
+  },
+});
+
+/**
+ * Record and replay: a job's AI-written stage outputs, to save under convex/fixtures/recorded/ as a
+ * permanent test case. Run with: npx convex run dev/tester:exportJob '{"jobId":"..."}'
+ */
+export const exportJob = internalQuery({
+  args: { jobId: v.id("generationJobs") },
+  handler: async (ctx, { jobId }) => {
+    const job = await ctx.db.get(jobId);
+    if (!job) throw new Error("Job not found.");
+    const drafts = await ctx.db
+      .query("generationDrafts")
+      .withIndex("by_job_stage", (q) => q.eq("jobId", jobId))
+      .collect();
+    const outputs: Record<string, { output: unknown; source: string }> = {};
+    for (const d of drafts) if (d.source !== "code") outputs[d.stage] = { output: d.output, source: d.source };
+    return { jobId, seed: job.seed, difficulty: job.difficulty, outputs };
   },
 });
 

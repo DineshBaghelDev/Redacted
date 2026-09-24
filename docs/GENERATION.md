@@ -52,45 +52,25 @@ The LLM never builds or edits topology.
 
 Code: `convex/fixtures/city.ts`, `convex/generation/core/{buildings,city}.ts`.
 
-## Stage 1 — Crime core (LLM)
+## Stage 1 — Crime core (LLM, implemented)
 
-Input: difficulty, city place list (names/types), crime-scene-eligible rooms.
+Input: difficulty, a **seeded brief** (motive type, weapon category, crime-scene place, picked by code from the seed so cases vary), every city room id, every camera id.
 
-```ts
-{
-  victim: CharacterSeed,
-  killer: CharacterSeed,
-  accomplice?: { seed: CharacterSeed, role: "fake-alibi" | "weapon-disposal" | "distraction" },
-  motive: { type: "money" | "jealousy" | "revenge" | "cover-up" | "power", details: string },
-  weapon: { name: string, category: "blunt" | "sharp" | "poison" | "firearm" | "strangulation" | "fall", originPlaceId },
-  method: string,
-  sceneRoomId: Id,
-  timeOfDeath: number,
-  windowStart: number, // LLM picks; must be <= 2 days (2880 min) before timeOfDeath
-  coverUp: ("wipe-prints" | "hide-weapon" | "move-body" | "disable-camera" | ...)[],
-}
-```
+Output shape: `crimeCoreSchema` in `core/schemas.ts` — victim/killer/accomplice ids (short lowercase first names), motive, weapon, method, scene room, time of death, windowStart, discovery, cover-up, optional switched-off camera.
 
-Checks: scene room exists; weapon category fits method; accomplice role valid; window ≤ 2 days.
+Rules and checks live together in `core/crimeCast.ts` (`CRIME_RULES` goes into the prompt word for word; `crimeProblems` enforces it): rooms exist and the scene allows crimes; victim, killer, accomplice and finder are different people; windowStart is Day 1 00:00; death on Day 2; body found after the death and by the end of Day 3; AI output follows the brief (the hand-written case is exempt from the brief).
 
 One crime per case. Accomplice optional.
 
-## Stage 2 — Cast (LLM)
+## Stage 2 — Cast (LLM, implemented)
 
-Input: crime core, suspect count by difficulty, free homes/workplaces from the city.
+Input: crime core, difficulty, every home id with its address, workplaces with free job titles and room ids, public places for hangouts.
 
-Suspect counts: easy ~3–4, normal ~6–7, hard 10+. Plus 3–6 non-suspect witnesses (bartender, neighbor, clerk, reporter).
+Suspect counts: easy 3–4, normal 6–7, hard 10–12 (the killer included). Plus 3–6 witnesses (bartender, neighbour, clerk…).
 
-Per character:
+Per character (`characterSchema`): name, age, gender, role, home, job, routine type, hangout, appearance (height, build, clothing, shoes), traits, relationship to victim, secret, what they protect, fake motive (innocent suspects), public records.
 
-- name, age, job, home, workplace,
-- **appearance** (height, build, usual clothing) — used for CCTV descriptions,
-- 3–4 personality traits,
-- relationship to victim,
-- secret, and what they protect (self, partner, job, affair, ...),
-- innocents get a believable fake motive.
-
-Checks: counts match difficulty; places exist; names unique; killer's motive matches crime core; every suspect has a motive.
+Checks (`castProblems`, rules in `castRules` go into the prompt): the crime's people exist with the right roles; counts match difficulty; ids unique; homes exist; jobs are free slots at that place and work rooms belong to it; unemployed people and students have a public hangout; the killer has no fake motive.
 
 ## Stage 3 — Timeline (code routine + LLM story events)
 
@@ -255,7 +235,9 @@ When all gates pass, `case.status = ready`. After this: no generated record is m
 Code layout:
 
 - `convex/generation/core/` — plain TypeScript, no Convex imports: seeded RNG, route finder, timeline checker, evidence builders (CCTV, forensics rule table, records), decisive set, validator. Shared by Vitest and Promptfoo.
-- `convex/generation/stages/` — one internal action per LLM stage: prompt, AI SDK call, Zod parse.
+- `convex/generation/stages.ts` — stage list: inputs, output schema, hand-written output, code `run`, AI `prompt`, `check`.
+- `convex/generation/prompts/` — prompt builders; city lists and rule text come from the same data the checks use.
+- `convex/generation/llm.ts` — `generateJson`: NIM call through the AI SDK, strict schema first, JSON mode fallback; bad output is returned as problems, never thrown.
 - `convex/generation/workflow.ts` — fixed stage order + repair loop (Convex workflow component).
 - `convex/fixtures/` — V1 city and the hand-written case.
 
@@ -263,7 +245,7 @@ Tables:
 
 - `generationJobs` — case, seed, status, current stage, attempts, errors, plain-words progress label, workflow id, token/cost totals. Client subscribes for the loading screen.
 - `generationDrafts` — one doc per (job, stage) output. Workflow steps pass draft ids, not large payloads.
-- `generationLogs` — raw prompt input + LLM output per stage (debugging; doubles as Promptfoo datasets).
+- `generationLogs` — every AI call: model, mode (strict/json), prompt, raw reply, problems, tokens, time (debugging; doubles as Promptfoo datasets).
 
 Workflow rules:
 
@@ -279,6 +261,7 @@ Testing:
 - **Vitest** — core functions against the hand-written case, plus deliberately broken copies that must fail the expected check.
 - **Vitest + `convex-test`** — workflow with stubbed LLM stages: order, repair loop, retries, cancel, publish.
 - **Promptfoo** — per-stage prompt evals whose assertion calls the same core validator; NPC evals (holds lie under pressure, breaks on proof, never leaks solution). Run manually/scheduled, not per push.
+- **Record and replay** — AI cases worth keeping are saved to `convex/fixtures/recorded/` (`npx convex run dev/tester:exportJob`); `replay.test.ts` reruns all code stages and checks on them and snapshots the problems.
 - **Smoke script** — full pipeline on the dev deployment over ~10 seeds; reports pass rate, time, cost.
 - **Dev case viewer** — dev-only read-only page to inspect generated cases.
 

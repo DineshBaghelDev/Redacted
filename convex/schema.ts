@@ -35,4 +35,20 @@ export default defineSchema({
     source: v.union(v.literal("hand-written"), v.literal("code"), v.literal("llm")),
     updatedAt: v.number(),
   }).index("by_job_stage", ["jobId", "stage"]),
+  // Every AI call made while generating, kept for debugging and cost tracking.
+  generationLogs: defineTable({
+    jobId: v.id("generationJobs"),
+    stage: v.string(),
+    model: v.string(),
+    mode: v.union(v.literal("strict"), v.literal("json")),
+    system: v.string(),
+    prompt: v.string(),
+    rawText: v.string(),
+    problems: v.array(v.string()),
+    error: v.optional(v.string()),
+    inputTokens: v.optional(v.number()),
+    outputTokens: v.optional(v.number()),
+    ms: v.number(),
+    createdAt: v.number(),
+  }).index("by_job", ["jobId"]),
 });

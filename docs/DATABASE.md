@@ -712,3 +712,27 @@ One document per (job, stage); rerunning a stage replaces it. Holds hidden case 
 ```
 
 Index: `by_job_stage` (`jobId`, `stage`).
+
+### `generationLogs`
+
+One document per AI call made while generating. Dev-tool/internal only.
+
+```ts
+{
+  jobId: Id<"generationJobs">,
+  stage: string,
+  model: string,
+  mode: "strict" | "json", // strict = NIM enforced the JSON schema; json = schema only in the prompt
+  system: string,
+  prompt: string,
+  rawText: string,
+  problems: string[],
+  error?: string,
+  inputTokens?: number,
+  outputTokens?: number,
+  ms: number,
+  createdAt: number,
+}
+```
+
+Index: `by_job` (`jobId`).

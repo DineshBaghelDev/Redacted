@@ -72,6 +72,6 @@ describe("checkTimeline catches broken cases", () => {
 
   it("story window longer than 2 days", () => {
     const broken = { ...crimeCore, windowStart: at(1, "00:00") - 1440 };
-    expect(problemsFor(broken)).toContain("The story starts more than 2 days before the death.");
+    expect(problemsFor(broken)).toContain("windowStart must be 0 (Day 1 00:00).");
   });
 });

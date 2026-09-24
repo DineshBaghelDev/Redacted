@@ -30,7 +30,7 @@ export const crimeCoreSchema = z.object({
   discovery: z.object({ time: z.number().int(), byId: id }),
   /** Required when coverUp includes "disable-camera": which camera went dark and when. */
   disabledCamera: z.object({ cameraId: id, from: z.number().int(), to: z.number().int() }).optional(),
-  coverUp: z.array(z.enum(["wipe-prints", "hide-weapon", "move-body", "disable-camera", "remove-item"])),
+  coverUp: z.array(z.enum(["wipe-prints", "hide-weapon", "move-body", "disable-camera", "remove-item"])).max(5),
 });
 
 export const routineTypes = ["office", "night-shift", "shop", "unemployed", "student"] as const;
