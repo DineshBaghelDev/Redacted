@@ -23,11 +23,14 @@ export function homesText(city: City) {
     .join("\n");
 }
 
-/** Places with job titles (repeated titles = several openings) and their room ids. */
+/** Places with job titles and how many openings each has ("cashier ×2"), plus their room ids. */
 export function jobsText(city: City) {
   return city.places
     .filter((p) => p.jobSlots.length)
-    .map((p) => `${p.id} · ${p.name}: jobs [${p.jobSlots.join(", ")}]; rooms [${p.building.rooms.map((r) => r.id).join(", ")}]`)
+    .map((p) => {
+      const counts = [...new Set(p.jobSlots)].map((t) => `${t} ×${p.jobSlots.filter((s) => s === t).length}`);
+      return `${p.id} · ${p.name}: jobs [${counts.join(", ")}]; rooms [${p.building.rooms.map((r) => r.id).join(", ")}]`;
+    })
     .join("\n");
 }
 

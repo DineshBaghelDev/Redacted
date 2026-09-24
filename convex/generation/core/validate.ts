@@ -82,14 +82,18 @@ export function validateCase(
     });
 
   const checks = [
-    check("killer", "Killer can be placed at the scene", killerIds, killerTypes.size >= 2 ? [] : [`Only ${killerTypes.size} kind(s) of evidence place ${nameOf(crime.killerId)} at the scene; need 2.`]),
+    check("killer", "Killer can be placed at the scene", killerIds, killerTypes.size >= 2 ? [] : [
+      `Only ${killerTypes.size} kind(s) of evidence place ${nameOf(crime.killerId)} at the scene${killerTypes.size ? ` (${[...killerTypes].join(", ")})` : ""}; need 2 different kinds, e.g. a camera, a witness at a public event, a card purchase, shoe prints at a side door, fibers or prints at the scene.`,
+    ]),
     check("motive", "Motive is backed by evidence", fact("motive"), atLeast(fact("motive"), 2, "for the motive")),
     check("weapon", "Weapon is linked to the victim and the killer", [...fact("weapon-at-scene"), ...fact("weapon-to-killer")], [
       ...atLeast(fact("weapon-at-scene"), 1, "linking the weapon to the victim"),
       ...atLeast(fact("weapon-to-killer"), 1, "linking the weapon to the killer"),
     ]),
     check("method", "Method is backed by the lab", fact("method"), atLeast(fact("method"), 1, "for the method")),
-    check("evidence", "Decisive evidence exists", facts.decisiveIds, atLeast(facts.decisiveIds, difficulty === "easy" ? 2 : 1, "that is decisive")),
+    check("evidence", "Decisive evidence exists", facts.decisiveIds, atLeast(facts.decisiveIds, difficulty === "easy" ? 2 : 1, "that is decisive").map(
+      (p) => `${p} Decisive means: the victim's blood on the killer's clothing, the killer's prints on the weapon, the killer on the scene room's camera at the time of death, or something taken from the scene found in the killer's home.`,
+    )),
     check(
       "unique",
       "Nothing decisive points at an innocent",

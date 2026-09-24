@@ -68,7 +68,7 @@ describe("cast checks", () => {
     const problems = castProblems(city, crimeCore, broken, "hard");
     expect(problems.join("\n")).toMatch(/Need 10–12 suspects/);
     expect(problems.join("\n")).toMatch(/unknown home nowhere:1/);
-    expect(problems.join("\n")).toMatch(/no free "executive" job/);
+    expect(problems.join("\n")).toMatch(/has only \d+ "executive" job\(s\)/);
   });
 
   it("AI casts must follow the seeded brief: suspect count, victim routine, names", () => {

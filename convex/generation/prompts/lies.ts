@@ -21,7 +21,10 @@ export function liesPrompt(crime: CrimeCore, cast: Cast, story: Story, set: Evid
       const comms = story.comms.filter((m) => m.from === c.id || m.to === c.id);
       const buys = story.purchases.filter((p) => p.who === c.id);
       const mine = new Set([...events, ...comms, ...buys].map((x) => x.id));
-      const proof = useful.filter((e) => e.aboutIds.includes(c.id) || e.sourceIds.some((s) => mine.has(s)));
+      // Their own statement can't disprove their lie, so it isn't offered.
+      const proof = useful.filter(
+        (e) => (e.aboutIds.includes(c.id) || e.sourceIds.some((s) => mine.has(s))) && !(e.type === "witness" && e.data.witnessId === c.id),
+      );
       return [
         `${c.id} · ${c.name} (${role}) — traits: ${c.traits.join(", ")}`,
         c.secret ? `  secret: ${c.secret}${c.protects ? `; protects: ${c.protects}` : ""}` : "  no secret",

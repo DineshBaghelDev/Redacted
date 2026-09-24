@@ -1,4 +1,4 @@
-import type { City } from "./city";
+import { findRoom, type City } from "./city";
 import { buildEvidence } from "./evidence";
 import { buildFacts } from "./facts";
 import type { Cast, CrimeCore, Story } from "./schemas";
@@ -10,13 +10,14 @@ import { validateCase, validationProblems } from "./validate";
 
 export const STORY_RULES = [
   "Ids of events, messages, purchases and items are short, unique and kebab-case. Actors, senders and buyers are cast ids.",
-  "Times are whole minutes from Day 1 00:00. Everything happens between 0 and the time the body is found.",
+  "Times are whole minutes from Day 1 00:00. Everything happens between 0 and the time the body is found. Every event lasts at least 1 minute (end is after start); a quick action takes 2–5 minutes.",
   "Every roomId is copied from the room list. enteredVia/leftVia, when given, is an [entrance] room of the same building.",
   "Nobody is in two events at once, and there is enough travel time between events at different places (see travel minutes). Everyday routines are added by code around your events; you only write what matters.",
   "The murder is one event in the crime scene room with the killer and the victim, covering the time of death, with \"weapon\" in itemsUsed. The victim does nothing after it (no events, messages or purchases).",
   "Exactly one item has id \"weapon\" and kind \"weapon\", starting in the crime's weapon origin room. An item that ends in a different room from where it starts needs an event in its final room that uses it. finalSlot is one of that room's search spots.",
   "Whoever finds the body has an event in the crime scene room starting at the discovery time.",
   "If there is an accomplice, the killer and accomplice must meet or talk in the story.",
+  "Write every action, gist and file in your own words; never copy the crime core's method or motive text (NPC scripts are built from the story and must not contain it).",
   "Visibility: \"public\" events can be seen by anyone at the same place; \"private\" events are known only to their actors.",
   "Tag with proves [\"motive\"] the messages, items, device files that show the killer's real motive; at least two things (records count) must prove it.",
 ];
@@ -30,9 +31,28 @@ export const EVIDENCE_NOTES = [
   "Side doors (enteredVia/leftVia) the killer uses at the scene building get their shoe prints.",
   "The weapon links to the killer through their prints on it (not with wipe-prints), fibers from their clothing, or the killer caught on camera in the weapon's origin room during a story event there that uses the weapon (e.g. taking poison from a pharmacy store with a camera).",
   "Anyone at the same place during a public event becomes a witness to it.",
+  "At least 2 different kinds of evidence must place the killer at or near the scene around the time of death (e.g. a camera, a witness at a public event, a card purchase, shoe prints at a side door, fibers or prints at the scene). One kind twice is not enough.",
   "Decisive evidence (at least 2 pieces on easy): the victim's blood on the killer's clothing, the killer's prints on the weapon, the killer on the scene room's camera at the time of death, or something taken from the scene that ends up in the killer's home.",
   "Innocent suspects may or may not have a provable alibi (a public event elsewhere that others see, a camera, a card purchase); the story decides. Nothing decisive may point at an innocent.",
 ];
+
+/**
+ * How many decisive pieces this case needs and the ways to get them that this crime allows, so the
+ * story can plan them instead of finding out from the checks.
+ */
+export function decisivePlan(city: City, crime: CrimeCore, difficulty: Difficulty) {
+  const cameraRooms = findRoom(city, crime.sceneRoomId)?.place.building.cameraRoomIds ?? [];
+  const sceneCamera = cameraRooms.includes(crime.sceneRoomId) && crime.disabledCamera?.cameraId !== `cam:${crime.sceneRoomId}`;
+  const routes = [
+    ...(["blunt", "sharp"].includes(crime.weapon.category)
+      ? ["the victim's blood on the killer's clothing: list a clothing item the killer owns in the murder event's itemsUsed"]
+      : []),
+    ...(crime.coverUp.includes("wipe-prints") ? [] : ["the killer's prints on the weapon: the killer handles the weapon in the murder event"]),
+    ...(sceneCamera ? ["the killer on the scene room's camera at the time of death: the killer is in the scene room then"] : []),
+    "something taken from the scene building that ends up in the killer's home: an item starting in the scene building, not owned by the killer, whose final room is in the killer's home, with an event there that uses it",
+  ];
+  return { needed: difficulty === "easy" ? 2 : 1, routes };
+}
 
 /**
  * Checks the story end to end: timeline first, then (if that passes) whether the evidence it produces
@@ -44,11 +64,23 @@ export function storyProblems(city: City, crime: CrimeCore, cast: Cast, story: S
   const ids = [...story.events, ...story.comms, ...story.purchases, ...story.items].map((x) => x.id);
   const dupes = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
   if (dupes.length) return [`These ids are used twice: ${dupes.join(", ")}.`];
+  // NPC scripts are built from the story; the scripts check rejects the solution's own wording.
+  const text = JSON.stringify(story);
+  const copied = [
+    ...(text.includes(crime.method) ? ["method"] : []),
+    ...(text.includes(crime.motive.details) ? ["motive details"] : []),
+  ];
+  if (copied.length) return copied.map((what) => `The story copies the crime core's ${what} word for word; describe it in your own words.`);
   const timeline = buildTimeline(city, crime, cast, story, seed);
   const timelineProblems = checkTimeline(city, crime, cast, story, timeline);
   if (timelineProblems.length) return timelineProblems;
   const set = buildEvidence(city, crime, cast, story, timeline, difficulty, seed);
   const facts = buildFacts(city, crime, cast, story, set);
   const checks = validateCase(city, crime, cast, story, set, facts, { lies: [] }, difficulty).filter((c) => c.id !== "lies");
-  return validationProblems(checks);
+  const problems = validationProblems(checks);
+  // The general "decisive means" list doesn't say which ways this crime allows; the repair needs that.
+  if (checks.some((c) => c.id === "evidence" && !c.ok)) {
+    problems.push(`Ways to get decisive evidence in this case: ${decisivePlan(city, crime, difficulty).routes.join("; ")}.`);
+  }
+  return problems;
 }

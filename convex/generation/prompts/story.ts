@@ -1,10 +1,12 @@
 import type { City } from "../core/city";
-import { EVIDENCE_NOTES, STORY_RULES } from "../core/story";
+import { decisivePlan, EVIDENCE_NOTES, STORY_RULES } from "../core/story";
+import type { Difficulty } from "../core/crimeCast";
 import { formatTime, type Cast, type CrimeCore } from "../core/schemas";
 import { storyRoomsText, travelText } from "./city";
 
 /** Prompt for stage 3a: the story events around the crime. */
-export function storyPrompt(city: City, crime: CrimeCore, cast: Cast, difficulty: string) {
+export function storyPrompt(city: City, crime: CrimeCore, cast: Cast, difficulty: Difficulty) {
+  const plan = decisivePlan(city, crime, difficulty);
   return `Write the story events for this ${difficulty} case: everything that matters in the two days up to the discovery of the body.
 
 Crime core (death at ${formatTime(crime.timeOfDeath)}, found at ${formatTime(crime.discovery.time)}):
@@ -18,6 +20,9 @@ ${STORY_RULES.map((r) => `- ${r}`).join("\n")}
 
 How code turns your story into evidence (plan the case so it can be solved, but not trivially):
 ${EVIDENCE_NOTES.map((r) => `- ${r}`).join("\n")}
+
+Decisive evidence: this case needs at least ${plan.needed} decisive piece(s). Plan them on purpose. ${plan.routes.length <= plan.needed ? "Only these ways work for this crime, so the story must use them:" : "Ways that work for this crime:"}
+${plan.routes.map((r) => `- ${r}`).join("\n")}
 
 What to write:
 - events: the murder and cover-up, earlier conflicts that give suspects motives, where people really were around the time of death (some provable, some not), the discovery. Usually 10–20 events. action is one plain sentence.

@@ -196,9 +196,9 @@ export const runAll = mutation({
 });
 
 /** A test run's difficulty mix. */
-const TEST_MIX = ["easy", "easy", "normal", "normal", "hard"] as const;
+const TEST_MIX = ["easy", "normal", "hard"] as const;
 
-/** Starts a test run: 5 new cases with random seeds, generated one after another. */
+/** Starts a test run: 3 new cases (one per difficulty) with random seeds, generated one after another. */
 export const runTestBatch = mutation({
   args: {},
   handler: async (ctx) => {

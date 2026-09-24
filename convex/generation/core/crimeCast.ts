@@ -28,7 +28,7 @@ export const castRules = (difficulty: Difficulty) => [
   "Create every person the crime core names, using exactly those ids: the victim (role \"victim\"), the killer and any accomplice (role \"suspect\"), and whoever finds the body.",
   `Exactly one victim, ${SUSPECTS[difficulty][0]}–${SUSPECTS[difficulty][1]} suspects (the killer included), ${WITNESSES[0]}–${WITNESSES[1]} witnesses. Ids are unique.`,
   "homeUnitId must be a home id from the list. People may share a home only if they live together.",
-  "job is null or uses a place id and a job title from that place's free jobs; each job title can be filled as many times as it is listed. job.roomId, if given, is a room of that place.",
+  "job is null or uses a place id and a job title from that place's jobs; \"cashier ×2\" means at most 2 people in the cast have that job there. job.roomId, if given, is a room of that place.",
   "routine is one of: office, night-shift, shop, unemployed, student. Unemployed people and students need a hangoutPlaceId (a public place id).",
   "Innocent suspects need a reason police would look at them (fakeMotive: a motive, a grudge, or just being near at the wrong time). The killer has no fakeMotive.",
   "secret and protects only where the person really has something serious to hide (it could get them arrested, fired, or ruin their reputation or family) or someone to shield; leave them out otherwise. Most people have none.",
@@ -167,7 +167,10 @@ export function castProblems(city: City, crime: CrimeCore, cast: Cast, difficult
         const key = `${place.id}/${c.job.title}`;
         jobsTaken.set(key, (jobsTaken.get(key) ?? 0) + 1);
         const slots = place.jobSlots.filter((s) => s === c.job!.title).length;
-        if (jobsTaken.get(key)! > slots) problems.push(`${place.name} has no free "${c.job.title}" job for ${c.name}.`);
+        if (jobsTaken.get(key)! > slots) {
+          const holders = cast.characters.filter((o) => o.job?.placeId === place.id && o.job.title === c.job!.title).map((o) => o.name);
+          problems.push(`${place.name} has only ${slots} "${c.job.title}" job(s), but ${holders.join(", ")} all have it: give ${c.name} another job or place.`);
+        }
       }
       if (c.job.roomId && (!c.job.roomId.startsWith(`${c.job.placeId}:`) || !findRoom(city, c.job.roomId))) {
         problems.push(`${c.name}'s work room isn't a room of their workplace.`);

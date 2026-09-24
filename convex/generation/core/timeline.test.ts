@@ -61,13 +61,13 @@ describe("checkTimeline catches broken cases", () => {
 
   it("weapon ends up somewhere nothing took it", () => {
     const broken = withEvent("dump-weapon", { itemsUsed: [] });
-    expect(problemsFor(crimeCore, cast, broken)).toContain("Nothing in the story takes \"Cast-iron doorstop\" to where it ends up.");
+    expect(problemsFor(crimeCore, cast, broken).join("\n")).toMatch(/Nothing in the story takes "Cast-iron doorstop" \(weapon\) from .*add an event in/);
   });
 
   it("more people in a job than the place has", () => {
     const extra = { ...cast.characters[1], id: "victor2", name: "Victor Two" };
     const broken: Cast = { characters: [...cast.characters, extra] };
-    expect(problemsFor(crimeCore, broken)).toContain('Meridian Tower has no free "executive" job for Victor Two.');
+    expect(problemsFor(crimeCore, broken).join("\n")).toMatch(/Meridian Tower has only \d+ "executive" job\(s\), but .*Victor Two/);
   });
 
   it("story window longer than 2 days", () => {

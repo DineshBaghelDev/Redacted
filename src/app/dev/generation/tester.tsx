@@ -71,7 +71,7 @@ function Jobs() {
           </button>
         </div>
         <button className={button} onClick={startTestRun}>
-          Run 5 test cases (2 easy, 2 normal, 1 hard)
+          Run 3 test cases (easy, normal, hard)
         </button>
         {batches && batches.length > 0 && <p className="mt-2 opacity-60">Test runs</p>}
         {batches?.map((b) => (

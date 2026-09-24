@@ -11,7 +11,7 @@ export const LIE_RULES = [
   "The killer always lies to clear themselves, with a convincing cover story. Only the killer's whereabouts lie is required; any other lie must be earned by the story.",
   "The killer must have a \"whereabouts\" lie whose truthIds include the murder event.",
   "truthIds are ids of story events, messages/calls or purchases the lie hides (may be empty for a secret with no event).",
-  "disprovingEvidenceIds are evidence ids from the list. Each must be about the liar or come from something the lie hides. Never a background item, and never the liar's own statement.",
+  "disprovingEvidenceIds are evidence ids copied exactly from that person's evidence list (never invented or placeholder ids). Each must be about the liar or come from something the lie hides. Never a background item, and never the liar's own statement.",
   "whenCaught is what this person would do once shown proof, judged from their personality and situation: tell the whole truth (\"full-truth\"), admit only what the proof shows (\"admit-shown\"), or switch to a backup lie (\"backup-lie\"), which then must exist and needs at least one piece of proof the first lie doesn't use.",
   "Lie ids are unique. The victim can't lie.",
 ];

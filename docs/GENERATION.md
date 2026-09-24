@@ -280,7 +280,7 @@ Testing:
 - **Vitest + `convex-test`** — workflow with stubbed LLM stages: order, repair loop, retries, cancel, publish.
 - **Promptfoo** — per-stage prompt evals whose assertion calls the same core validator; NPC evals (holds lie under pressure, breaks on proof, never leaks solution). Run manually/scheduled, not per push.
 - **Record and replay** — AI cases worth keeping are saved to `convex/fixtures/recorded/` (`npx convex run dev/tester:exportJob`); `replay.test.ts` reruns all code stages and checks on them and snapshots the problems.
-- **Test runs** — "Run 5 test cases" in the tester (2 easy, 2 normal, 1 hard, random seeds, one after another); the stats view shows pass rate, time and tokens per case, and per AI stage: first-try passes, repairs, time, tokens, failed calls and the most common problems. Cost is added once the provider is chosen.
+- **Test runs** — "Run 3 test cases" in the tester (easy, normal, hard, random seeds, one after another); the stats view shows pass rate, time and tokens per case, and per AI stage: first-try passes, repairs, time, tokens, failed calls and the most common problems. Cost is added once the provider is chosen.
 - **Dev case viewer** — dev-only read-only page to inspect generated cases.
 
 ## Model strategy

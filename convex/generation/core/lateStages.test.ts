@@ -7,7 +7,7 @@ import { estimateInput, estimateTime } from "./estimate";
 import { buildEvidence } from "./evidence";
 import { buildFacts } from "./facts";
 import { keepValidLies } from "./lies";
-import { STORY_RULES, storyProblems } from "./story";
+import { decisivePlan, STORY_RULES, storyProblems } from "./story";
 import { applyTexts, textProblems, textTargets } from "./text";
 import { buildTimeline } from "./timeline";
 
@@ -107,5 +107,28 @@ describe("lies clean-up keeps a good main lie", () => {
     const kept = keepValidLies(crimeCore, cast, story, set, { lies: [broken] });
     expect(kept.lies).toHaveLength(1);
     expect(kept.lies[0]).toMatchObject({ id: "victor-home", whenCaught: "admit-shown", backupLie: undefined });
+  });
+});
+
+describe("decisive evidence plan", () => {
+  it("offers only the routes this crime allows", () => {
+    const plan = decisivePlan(city, crimeCore, "easy");
+    expect(plan.needed).toBe(2);
+    expect(plan.routes.join("\n")).toMatch(/blood on the killer's clothing/);
+    const wiped = decisivePlan(city, { ...crimeCore, coverUp: ["wipe-prints"], weapon: { ...crimeCore.weapon, category: "firearm" } }, "hard");
+    expect(wiped.needed).toBe(1);
+    expect(wiped.routes.join("\n")).not.toMatch(/prints on the weapon|blood on the killer's clothing/);
+    expect(wiped.routes.join("\n")).toMatch(/killer's home/);
+  });
+
+  it("goes into the story prompt", () => {
+    expect(storyPrompt(city, crimeCore, cast, "easy")).toContain("needs at least 2 decisive piece(s)");
+  });
+});
+
+describe("story copying the solution", () => {
+  it("a story that copies the method word for word goes back for a repair", () => {
+    const copied = { ...story, events: story.events.map((e, i) => (i === 0 ? { ...e, action: crimeCore.method } : e)) };
+    expect(storyProblems(city, crimeCore, cast, copied, "easy", 1234)).toEqual(["The story copies the crime core's method word for word; describe it in your own words."]);
   });
 });

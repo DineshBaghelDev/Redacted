@@ -70,6 +70,16 @@ function chatModel(model: string, strict: boolean) {
   return createOpenAICompatible({ name, baseURL, apiKey, supportsStructuredOutputs: strict }).chatModel(id);
 }
 
+/** A failed call's message plus, for provider errors, the status and the start of the reply body. */
+function describeError(error: unknown) {
+  if (!(error instanceof Error)) return String(error);
+  // Retries wrap the provider error in lastError; other wrappers use cause.
+  const inner = (error as { lastError?: unknown }).lastError ?? error.cause;
+  const api = APICallError.isInstance(error) ? error : APICallError.isInstance(inner) ? inner : undefined;
+  if (!api) return error.message;
+  return `${error.message} [status ${api.statusCode ?? "?"}] ${(api.responseBody ?? "").slice(0, 300)}`;
+}
+
 /** Pulls JSON out of a reply that may be wrapped in a ``` fence or have text around it. */
 export function parseJson(text: string): unknown {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -135,7 +145,7 @@ export async function generateJson(args: { schema: z.ZodType; system: string; pr
       if (strict && APICallError.isInstance(error) && error.statusCode !== undefined && error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 401 && error.statusCode !== 429) {
         continue;
       }
-      return { ...base, mode, problems: ["The AI call failed."], error: error instanceof Error ? error.message : String(error), ms: Date.now() - started };
+      return { ...base, mode, problems: ["The AI call failed."], error: describeError(error), ms: Date.now() - started };
     }
   }
   throw new Error("unreachable");

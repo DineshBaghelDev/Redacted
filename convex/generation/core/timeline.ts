@@ -152,7 +152,9 @@ export function checkTimeline(city: City, crime: CrimeCore, cast: Cast, story: S
     }
     for (const a of e.actors) if (!people.has(a)) problems.push(`Event "${e.id}" has unknown person ${a}.`);
     for (const i of e.itemsUsed) if (!itemIds.has(i)) problems.push(`Event "${e.id}" uses unknown item ${i}.`);
-    if (e.end <= e.start) problems.push(`Event "${e.id}" ends before it starts.`);
+    if (e.end <= e.start) {
+      problems.push(`Event "${e.id}" (start ${e.start}, end ${e.end}) must last at least 1 minute: end has to be after start, e.g. a quick action lasts 2–5 minutes.`);
+    }
     if (e.start < timeline.windowStart || e.start > timeline.windowEnd) problems.push(`Event "${e.id}" is outside the story window.`);
   }
   for (const c of story.comms) {
@@ -172,7 +174,9 @@ export function checkTimeline(city: City, crime: CrimeCore, cast: Cast, story: S
       problems.push(`Item "${item.id}" ends in slot "${item.finalSlot}", which ${finalRoom.name} (${finalRoom.id}) doesn't have. ${choices}`);
     }
     if (item.startRoomId !== item.finalRoomId && !story.events.some((e) => e.roomId === item.finalRoomId && e.itemsUsed.includes(item.id))) {
-      problems.push(`Nothing in the story takes "${item.name}" to where it ends up.`);
+      problems.push(
+        `Nothing in the story takes "${item.name}" (${item.id}) from ${item.startRoomId} to ${item.finalRoomId}: add an event in ${item.finalRoomId} with "${item.id}" in itemsUsed, or end it where it starts.`,
+      );
     }
   }
 
@@ -182,7 +186,8 @@ export function checkTimeline(city: City, crime: CrimeCore, cast: Cast, story: S
     for (let i = 0; i + 1 < mine.length; i++) {
       const [a, b] = [mine[i], mine[i + 1]];
       if (b.start < a.end) {
-        problems.push(`${c.name} is in two places at once (${formatTime(b.start)}).`);
+        const what = (e: TimelineEntry) => `"${e.action}" (${e.storyEventId ?? "everyday routine"}, ${formatTime(e.start)}–${formatTime(e.end)})`;
+        problems.push(`${c.name} is in two places at once: ${what(a)} overlaps ${what(b)}. Move or shorten one of your events.`);
         continue;
       }
       const need = travelMinutes(city, a.placeId, b.placeId);
