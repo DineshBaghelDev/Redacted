@@ -241,6 +241,16 @@ NPC dialogue does not automatically:
 - change suspicion scores,
 - interpret what the player should conclude.
 
+### Lies and showing proof
+
+- A lie breaks only when a player shows an inventory item that disproves it. Asking again or pushing harder never forces the truth.
+- Players can attach an inventory item to a message ("show item").
+- The server checks the shown item against the lie's stored disproving items. The LLM never decides whether a lie is caught.
+- On a match, the lie is marked exposed for the session (shared by both players) and the NPC prompt is told it is exposed.
+- Reaction to exposure comes from personality: nervous NPCs tell the full truth on that topic, stubborn ones admit only what the proof shows, cunning ones switch to a backup lie that is also disprovable.
+- The killer may admit smaller lies but never confesses the murder; the player proves it at case close.
+- Without proof, NPCs stay in character (nervous, annoyed, deflecting) but keep the lie.
+
 Both players see the same NPC conversation live.
 
 Both may send concurrently. Messages are ordered and processed one NPC turn at a time for that conversation.

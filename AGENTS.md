@@ -43,7 +43,7 @@ This repository's technical decisions are split across the files below. Agents s
 9. Game time is deterministic integer minutes. LLMs do not decide action duration during play.
 10. Case close is scored out of five stars: killer, motive, weapon, evidence, method.
 11. Core backend interface is Convex functions, not REST.
-12. Keep V1 small. Do not add Redis, Socket.IO, Fastify, PostgreSQL, Liveblocks, LangChain, vector search, or a custom admin panel unless this spec is deliberately revised.
+12. Keep V1 small. Do not add Redis, Socket.IO, Fastify, PostgreSQL, Liveblocks, LangChain, vector search, or a custom admin panel unless this spec is deliberately revised. Exception: one dev-only, read-only case viewer page (hidden in production) for inspecting generated cases.
 
 ## Agent implementation rules
 

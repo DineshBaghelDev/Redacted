@@ -27,6 +27,7 @@ This file records decisions from the technical design discussion so agents do no
 - Background work handled in Convex workflows/actions.
 - Vercel AI SDK for LLM abstraction.
 - Fixed provider/model configuration; no runtime model chooser or dynamic router in V1.
+- LLM provider: NVIDIA NIM. `moonshotai/kimi-k3` for generation, `moonshotai/kimi-k2.6` for NPCs.
 - Stronger model for primary case generation; cheaper model for repair/NPC when suitable.
 
 ## Case generation/storage
@@ -34,7 +35,12 @@ This file records decisions from the technical design discussion so agents do no
 - Case generated when creating a new case, before gameplay begins.
 - 30–90s generation latency is acceptable.
 - Fixed multi-step generation pipeline.
-- Generate solution first, then timeline, characters, world assignments, evidence/records, validation.
+- Pipeline order: crime core, cast, timeline, code-derived evidence, lies, text, NPC scripts, validation (see `GENERATION.md`).
+- Evidence records (CCTV, calls, card records, forensics, items) are derived by code from timeline events; the LLM only writes wording.
+- Timeline window is picked by the LLM, max 2 days before the crime. Daily routine is code-generated; the LLM writes only story events.
+- One crime per case; an optional accomplice may exist.
+- NPC lies are driven by personality and what the NPC protects, never random; every lie must be refutable by at least one evidence item.
+- NPCs may improvise backstory older than the window while talking (saved to NPC memory). Talk only, never new evidence.
 - Targeted repair of invalid sections, then revalidate.
 - Deterministic structural/consistency checks; no extra LLM solvability call in V1.
 - Generated cases are stored permanently/replayable.
@@ -46,7 +52,9 @@ This file records decisions from the technical design discussion so agents do no
 ## World
 
 - City is a graph, not an open-world street simulation.
-- At least 10 places per generated city.
+- At least 10 places per city. V1 uses one ready-made city with 20 places, reused across cases.
+- CCTV cameras exist on streets (graph edges) and at interior spots (entrance, stairs, lift, corridor, lobby); coverage is set per building in the city fixture.
+- CCTV rows describe appearance, not names.
 - Players can travel to any reachable place.
 - Building/floor/room layouts are deterministic from templates + seed.
 - LLM may choose semantic parameters/assignments, not graph topology.
@@ -100,6 +108,8 @@ This file records decisions from the technical design discussion so agents do no
 - Both players may message same NPC concurrently.
 - Same-NPC messages are server-ordered and processed sequentially.
 - Different NPC conversations may run simultaneously.
+- NPC lies break only when a player shows an item that disproves them; repeated pressure never forces the truth. The server checks the item, not the LLM. Exposed lies are tracked per session, shared by both players.
+- The killer never confesses the murder, even when caught in smaller lies.
 - Interrogation is allowed only when the NPC is present: either the player calls the NPC to the bureau, or the player goes to meet the NPC.
 
 ## Game time
@@ -130,12 +140,14 @@ Five independent stars:
 - Evidence requires valid selected evidence IDs/proof group + semantic explanation.
 - Method graded semantically by LLM.
 - Server sums booleans into total stars.
+- Evidence star: player selects any item from the case's decisive set (e.g. killer's fingerprint on the weapon).
+- Accomplice: correctly naming them shows a separate bonus badge; stars stay out of 5.
 
 ## Observability/admin
 
 - Sentry for runtime errors/failures.
 - Convex dashboard/logs for developer inspection.
-- No custom admin panel in V1.
+- No custom admin panel in V1, except one dev-only, read-only case viewer page hidden in production.
 
 ## Rejected or superseded decisions
 
@@ -146,6 +158,8 @@ Five independent stars:
 - `sessionState.phase`: removed; game has no phase concept.
 - Liveblocks for clue board: rejected as duplicate realtime/persistence.
 - LLM-generated building graphs: rejected as unnecessary and fragile.
+- Procedurally generated city per case: superseded by one ready-made city for V1.
+- Free city simulation to produce the story: rejected; cannot guarantee a solvable clue trail or difficulty control.
 
 
 ## Gameplay access semantics

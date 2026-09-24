@@ -14,3 +14,16 @@
 - Main-menu options render as plain text and only reveal their bordered pixel-noir styling on hover or keyboard focus.
 - The join-room dialog takes the room code as six single-character OTP-style boxes and shows join errors inside the dialog.
 - Only waiting rooms accept joins, and room actions require an authenticated session-player membership.
+
+## 2026-09-24
+
+- Case generation plans the crime first, then derives all evidence from one timeline with code; the LLM writes people, motives, story events and wording only.
+- V1 uses one ready-made 20-place city with street and in-building cameras.
+- Timeline window is up to 2 days before the crime; older backstory is NPC talk only.
+- One crime per case with an optional accomplice; naming the accomplice earns a bonus badge, not a sixth star.
+- NPC lies come from personality and what they protect, and every lie can be disproved by evidence.
+- CCTV rows describe appearance, not names; players filter by camera and time.
+- Evidence star is earned by picking a key item from the case's decisive set.
+- NPC lies break only when players show proof, never from repeated pushing; the killer never confesses the murder.
+- Use NVIDIA NIM with Kimi K3 for case generation and Kimi K2.6 for NPC conversations.
+- Allow one dev-only, read-only case viewer page for inspecting generated cases until the game UI exists.

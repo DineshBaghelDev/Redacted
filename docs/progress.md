@@ -15,3 +15,7 @@
 - Main-menu options are now borderless plain text that reveal the pixel-noir border/background on hover or keyboard focus.
 - Fixed the detective-name dialog flashing on reload: the room hub now waits for the client to read the saved name from localStorage before rendering anything, eliminating the SSR/client mismatch.
 - Hardened room lifecycle actions with waiting-state and membership checks, persisted leave cleanup, visible lobby errors, and selected-case handoff into the case brief.
+
+## 2026-09-24
+
+- Redesigned the case-generation plan in `docs/GENERATION.md` (crime core, cast, timeline, code-derived evidence, lies, validation, repair); no code yet.

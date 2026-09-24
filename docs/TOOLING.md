@@ -58,6 +58,13 @@ Role:
 
 One configured generation model, one NPC model, one repair model, one judge model; some may be the same provider/model initially.
 
+Provider: **NVIDIA NIM** (OpenAI-compatible, `https://integrate.api.nvidia.com/v1`) through `@ai-sdk/openai-compatible`.
+
+- Generation (and repair/judge initially): `moonshotai/kimi-k3`
+- NPC roleplay: `moonshotai/kimi-k2.6`
+
+Structured output uses `generateText` + `Output.object` with Zod. Whether NIM honours `json_schema` for these models must be verified on first use; if not, fall back to `json_object` mode and rely on Zod parsing + repair.
+
 No dynamic model router in V1.
 
 ### Zod
@@ -92,7 +99,7 @@ Convex dashboard/logs are sufficient for developer data/function inspection. No 
 
 ### Vitest
 
-Role:
+Role (plus `convex-test` for workflow/function tests with stubbed LLM stages):
 
 - deterministic unit tests,
 - generation validators,
@@ -167,6 +174,8 @@ NPC/case context is bounded structured case data. Do not add embeddings/vector s
 ### Custom admin dashboard
 
 Not needed for developer-only debugging. Use Sentry + Convex dashboard.
+
+Exception: one **dev-only, read-only case viewer** page (timeline, evidence, lies, validator results), hidden in production by an env flag. It never creates or edits data.
 
 ## Operational note
 

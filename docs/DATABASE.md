@@ -233,7 +233,15 @@ Create an actual corridor room only if the corridor itself is searchable/interac
   experiences: string[],
   knowledge: string[],
   secrets: string[],
-  intentionalLies: string[],
+  intentionalLies: {
+    topic: string,
+    claim: string,
+    truth: string,
+    reason: string,
+    disprovingItemIds: string[],
+    reactionWhenCaught: string,
+    backupLie?: string,
+  }[],
   behavioralRules: string[],
 }
 ```
@@ -308,8 +316,10 @@ Mutable per session.
 ```ts
 {
   caseId: Id<"cases">,
-  placeId: Id<"places">,
+  placeId?: Id<"places">,       // interior camera
   roomId?: Id<"rooms">,
+  streetFromPlaceId?: Id<"places">, // street camera on a graph edge
+  streetToPlaceId?: Id<"places">,
   name: string,
   description: string,
 }
@@ -323,9 +333,9 @@ Mutable per session.
   cameraId: Id<"cctvCameras">,
   startTime: number,
   endTime: number,
-  npcIds: Id<"npcs">[],
+  npcIds: Id<"npcs">[],     // server-only, for validation; never returned to clients
   vehicleIds: Id<"vehicles">[],
-  description: string,
+  description: string,      // appearance description, not names
 }
 ```
 
