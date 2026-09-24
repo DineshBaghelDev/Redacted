@@ -12,6 +12,8 @@ export type AiAttempt = {
   problems: string[];
   /** True when this try's problems should go back to the AI for another try. */
   retry: boolean;
+  /** Calls to earlier models in the stage's list that failed before `call`. */
+  failedCalls: LlmCall[];
 };
 
 /** The first prompt, or, for a repair, the first prompt plus the previous answer and its problems. */
@@ -45,12 +47,14 @@ export async function runAiAttempt(
   const { system, prompt: base } = stage.prompt(inputs, job);
   const prompt = repairPrompt(base, previous);
   // A failed call (rate limit, quota, overload) moves on to the stage's next model.
-  let call!: LlmCall;
+  const calls: LlmCall[] = [];
   for (const next of model ? [model] : modelsFor(stage.name)) {
-    call = await generateJson({ schema: stage.schema, system, prompt, model: next });
-    if (!call.error) break;
+    calls.push(await generateJson({ schema: stage.schema, system, prompt, model: next }));
+    if (!calls[calls.length - 1].error) break;
   }
-  if (call.error) return { call, system, prompt, output: previous?.output ?? null, problems: call.problems, retry: false };
+  const call = calls[calls.length - 1];
+  const failedCalls = calls.slice(0, -1);
+  if (call.error) return { call, system, prompt, output: previous?.output ?? null, problems: call.problems, retry: false, failedCalls };
 
   let output = call.output;
   let problems = call.problems.length ? call.problems : checkOutput(stage, output, inputs, job, true);
@@ -63,5 +67,5 @@ export async function runAiAttempt(
       problems = checkOutput(stage, output, inputs, job, true);
     }
   }
-  return { call, system, prompt, output, problems, retry };
+  return { call, system, prompt, output, problems, retry, failedCalls };
 }

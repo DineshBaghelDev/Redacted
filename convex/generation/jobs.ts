@@ -42,6 +42,22 @@ export async function runAiTry(ctx: ActionCtx, jobId: Id<"generationJobs">, stag
   const stageJob = { seed: job.seed, difficulty: job.difficulty, recentCrimes };
   const result = await runAiAttempt(stage, drafts, stageJob, attempt, previous ? { output: previous.output, problems: previous.checkErrors } : undefined);
   const { call } = result;
+  // Failed calls before a fallback model took over, so the stats see them.
+  for (const failed of result.failedCalls) {
+    await ctx.runMutation(internal.generation.jobs.saveLog, {
+      jobId,
+      stage: stage.name,
+      model: failed.model,
+      mode: failed.mode,
+      system: result.system,
+      prompt: result.prompt,
+      rawText: failed.rawText,
+      problems: failed.problems,
+      error: failed.error,
+      ms: failed.ms,
+      attempt,
+    });
+  }
   await ctx.runMutation(internal.generation.jobs.saveLog, {
     jobId,
     stage: stage.name,

@@ -52,6 +52,7 @@ describe("AI tries and repairs", () => {
     fakeAi.mockResolvedValueOnce(reply(lies));
     const result = await runAiAttempt(getStage("lies"), inputs, job, 0);
     expect(fakeAi.mock.calls.map((c) => c[0].model)).toEqual(["busy", "backup"]);
+    expect(result.failedCalls.map((c) => c.error)).toEqual(["rate limit"]);
     expect(result).toMatchObject({ retry: false, problems: [] });
   });
 });
