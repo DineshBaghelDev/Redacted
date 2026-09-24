@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-09-24
+
+- Keep Sentry error-generating demo routes available in development only, not in production.
+
 ## 2026-09-06
 
 - Use the supplied office skyline art as the home-screen background and present the main actions as a left-side pixel-game menu.

@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-09-24
+
+- Restricted the Sentry demo page and error API to development; enabled example logging and disabled collection of user details and request bodies.
+- Fixed the legacy room hub to display join failures without changing the current room and to distinguish loading, unavailable, and joined rooms.
+
 ## 2026-09-06
 
 - Restyled the signed-in and signed-out home screen as a pixel-noir title menu using the supplied city-office background.
