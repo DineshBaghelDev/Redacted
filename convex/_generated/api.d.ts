@@ -8,6 +8,10 @@
  * @module
  */
 
+import type * as dev_tester from "../dev/tester.js";
+import type * as generation_core_rng from "../generation/core/rng.js";
+import type * as generation_stages from "../generation/stages.js";
+import type * as lib_auth from "../lib/auth.js";
 import type * as sessions from "../sessions.js";
 
 import type {
@@ -17,6 +21,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "dev/tester": typeof dev_tester;
+  "generation/core/rng": typeof generation_core_rng;
+  "generation/stages": typeof generation_stages;
+  "lib/auth": typeof lib_auth;
   sessions: typeof sessions;
 }>;
 
@@ -46,4 +54,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  workflow: import("@convex-dev/workflow/_generated/component.js").ComponentApi<"workflow">;
+};

@@ -687,3 +687,28 @@ case
    |- N clue-board nodes -> N edges
    `- N accusations (normally one final accepted submission)
 ```
+
+## Case generation (dev/pipeline) — server-only
+
+### `generationJobs`
+
+```ts
+{ seed: number, difficulty: "easy" | "normal" | "hard", createdBy: string, createdAt: number }
+```
+
+### `generationDrafts`
+
+One document per (job, stage); rerunning a stage replaces it. Holds hidden case data — only dev-tool (allowlisted) or internal functions may read it.
+
+```ts
+{
+  jobId: Id<"generationJobs">,
+  stage: string,
+  output: any,
+  checkErrors: string[],
+  source: "hand-written" | "code" | "llm",
+  updatedAt: number,
+}
+```
+
+Index: `by_job_stage` (`jobId`, `stage`).

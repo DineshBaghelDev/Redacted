@@ -19,4 +19,20 @@ export default defineSchema({
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_authUserId", ["authUserId"]),
+
+  // Case generation (dev tester + pipeline). Drafts hold hidden case data: never expose outside dev tools.
+  generationJobs: defineTable({
+    seed: v.number(),
+    difficulty: v.union(v.literal("easy"), v.literal("normal"), v.literal("hard")),
+    createdBy: v.string(),
+    createdAt: v.number(),
+  }),
+  generationDrafts: defineTable({
+    jobId: v.id("generationJobs"),
+    stage: v.string(),
+    output: v.any(),
+    checkErrors: v.array(v.string()),
+    source: v.union(v.literal("hand-written"), v.literal("code"), v.literal("llm")),
+    updatedAt: v.number(),
+  }).index("by_job_stage", ["jobId", "stage"]),
 });
