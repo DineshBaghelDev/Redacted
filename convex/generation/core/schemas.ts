@@ -5,6 +5,9 @@ import { z } from "zod";
 
 const id = z.string().min(1);
 
+/** What a piece of story material helps prove. Code derives the rest (presence, alibis, weapon links). */
+const proves = z.array(z.enum(["motive", "accomplice"])).default([]);
+
 export const crimeCoreSchema = z.object({
   victimId: id,
   killerId: id,
@@ -25,6 +28,8 @@ export const crimeCoreSchema = z.object({
   timeOfDeath: z.number().int(),
   windowStart: z.number().int(),
   discovery: z.object({ time: z.number().int(), byId: id }),
+  /** Required when coverUp includes "disable-camera": which camera went dark and when. */
+  disabledCamera: z.object({ cameraId: id, from: z.number().int(), to: z.number().int() }).optional(),
   coverUp: z.array(z.enum(["wipe-prints", "hide-weapon", "move-body", "disable-camera", "remove-item"])),
 });
 
@@ -34,6 +39,7 @@ export const characterSchema = z.object({
   id,
   name: z.string(),
   age: z.number().int(),
+  gender: z.enum(["male", "female", "nonbinary"]),
   role: z.enum(["victim", "suspect", "witness"]),
   homeUnitId: id,
   /** roomId pins where they work; otherwise code picks a fitting room. */
@@ -41,12 +47,28 @@ export const characterSchema = z.object({
   routine: z.enum(routineTypes),
   /** Where unemployed people / students spend the afternoon. */
   hangoutPlaceId: id.optional(),
-  appearance: z.object({ height: z.string(), build: z.string(), clothing: z.string() }),
+  appearance: z.object({
+    height: z.string(),
+    build: z.string(),
+    clothing: z.string(),
+    /** Used for footprint evidence, e.g. "size 11 leather dress shoes". */
+    shoes: z.string().optional(),
+  }),
   traits: z.array(z.string()),
   relationshipToVictim: z.string(),
   secret: z.string(),
   protects: z.string(),
   fakeMotive: z.string().optional(),
+  /** Public records about this person (insurance, debts, complaints, companies...). */
+  records: z
+    .array(
+      z.object({
+        kind: z.enum(["insurance", "debt", "complaint", "criminal", "property", "company", "other"]),
+        summary: z.string(),
+        proves,
+      }),
+    )
+    .default([]),
 });
 
 export const castSchema = z.object({ characters: z.array(characterSchema) });
@@ -76,6 +98,7 @@ export const storySchema = z.object({
       type: z.enum(["call", "message"]),
       gist: z.string(),
       durationMinutes: z.number().int().optional(),
+      proves,
     }),
   ),
   purchases: z.array(
@@ -93,11 +116,15 @@ export const storySchema = z.object({
     z.object({
       id,
       name: z.string(),
+      kind: z.enum(["weapon", "clothing", "document", "device", "other"]),
       description: z.string(),
       ownerId: id.optional(),
       startRoomId: id,
       finalRoomId: id,
       finalSlot: z.string(),
+      proves,
+      /** Files/notes found by opening a device (laptop, tablet...). */
+      contents: z.array(z.object({ title: z.string(), text: z.string(), proves })).default([]),
     }),
   ),
 });

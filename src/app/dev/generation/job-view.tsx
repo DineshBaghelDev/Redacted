@@ -5,9 +5,12 @@ import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { City } from "../../../../convex/generation/core/city";
+import type { EvidenceSet } from "../../../../convex/generation/core/evidence/types";
+import type { Facts } from "../../../../convex/generation/core/facts";
 import type { Cast, CrimeCore, Story } from "../../../../convex/generation/core/schemas";
 import type { Timeline } from "../../../../convex/generation/core/timeline";
 import { CityView } from "./city-view";
+import { EvidenceView, FactsView } from "./evidence-views";
 import { CastView, CrimeView, namesFrom, StoryView } from "./story-views";
 import { TimelineView } from "./timeline-view";
 
@@ -49,6 +52,10 @@ export function JobView({ jobId }: { jobId: Id<"generationJobs"> }) {
         return <StoryView story={output as Story} names={names} />;
       case "timeline":
         return <TimelineView timeline={output as Timeline} names={names} />;
+      case "evidence":
+        return <EvidenceView set={output as EvidenceSet} names={names} />;
+      case "facts":
+        return <FactsView facts={output as Facts} set={outputOf("evidence") as EvidenceSet | undefined} names={names} />;
       default:
         return null;
     }

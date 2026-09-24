@@ -25,12 +25,13 @@
 - Tester: stage 0 now shows a clickable city map (streets, minutes, camera streets) and each building's floors, rooms, cameras, doors and item slots. Added fixed map positions to places.
 - Chunk A: stage shapes (crime core, cast, story) as Zod schemas, a hand-written easy case ("The Keel Street Ledger": 4 suspects, 3 witnesses) in the fixture city, routine builder, timeline merge with travel-time trimming, and timeline checks with broken-case tests. Tester can load hand-written stage outputs and shows the timeline as a filterable table.
 - Tester: crime, cast and story stages now have visual views (crime card, character cards, story timeline with calls/purchases/items); timeline table shows names. Raw data stays as a collapsible fallback.
+- Chunk B: invariant tests (200 seeds + 200 randomly shifted stories), evidence builders (CCTV with faulty cameras, phones, card payments, forensics, items, devices, public records, witness statements), facts stage (what each piece proves, decisive set, alibis). Added gender, item kind, `proves` tags and public records to the stage shapes. Tester shows evidence like a player would (CCTV by camera and time, phones, lab, items, records, witnesses, with a "show hidden truth" toggle) and each fact with its supporting evidence.
+- Finished chunk B's leftovers: laptops as optional story items with readable files, background clutter items for searches, weapon-specific lab tests (toxicology, ballistics, ligature), footprints at side doors the killer used, and the "camera switched off" cover-up with its checks. Hand-written case gained Daniel's laptop (a spreadsheet of payments to Hale Consulting) and Victor's shoes. Tester shows laptop files and marks clutter as background items.
 
 ## Pending
 
 ### Case generation — remaining chunks
 
-- **B.** Evidence built from the timeline (CCTV, phone, card, forensics, items, records, devices) + fact links and decisive set.
 - **C.** Lie checks, NPC scripts (what each NPC knows) and the full solvability validator. Milestone: hand-written case passes end to end with no AI.
 - **D.** AI setup (NIM, logs) + AI crime core and cast stages.
 - **E.** AI story events (with repair), lies, written text, case brief, time estimate.
@@ -42,18 +43,17 @@ Today the same code path and checks run for hand-written and AI output, but that
 
 - **Solvability not checked yet.** An AI story can pass every timeline check and still be unsolvable (alibi can't be broken, innocents can't be cleared). Covered by chunk C.
 - **Story sense not checked.** Only later evals (chunk F) judge whether a case makes sense.
-- **Only one test case, written alongside the checker.** Untested paths: accomplice, unemployed/student routines and hangouts, hotel guests, events crossing midnight, 3+ people meeting, poison/other weapon types, public-place crime scenes.
+- **Only one test case, written alongside the checker.** Untested paths: accomplice, unemployed/student routines and hangouts, hotel guests, events crossing midnight, 3+ people meeting, firearm/strangulation/fall cases end to end (poison lab test is covered), public-place crime scenes.
 - **Repair via plain-English problems is untested.** Unknown whether the AI can fix its output from the checker's messages.
 - **NIM strict JSON support for Kimi is unknown.** Verify on the first AI call; fall back to JSON mode + Zod if needed.
 
 Planned fixes:
 
-- [ ] **Invariant tests (start of chunk B):** run the timeline builder over ~200 seeds and randomly tweaked copies of the case; whenever the checker says "no problems", assert the basic rules really hold (no overlaps, travel possible). Catches checker gaps and crashes.
+- [x] **Invariant tests (start of chunk B):** run the timeline builder over ~200 seeds and randomly tweaked copies of the case; whenever the checker says "no problems", assert the basic rules really hold (no overlaps, travel possible). Catches checker gaps and crashes.
 - [ ] **One source for rules (chunk D):** prompts get the exact allowed ids (rooms, homes, jobs) and the same rule list the checker uses.
 - [ ] **Record and replay (chunk D):** save every AI case, passing or failing, as a test fixture so each real case becomes a permanent regression test.
 - [ ] **Smoke pass rate (chunk F):** 10-seed run reporting pass rate, time and cost — the real measure of "it works for AI".
 
 ### Open questions
 
-- Hand-written story ("The Keel Street Ledger") awaiting review before chunk B.
 - Stairs vs lift: routes inside buildings always pick stairs on a tie; timeline may need to say which was used, since cameras differ.

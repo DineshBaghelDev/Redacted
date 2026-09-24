@@ -54,7 +54,7 @@ describe("checkTimeline catches broken cases", () => {
   it("victim acting after death", () => {
     const broken: Story = {
       ...story,
-      comms: [...story.comms, { id: "ghost", from: "daniel", to: "nora", time: at(2, "23:00"), type: "message", gist: "hi" }],
+      comms: [...story.comms, { id: "ghost", from: "daniel", to: "nora", time: at(2, "23:00"), type: "message", gist: "hi", proves: [] }],
     };
     expect(problemsFor(crimeCore, cast, broken)).toContain("The victim calls or messages someone after dying.");
   });

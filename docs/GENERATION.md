@@ -133,7 +133,27 @@ Repair: exact violations are sent back to the LLM.
 - **Public records:** from cast backstory (debts, insurance, property, criminal record).
 - **Devices:** phones/laptops hold message and note content.
 
-Every evidence item keeps `sourceEventIds` internally.
+Every evidence item keeps hidden `aboutIds` (who it is truly about) and `sourceIds` (story/timeline ids it came from).
+
+Implemented rules (`convex/generation/core/evidence/`):
+
+- CCTV rows: a stay row when someone is in a camera room; pass rows for camera rooms on the in-building route (exit via `leftVia` or nearest entrance, enter via `enteredVia` or nearest entrance) and for camera streets on the fastest street route, timed from departure. Rows describe gender + appearance, never names.
+- Faulty cameras: easy 1, normal 2, hard 4; picked by seed only among cameras that recorded nothing from the story. Each gets an "offline" record.
+- Phones: every call/message is stored on both phones. The victim's phone is found on the body; other phones must be handed over by their owner.
+- Forensics: autopsy (cause by weapon type, time-of-death range ±45/90/120 min by difficulty); weapon blood (blunt/sharp), weapon prints (none if `wipe-prints`), fibers from the killer's clothing used in the murder; blood on that clothing; prints on other story items; scene prints (residents + visitors, killer removed if wiped) and scene fibers.
+- Records: address and employment for everyone, plus each character's `records` (insurance, debts, complaints, companies...).
+- Witness statements: for each public story event, other people in it and anyone at the same place at the time (never the victim).
+- Devices: laptops/tablets are ordinary story items of kind `device` (only present when the story puts one somewhere). Their `contents` (files, notes) become evidence readable after the device is found.
+- Background clutter: everyday objects (bills, magazines, gym bags...) placed by seed in rooms that matter to the case (story rooms, cast homes and work rooms): easy 2, normal 3, hard 5 per place. They prove nothing.
+- Weapon-specific lab tests: toxicology (poison), ballistics (firearm), ligature marks (strangulation); a fall is shown by the autopsy.
+- Footprints: shoe prints at any side door the killer used at the scene building, described by the killer's `appearance.shoes`.
+- Camera switched off (`disable-camera` cover-up): the crime names the camera and time window (`disabledCamera`); its records in that window are dropped and a "switched off" record is added. Checked: camera exists, times make sense, and the killer or accomplice is at that camera's place when it goes off.
+
+## Stage 5 — Fact links and decisive set (code, implemented)
+
+`convex/generation/core/facts.ts` turns evidence into facts: killer at scene, killer near scene (camera within 60 min and able to reach the scene), killer contacted victim, motive (anything tagged `proves: ["motive"]`), weapon used on victim, weapon linked to killer (prints or killer-clothing fibers), method (autopsy), accomplice link, and one alibi fact per innocent suspect (camera, card payment or witness placing them too far away to reach the scene at the time of death).
+
+Decisive = victim's blood on an item the killer owns, killer's prints on the weapon, or the killer on a camera in the scene room at the time of death.
 
 ## Stage 5 — Fact links and decisive set (code)
 

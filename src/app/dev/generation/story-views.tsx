@@ -83,7 +83,7 @@ export function CastView({ cast, crime }: { cast: Cast; crime?: CrimeCore }) {
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-base text-yellow-200">{c.name}</span>
             <span className="text-xs opacity-60">
-              {c.age} · {c.role}
+              {c.age} · {c.gender} · {c.role}
               {crime?.killerId === c.id && <span className="text-red-400"> · KILLER</span>}
               {crime?.accomplice?.id === c.id && <span className="text-red-400"> · ACCOMPLICE</span>}
             </span>
@@ -164,6 +164,11 @@ export function StoryView({ story, names }: { story: Story; names: Names }) {
                 {item.ownerId && ` · owner ${who(item.ownerId)}`}
               </span>
               <div className="text-xs opacity-60">{item.description}</div>
+              {item.contents.map((file) => (
+                <div key={file.title} className="pl-3 text-xs">
+                  📄 {file.title}: <span className="opacity-70">{file.text}</span>
+                </div>
+              ))}
             </li>
           ))}
         </ul>

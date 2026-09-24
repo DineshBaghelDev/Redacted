@@ -3,7 +3,10 @@ import * as easyCase from "../fixtures/caseEasy";
 import { city } from "../fixtures/city";
 import { checkCity, cityCapacity } from "./core/city";
 import { castSchema, crimeCoreSchema, storySchema, type Cast, type CrimeCore, type Story } from "./core/schemas";
-import { buildTimeline, checkTimeline } from "./core/timeline";
+import { buildEvidence, evidenceProblems } from "./core/evidence";
+import type { EvidenceSet } from "./core/evidence/types";
+import { buildFacts, factProblems } from "./core/facts";
+import { buildTimeline, checkTimeline, type Timeline } from "./core/timeline";
 
 export type Difficulty = "easy" | "normal" | "hard";
 
@@ -69,6 +72,29 @@ export const stages: StageDef[] = [
       const [crime, cast, story] = [inputs.crime as CrimeCore, inputs.cast as Cast, inputs.story as Story];
       const timeline = buildTimeline(city, crime, cast, story, job.seed);
       return { output: timeline, checkErrors: checkTimeline(city, crime, cast, story, timeline) };
+    },
+  },
+  {
+    name: "evidence",
+    label: "4 · Evidence (CCTV, phones, forensics, items, records, witnesses)",
+    kind: "code",
+    inputs: ["crime", "cast", "story", "timeline"],
+    run: (inputs, job) => {
+      const [crime, cast, story] = [inputs.crime as CrimeCore, inputs.cast as Cast, inputs.story as Story];
+      const timeline = inputs.timeline as Timeline;
+      const output = buildEvidence(city, crime, cast, story, timeline, job.difficulty, job.seed);
+      return { output, checkErrors: evidenceProblems(crime, timeline, output) };
+    },
+  },
+  {
+    name: "facts",
+    label: "5 · What the evidence proves",
+    kind: "code",
+    inputs: ["crime", "cast", "story", "evidence"],
+    run: (inputs) => {
+      const [crime, cast, story] = [inputs.crime as CrimeCore, inputs.cast as Cast, inputs.story as Story];
+      const output = buildFacts(city, crime, cast, story, inputs.evidence as EvidenceSet);
+      return { output, checkErrors: factProblems(output) };
     },
   },
 ];
