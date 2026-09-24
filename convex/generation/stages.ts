@@ -40,7 +40,8 @@ import type { Difficulty } from "./core/crimeCast";
 
 export type { Difficulty };
 
-export type StageJob = { seed: number; difficulty: Difficulty };
+/** recentCrimes: one-line summaries of the last AI crimes, so the crime stage can avoid repeating them. */
+export type StageJob = { seed: number; difficulty: Difficulty; recentCrimes?: string[] };
 
 export type StageResult = { output: unknown; checkErrors: string[] };
 
@@ -92,7 +93,7 @@ export const stages: StageDef[] = [
     inputs: [],
     schema: crimeCoreSchema,
     handWritten: easyCase.crimeCore,
-    prompt: (_inputs, job) => ({ system: SYSTEM, prompt: crimePrompt(city, job.seed, job.difficulty) }),
+    prompt: (_inputs, job) => ({ system: SYSTEM, prompt: crimePrompt(city, job.seed, job.difficulty, job.recentCrimes) }),
     // The seeded brief only binds AI output; the hand-written case predates it.
     check: (output, _inputs, job, fromAi) => crimeProblems(city, output as CrimeCore, fromAi ? crimeBrief(city, job.seed) : undefined),
     // A switched-off camera the AI never names: drop that cover-up step rather than fail the case.

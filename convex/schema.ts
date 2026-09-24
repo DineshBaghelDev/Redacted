@@ -48,7 +48,9 @@ export default defineSchema({
     checkErrors: v.array(v.string()),
     source: v.union(v.literal("hand-written"), v.literal("code"), v.literal("llm")),
     updatedAt: v.number(),
-  }).index("by_job_stage", ["jobId", "stage"]),
+  })
+    .index("by_job_stage", ["jobId", "stage"])
+    .index("by_stage", ["stage"]),
   // Every AI call made while generating, kept for debugging and cost tracking.
   generationLogs: defineTable({
     jobId: v.id("generationJobs"),

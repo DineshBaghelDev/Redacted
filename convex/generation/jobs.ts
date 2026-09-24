@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { internalAction, internalMutation, internalQuery, type ActionCtx } from "../_generated/server";
 import { jobStatus } from "../schema";
 import { runAiAttempt } from "./aiStage";
+import type { CrimeCore } from "./core/schemas";
 import { getStage } from "./stages";
 
 // Running stages for a generation job, shared by the dev tester (one stage at a time) and the
@@ -37,7 +38,8 @@ export async function runAiTry(ctx: ActionCtx, jobId: Id<"generationJobs">, stag
     stages: stage.inputs,
     previousOf: attempt > 0 ? stage.name : undefined,
   });
-  const stageJob = { seed: job.seed, difficulty: job.difficulty };
+  const recentCrimes = stage.name === "crime" ? await ctx.runQuery(internal.generation.jobs.recentCrimes, { excludeJobId: jobId }) : undefined;
+  const stageJob = { seed: job.seed, difficulty: job.difficulty, recentCrimes };
   const result = await runAiAttempt(stage, drafts, stageJob, attempt, previous ? { output: previous.output, problems: previous.checkErrors } : undefined);
   const { call } = result;
   await ctx.runMutation(internal.generation.jobs.saveLog, {
@@ -119,6 +121,28 @@ export const saveLog = internalMutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("generationLogs", { ...args, createdAt: Date.now() });
+  },
+});
+
+/** How many past AI crimes the crime prompt is told not to repeat. */
+const RECENT_CRIMES = 10;
+
+/** One-line summaries of the newest AI-written crimes from other jobs. */
+export const recentCrimes = internalQuery({
+  args: { excludeJobId: v.id("generationJobs") },
+  handler: async (ctx, { excludeJobId }): Promise<string[]> => {
+    const drafts = await ctx.db
+      .query("generationDrafts")
+      .withIndex("by_stage", (q) => q.eq("stage", "crime"))
+      .order("desc")
+      .take(RECENT_CRIMES * 3);
+    return drafts
+      .filter((d) => d.source === "llm" && d.jobId !== excludeJobId)
+      .slice(0, RECENT_CRIMES)
+      .map((d) => {
+        const crime = d.output as CrimeCore;
+        return `${crime.motive.type}, ${crime.weapon.name}: ${crime.motive.details}`;
+      });
   },
 });
 

@@ -92,6 +92,8 @@ describe("prompts", () => {
     for (const rule of CRIME_RULES) expect(crime).toContain(rule);
     expect(crime).toContain(crimeBrief(city, 7).scenePlaceId);
     expect(crime).toContain("keel-14:kitchen");
+    expect(crimePrompt(city, 7, "easy", ["money, a crowbar: Tom wanted the shop."])).toContain("- money, a crowbar: Tom wanted the shop.");
+    expect(crime).not.toContain("Recent cases");
     const castText = castPrompt(city, crimeCore, "normal", 7);
     for (const rule of castRules("normal")) expect(castText).toContain(rule);
     expect(castText).toContain("carver-towers:unit-5a");

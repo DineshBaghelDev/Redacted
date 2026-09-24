@@ -23,6 +23,7 @@ import type * as generation_core_evidence_index from "../generation/core/evidenc
 import type * as generation_core_evidence_types from "../generation/core/evidence/types.js";
 import type * as generation_core_facts from "../generation/core/facts.js";
 import type * as generation_core_lies from "../generation/core/lies.js";
+import type * as generation_core_names from "../generation/core/names.js";
 import type * as generation_core_rng from "../generation/core/rng.js";
 import type * as generation_core_routine from "../generation/core/routine.js";
 import type * as generation_core_schemas from "../generation/core/schemas.js";
@@ -68,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   "generation/core/evidence/types": typeof generation_core_evidence_types;
   "generation/core/facts": typeof generation_core_facts;
   "generation/core/lies": typeof generation_core_lies;
+  "generation/core/names": typeof generation_core_names;
   "generation/core/rng": typeof generation_core_rng;
   "generation/core/routine": typeof generation_core_routine;
   "generation/core/schemas": typeof generation_core_schemas;

@@ -7,9 +7,12 @@ Cases must be fair: the truth is hidden but can be worked out from evidence. Kee
 Reply with JSON only.`;
 
 /** Prompt for stage 1: the crime core. */
-export function crimePrompt(city: City, seed: number, difficulty: Difficulty) {
+export function crimePrompt(city: City, seed: number, difficulty: Difficulty, recentCrimes: string[] = []) {
   const brief = crimeBrief(city, seed);
-  return `Create the crime core for a ${difficulty} case.
+  const avoid = recentCrimes.length
+    ? `\n\nRecent cases already used these premises. Make this one clearly different: a different kind of relationship between victim and killer, a different situation behind the motive, a different weapon item. Don't reuse these plots:\n${recentCrimes.map((c) => `- ${c}`).join("\n")}`
+    : "";
+  return `Create the crime core for a ${difficulty} case.${avoid}
 
 Brief (must follow):
 - motive type: ${brief.motiveType}

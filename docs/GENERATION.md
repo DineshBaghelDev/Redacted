@@ -54,7 +54,7 @@ Code: `convex/fixtures/city.ts`, `convex/generation/core/{buildings,city}.ts`.
 
 ## Stage 1 — Crime core (LLM, implemented)
 
-Input: difficulty, a **seeded brief** (motive type, weapon category, crime-scene place, accomplice yes/no (about 1 case in 5), the part of Day 2 the death falls in (night, morning, afternoon, evening), and 24 first names plus 20 surnames from `core/names.ts`; all picked by code from the seed so cases vary), every city room id, every camera id.
+Input: difficulty, a **seeded brief** (motive type, weapon category, crime-scene place, accomplice yes/no (about 1 case in 5), the part of Day 2 the death falls in (night, morning, afternoon, evening), and 24 first names plus 20 surnames from `core/names.ts`; all picked by code from the seed so cases vary), every city room id, every camera id, and one-line summaries (motive type, weapon, motive details) of the 10 newest AI crimes from other jobs, which the prompt says not to repeat. No check enforces this; judging "too similar" is left to later evals.
 
 Output shape: `crimeCoreSchema` in `core/schemas.ts` — victim/killer/accomplice ids (short lowercase first names), motive, weapon, method, scene room, time of death, windowStart, discovery, cover-up, optional switched-off camera.
 

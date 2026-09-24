@@ -39,11 +39,12 @@ export async function runAiAttempt(
   job: StageJob,
   attempt: number,
   previous?: { output: unknown; problems: string[] },
+  model?: string,
 ): Promise<AiAttempt> {
   if (!stage.prompt || !stage.schema) throw new Error("The AI version of this stage isn't built yet. Use the hand-written one.");
   const { system, prompt: base } = stage.prompt(inputs, job);
   const prompt = repairPrompt(base, previous);
-  const call = await generateJson({ schema: stage.schema, system, prompt });
+  const call = await generateJson({ schema: stage.schema, system, prompt, model });
   if (call.error) return { call, system, prompt, output: previous?.output ?? null, problems: call.problems, retry: false };
 
   let output = call.output;

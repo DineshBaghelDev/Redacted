@@ -45,6 +45,8 @@
 
 - Seeding for variety: the seed now also picks accomplice or not (about 1 case in 5), the part of Day 2 the death falls in, 24 first names and 20 surnames for the case (`core/names.ts`), the exact suspect count and the victim's routine. Prompts state them; crime and cast checks enforce them on AI output. Replay tests no longer apply seeded-brief rules to old recordings. 93 tests. Not deployed yet: waiting for the first 5-case NIM baseline run to finish so it measures the old pipeline.
 
+- Cases looked alike (6 AI cases: Elena killer in 3, Marcus/Martin victims, affair/inheritance/old-testimony plots, two poisoned coffees at Union Station). The crime prompt now gets one-line summaries of the 10 newest AI crimes from other jobs and must pick a clearly different premise (new `by_stage` index on drafts). Also not deployed until the baseline run ends.
+
 ## Pending
 
 ### Case generation — remaining chunks
