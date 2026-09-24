@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { action, internalMutation, internalQuery, mutation, query } from "../_generated/server";
-import { getStage, stages } from "../generation/stages";
+import { schemaProblems } from "../generation/core/schemas";
+import { getStage, stages, type StageResult } from "../generation/stages";
 import { isDevUser, requireDevUser } from "../lib/auth";
 
 // Dev-only generation tester. Every public function here checks the DEV_TOOL_USER_IDS allowlist.
@@ -22,7 +23,13 @@ export const listStages = query({
   args: {},
   handler: async (ctx) => {
     await requireDevUser(ctx);
-    return stages.map(({ name, label, kind, inputs }) => ({ name, label, kind, inputs }));
+    return stages.map(({ name, label, kind, inputs, handWritten }) => ({
+      name,
+      label,
+      kind,
+      inputs,
+      hasHandWritten: handWritten !== undefined,
+    }));
   },
 });
 
@@ -58,10 +65,13 @@ export const listDrafts = query({
   },
 });
 
-/** Runs one stage on the job's existing drafts and saves the result as that stage's draft. */
+/**
+ * Runs one stage on the job's existing drafts (or loads its hand-written output) and saves the result
+ * as that stage's draft.
+ */
 export const runStage = action({
-  args: { jobId: v.id("generationJobs"), stage: v.string() },
-  handler: async (ctx, { jobId, stage: stageName }) => {
+  args: { jobId: v.id("generationJobs"), stage: v.string(), handWritten: v.optional(v.boolean()) },
+  handler: async (ctx, { jobId, stage: stageName, handWritten }) => {
     await requireDevUser(ctx);
     const stage = getStage(stageName);
     const { job, drafts } = await ctx.runQuery(internal.dev.tester.loadInputs, {
@@ -74,13 +84,23 @@ export const runStage = action({
       throw new Error(`Run these stages first: ${missing.join(", ")}`);
     }
 
-    const result = await stage.run(drafts, { seed: job.seed, difficulty: job.difficulty });
+    let result: StageResult;
+    if (handWritten) {
+      if (stage.handWritten === undefined) throw new Error("This stage has no hand-written version.");
+      result = { output: stage.handWritten, checkErrors: [] };
+    } else if (stage.run) {
+      result = stage.run(drafts, { seed: job.seed, difficulty: job.difficulty });
+    } else {
+      throw new Error("The AI version of this stage isn't built yet. Use the hand-written one.");
+    }
+    if (stage.schema) result.checkErrors.unshift(...schemaProblems(stage.schema, result.output));
+
     await ctx.runMutation(internal.dev.tester.saveDraft, {
       jobId,
       stage: stage.name,
       output: result.output,
       checkErrors: result.checkErrors,
-      source: stage.kind,
+      source: handWritten ? "hand-written" : stage.kind,
     });
     return result.checkErrors;
   },

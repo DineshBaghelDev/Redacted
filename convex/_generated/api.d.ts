@@ -9,10 +9,14 @@
  */
 
 import type * as dev_tester from "../dev/tester.js";
+import type * as fixtures_caseEasy from "../fixtures/caseEasy.js";
 import type * as fixtures_city from "../fixtures/city.js";
 import type * as generation_core_buildings from "../generation/core/buildings.js";
 import type * as generation_core_city from "../generation/core/city.js";
 import type * as generation_core_rng from "../generation/core/rng.js";
+import type * as generation_core_routine from "../generation/core/routine.js";
+import type * as generation_core_schemas from "../generation/core/schemas.js";
+import type * as generation_core_timeline from "../generation/core/timeline.js";
 import type * as generation_stages from "../generation/stages.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as sessions from "../sessions.js";
@@ -25,10 +29,14 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "dev/tester": typeof dev_tester;
+  "fixtures/caseEasy": typeof fixtures_caseEasy;
   "fixtures/city": typeof fixtures_city;
   "generation/core/buildings": typeof generation_core_buildings;
   "generation/core/city": typeof generation_core_city;
   "generation/core/rng": typeof generation_core_rng;
+  "generation/core/routine": typeof generation_core_routine;
+  "generation/core/schemas": typeof generation_core_schemas;
+  "generation/core/timeline": typeof generation_core_timeline;
   "generation/stages": typeof generation_stages;
   "lib/auth": typeof lib_auth;
   sessions: typeof sessions;

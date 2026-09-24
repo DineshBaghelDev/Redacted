@@ -135,6 +135,13 @@ export function checkCity(city: City) {
   return problems;
 }
 
+/** Finds a room and its place by room id; null when unknown. */
+export function findRoom(city: City, roomId: string) {
+  const place = city.places.find((p) => roomId.startsWith(`${p.id}:`));
+  const room = place?.building.rooms.find((r) => r.id === roomId);
+  return place && room ? { place, room } : null;
+}
+
 /** Totals used to check a case fits the city. */
 export function cityCapacity(city: City) {
   return {

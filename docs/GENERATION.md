@@ -98,7 +98,11 @@ Window: `windowStart` → body discovery, max 2 days.
 
 1. **Routine (code):** each character gets a daily routine from a template (office worker, night shift, shop owner, unemployed, student) + seed: work hours, nights at home, regular spots.
 2. **Story events (LLM):** only events that matter — meetings, fights, purchases, the crime, cover-up, accomplice coordination.
-3. **Merge (code):** story events override routine.
+3. **Merge (code):** story events override routine; routine blocks next to a story event in another place are trimmed so there is always enough travel time. Story events are never moved — clashes between them are reported.
+
+Times are whole minutes from Day 1 00:00 (Day 2 starts at 1440). The story stage also lists **story items** (weapon included, id `weapon`) with start room and final room + slot; any item that moves needs an event that uses it in its final room. Cast members pick a routine type; `job.roomId` can pin their work room, otherwise code picks one.
+
+Code: `convex/generation/core/{schemas,routine,timeline}.ts`; hand-written stand-ins for the LLM stages live in `convex/fixtures/caseEasy.ts`.
 
 ```ts
 event:    { id, actors, placeId, roomId, start, end, action, visibility: "public" | "private", itemsUsed }
