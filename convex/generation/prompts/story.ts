@@ -28,7 +28,7 @@ ${plan.decisive.slice(0, plan.needed).map((r) => `  - ${r}`).join("\n")}${plan.d
 ${plan.weaponToKiller.map((r) => `  - ${r}`).join("\n")}${plan.accomplice.length ? `\n- Link the accomplice to the killer (at least 1):\n${plan.accomplice.map((r) => `  - ${r}`).join("\n")}` : ""}
 
 What to write:
-- events: the murder and cover-up, earlier conflicts that give suspects motives, where people really were around the time of death (some provable, some not), the discovery. Usually 10–20 events. action is one plain sentence.
+- events: the murder and cover-up, earlier conflicts that give each suspect their reason to be suspected, where people really were around the time of death (some provable, some not), the discovery. Every suspect appears at least once. Usually 15–30 events. action is one plain sentence.
 - comms: calls and messages that matter (gist = what was said). durationMinutes for calls.
 - purchases: things bought that matter (card or cash).
 - items: the weapon, clothing the killer wore, documents and devices that matter. Devices (laptops, tablets) can hold files in contents.

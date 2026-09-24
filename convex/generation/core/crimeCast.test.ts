@@ -108,3 +108,10 @@ describe("parseJson", () => {
     expect(parseJson('Here you go: {"a":{"b":2}} done')).toEqual({ a: { b: 2 } });
   });
 });
+
+describe("innocent suspects", () => {
+  it("need a reason police would look at them", () => {
+    const noReason = { characters: cast.characters.map((c) => (c.id === "tom" ? { ...c, fakeMotive: undefined } : c)) };
+    expect(castProblems(city, crimeCore, noReason).join(" | ")).toMatch(/Tom .* is a suspect with no reason police would look at them/);
+  });
+});

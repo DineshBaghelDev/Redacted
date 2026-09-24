@@ -32,9 +32,9 @@ Field notes:
 - disabledCamera: { cameraId, from, to } (minutes) if coverUp includes "disable-camera", otherwise null. Most cases don't switch off a camera.
 - accomplice: null unless the brief says there is one; then pick the role that fits the story: fake-alibi, weapon-disposal or distraction.
 
-City rooms (id Name):
+City rooms (id, name if it adds anything):
 ${roomsText(city)}
 
-Cameras (id Name):
+Cameras:
 ${camerasText(city)}`;
 }

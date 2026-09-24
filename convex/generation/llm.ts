@@ -95,7 +95,14 @@ export function parseJson(text: string): unknown {
  * request, retries once in JSON mode with the schema written into the prompt. Never throws for bad
  * output: shape problems come back in `problems` so the stage can report or repair them.
  */
-export async function generateJson(args: { schema: z.ZodType; system: string; prompt: string; model?: string }): Promise<LlmCall> {
+export async function generateJson(args: {
+  schema: z.ZodType;
+  system: string;
+  prompt: string;
+  model?: string;
+  /** Quick retries of a failed call on the same model (AI SDK default 2). */
+  maxRetries?: number;
+}): Promise<LlmCall> {
   const model = args.model ?? MODELS.main;
   const started = Date.now();
   const base = { model, ms: 0, rawText: "", output: null, problems: [] as string[] };
@@ -110,6 +117,7 @@ export async function generateJson(args: { schema: z.ZodType; system: string; pr
         prompt,
         output: Output.object({ schema: args.schema }),
         abortSignal: AbortSignal.timeout(TIMEOUT_MS - (Date.now() - started)),
+        maxRetries: args.maxRetries,
       });
       return {
         ...base,

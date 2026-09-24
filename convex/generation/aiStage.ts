@@ -48,8 +48,10 @@ export async function runAiAttempt(
   const prompt = repairPrompt(base, previous);
   // A failed call (rate limit, quota, overload) moves on to the stage's next model.
   const calls: LlmCall[] = [];
-  for (const next of model ? [model] : modelsFor(stage.name)) {
-    calls.push(await generateJson({ schema: stage.schema, system, prompt, model: next }));
+  const models = model ? [model] : modelsFor(stage.name);
+  for (const [i, next] of models.entries()) {
+    // Only the last model retries a failed call; before that, moving on is faster (e.g. a used-up daily quota).
+    calls.push(await generateJson({ schema: stage.schema, system, prompt, model: next, maxRetries: i === models.length - 1 ? undefined : 0 }));
     if (!calls[calls.length - 1].error) break;
   }
   const call = calls[calls.length - 1];

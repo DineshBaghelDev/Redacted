@@ -5,7 +5,7 @@ import { formatTime, type Brief, type Cast, type CrimeCore, type Story } from ".
 
 export const BRIEF_RULES = [
   "Only what the police know when they are called: who died, where the body was found, when, and who reported it.",
-  "Never name or hint at the killer or accomplice, the motive, the exact method, or the weapon (unless the weapon was left at the scene).",
+  "Never name or hint at the killer or accomplice, the motive, the exact method, or the weapon (unless the weapon was left in plain sight at the scene).",
   "title: 2–5 words, like a case file name. summary: 2–4 plain sentences. initialFacts: 3–5 short facts.",
 ];
 
@@ -20,7 +20,8 @@ export function briefInput(city: City, crime: CrimeCore, cast: Cast, story: Stor
     foundAt: scene ? `${scene.place.name}, ${scene.room.name}` : crime.sceneRoomId,
     foundAtTime: formatTime(crime.discovery.time),
     reportedBy: `${nameOf(crime.discovery.byId)} (${cast.characters.find((c) => c.id === crime.discovery.byId)?.relationshipToVictim ?? ""})`,
-    weaponAtScene: weapon && weapon.finalRoomId === crime.sceneRoomId ? weapon.name : null,
+    // Hidden as part of the cover-up means not in plain sight, even if it's still in the room.
+    weaponAtScene: weapon && weapon.finalRoomId === crime.sceneRoomId && !crime.coverUp.includes("hide-weapon") ? weapon.name : null,
   };
 }
 
@@ -45,7 +46,8 @@ export function briefProblems(crime: CrimeCore, cast: Cast, story: Story, brief:
     }
   }
   const weapon = story.items.find((i) => i.id === "weapon");
-  if (weapon && weapon.finalRoomId !== crime.sceneRoomId && lower.includes(weapon.name.toLowerCase())) problems.push("The brief names the weapon, which isn't at the scene.");
+  const inPlainSight = weapon?.finalRoomId === crime.sceneRoomId && !crime.coverUp.includes("hide-weapon");
+  if (weapon && !inPlainSight && lower.includes(weapon.name.toLowerCase())) problems.push("The brief names the weapon, which isn't in plain sight at the scene.");
   if (lower.includes(crime.method.toLowerCase().slice(0, 40))) problems.push("The brief copies the hidden method.");
   if (lower.includes(crime.motive.details.toLowerCase().slice(0, 40))) problems.push("The brief copies the hidden motive.");
   const victim = cast.characters.find((c) => c.id === crime.victimId);

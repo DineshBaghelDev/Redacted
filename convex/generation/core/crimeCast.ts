@@ -30,7 +30,7 @@ export const castRules = (difficulty: Difficulty) => [
   "homeUnitId must be a home id from the list. People may share a home only if they live together.",
   "job is null or uses a place id and a job title from that place's jobs; \"cashier ×2\" means at most 2 people in the cast have that job there. job.roomId, if given, is a room of that place.",
   "routine is one of: office, night-shift, shop, unemployed, student. Unemployed people and students need a hangoutPlaceId (a public place id).",
-  "Innocent suspects need a reason police would look at them (fakeMotive: a motive, a grudge, or just being near at the wrong time). The killer has no fakeMotive.",
+  "Innocent suspects need a reason police would look at them (fakeMotive: a motive, a grudge, or just being near at the wrong time). At least 2 of them have a motive as serious as the killer's (money, revenge, jealousy, a secret the victim could expose), so the killer isn't obvious. The killer has no fakeMotive.",
   "secret and protects only where the person really has something serious to hide (it could get them arrested, fired, or ruin their reputation or family) or someone to shield; leave them out otherwise. Most people have none.",
   "appearance is what a camera would see: height, build, usual clothing, and shoes for anyone who might leave footprints.",
 ];
@@ -130,6 +130,11 @@ export function castProblems(city: City, crime: CrimeCore, cast: Cast, difficult
   if (!people.has(crime.discovery.byId)) problems.push("Whoever finds the body is not in the cast.");
   if (crime.accomplice && people.get(crime.accomplice.id)?.role !== "suspect") problems.push("The accomplice must be a suspect.");
   if (people.get(crime.killerId)?.fakeMotive) problems.push("The killer shouldn't have a fake motive.");
+  for (const c of cast.characters) {
+    if (c.role === "suspect" && c.id !== crime.killerId && c.id !== crime.accomplice?.id && !c.fakeMotive?.trim()) {
+      problems.push(`${c.name} is a suspect with no reason police would look at them: give a fakeMotive tied to the victim (a motive, a grudge, or being near at the wrong time), or make them a witness.`);
+    }
+  }
 
   const count = (role: string) => cast.characters.filter((c) => c.role === role).length;
   if (count("victim") !== 1) problems.push(`There must be exactly one victim (found ${count("victim")}).`);

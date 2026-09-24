@@ -149,3 +149,25 @@ describe("script leak check", () => {
     expect(scriptProblems(crimeCore, privateFind, scripts)).toEqual([]);
   });
 });
+
+describe("suspects need substance", () => {
+  it("a suspect missing from the story goes back for a repair", () => {
+    const tom = "tom";
+    const without = {
+      ...story,
+      events: story.events.map((e) => ({ ...e, actors: e.actors.filter((a) => a !== tom) })).filter((e) => e.actors.length > 0),
+      comms: story.comms.filter((m) => m.from !== tom && m.to !== tom),
+      purchases: story.purchases.filter((p) => p.who !== tom),
+    };
+    expect(storyProblems(city, crimeCore, cast, without, "easy", SEED)[0]).toMatch(/don't appear in the story.*\(tom\)/);
+  });
+});
+
+describe("brief and a hidden weapon", () => {
+  it("can't name a weapon the killer hid, even if it's still at the scene", () => {
+    const hiddenAtScene = { ...story, items: story.items.map((i) => (i.id === "weapon" ? { ...i, finalRoomId: crimeCore.sceneRoomId } : i)) };
+    const weapon = hiddenAtScene.items.find((i) => i.id === "weapon")!;
+    const naming = { ...brief, initialFacts: [...brief.initialFacts.slice(0, 3), `A ${weapon.name.toLowerCase()} was found nearby.`] };
+    expect(briefProblems(crimeCore, cast, hiddenAtScene, naming).join(" | ")).toMatch(/isn't in plain sight/);
+  });
+});

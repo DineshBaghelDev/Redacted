@@ -16,6 +16,11 @@ export const STORY_RULES = [
   "The murder is one event in the crime scene room with the killer and the victim, covering the time of death, with \"weapon\" in itemsUsed. The victim does nothing after it (no events, messages or purchases).",
   "Exactly one item has id \"weapon\" and kind \"weapon\", starting in the crime's weapon origin room. An item that ends in a different room from where it starts needs an event in its final room that uses it. finalSlot is where in the room it ends up (e.g. a drawer, the bin); rooms marked [no items] can't hold one.",
   "Whoever finds the body has an event in the crime scene room starting at the discovery time.",
+  "Every suspect appears in the story (an event, call, message or purchase) in a way that backs up why police would suspect them: a clash with the victim, a debt, being near the scene around the time of death.",
+  "At least one innocent suspect has no alibi or is out near the scene around the time of death, so the killer isn't the only one who could have done it.",
+  "The victim's last hours make sense: the story shows why they were at the scene at that time (a meeting, a late shift, going home).",
+  "Nobody states a plan to kill or confesses in a message or call. Motive evidence is indirect: a debt notice, a letter about the will, an argument someone overheard.",
+  "Everything the killer does has a reason in the story; never add an action only to create evidence.",
   "If there is an accomplice, the killer and accomplice must meet or talk in the story.",
   "Write every action, gist and file in your own words; never copy the crime core's method or motive text (NPC scripts are built from the story and must not contain it).",
   "Visibility: \"public\" events can be seen by anyone at the same place; \"private\" events are known only to their actors.",
@@ -51,7 +56,7 @@ export function evidencePlan(city: City, crime: CrimeCore, difficulty: Difficult
     ...(wiped ? [] : ["the killer's prints on the weapon: the killer handles the weapon in the murder event"]),
     ...(hasCamera(crime.sceneRoomId) ? ["the killer on the scene room's camera at the time of death: the killer is in the scene room then"] : []),
     ...(["blunt", "sharp"].includes(crime.weapon.category) ? [`the victim's blood on the killer's clothing: ${clothing}`] : []),
-    "something taken from the scene building that ends up in the killer's home: an item starting in the scene building, not owned by the killer, whose final room is in the killer's home, with an event there that uses it",
+    "something the killer takes from the scene for a reason the story makes clear (e.g. the document they killed over) and that ends up in their home: an item starting in the scene building, not owned by the killer, whose final room is in the killer's home, with an event there that uses it",
   ];
   const weaponToKiller = [
     ...(wiped ? [] : ["the killer's prints on the weapon: the killer is an actor in an event that uses the weapon"]),
@@ -83,6 +88,9 @@ export function storyProblems(city: City, crime: CrimeCore, cast: Cast, story: S
     ...(text.includes(crime.motive.details) ? ["motive details"] : []),
   ];
   if (copied.length) return copied.map((what) => `The story copies the crime core's ${what} word for word; describe it in your own words.`);
+  const inStory = new Set([...story.events.flatMap((e) => e.actors), ...story.comms.flatMap((m) => [m.from, m.to]), ...story.purchases.map((p) => p.who)]);
+  const missing = cast.characters.filter((c) => c.role === "suspect" && !inStory.has(c.id)).map((c) => `${c.name} (${c.id})`);
+  if (missing.length) return [`These suspects don't appear in the story, so nothing backs up why police would suspect them: ${missing.join(", ")}. Give each one an event, call, message or purchase that does.`];
   const timeline = buildTimeline(city, crime, cast, story, seed);
   const timelineProblems = checkTimeline(city, crime, cast, story, timeline);
   if (timelineProblems.length) return timelineProblems;
