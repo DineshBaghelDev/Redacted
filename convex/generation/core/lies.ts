@@ -88,9 +88,17 @@ export function liarCountProblems(crime: CrimeCore, cast: Cast, { lies }: Lies, 
  * required whereabouts lie is reported by checkLies, not fixed here.
  */
 export function keepValidLies(crime: CrimeCore, cast: Cast, story: Story, set: EvidenceSet, lies: Lies): Lies {
-  const ok = (lie: Lie) => checkLies(crime, cast, story, set, { lies: [lie] }).filter((p) => !p.includes("needs a whereabouts lie")).length === 0;
+  const ok = (lie: Lie) =>
+    lie.disprovingEvidenceIds.length > 0 && checkLies(crime, cast, story, set, { lies: [lie] }).filter((p) => !p.includes("needs a whereabouts lie")).length === 0;
+  // One bad proof id shouldn't cost a whole lie (e.g. the killer's alibi): keep only the ids that work.
+  const works = (lie: Lie, id: string) => ok({ ...lie, disprovingEvidenceIds: [id], backupLie: undefined, whenCaught: "admit-shown" });
+  const prune = (lie: Lie): Lie => ({
+    ...lie,
+    disprovingEvidenceIds: lie.disprovingEvidenceIds.filter((id) => works(lie, id)),
+    backupLie: lie.backupLie && { ...lie.backupLie, disprovingEvidenceIds: lie.backupLie.disprovingEvidenceIds.filter((id) => works(lie, id)) },
+  });
   const kept: Lie[] = [];
-  for (const lie of lies.lies) {
+  for (const lie of lies.lies.map(prune)) {
     if (ok(lie)) kept.push(lie);
     else if (lie.backupLie) {
       // A broken backup lie shouldn't cost the main one: drop the backup, admit what the proof shows.

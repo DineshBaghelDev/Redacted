@@ -171,3 +171,12 @@ describe("brief and a hidden weapon", () => {
     expect(briefProblems(crimeCore, cast, hiddenAtScene, naming).join(" | ")).toMatch(/isn't in plain sight/);
   });
 });
+
+describe("lie clean-up", () => {
+  it("drops only the bad proof ids and keeps the lie", () => {
+    const main = lies.lies.find((l) => l.npcId === crimeCore.killerId && l.topic === "whereabouts")!;
+    const withBad = { lies: lies.lies.map((l) => (l.id === main.id ? { ...l, disprovingEvidenceIds: [...l.disprovingEvidenceIds, "no-such-evidence"] } : l)) };
+    const kept = keepValidLies(crimeCore, cast, story, set, withBad).lies.find((l) => l.id === main.id);
+    expect(kept?.disprovingEvidenceIds).toEqual(main.disprovingEvidenceIds);
+  });
+});
