@@ -93,7 +93,13 @@ export const runStage = action({
     } else {
       throw new Error("The AI version of this stage isn't built yet. Use the hand-written one.");
     }
-    if (stage.schema) result.checkErrors.unshift(...schemaProblems(stage.schema, result.output));
+    if (stage.schema) {
+      const shapeProblems = schemaProblems(stage.schema, result.output);
+      result.checkErrors.unshift(...shapeProblems);
+      if (shapeProblems.length === 0 && stage.check) {
+        result.checkErrors.push(...stage.check(result.output, drafts, { seed: job.seed, difficulty: job.difficulty }));
+      }
+    }
 
     await ctx.runMutation(internal.dev.tester.saveDraft, {
       jobId,

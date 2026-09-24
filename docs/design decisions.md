@@ -30,3 +30,7 @@
 - The city and buildings never change between cases; places use addresses or business names so any new cast can live and work there.
 - Some cameras can be faulty in a case, so camera coverage is not the same every time.
 - One hand-written easy case is kept for building the game UI and testing, so we don't spend AI tokens regenerating cases during development.
+- Each lie says how the person reacts when caught: tells the whole truth, admits only what the proof shows, or switches to a backup lie (which needs different proof).
+- Finding something taken from the victim's home inside the killer's home counts as decisive evidence.
+- The victim's phone is found "on the body" at the scene.
+- Any evidence the players have found can be shown to break a lie, not only physical items they picked up.

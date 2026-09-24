@@ -109,8 +109,8 @@ describe("facts for the easy case", () => {
     expect(factProblems(facts)).toEqual([]);
   });
 
-  it("decisive evidence is the blood on Victor's overcoat", () => {
-    expect(facts.decisiveIds).toEqual(["forensic/overcoat/blood"]);
+  it("decisive evidence is the blood on Victor's overcoat and Daniel's ledger in his flat", () => {
+    expect(facts.decisiveIds).toEqual(["forensic/overcoat/blood", "item/ledger"]);
   });
 
   it("clears every innocent suspect", () => {

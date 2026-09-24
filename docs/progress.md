@@ -27,12 +27,13 @@
 - Tester: crime, cast and story stages now have visual views (crime card, character cards, story timeline with calls/purchases/items); timeline table shows names. Raw data stays as a collapsible fallback.
 - Chunk B: invariant tests (200 seeds + 200 randomly shifted stories), evidence builders (CCTV with faulty cameras, phones, card payments, forensics, items, devices, public records, witness statements), facts stage (what each piece proves, decisive set, alibis). Added gender, item kind, `proves` tags and public records to the stage shapes. Tester shows evidence like a player would (CCTV by camera and time, phones, lab, items, records, witnesses, with a "show hidden truth" toggle) and each fact with its supporting evidence.
 - Finished chunk B's leftovers: laptops as optional story items with readable files, background clutter items for searches, weapon-specific lab tests (toxicology, ballistics, ligature), footprints at side doors the killer used, and the "camera switched off" cover-up with its checks. Hand-written case gained Daniel's laptop (a spreadsheet of payments to Hale Consulting) and Victor's shoes. Tester shows laptop files and marks clutter as background items.
+- Chunk C: lies stage shape and checks (each lie hides something real and is broken by existing evidence about the liar; backup lies need different proof; the killer must lie about where he was), NPC scripts built by code (profile, what they took part in or saw, their messages and purchases, lies, rules; leak check), and the final "can the case be solved?" check (killer, motive, weapon, method, decisive evidence, every innocent cleared, accomplice, every lie catchable, everything reachable, no giveaway). Hand-written case got 5 lies, Nora's stolen painkillers, and passes every check with no AI. New decisive rule: something taken from the scene found in the killer's home. Tester shows lies with their proof, each NPC's script, and a pass/fail checklist. 59 tests.
+- Docs: any found evidence (not only picked-up items) can be shown to break a lie.
 
 ## Pending
 
 ### Case generation — remaining chunks
 
-- **C.** Lie checks, NPC scripts (what each NPC knows) and the full solvability validator. Milestone: hand-written case passes end to end with no AI.
 - **D.** AI setup (NIM, logs) + AI crime core and cast stages.
 - **E.** AI story events (with repair), lies, written text, case brief, time estimate.
 - **F.** Full workflow ("Run all", retries, repair loop), Promptfoo evals, 10-seed smoke run.
@@ -41,7 +42,7 @@
 
 Today the same code path and checks run for hand-written and AI output, but that does not yet guarantee AI cases work:
 
-- **Solvability not checked yet.** An AI story can pass every timeline check and still be unsolvable (alibi can't be broken, innocents can't be cleared). Covered by chunk C.
+- **Solvability check is rule-based.** It proves each star has reachable evidence, not that players will connect it. Story sense is still for evals.
 - **Story sense not checked.** Only later evals (chunk F) judge whether a case makes sense.
 - **Only one test case, written alongside the checker.** Untested paths: accomplice, unemployed/student routines and hangouts, hotel guests, events crossing midnight, 3+ people meeting, firearm/strangulation/fall cases end to end (poison lab test is covered), public-place crime scenes.
 - **Repair via plain-English problems is untested.** Unknown whether the AI can fix its output from the checker's messages.
@@ -56,4 +57,6 @@ Planned fixes:
 
 ### Open questions
 
+- CCTV row ids depend on the seed, so hand-written lies can't point at camera records. AI lies get the real ids per case, so this only limits the fixture.
+- A witness who lies about an event is treated as never telling what they saw of it, even after the lie breaks. Simple and safe for the checks; revisit if it blocks good cases.
 - Stairs vs lift: routes inside buildings always pick stairs on a tie; timeline may need to say which was used, since cameras differ.

@@ -112,7 +112,7 @@ This file records decisions from the technical design discussion so agents do no
 - Both players may message same NPC concurrently.
 - Same-NPC messages are server-ordered and processed sequentially.
 - Different NPC conversations may run simultaneously.
-- NPC lies break only when a player shows an item that disproves them; repeated pressure never forces the truth. The server checks the item, not the LLM. Exposed lies are tracked per session, shared by both players.
+- NPC lies break only when a player shows found evidence that disproves them (any kind: item, lab result, CCTV record, message, record, file, statement); repeated pressure never forces the truth. The server checks the evidence, not the LLM. Exposed lies are tracked per session, shared by both players.
 - The killer never confesses the murder, even when caught in smaller lies.
 - Interrogation is allowed only when the NPC is present: either the player calls the NPC to the bureau, or the player goes to meet the NPC.
 

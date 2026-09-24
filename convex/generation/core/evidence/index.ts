@@ -164,6 +164,14 @@ export function buildEvidence(
   return { cameras, evidence };
 }
 
+/** Room ids of someone's home: every room of a house, or just the flat/hotel room. */
+export function homeRooms(city: City, homeUnitId: string) {
+  const place = city.places.find((p) => homeUnitId.startsWith(`${p.id}:`));
+  if (place?.kind === "home" && place.building.homeUnits.length === 1) return new Set(place.building.rooms.map((r) => r.id));
+  const unit = place?.building.homeUnits.find((u) => u.id === homeUnitId);
+  return new Set([unit?.roomId ?? homeUnitId]);
+}
+
 /** Rooms that matter to the case, grouped by place: story rooms, homes and workplaces of the cast. */
 function relevantRooms(city: City, cast: Cast, story: Story) {
   const rooms = new Set<string>([
@@ -171,9 +179,7 @@ function relevantRooms(city: City, cast: Cast, story: Story) {
     ...story.items.flatMap((i) => [i.startRoomId, i.finalRoomId]),
   ]);
   for (const c of cast.characters) {
-    const home = city.places.find((p) => c.homeUnitId.startsWith(`${p.id}:`));
-    if (home?.kind === "home" && home.building.homeUnits.length === 1) home.building.rooms.forEach((r) => rooms.add(r.id));
-    else rooms.add(c.homeUnitId);
+    homeRooms(city, c.homeUnitId).forEach((r) => rooms.add(r));
     if (c.job?.roomId) rooms.add(c.job.roomId);
   }
   const byPlace = new Map<string, string[]>();

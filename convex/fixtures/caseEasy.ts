@@ -1,7 +1,7 @@
-import { at, type Cast, type CrimeCore, type Story } from "../generation/core/schemas";
+import { at, type Cast, type CrimeCore, type Lies, type Story } from "../generation/core/schemas";
 
 // Hand-written easy case ("The Keel Street Ledger"). Used to build and test the game UI and every
-// code stage without spending LLM tokens. It stands in for the outputs of the crime, cast and story stages.
+// code stage without spending LLM tokens. It stands in for the outputs of the crime, cast, story and lies stages.
 
 export const crimeCore: CrimeCore = {
   victimId: "daniel",
@@ -178,7 +178,17 @@ export const story: Story = {
       end: at(2, "02:15"),
       action: "Nora slips a box of painkillers into her hoodie pocket.",
       visibility: "private",
-      itemsUsed: [],
+      itemsUsed: ["painkillers"],
+    },
+    {
+      id: "nora-stash",
+      actors: ["nora"],
+      roomId: "gable-row:unit-1b",
+      start: at(2, "08:00"),
+      end: at(2, "08:05"),
+      action: "Back home, Nora hides the painkillers in her desk.",
+      visibility: "private",
+      itemsUsed: ["painkillers"],
     },
     {
       id: "cafe-argument",
@@ -384,6 +394,79 @@ export const story: Story = {
         },
         { title: "Holiday photos", text: "Photos of Daniel and Nora at the lake last summer.", proves: [] },
       ],
+    },
+    {
+      id: "painkillers",
+      name: "Box of painkillers",
+      kind: "other",
+      description: "A box of strong prescription painkillers with a St. Clare Clinic pharmacy label.",
+      ownerId: "nora",
+      startRoomId: "st-clare-clinic:pharmacy-store",
+      finalRoomId: "gable-row:unit-1b",
+      finalSlot: "desk",
+      proves: [],
+      contents: [],
+    },
+  ],
+};
+
+// Evidence ids below are the stable ones built by the evidence stage (items, lab results, records,
+// messages). CCTV row ids depend on the seed, so hand-written lies don't point at them.
+export const lies: Lies = {
+  lies: [
+    {
+      id: "victor-home",
+      npcId: "victor",
+      topic: "whereabouts",
+      claim: "I was home at Carver Towers all evening after work. I never went near Keel Street.",
+      truthIds: ["murder", "take-ledger", "dump-weapon"],
+      reason: "Admitting he was at Daniel's house that night would make him the obvious suspect.",
+      disprovingEvidenceIds: ["forensic/footprints/keel-14:back-door", "forensic/scene/fibers/overcoat"],
+      whenCaught: "backup-lie",
+      backupLie: {
+        claim: "All right, I went round to talk about work, but Daniel was alive when I left at about 22:15.",
+        disprovingEvidenceIds: ["forensic/overcoat/blood", "forensic/weapon/fibers/overcoat"],
+      },
+    },
+    {
+      id: "victor-work",
+      npcId: "victor",
+      topic: "relationship",
+      claim: "Daniel and I got on well. There was no trouble at work.",
+      truthIds: ["office-confrontation"],
+      reason: "Any trouble with Daniel points straight at his stealing.",
+      disprovingEvidenceIds: ["record/victor/0", "forensic/ledger/prints"],
+      whenCaught: "admit-shown",
+    },
+    {
+      id: "lena-debt",
+      npcId: "lena",
+      topic: "relationship",
+      claim: "Daniel and I split up on good terms. I don't owe him a thing.",
+      truthIds: ["cafe-argument", "debt-message"],
+      reason: "She is ashamed of the debt and knows the fight makes her look guilty.",
+      disprovingEvidenceIds: ["message/debt-message/lena", "witness/eli/cafe-argument"],
+      whenCaught: "admit-shown",
+    },
+    {
+      id: "tom-garage",
+      npcId: "tom",
+      topic: "secret",
+      claim: "My garage is honest. Nobody has ever complained about my bills.",
+      truthIds: [],
+      reason: "He is protecting his business from an insurance fraud inquiry.",
+      disprovingEvidenceIds: ["record/tom/0"],
+      whenCaught: "full-truth",
+    },
+    {
+      id: "nora-pills",
+      npcId: "nora",
+      topic: "secret",
+      claim: "I've never taken anything from the clinic.",
+      truthIds: ["nora-pills"],
+      reason: "She would lose her job and get her boyfriend in trouble.",
+      disprovingEvidenceIds: ["item/painkillers"],
+      whenCaught: "full-truth",
     },
   ],
 };

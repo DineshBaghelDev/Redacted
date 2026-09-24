@@ -18,10 +18,13 @@ import type * as generation_core_evidence_clutter from "../generation/core/evide
 import type * as generation_core_evidence_index from "../generation/core/evidence/index.js";
 import type * as generation_core_evidence_types from "../generation/core/evidence/types.js";
 import type * as generation_core_facts from "../generation/core/facts.js";
+import type * as generation_core_lies from "../generation/core/lies.js";
 import type * as generation_core_rng from "../generation/core/rng.js";
 import type * as generation_core_routine from "../generation/core/routine.js";
 import type * as generation_core_schemas from "../generation/core/schemas.js";
+import type * as generation_core_scripts from "../generation/core/scripts.js";
 import type * as generation_core_timeline from "../generation/core/timeline.js";
+import type * as generation_core_validate from "../generation/core/validate.js";
 import type * as generation_stages from "../generation/stages.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as sessions from "../sessions.js";
@@ -43,10 +46,13 @@ declare const fullApi: ApiFromModules<{
   "generation/core/evidence/index": typeof generation_core_evidence_index;
   "generation/core/evidence/types": typeof generation_core_evidence_types;
   "generation/core/facts": typeof generation_core_facts;
+  "generation/core/lies": typeof generation_core_lies;
   "generation/core/rng": typeof generation_core_rng;
   "generation/core/routine": typeof generation_core_routine;
   "generation/core/schemas": typeof generation_core_schemas;
+  "generation/core/scripts": typeof generation_core_scripts;
   "generation/core/timeline": typeof generation_core_timeline;
+  "generation/core/validate": typeof generation_core_validate;
   "generation/stages": typeof generation_stages;
   "lib/auth": typeof lib_auth;
   sessions: typeof sessions;

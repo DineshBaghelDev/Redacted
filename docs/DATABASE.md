@@ -234,13 +234,13 @@ Create an actual corridor room only if the corridor itself is searchable/interac
   knowledge: string[],
   secrets: string[],
   intentionalLies: {
-    topic: string,
+    topic: "whereabouts" | "relationship" | "motive" | "item" | "secret",
     claim: string,
-    truth: string,
+    truthIds: string[],
     reason: string,
-    disprovingItemIds: string[],
-    reactionWhenCaught: string,
-    backupLie?: string,
+    disprovingEvidenceIds: string[],
+    whenCaught: "full-truth" | "admit-shown" | "backup-lie",
+    backupLie?: { claim: string, disprovingEvidenceIds: string[] },
   }[],
   behavioralRules: string[],
 }

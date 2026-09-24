@@ -1,4 +1,5 @@
 import { streetRoute, type City } from "./city";
+import { homeRooms } from "./evidence";
 import type { Evidence, EvidenceSet } from "./evidence/types";
 import type { Cast, CrimeCore, Story } from "./schemas";
 
@@ -39,7 +40,16 @@ export function buildFacts(city: City, crime: CrimeCore, cast: Cast, story: Stor
   const killerOnSceneCamera = cctv.filter(
     (e) => e.aboutIds.includes(killer) && e.access.tool === "cctv" && e.access.cameraId === `cam:${crime.sceneRoomId}` && e.time! <= tod + 15 && e.end! >= tod - 15,
   );
-  const decisive = [...bloodOnKillerItem, ...killerPrintsOnWeapon, ...killerOnSceneCamera];
+  // Something taken from the scene building that ends up in the killer's home.
+  const killerChar = cast.characters.find((c) => c.id === killer);
+  const killerHome = killerChar ? homeRooms(city, killerChar.homeUnitId) : new Set<string>();
+  const takenFromScene = new Set(
+    story.items
+      .filter((i) => i.ownerId !== killer && i.startRoomId.startsWith(`${scenePlace}:`) && killerHome.has(i.finalRoomId))
+      .map((i) => `item/${i.id}`),
+  );
+  const sceneItemAtKillerHome = evidence.filter((e) => takenFromScene.has(e.id));
+  const decisive = [...bloodOnKillerItem, ...killerPrintsOnWeapon, ...killerOnSceneCamera, ...sceneItemAtKillerHome];
 
   const killerAtScene = [
     ...decisive,

@@ -2,11 +2,14 @@ import type { z } from "zod";
 import * as easyCase from "../fixtures/caseEasy";
 import { city } from "../fixtures/city";
 import { checkCity, cityCapacity } from "./core/city";
-import { castSchema, crimeCoreSchema, storySchema, type Cast, type CrimeCore, type Story } from "./core/schemas";
+import { castSchema, crimeCoreSchema, liesSchema, storySchema, type Cast, type CrimeCore, type Lies, type Story } from "./core/schemas";
 import { buildEvidence, evidenceProblems } from "./core/evidence";
 import type { EvidenceSet } from "./core/evidence/types";
-import { buildFacts, factProblems } from "./core/facts";
+import { buildFacts, factProblems, type Facts } from "./core/facts";
+import { checkLies } from "./core/lies";
+import { buildScripts, scriptProblems } from "./core/scripts";
 import { buildTimeline, checkTimeline, type Timeline } from "./core/timeline";
+import { validateCase, validationProblems } from "./core/validate";
 
 export type Difficulty = "easy" | "normal" | "hard";
 
@@ -26,6 +29,8 @@ export type StageDef = {
   handWritten?: unknown;
   /** Code stages only. */
   run?: (inputs: Record<string, unknown>, job: StageJob) => StageResult;
+  /** LLM stages: code checks on the output (hand-written or AI), beyond its shape. */
+  check?: (output: unknown, inputs: Record<string, unknown>, job: StageJob) => string[];
 };
 
 /**
@@ -95,6 +100,38 @@ export const stages: StageDef[] = [
       const [crime, cast, story] = [inputs.crime as CrimeCore, inputs.cast as Cast, inputs.story as Story];
       const output = buildFacts(city, crime, cast, story, inputs.evidence as EvidenceSet);
       return { output, checkErrors: factProblems(output) };
+    },
+  },
+  {
+    name: "lies",
+    label: "6 · Lies",
+    kind: "llm",
+    inputs: ["crime", "cast", "story", "evidence"],
+    schema: liesSchema,
+    handWritten: easyCase.lies,
+    check: (output, inputs) =>
+      checkLies(inputs.crime as CrimeCore, inputs.cast as Cast, inputs.story as Story, inputs.evidence as EvidenceSet, output as Lies),
+  },
+  {
+    name: "scripts",
+    label: "8 · NPC scripts",
+    kind: "code",
+    inputs: ["crime", "cast", "story", "evidence", "lies"],
+    run: (inputs) => {
+      const [crime, story] = [inputs.crime as CrimeCore, inputs.story as Story];
+      const output = buildScripts(city, crime, inputs.cast as Cast, story, inputs.evidence as EvidenceSet, inputs.lies as Lies);
+      return { output, checkErrors: scriptProblems(crime, story, output) };
+    },
+  },
+  {
+    name: "check",
+    label: "11 · Can the case be solved?",
+    kind: "code",
+    inputs: ["crime", "cast", "story", "evidence", "facts", "lies"],
+    run: (inputs, job) => {
+      const [crime, cast, story] = [inputs.crime as CrimeCore, inputs.cast as Cast, inputs.story as Story];
+      const output = validateCase(city, crime, cast, story, inputs.evidence as EvidenceSet, inputs.facts as Facts, inputs.lies as Lies, job.difficulty);
+      return { output, checkErrors: validationProblems(output) };
     },
   },
 ];

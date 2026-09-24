@@ -7,8 +7,11 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 import type { City } from "../../../../convex/generation/core/city";
 import type { EvidenceSet } from "../../../../convex/generation/core/evidence/types";
 import type { Facts } from "../../../../convex/generation/core/facts";
-import type { Cast, CrimeCore, Story } from "../../../../convex/generation/core/schemas";
+import type { Cast, CrimeCore, Lies, Story } from "../../../../convex/generation/core/schemas";
+import type { NpcScript } from "../../../../convex/generation/core/scripts";
 import type { Timeline } from "../../../../convex/generation/core/timeline";
+import type { CaseCheck } from "../../../../convex/generation/core/validate";
+import { CheckView, LiesView, ScriptsView } from "./case-views";
 import { CityView } from "./city-view";
 import { EvidenceView, FactsView } from "./evidence-views";
 import { CastView, CrimeView, namesFrom, StoryView } from "./story-views";
@@ -39,6 +42,7 @@ export function JobView({ jobId }: { jobId: Id<"generationJobs"> }) {
   const outputOf = (name: string) => drafts?.find((d) => d.stage === name)?.output;
   const crime = outputOf("crime") as CrimeCore | undefined;
   const names = namesFrom(outputOf("cast") as Cast | undefined);
+  const evidence = outputOf("evidence") as EvidenceSet | undefined;
 
   function view(stage: string, output: unknown) {
     switch (stage) {
@@ -55,7 +59,13 @@ export function JobView({ jobId }: { jobId: Id<"generationJobs"> }) {
       case "evidence":
         return <EvidenceView set={output as EvidenceSet} names={names} />;
       case "facts":
-        return <FactsView facts={output as Facts} set={outputOf("evidence") as EvidenceSet | undefined} names={names} />;
+        return <FactsView facts={output as Facts} set={evidence} names={names} />;
+      case "lies":
+        return <LiesView lies={output as Lies} story={outputOf("story") as Story | undefined} set={evidence} names={names} />;
+      case "scripts":
+        return <ScriptsView scripts={output as NpcScript[]} />;
+      case "check":
+        return <CheckView checks={output as CaseCheck[]} set={evidence} names={names} />;
       default:
         return null;
     }

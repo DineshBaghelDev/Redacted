@@ -80,6 +80,8 @@ Check:
 - no grading-required evidence depends on inaccessible data,
 - no required chain depends on a nonexistent/hidden action.
 
+Implemented in `convex/generation/core/validate.ts` (stage 11 in `GENERATION.md`), together with lie checks (`core/lies.ts`: every lie is breakable by found evidence about the liar) and the NPC script leak check (`core/scripts.ts`). A witness who lies about an event doesn't count as a source for it. Not yet built: CCTV query ranges per access point and case-brief leakage checks.
+
 ## Case-brief leakage checks
 
 Ensure the initial brief does not directly expose:

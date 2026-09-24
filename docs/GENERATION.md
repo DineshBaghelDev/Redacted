@@ -153,13 +153,7 @@ Implemented rules (`convex/generation/core/evidence/`):
 
 `convex/generation/core/facts.ts` turns evidence into facts: killer at scene, killer near scene (camera within 60 min and able to reach the scene), killer contacted victim, motive (anything tagged `proves: ["motive"]`), weapon used on victim, weapon linked to killer (prints or killer-clothing fibers), method (autopsy), accomplice link, and one alibi fact per innocent suspect (camera, card payment or witness placing them too far away to reach the scene at the time of death).
 
-Decisive = victim's blood on an item the killer owns, killer's prints on the weapon, or the killer on a camera in the scene room at the time of death.
-
-## Stage 5 — Fact links and decisive set (code)
-
-Code builds a fixed fact list: killer at scene at time of death, killer's weapon access, motive facts, method facts, accomplice link. Each evidence item is linked to the facts it supports or refutes — automatic, since each item came from known events.
-
-**Decisive set:** items that directly tie the killer to the crime and have no innocent explanation (e.g. killer's fingerprint on the weapon, victim's blood on killer's clothing, camera placing the killer at the scene at time of death). Cover-up changes this: wiped prints are not decisive, so something else must be. The evidence star is earned by selecting any item from the decisive set.
+Decisive = victim's blood on an item the killer owns, killer's prints on the weapon, the killer on a camera in the scene room at the time of death, or an item taken from the scene building that ends up in the killer's home. Cover-ups change this (wiped prints are not decisive). The evidence star is earned by selecting any item from the decisive set.
 
 ## Stage 6 — Lies (LLM chooses, code checks)
 
@@ -168,12 +162,22 @@ Lies come from personality and interest, never at random.
 Input per NPC: personality, secret, what they protect, their slice of the timeline, evidence list.
 
 ```ts
-lie: { topic, claim, truthEventIds, reason, disprovingItemIds, reactionWhenCaught, backupLie? } // reaction from personality
+lie: {
+  id, npcId,
+  topic: "whereabouts" | "relationship" | "motive" | "item" | "secret",
+  claim, reason,
+  truthIds,               // story events, messages/calls or purchases the lie hides
+  disprovingEvidenceIds,  // evidence ids; showing one breaks the lie
+  whenCaught: "full-truth" | "admit-shown" | "backup-lie", // from personality
+  backupLie?: { claim, disprovingEvidenceIds },
+}
 ```
 
-A lie breaks during play only when a player shows an item in `disprovingItemIds` (see `GAME_SYSTEMS.md`). Cunning NPCs may have a `backupLie`, which gets the same checks.
+A lie breaks during play only when a player shows found evidence (any kind) listed in `disprovingEvidenceIds` (see `GAME_SYSTEMS.md`).
 
-Checks: truth events exist; **≥ 1 evidence item refutes the lie** (and its backup lie, if any), otherwise the lie is dropped; the killer must have a refutable alibi lie. Innocents lying to protect their own secrets are the natural red herrings.
+Checks (`core/lies.ts`, implemented): the person exists and isn't the victim; truth ids exist; every disproving piece exists, isn't background clutter, isn't the liar's own statement, and is about the liar or comes from what the lie hides; `backup-lie` needs a backup lie whose proof isn't only the first lie's proof; the killer must have a whereabouts lie hiding the murder. For AI output, failing lies will be dropped or repaired (chunk E). Innocents lying to protect their own secrets are the natural red herrings.
+
+A witness who lies about an event never counts as telling what they saw of it, so their statement can't clear anyone.
 
 ## Stage 7 — Text writing (LLM, fenced)
 
@@ -184,6 +188,7 @@ Writes message bodies, notes, record wording, witness phrasing. Input is the fac
 - Knowledge = events the NPC took part in + events they **witnessed** (same place, same time, public visibility — computed by code).
 - Script = personality, knowledge, lies, secret, relationships, speaking style.
 - Never includes solution fields or other NPCs' private events.
+- Implemented in `core/scripts.ts`: profile (age, gender, job, home, personality, relationship, secret, what they protect), knowledge (events they took part in or saw, their calls/messages, purchases, and the public news of the death), their lies, and fixed rules. Only the killer gets "never confess"; innocents get "you don't know who killed the victim". A leak check rejects private events the NPC wasn't in and the crime's hidden method/motive text.
 
 **Things older than the window:** NPCs may improvise small backstory details older than 2 days while talking. These are persisted to NPC session memory so both players see the same thing. They are **talk only** — never new evidence, records, CCTV, or forensics.
 
@@ -197,7 +202,7 @@ A model receives only what's needed to estimate a competent investigation route 
 
 ## Stage 11 — Solvability validation (code)
 
-No LLM judge in V1. Checks, plus those in `VALIDATION_EVALS.md`:
+No LLM judge in V1. Implemented in `core/validate.ts`; returns a pass/fail list the tester shows as a checklist. Checks, plus those in `VALIDATION_EVALS.md`:
 
 - **killer:** ≥ 2 different evidence types place the killer at the scene or break their alibi,
 - **motive:** ≥ 2 items,
@@ -208,7 +213,9 @@ No LLM judge in V1. Checks, plus those in `VALIDATION_EVALS.md`:
 - **accomplice:** ≥ 1 linking item if present,
 - **red herrings:** every lie and fake motive is refutable,
 - **reachable:** every required item is obtainable at a city place/tool,
-- **no shortcut:** no single item names the killer outright.
+- **no shortcut:** no single item names the killer outright (killer's name next to words like "killed" or "murderer").
+
+"Killer" counts evidence kinds across: at the scene, near the scene, and proof that breaks the killer's whereabouts lie. "Reachable" means: search spots exist in the room ("on the body" only at the scene), cameras exist, lab subjects and devices are themselves found, phones exist, and the person to question is alive and not lying about that event.
 
 ## Stage 12 — Targeted repair
 

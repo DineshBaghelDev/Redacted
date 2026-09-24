@@ -129,7 +129,30 @@ export const storySchema = z.object({
   ),
 });
 
+/** A claim an NPC makes that some evidence disproves. Ids in `disprovingEvidenceIds` are evidence ids. */
+const claimSchema = z.object({
+  claim: z.string(),
+  disprovingEvidenceIds: z.array(id).min(1),
+});
+
+export const lieSchema = claimSchema.extend({
+  id,
+  npcId: id,
+  topic: z.enum(["whereabouts", "relationship", "motive", "item", "secret"]),
+  /** Story events, messages/calls or purchases the lie hides. */
+  truthIds: z.array(id).default([]),
+  /** Why this person lies, from their personality and what they protect. */
+  reason: z.string(),
+  /** What they do once shown proof: tell the whole truth, admit only what the proof shows, or switch to a backup lie. */
+  whenCaught: z.enum(["full-truth", "admit-shown", "backup-lie"]),
+  backupLie: claimSchema.optional(),
+});
+
+export const liesSchema = z.object({ lies: z.array(lieSchema) });
+
 export type CrimeCore = z.infer<typeof crimeCoreSchema>;
+export type Lie = z.infer<typeof lieSchema>;
+export type Lies = z.infer<typeof liesSchema>;
 export type Character = z.infer<typeof characterSchema>;
 export type Cast = z.infer<typeof castSchema>;
 export type StoryEvent = z.infer<typeof storyEventSchema>;
