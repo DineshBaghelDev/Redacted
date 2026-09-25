@@ -20,7 +20,7 @@ Cast:
 ${JSON.stringify(cast, null, 2)}
 
 Rules:
-${storyRules(kind).map((r) => `- ${r}`).join("\n")}
+${storyRules(crime).map((r) => `- ${r}`).join("\n")}
 
 How code turns your story into evidence (plan the case so it can be solved, but not trivially):
 ${evidenceNotes(kind).map((r) => `- ${r}`).join("\n")}

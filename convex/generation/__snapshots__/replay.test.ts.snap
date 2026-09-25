@@ -3,7 +3,13 @@
 exports[`replay > union-station-poison.json gives the same problems as before 1`] = `
 {
   "brief": [],
-  "cast": [],
+  "cast": [
+    "Sandra Holloway's text gives clock times (7.30am); the story sets the times, so describe them without the clock.",
+    "Ruth Calder's text gives clock times (7.00am); the story sets the times, so describe them without the clock.",
+    "Farid Haddad's text gives clock times (7.14am.); the story sets the times, so describe them without the clock.",
+    "Margo Ellison's text gives clock times (7.05am.); the story sets the times, so describe them without the clock.",
+    "Orian Beck's text gives clock times (9am); the story sets the times, so describe them without the clock.",
+  ],
   "check": [],
   "city": [],
   "crime": [],
@@ -13,12 +19,22 @@ exports[`replay > union-station-poison.json gives the same problems as before 1`
   "lies": [],
   "scripts": [],
   "story": [
+    "Sandra Holloway's text gives clock times (7.30am); the story sets the times, so describe them without the clock.",
+    "Ruth Calder's text gives clock times (7.00am); the story sets the times, so describe them without the clock.",
+    "Farid Haddad's text gives clock times (7.14am.); the story sets the times, so describe them without the clock.",
+    "Margo Ellison's text gives clock times (7.05am.); the story sets the times, so describe them without the clock.",
+    "Orian Beck's text gives clock times (9am); the story sets the times, so describe them without the clock.",
     "Call/message "elena-marta-message" is from Elena Vasquez to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.",
     "Call/message "elena-dental-fake" is from Elena Vasquez to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.",
     "Call/message "elena-clinic-lie" is from Elena Vasquez to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.",
   ],
   "text": [],
   "timeline": [
+    "Sandra Holloway's text gives clock times (7.30am); the story sets the times, so describe them without the clock.",
+    "Ruth Calder's text gives clock times (7.00am); the story sets the times, so describe them without the clock.",
+    "Farid Haddad's text gives clock times (7.14am.); the story sets the times, so describe them without the clock.",
+    "Margo Ellison's text gives clock times (7.05am.); the story sets the times, so describe them without the clock.",
+    "Orian Beck's text gives clock times (9am); the story sets the times, so describe them without the clock.",
     "Call/message "elena-marta-message" is from Elena Vasquez to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.",
     "Call/message "elena-dental-fake" is from Elena Vasquez to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.",
     "Call/message "elena-clinic-lie" is from Elena Vasquez to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.",

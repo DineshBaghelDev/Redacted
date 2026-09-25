@@ -7,11 +7,11 @@ import { estimateInput, estimateTime } from "./estimate";
 import { buildEvidence } from "./evidence";
 import { buildFacts } from "./facts";
 import { keepValidLies } from "./lies";
-import { crimeKind } from "./crimes";
 import { clockProblems, evidencePlan, storyProblems, storyRules } from "./story";
 import { buildScripts, scriptProblems } from "./scripts";
 import { applyTexts, textProblems, textTargets } from "./text";
 import { buildTimeline } from "./timeline";
+import { clockTimesIn } from "./clock";
 
 const SEED = 1234;
 const timeline = buildTimeline(city, crimeCore, cast, story, SEED);
@@ -22,7 +22,7 @@ describe("story check", () => {
   it("hand-written story passes, and the prompt carries every rule", () => {
     expect(storyProblems(city, crimeCore, cast, story, "easy", SEED)).toEqual([]);
     const prompt = storyPrompt(city, crimeCore, cast, "easy");
-    for (const rule of storyRules(crimeKind("murder"))) expect(prompt).toContain(rule);
+    for (const rule of storyRules(crimeCore)) expect(prompt).toContain(rule);
     expect(prompt).toContain("keel-14:back-door [entrance] [no items]");
   });
 
@@ -198,5 +198,22 @@ describe("wording that disagrees with the data", () => {
   it("rejects a brief that invents a weekday", () => {
     const tuesday = { ...brief, summary: `${brief.summary} It happened early Tuesday.` };
     expect(briefProblems(city, crimeCore, cast, story, tuesday).join(" | ")).toMatch(/Tuesday/);
+  });
+});
+
+describe("clock times in prose", () => {
+  it("reads am/pm, dotted and o'clock times", () => {
+    expect(clockTimesIn("left at 7.30am, back by 9 pm, then the two o'clock bus").map((t) => t.minutes)).toEqual([[450], [1260], [120, 840]]);
+  });
+});
+
+describe("a fall has no weapon item", () => {
+  it("drops the weapon routes and asks for no weapon item", () => {
+    const fall = { ...crimeCore, weapon: { ...crimeCore.weapon, category: "fall" as const } };
+    const plan = evidencePlan(city, fall, "normal");
+    expect(plan.routes.map((r) => r.checkId)).toEqual(["culprit"]);
+    expect(plan.decisive.join(" | ")).not.toMatch(/weapon/);
+    expect(storyRules(fall).join(" | ")).toMatch(/A fall has no weapon/);
+    expect(storyProblems(city, fall, cast, story, "normal", 1234).join(" | ")).toMatch(/remove the item with id "weapon"/);
   });
 });

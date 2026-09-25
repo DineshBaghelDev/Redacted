@@ -15,6 +15,7 @@ import type * as generation_aiStage from "../generation/aiStage.js";
 import type * as generation_core_brief from "../generation/core/brief.js";
 import type * as generation_core_buildings from "../generation/core/buildings.js";
 import type * as generation_core_city from "../generation/core/city.js";
+import type * as generation_core_clock from "../generation/core/clock.js";
 import type * as generation_core_crimeCast from "../generation/core/crimeCast.js";
 import type * as generation_core_crimes_index from "../generation/core/crimes/index.js";
 import type * as generation_core_crimes_kind from "../generation/core/crimes/kind.js";
@@ -64,6 +65,7 @@ declare const fullApi: ApiFromModules<{
   "generation/core/brief": typeof generation_core_brief;
   "generation/core/buildings": typeof generation_core_buildings;
   "generation/core/city": typeof generation_core_city;
+  "generation/core/clock": typeof generation_core_clock;
   "generation/core/crimeCast": typeof generation_core_crimeCast;
   "generation/core/crimes/index": typeof generation_core_crimes_index;
   "generation/core/crimes/kind": typeof generation_core_crimes_kind;

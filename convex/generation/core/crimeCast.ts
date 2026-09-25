@@ -1,4 +1,5 @@
 import { findRoom, type City } from "./city";
+import { clockTimesIn } from "./clock";
 import { capitalize, crimeKind, crimeTypeFor, type CrimeWords } from "./crimes";
 import { listCameras } from "./evidence/cctv";
 import { FIRST_NAMES, SURNAMES } from "./names";
@@ -33,9 +34,10 @@ export const castRules = (difficulty: Difficulty, w: CrimeWords) => [
   "homeUnitId must be a home id from the list. People may share a home only if they live together.",
   'job is null or uses a place id and a job title from that place\'s jobs; "cashier ×2" means at most 2 people in the cast have that job there. job.roomId, if given, is a room of that place.',
   "routine is one of: office, night-shift, shop, unemployed, student. Unemployed people and students need a hangoutPlaceId (a public place id).",
-  `Innocent suspects need a reason police would look at them (fakeMotive: a motive, a grudge, or just being near at the wrong time). At least 2 of them have a motive as serious as the ${w.culprit}'s (money, revenge, jealousy, a secret the victim could expose), so the ${w.culprit} isn't obvious. The ${w.culprit} has no fakeMotive.`,
+  `Innocent suspects need a reason police would look at them (fakeMotive: a motive, a grudge, or just being near at the wrong time). fakeMotive is the reason, not evidence: never say prints, cameras, keycards or records were found, because the story creates the evidence later. At least 2 of them have a motive as serious as the ${w.culprit}'s (money, revenge, jealousy, a secret the victim could expose), so the ${w.culprit} isn't obvious. The ${w.culprit} has no fakeMotive.`,
   "secret and protects only where the person really has something serious to hide (it could get them arrested, fired, or ruin their reputation or family) or someone to shield; leave them out otherwise. Most people have none.",
   "appearance is what a camera would see: height, build, usual clothing, and shoes for anyone who might leave footprints.",
+  "No clock times in anyone's text (relationshipToVictim, fakeMotive, secret, protects, records): the story sets when things happen, so write \"that evening\", not \"at 10:45pm\".",
 ];
 
 /** Parts of Day 2 the crime can fall in, as [from, to) game minutes. */
@@ -142,6 +144,12 @@ export function castProblems(city: City, crime: CrimeBase, cast: Cast, difficult
     if (c.role === "suspect" && c.id !== crime.culpritId && c.id !== crime.accomplice?.id && !c.fakeMotive?.trim()) {
       problems.push(`${c.name} is a suspect with no reason police would look at them: give a fakeMotive tied to the victim (a motive, a grudge, or being near at the wrong time), or make them a witness.`);
     }
+  }
+
+  for (const c of cast.characters) {
+    const text = [c.relationshipToVictim, c.fakeMotive, c.secret, c.protects, ...c.records.map((r) => r.summary)].filter(Boolean).join(" ");
+    const times = clockTimesIn(text).map((t) => t.said);
+    if (times.length) problems.push(`${c.name}'s text gives clock times (${times.join(", ")}); the story sets the times, so describe them without the clock.`);
   }
 
   const count = (role: string) => cast.characters.filter((c) => c.role === role).length;

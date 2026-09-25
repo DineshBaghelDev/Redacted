@@ -31,6 +31,9 @@ const CAUSE = {
 
 const TIME_OF_DEATH_SPREAD = { easy: 45, normal: 90, hard: 120 } as const;
 
+/** A fall has no weapon to carry: the push itself is the weapon, and the autopsy proves it. */
+const hasWeaponItem = (crime: MurderCore) => crime.weapon.category !== "fall";
+
 const bloody = (crime: MurderCore) => crime.weapon.category === "blunt" || crime.weapon.category === "sharp";
 
 /** The killer's clothing worn in the murder event (it gets the victim's blood and sheds fibers). */
@@ -60,7 +63,7 @@ export const murder: CrimeKind<MurderCore> = {
   crimeRules: ["weapon.originRoomId must be a room id from the city list."],
   crimeNotes: [
     "method: one sentence on how the victim died.",
-    "weapon.name: the actual object: for poison, the poison and what it was in; for strangulation, the cord or scarf; for a fall, what the victim was pushed with or tripped on.",
+    "weapon.name: the actual object: for poison, the poison and what it was in; for strangulation, the cord or scarf. For a fall there is no object: weapon.name says how they fell (e.g. \"pushed down the back stairs\") and weapon.originRoomId is the scene room.",
     "weapon.originRoomId: where the weapon was before the crime, copied exactly from the room list (e.g. a kitchen or garage at the scene, a shop's stock room, or a room at a home or workplace). Never invent ids; homes aren't assigned to people yet.",
     "accomplice: null unless the brief says there is one; then pick the role that fits the story: fake-alibi, weapon-disposal or distraction.",
   ],
@@ -68,12 +71,17 @@ export const murder: CrimeKind<MurderCore> = {
   summary: (crime) => `murder, ${crime.motive.type}, ${crime.weapon.name}: ${crime.motive.details}`,
 
   victimEndsAt: (crime) => crime.crimeTime,
-  storyRules: [
-    'The murder is one event in the crime scene room with the killer and the victim, covering the time of death, with "weapon" in itemsUsed. The victim does nothing after it (no events, messages or purchases).',
-    'Exactly one item has id "weapon" and kind "weapon", starting in the crime\'s weapon origin room.',
+  storyRules: (crime) => [
+    ...(hasWeaponItem(crime)
+      ? [
+          'The murder is one event in the crime scene room with the killer and the victim, covering the time of death, with "weapon" in itemsUsed.',
+          'Exactly one item has id "weapon" and kind "weapon", starting in the crime\'s weapon origin room.',
+        ]
+      : ['The murder is one event in the crime scene room with the killer and the victim, covering the time of death, in which the killer makes the victim fall. A fall has no weapon: no item has id "weapon" or kind "weapon".']),
+    "The victim does nothing after the murder (no events, messages or purchases).",
     "The victim's last hours make sense: the story shows why they were at the scene at that time (a meeting, a late shift, going home).",
   ],
-  storyItems: "items: the weapon, clothing the killer wore, documents and devices that matter. Devices (laptops, tablets) can hold files in contents.",
+  storyItems: "items: the weapon (none for a fall), clothing the killer wore, documents and devices that matter. Devices (laptops, tablets) can hold files in contents.",
   evidenceNotes: [
     "Clothing owned by the killer and listed in the murder event's itemsUsed also gets the victim's blood (blunt or sharp weapons) and leaves fibers on the weapon.",
     'The weapon links to the killer through their prints on it (not with wipe-prints), fibers from their clothing, the killer buying it by card (a purchase with itemId "weapon"), or the killer caught on camera in the weapon\'s origin room during a story event there that uses the weapon.',
@@ -88,6 +96,7 @@ export const murder: CrimeKind<MurderCore> = {
     const originHasCamera =
       !!findRoom(parts.city, crime.weapon.originRoomId)?.place.building.cameraRoomIds.includes(crime.weapon.originRoomId) &&
       crime.disabledCamera?.cameraId !== `cam:${crime.weapon.originRoomId}`;
+    if (!hasWeaponItem(crime)) return { decisive: [], routes: [] };
     return {
       decisive: [
         ...(wiped ? [] : ["the killer's prints on the weapon: the killer handles the weapon in the murder event"]),
@@ -119,7 +128,9 @@ export const murder: CrimeKind<MurderCore> = {
     if (story.comms.some((c) => c.from === crime.victimId && c.time > tod)) problems.push("The victim calls or messages someone after dying.");
     if (story.purchases.some((p) => p.who === crime.victimId && p.time > tod)) problems.push("The victim buys something after dying.");
     const weapon = story.items.find((i) => i.id === "weapon");
-    if (!weapon) problems.push('The story has no item with id "weapon".');
+    if (!hasWeaponItem(crime)) {
+      if (weapon) problems.push('A fall has no weapon: remove the item with id "weapon".');
+    } else if (!weapon) problems.push('The story has no item with id "weapon".');
     else {
       if (weapon.startRoomId !== crime.weapon.originRoomId) problems.push("The weapon starts somewhere other than the crime says.");
       const used = story.events.some((e) => e.roomId === crime.sceneRoomId && e.itemsUsed.includes("weapon") && e.start <= tod && tod <= e.end);
@@ -257,12 +268,13 @@ export const murder: CrimeKind<MurderCore> = {
     };
   },
 
-  checks(_parts, facts, atLeast) {
+  checks({ crime }, facts, atLeast) {
     const fact = (id: string) => facts.facts.find((f) => f.id === id)?.evidenceIds ?? [];
     return [
       makeCheck("weapon", "Weapon is linked to the victim and the killer", [...fact("weapon-at-scene"), ...fact("weapon-to-killer")], [
         ...atLeast(fact("weapon-at-scene"), 1, "linking the weapon to the victim"),
-        ...atLeast(fact("weapon-to-killer"), 1, "linking the weapon to the killer"),
+        // A fall has no weapon to link: the autopsy showing the fall is enough.
+        ...(hasWeaponItem(crime) ? atLeast(fact("weapon-to-killer"), 1, "linking the weapon to the killer") : []),
       ]),
       makeCheck("method", "Method is backed by the lab", fact("method"), atLeast(fact("method"), 1, "for the method")),
     ];

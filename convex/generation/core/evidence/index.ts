@@ -310,7 +310,11 @@ export function evidenceProblems(crime: CrimeBase, timeline: Timeline, set: Evid
     const there = timeline.entries.some(
       (e) => culprits.includes(e.actorId) && placeIds.includes(e.placeId) && e.start <= off.from && e.end >= off.from - 30,
     );
-    if (camera && !there) problems.push(`Nobody from the crime is at ${camera.name} to switch it off.`);
+    if (camera && !there) {
+      problems.push(
+        `Nobody from the crime is at ${camera.name} to switch it off at ${formatTime(off.from)}: give the culprit${crime.accomplice ? " or the accomplice" : ""} an event at ${placeIds.join(" or ")} that covers ${formatTime(off.from)} (up to 30 minutes before is fine), in which they switch it off.`,
+      );
+    }
   }
   return problems;
 }

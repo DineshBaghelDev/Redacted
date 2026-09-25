@@ -1,24 +1,26 @@
 import { findRoom, type City } from "./city";
 import { capitalize, crimeKind, type CrimeKind } from "./crimes";
-import { buildEvidence } from "./evidence";
+import { buildEvidence, evidenceProblems } from "./evidence";
 import { listCameras } from "./evidence/cctv";
 import { buildFacts } from "./facts";
 import { formatTime, type Cast, type CrimeBase, type Story } from "./schemas";
 import { buildTimeline, checkTimeline } from "./timeline";
+import { clockTimesIn, nearSpan } from "./clock";
 import type { Difficulty } from "./crimeCast";
 import { validateCase, validationProblems } from "./validate";
 
 // Story rules: the same text goes into the AI prompt, and storyProblems enforces it. Shared rules come
 // first, then the crime kind's own.
 
-export function storyRules(kind: CrimeKind) {
+export function storyRules(crime: CrimeBase) {
+  const kind = crimeKind(crime);
   const w = kind.words;
   return [
     "Ids of events, messages, purchases and items are short, unique and kebab-case. Actors, senders and buyers are cast ids.",
     `Times are whole minutes from Day 1 00:00. Everything happens between 0 and the time ${w.discovery}. Every event lasts at least 1 minute (end is after start); a quick action takes 2–5 minutes.`,
     "Every roomId is copied from the room list. enteredVia/leftVia, when given, is an [entrance] room of the same building.",
     "Nobody is in two events at once, and there is enough travel time between events at different places (see travel minutes). Everyday routines are added by code around your events; you only write what matters.",
-    ...kind.storyRules,
+    ...kind.storyRules(crime),
     "An item that ends in a different room from where it starts needs an event in its final room that uses it. finalSlot is where in the room it ends up (e.g. a drawer, the bin); rooms marked [no items] can't hold one.",
     `${capitalize(w.finder)} has an event in the crime scene room starting at the discovery time.`,
     `Every suspect appears in the story (an event, call, message or purchase) in a way that backs up why police would suspect them: a clash with the victim, a debt, being near the scene around the ${w.crimeTime}.`,
@@ -89,38 +91,16 @@ export function evidencePlan(city: City, crime: CrimeBase, difficulty: Difficult
   return { needed: difficulty === "easy" ? 2 : 1, decisive, routes };
 }
 
-const WORD_HOURS = ["twelve", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"];
-
 /**
  * Events whose wording names a clock time that disagrees with the event's own time, e.g. "dozed
- * through his two o'clock round" in an event at 21:00. Reads "2 a.m.", "7:30 pm" and "two o'clock"
- * ("o'clock" could be morning or evening); a time within an hour of the event is fine.
+ * through his two o'clock round" in an event at 21:00. A time within half an hour of the event is fine.
  */
 export function clockProblems(story: Story) {
-  const problems: string[] = [];
-  const pattern = /\b(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s?m\b\.?|\b(\d{1,2}|twelve|one|two|three|four|five|six|seven|eight|nine|ten|eleven)\s+o'clock\b/gi;
-  for (const e of story.events) {
-    for (const m of e.action.matchAll(pattern)) {
-      const minute = m[2] ? Number(m[2]) : 0;
-      let hours: number[];
-      if (m[3]) {
-        const h = Number(m[1]) % 12;
-        hours = [m[3].toLowerCase() === "p" ? h + 12 : h];
-      } else {
-        const word = m[4].toLowerCase();
-        const h = (/^\d+$/.test(word) ? Number(word) : WORD_HOURS.indexOf(word)) % 12;
-        hours = [h, h + 12];
-      }
-      const near = hours.some((h) => {
-        const said = h * 60 + minute;
-        const at = (t: number) => ((t % 1440) + 1440) % 1440;
-        const [from, to] = [at(e.start - 60), at(e.end + 60)];
-        return from <= to ? said >= from && said <= to : said >= from || said <= to;
-      });
-      if (!near) problems.push(`Event "${e.id}" says "${m[0]}" but happens at ${formatTime(e.start)}–${formatTime(e.end)}: change the wording or the time so they agree.`);
-    }
-  }
-  return problems;
+  return story.events.flatMap((e) =>
+    clockTimesIn(e.action)
+      .filter((t) => !t.minutes.some((m) => nearSpan(m, e.start, e.end, 30)))
+      .map((t) => `Event "${e.id}" says "${t.said}" but happens at ${formatTime(e.start)}–${formatTime(e.end)}: change the wording or the time so they agree.`),
+  );
 }
 
 /**
@@ -146,6 +126,9 @@ export function storyProblems(city: City, crime: CrimeBase, cast: Cast, story: S
   const timelineProblems = checkTimeline(city, crime, cast, story, timeline);
   if (timelineProblems.length) return timelineProblems;
   const set = buildEvidence(city, crime, cast, story, timeline, difficulty, seed);
+  // The switched-off camera needs someone there to switch it off; only the story can fix that.
+  const cameraProblems = evidenceProblems(crime, timeline, set);
+  if (cameraProblems.length) return cameraProblems;
   const facts = buildFacts(city, crime, cast, story, set);
   const checks = validateCase(city, crime, cast, story, set, facts, { lies: [] }, difficulty).filter((c) => c.id !== "lies");
   const problems = validationProblems(checks);

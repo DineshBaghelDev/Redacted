@@ -95,7 +95,7 @@ describe("new evidence kinds", () => {
       disabledCamera: { cameraId: "cam:civic-bank:vault", from: at(2, "22:00"), to: at(2, "23:00") },
     };
     const s = buildEvidence(city, off, cast, story, timeline, "easy", SEED);
-    expect(evidenceProblems(off, timeline, s)).toContain("Nobody from the crime is at First Civic Bank · Vault to switch it off.");
+    expect(evidenceProblems(off, timeline, s).join(" | ")).toMatch(/Nobody from the crime is at First Civic Bank · Vault to switch it off at Day \d \d\d:\d\d: give the culprit an event at civic-bank/);
   });
 
   it("complains when the cover-up mentions a camera but none is given", () => {

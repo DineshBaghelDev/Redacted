@@ -52,7 +52,7 @@ export type CrimeKind<C extends CrimeBase = CrimeBase> = {
   // Stage 3: story
   /** When the victim's day ends (murder: the death); undefined when they live on. */
   victimEndsAt?(crime: C): number;
-  storyRules: string[];
+  storyRules(crime: C): string[];
   /** The "items:" line of the story prompt's "What to write". */
   storyItems: string;
   evidenceNotes: string[];

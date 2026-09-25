@@ -51,6 +51,8 @@
 - V1 cases are murders only. Other crimes would need a different case-close scoring.
 - The pipeline is built so theft, robbery and other crimes can be added as one module each; everything that isn't specific to murder is shared.
 - A murder's cover-up can't move the body: the crime scene is always where the body is found.
+- A murder by a fall has no weapon item: the push is the weapon, and the autopsy proves it.
+- Case briefs never use weekdays (cases run on Day 1, Day 2...), and generated character descriptions give no clock times; the story sets every time.
 - The murder weapon hidden in the killer's home counts as decisive evidence once the lab ties it to the victim, and the killer buying the weapon by card links it to them.
 - Lying isn't compulsory: innocent people tell the truth to clear themselves and lie only when the truth would do real damage (arrest, job, reputation, family). The killer always has a cover story. At most 2/3/4 innocent liars on easy/normal/hard.
 - Innocent suspects don't need a provable alibi; some cases leave people unaccounted for. Nothing decisive may point at an innocent.
