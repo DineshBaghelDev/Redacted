@@ -5,7 +5,7 @@ import { listCameras } from "./evidence/cctv";
 import { buildFacts, factProblems } from "./facts";
 import { formatTime, type Cast, type CrimeBase, type Story } from "./schemas";
 import { buildTimeline, checkTimeline } from "./timeline";
-import { clockTimesIn, nearSpan } from "./clock";
+import { clockTimesIn, nearSpan, wrongPartsOfDay } from "./clock";
 import type { Difficulty } from "./crimeCast";
 import { validateCase, validationProblems } from "./validate";
 
@@ -28,7 +28,7 @@ export function storyRules(crime: CrimeBase) {
     "Nobody states a plan to commit the crime or confesses in a message or call. Motive evidence is indirect: a debt notice, a letter about the will, an argument someone overheard.",
     `Everything the ${w.culprit} does has a reason in the story; never add an action only to create evidence.`,
     `If there is an accomplice, the ${w.culprit} and accomplice must meet or talk in the story.`,
-    "An event's action happens at that event's own time: never mention a clock time or part of day in it that disagrees with its start and end.",
+    "An event's action happens at that event's own time: never mention a clock time or part of day in it that disagrees with its start and end (after midnight is night, not evening).",
     "Write every action, gist and file in your own words; never copy the crime core's method or motive text (NPC scripts are built from the story and must not contain it).",
     'Visibility: "public" events can be seen by anyone at the same place; "private" events are known only to their actors.',
     `Tag with proves ["motive"] the messages, items, device files that show the ${w.culprit}'s real motive; at least two things (records count) must prove it.`,
@@ -96,11 +96,15 @@ export function evidencePlan(city: City, crime: CrimeBase, difficulty: Difficult
  * through his two o'clock round" in an event at 21:00. A time within half an hour of the event is fine.
  */
 export function clockProblems(story: Story) {
-  return story.events.flatMap((e) =>
-    clockTimesIn(e.action)
-      .filter((t) => !t.minutes.some((m) => nearSpan(m, e.start, e.end, 30)))
-      .map((t) => `Event "${e.id}" says "${t.said}" but happens at ${formatTime(e.start)}–${formatTime(e.end)}: change the wording or the time so they agree.`),
-  );
+  return story.events.flatMap((e) => {
+    const says = (what: string) => `Event "${e.id}" says "${what}" but happens at ${formatTime(e.start)}–${formatTime(e.end)}: change the wording or the time so they agree.`;
+    return [
+      ...clockTimesIn(e.action)
+        .filter((t) => !t.minutes.some((m) => nearSpan(m, e.start, e.end, 30)))
+        .map((t) => says(t.said)),
+      ...wrongPartsOfDay(e.action, e.start, e.end).map(says),
+    ];
+  });
 }
 
 /**

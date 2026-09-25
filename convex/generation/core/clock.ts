@@ -28,3 +28,25 @@ export function nearSpan(minuteOfDay: number, start: number, end: number, slack:
   const [from, to] = [at(start - slack), at(end + slack)];
   return from <= to ? minuteOfDay >= from && minuteOfDay <= to : minuteOfDay >= from || minuteOfDay <= to;
 }
+
+/** Parts of the day as [word, from hour, to hour): generous, so only a clear mismatch counts. */
+export const PARTS_OF_DAY: [string, number, number][] = [
+  ["morning", 0, 13],
+  ["afternoon", 11, 19],
+  ["evening", 16, 24],
+  ["night", 19, 7],
+];
+
+/** Parts of the day a text names that no minute of the case-time span [start, end] falls in. */
+export function wrongPartsOfDay(text: string, start: number, end: number) {
+  return PARTS_OF_DAY.filter(([word, from, to]) => {
+    // "night shift", "last night", "the evening before" name something else, not when this happens.
+    const said = new RegExp(`(?<!(last|previous|yesterday|tomorrow|next) )\\b${word}\\b(?! (shift|shifts|before|after|round|rounds|patrol|guard|bus|train|class|school|run|staff|manager|porter|nurse))`, "i");
+    if (!said.test(text)) return false;
+    for (let t = start; t <= end; t += 15) {
+      const hour = Math.floor((((t % 1440) + 1440) % 1440) / 60);
+      if (from <= to ? hour >= from && hour < to : hour >= from || hour < to) return false;
+    }
+    return true;
+  }).map(([word]) => word);
+}

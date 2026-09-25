@@ -72,6 +72,8 @@
 
 - Test run 10: easy (4 min) and normal (5 min) passed with every AI stage right first time or one quick text repair; hard failed at facts: a fall murder still expected "the weapon links to the killer", which a fall has no weapon for. Fixed, and the story check now also runs the facts stage's checks, so a later code stage can't fail on something only a story repair could fix. Also: the brief can't name a part of day that disagrees with the discovery time ("delivering groceries that evening" for a 09:00 discovery), a poison must kill within the hour (the killer is with the victim when they die; the AI had picked slow rat poison), and an invented room id gets the list of that building's real rooms. Crime scenes are spread evenly over the 18 places (checked over 2,000 seeds). 112 tests.
 
+- Test run 11: normal (9 min) and hard (9 min) passed; easy crashed at story when a Kimi reply died midway: the AI SDK's own result promises rejected with nobody listening, which killed the step with no log. AI replies are now read only from the stream parts, and a refused call for Kimi's one-at-a-time limit waits too. Wording checks widened: an event's parts of day must fit its time ("all evening" for a 00:00–03:00 event; "night shift" and "last night" don't count), and the text stage accepts a time written in 12-hour form ("9:30" for "21:30"; 11 false problems in one try). Note: the owner's running `convex dev` deploys each saved file, so check changes go live mid-run. 115 tests.
+
 ## Pending
 
 ### Case generation — remaining chunks

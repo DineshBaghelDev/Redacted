@@ -67,8 +67,10 @@ export function textProblems(city: City, cast: Cast, targets: TextTarget[], { te
         problems.push(`Text "${id}" mentions ${p.name}, which isn't in its source.`);
       }
     }
+    // Same clock time in 12- or 24-hour form is fine ("9:30" for a source's "21:30").
+    const sourceTimes = new Set((allowed.match(/\b\d{1,2}:\d{2}\b/g) ?? []).map((t) => minuteOfDay(t) % 720));
     for (const time of text.match(/\b\d{1,2}:\d{2}\b/g) ?? []) {
-      if (!allowed.includes(time)) problems.push(`Text "${id}" mentions the time ${time}, which isn't in its source.`);
+      if (!sourceTimes.has(minuteOfDay(time) % 720)) problems.push(`Text "${id}" mentions the time ${time}, which isn't in its source.`);
     }
   }
   return problems;
@@ -84,4 +86,10 @@ export function applyTexts(set: EvidenceSet, { texts }: Texts): EvidenceSet {
       return text ? { ...e, summary: text } : e;
     }),
   };
+}
+
+/** "21:30" to minutes of the day. */
+function minuteOfDay(hhmm: string) {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
 }

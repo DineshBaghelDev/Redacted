@@ -1,3 +1,4 @@
+import { wrongPartsOfDay } from "./clock";
 import { crimeKind } from "./crimes";
 import { formatTime, type Brief, type Cast, type CrimeBase, type Story } from "./schemas";
 import type { City } from "./city";
@@ -7,13 +8,6 @@ import type { City } from "./city";
 const SHAPE_RULE = "title: 2–5 words, like a case file name. summary: 2–4 plain sentences. initialFacts: 3–5 short facts.";
 /** Case days have no weekday, so any weekday in the brief is invented. */
 const WEEKDAYS = /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i;
-/** [word, from hour, to hour): generous, so only a clear mismatch counts. */
-const PARTS_OF_DAY: [string, number, number][] = [
-  ["morning", 4, 13],
-  ["afternoon", 11, 19],
-  ["evening", 16, 24],
-  ["night", 19, 7],
-];
 const ONLY_FACTS_RULE =
   "Use only the known facts below, worded plainly: no weekdays (cases use Day 1, Day 2...), no part of day that disagrees with the times given, and no actions or details that aren't listed (e.g. why someone came to the room).";
 
@@ -51,10 +45,8 @@ export function briefProblems(city: City, crime: CrimeBase, cast: Cast, story: S
   if (lower.includes(crime.motive.details.toLowerCase().slice(0, 40))) problems.push("The brief copies the hidden motive.");
   problems.push(...crimeKind(crime).briefProblems({ city, crime, cast, story }, brief));
   // Parts of the day the brief names must fit when the body was found.
-  const hour = Math.floor((crime.discovery.time % 1440) / 60);
-  for (const [word, from, to] of PARTS_OF_DAY) {
-    const fits = from <= to ? hour >= from && hour < to : hour >= from || hour < to;
-    if (new RegExp(`\\b${word}\\b`, "i").test(text) && !fits) problems.push(`The brief says "${word}", but the discovery was at ${formatTime(crime.discovery.time)}.`);
+  for (const word of wrongPartsOfDay(text, crime.discovery.time, crime.discovery.time)) {
+    problems.push(`The brief says "${word}", but the discovery was at ${formatTime(crime.discovery.time)}.`);
   }
   const weekday = text.match(WEEKDAYS);
   if (weekday) problems.push(`The brief says "${weekday[0]}", but cases have no weekdays: use the day and time given.`);
