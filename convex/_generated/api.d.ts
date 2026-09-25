@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as cases from "../cases.js";
 import type * as dev_tester from "../dev/tester.js";
 import type * as fixtures_caseEasy from "../fixtures/caseEasy.js";
 import type * as fixtures_city from "../fixtures/city.js";
@@ -58,6 +59,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  cases: typeof cases;
   "dev/tester": typeof dev_tester;
   "fixtures/caseEasy": typeof fixtures_caseEasy;
   "fixtures/city": typeof fixtures_city;

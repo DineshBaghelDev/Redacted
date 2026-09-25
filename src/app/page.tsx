@@ -41,7 +41,11 @@ export default function Home() {
 
       <Show when="signed-in">
         <section
-          className="relative flex h-screen w-full items-center justify-start overflow-hidden border-0 bg-[#050712] px-0 shadow-[inset_0_0_24px_rgba(34,211,238,0.22)]"
+          className="relative flex h-screen w-full items-center justify-start overflow-hidden border-0 bg-cover bg-center bg-[#050712] px-0 shadow-[inset_0_0_24px_rgba(34,211,238,0.22)]"
+          style={{
+            backgroundImage:
+              "linear-gradient(90deg, rgba(5,7,18,0.82), rgba(5,7,18,0.18)), url('/home-background.png')",
+          }}
         >
           <RoomHub />
         </section>

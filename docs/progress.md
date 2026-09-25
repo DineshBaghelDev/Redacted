@@ -4,8 +4,16 @@
 
 - New rooms now enter the fixed Union Station Death development case without running generation; added the bureau image as the first playable investigation surface with clickable Interrogate, CCTV, Clueboard, and Evidence stations.
 - Removed the account profile badge and made the app shell and bureau use the full viewport width.
-- Removed the signed-in home background and locked the bureau scene to the viewport with no page scroll.
+- Kept the home/menu background image while locking the bureau scene to the viewport with no page scroll.
 - Removed the bureau header and bottom instruction panel so the scene is unobstructed.
+- Made screen state URL-backed: reloading `/game` or a station route no longer returns to the home menu.
+- Kept room creation and the lobby on `/lobby` so route navigation does not clear the newly created room modal.
+- Lobby URLs now include the room code (`/lobby/:roomCode`) and restore the room query on reload.
+- Investigation routes are room-scoped: `/lobby/:roomCode/bureau` and `/lobby/:roomCode/bureau/:station`.
+- Added bureau hotspots for the window map (`/map`) and desk case file (`/case`).
+- The desk case route now renders the fixed Union Station Death brief and initial facts.
+- Case brief content now comes from the latest passed Convex generation job through a public-fields-only query; no case facts are hardcoded in the UI.
+- Gated room and case queries on Clerk readiness to prevent unauthenticated Convex calls during lobby-route reloads.
 
 ## 2026-09-24
 

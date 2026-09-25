@@ -31,7 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${pixelifySans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full">
+      <body className="min-h-full vsc-initialized">
         <ClerkProvider appearance={{ theme: shadcn }}>
           <AppConvexProvider>{children}</AppConvexProvider>
         </ClerkProvider>

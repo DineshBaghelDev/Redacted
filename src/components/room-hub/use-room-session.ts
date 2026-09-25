@@ -1,21 +1,57 @@
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Screen } from "./constants";
 
+function screenForPath(pathname: string): Screen {
+  if (pathname === "/join") return "join";
+  if (pathname === "/previous") return "previous";
+  if (pathname === "/settings") return "settings";
+  if (pathname === "/brief") return "brief";
+  if (pathname === "/game/loading") return "loading";
+  if (pathname === "/game" || pathname.startsWith("/game/")) return "bureau";
+  if (/^\/lobby\/[^/]+\/(?:bureau(?:\/.*)?|map|case)$/.test(pathname)) return "bureau";
+  if (/^\/lobby\/[^/]+\/game-loading$/.test(pathname)) return "loading";
+  if (/^\/lobby\/[^/]+\/brief$/.test(pathname)) return "brief";
+  return "menu";
+}
+
+function pathForScreen(screen: Screen, roomCode: string) {
+  if (screen === "join") return "/join";
+  if (screen === "previous") return "/previous";
+  if (screen === "settings") return "/settings";
+  if (screen === "loading") return roomCode ? `/lobby/${roomCode}/game-loading` : "/game/loading";
+  if (screen === "brief") return roomCode ? `/lobby/${roomCode}/brief` : "/brief";
+  if (screen === "bureau") return roomCode ? `/lobby/${roomCode}/bureau` : "/game";
+  return "/";
+}
+
+function roomCodeForPath(pathname: string) {
+  const match = pathname.match(/^\/lobby\/([^/]+)(?:\/|$)/);
+  return match ? decodeURIComponent(match[1]).toUpperCase() : "";
+}
+
+function isLobbyPath(pathname: string) {
+  return /^\/lobby\/[^/]+$/.test(pathname);
+}
+
 export function useRoomSession(nickname: string) {
   const { isLoaded, isSignedIn } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
   const createRoom = useMutation(api.sessions.create);
   const joinRoom = useMutation(api.sessions.join);
   const setReady = useMutation(api.sessions.setReady);
   const startRoom = useMutation(api.sessions.start);
   const leaveSession = useMutation(api.sessions.leave);
 
-  const [screen, setScreen] = useState<Screen>("menu");
-  const [roomCode, setRoomCode] = useState("");
-  const [joinedRoomCode, setJoinedRoomCode] = useState("");
-  const [showRoom, setShowRoom] = useState(false);
+  const [screen, setScreen] = useState<Screen>(() => screenForPath(pathname));
+  const initialRoomCode = roomCodeForPath(pathname);
+  const [roomCode, setRoomCode] = useState(initialRoomCode);
+  const [joinedRoomCode, setJoinedRoomCode] = useState(initialRoomCode);
+  const [showRoom, setShowRoom] = useState(() => Boolean(initialRoomCode) && isLobbyPath(pathname));
   const [freshStartCase, setFreshStartCase] = useState("");
   const [activeCaseId, setActiveCaseId] = useState("");
   const [error, setError] = useState("");
@@ -24,8 +60,13 @@ export function useRoomSession(nickname: string) {
 
   const room = useQuery(
     api.sessions.get,
-    joinedRoomCode ? { roomCode: joinedRoomCode } : "skip",
+    joinedRoomCode && isLoaded && isSignedIn ? { roomCode: joinedRoomCode } : "skip",
   );
+
+  function navigateTo(nextScreen: Screen) {
+    setScreen(nextScreen);
+    router.push(pathForScreen(nextScreen, joinedRoomCode));
+  }
 
   async function createOrJoin(action: "create" | "join") {
     if (!isLoaded || !isSignedIn) {
@@ -52,7 +93,7 @@ export function useRoomSession(nickname: string) {
       setJoinedRoomCode(result.roomCode);
       setRoomCode(result.roomCode);
       setShowRoom(true);
-      setScreen("menu");
+      router.push(`/lobby/${result.roomCode}`);
     } catch (caught) {
       setError(
         action === "join"
@@ -94,7 +135,7 @@ export function useRoomSession(nickname: string) {
   }
 
   function closeJoin() {
-    setScreen("menu");
+    navigateTo("menu");
     setRoomCode("");
     setError("");
   }
@@ -107,6 +148,7 @@ export function useRoomSession(nickname: string) {
       setShowRoom(false);
       setJoinedRoomCode("");
       setRoomCode("");
+      router.push("/");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not leave the room.");
     }
@@ -115,13 +157,13 @@ export function useRoomSession(nickname: string) {
   function openBrief(caseId = "") {
     setActiveCaseId(caseId);
     setShowRoom(false);
-    setScreen("loading");
-    window.setTimeout(() => setScreen("bureau"), 1200);
+    navigateTo("loading");
+    window.setTimeout(() => navigateTo("bureau"), 1200);
   }
 
   return {
     screen,
-    setScreen,
+    setScreen: navigateTo,
     roomCode,
     setRoomCode,
     joinedRoomCode,

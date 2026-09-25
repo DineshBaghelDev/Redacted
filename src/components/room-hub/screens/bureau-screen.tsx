@@ -1,7 +1,10 @@
-import { useState } from "react";
 import Image from "next/image";
+import { useAuth } from "@clerk/nextjs";
+import { usePathname, useRouter } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
-type Station = "interrogate" | "cctv" | "clueboard" | "evidence";
+type Station = "interrogate" | "cctv" | "clueboard" | "evidence" | "map" | "case";
 
 const stations: Record<Station, { label: string; description: string }> = {
   interrogate: {
@@ -20,11 +23,32 @@ const stations: Record<Station, { label: string; description: string }> = {
     label: "Evidence",
     description: "Review collected items, lab results, messages, and public records.",
   },
+  map: {
+    label: "City map",
+    description: "Plan where to go next and review the places connected to this case.",
+  },
+  case: {
+    label: "Case file",
+    description: "Review the Union Station death briefing and the facts established so far.",
+  },
 };
 
 export function BureauScreen() {
-  const [station, setStation] = useState<Station | null>(null);
+  const pathname = usePathname();
+  const router = useRouter();
+  const pathParts = pathname.split("/");
+  const roomCode = pathParts[2] ?? "";
+  const station = (pathParts[3] === "bureau" ? pathParts[4] : pathParts[3]) as Station | undefined;
   const activeStation = station ? stations[station] : null;
+  const { isLoaded, isSignedIn } = useAuth();
+  const caseBrief = useQuery(api.cases.latestBrief, isLoaded && isSignedIn ? {} : "skip");
+
+  function openStation(nextStation: Station) {
+    const path = nextStation === "map" || nextStation === "case"
+      ? `/lobby/${roomCode}/${nextStation}`
+      : `/lobby/${roomCode}/bureau/${nextStation}`;
+    router.push(path);
+  }
 
   return (
     <section className="relative h-screen w-full overflow-hidden border border-cyan-300/70 bg-[#050712] shadow-[0_0_30px_rgba(34,211,238,0.22)]">
@@ -38,10 +62,12 @@ export function BureauScreen() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#050712]/35 via-transparent to-[#050712]/45" />
 
-        <Hotspot label="Interrogate" className="left-[4%] top-[26%] h-[40%] w-[18%]" onClick={() => setStation("interrogate")} />
-        <Hotspot label="CCTV" className="left-[24%] top-[27%] h-[39%] w-[17%]" onClick={() => setStation("cctv")} />
-        <Hotspot label="Clueboard" className="left-[41%] top-[27%] h-[29%] w-[21%]" onClick={() => setStation("clueboard")} />
-        <Hotspot label="Evidence" className="left-[62%] top-[26%] h-[40%] w-[19%]" onClick={() => setStation("evidence")} />
+        <Hotspot label="Interrogate" className="left-[4%] top-[26%] h-[40%] w-[18%]" onClick={() => openStation("interrogate")} />
+        <Hotspot label="CCTV" className="left-[24%] top-[27%] h-[39%] w-[17%]" onClick={() => openStation("cctv")} />
+        <Hotspot label="Clueboard" className="left-[41%] top-[27%] h-[29%] w-[21%]" onClick={() => openStation("clueboard")} />
+        <Hotspot label="Evidence" className="left-[62%] top-[26%] h-[40%] w-[19%]" onClick={() => openStation("evidence")} />
+        <Hotspot label="Map" className="left-[82%] top-[17%] h-[43%] w-[18%]" onClick={() => openStation("map")} />
+        <Hotspot label="Case" className="left-[18%] top-[59%] h-[39%] w-[64%]" onClick={() => openStation("case")} />
 
       </div>
 
@@ -56,16 +82,42 @@ export function BureauScreen() {
               <button
                 aria-label="Return to bureau"
                 className="border border-cyan-300 px-3 py-2 text-sm uppercase text-cyan-100 hover:border-yellow-200 hover:text-yellow-200"
-                onClick={() => setStation(null)}
+                onClick={() => router.push(`/lobby/${roomCode}/bureau`)}
                 type="button"
               >
                 Back
               </button>
             </div>
-            <p className="mt-6 text-lg leading-relaxed text-cyan-100/85">{activeStation.description}</p>
-            <p className="mt-5 border-t border-cyan-300/30 pt-4 text-sm uppercase text-cyan-100/60">
-              This station is the next investigation surface.
-            </p>
+            {station === "case" ? (
+              <div className="mt-6 space-y-5 border-2 border-[#b8a77d] bg-[#e9dfc5] p-5 text-[#211d17] shadow-[4px_4px_0_rgba(0,0,0,0.25)]">
+                {caseBrief === undefined ? (
+                  <p className="text-base uppercase">Loading case file...</p>
+                ) : !caseBrief ? (
+                  <p className="text-base uppercase text-red-800">No completed case is available.</p>
+                ) : (
+                  <>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-red-800">Case file · public brief</p>
+                      <h3 className="mt-2 text-2xl uppercase">{caseBrief.title}</h3>
+                    </div>
+                    <p className="text-base leading-relaxed">{caseBrief.summary}</p>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-red-800">Initial facts</p>
+                      <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-relaxed">
+                        {caseBrief.initialFacts.map((fact) => <li key={fact}>{fact}</li>)}
+                      </ul>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <>
+                <p className="mt-6 text-lg leading-relaxed text-cyan-100/85">{activeStation.description}</p>
+                <p className="mt-5 border-t border-cyan-300/30 pt-4 text-sm uppercase text-cyan-100/60">
+                  This station is the next investigation surface.
+                </p>
+              </>
+            )}
           </div>
         </div>
       ) : null}
