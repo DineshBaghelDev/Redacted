@@ -33,7 +33,7 @@ const stations: Record<Station, { label: string; description: string }> = {
   },
 };
 
-export function BureauScreen() {
+export function BureauScreen({ error, onLeave }: { error: string; onLeave: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const pathParts = pathname.split("/");
@@ -41,7 +41,7 @@ export function BureauScreen() {
   const station = (pathParts[3] === "bureau" ? pathParts[4] : pathParts[3]) as Station | undefined;
   const activeStation = station ? stations[station] : null;
   const { isLoaded, isSignedIn } = useAuth();
-  const caseBrief = useQuery(api.cases.latestBrief, isLoaded && isSignedIn ? {} : "skip");
+  const caseBrief = useQuery(api.cases.getBrief, isLoaded && isSignedIn && roomCode ? { roomCode } : "skip");
 
   function openStation(nextStation: Station) {
     const path = nextStation === "map" || nextStation === "case"
@@ -52,6 +52,16 @@ export function BureauScreen() {
 
   return (
     <section className="relative h-screen w-full overflow-hidden border border-cyan-300/70 bg-[#050712] shadow-[0_0_30px_rgba(34,211,238,0.22)]">
+      <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
+        <button
+          className="border border-red-400 bg-red-950/90 px-4 py-2 text-sm uppercase text-red-100 shadow-[0_0_16px_rgba(248,113,113,0.25)] hover:border-red-200"
+          onClick={onLeave}
+          type="button"
+        >
+          Leave game
+        </button>
+        {error ? <p className="max-w-xs bg-[#050712]/90 px-3 py-2 text-sm text-red-200">{error}</p> : null}
+      </div>
       <div className="relative h-full w-full bg-black">
         <Image
           alt="The investigation bureau"

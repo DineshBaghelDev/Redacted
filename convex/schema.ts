@@ -5,7 +5,16 @@ import { v } from "convex/values";
 export const jobStatus = v.union(v.literal("queued"), v.literal("running"), v.literal("passed"), v.literal("failed"), v.literal("stopped"));
 
 export default defineSchema({
+  cases: defineTable({
+    generationJobId: v.id("generationJobs"),
+    difficulty: v.union(v.literal("easy"), v.literal("normal"), v.literal("hard")),
+    title: v.string(),
+    summary: v.string(),
+    initialFacts: v.array(v.string()),
+    createdAt: v.number(),
+  }).index("by_generationJobId", ["generationJobId"]),
   sessions: defineTable({
+    caseId: v.optional(v.id("cases")),
     roomCode: v.string(),
     status: v.union(v.literal("waiting"), v.literal("playing")),
     createdAt: v.number(),
@@ -21,6 +30,7 @@ export default defineSchema({
     joinedAt: v.number(),
   })
     .index("by_sessionId", ["sessionId"])
+    .index("by_sessionId_authUserId", ["sessionId", "authUserId"])
     .index("by_authUserId", ["authUserId"]),
 
   // Case generation (dev tester + pipeline). Drafts hold hidden case data: never expose outside dev tools.
@@ -40,7 +50,9 @@ export default defineSchema({
     workflowId: v.optional(v.string()),
     /** Test runs: the jobs started together share this label. */
     batch: v.optional(v.string()),
-  }).index("by_batch", ["batch"]),
+  })
+    .index("by_batch", ["batch"])
+    .index("by_status", ["status"]),
   generationDrafts: defineTable({
     jobId: v.id("generationJobs"),
     stage: v.string(),

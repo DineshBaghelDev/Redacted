@@ -1,22 +1,18 @@
 import { menuOptionButton } from "../constants";
 
 type MainMenuScreenProps = {
-  onCreate: () => void;
   onJoin: () => void;
   onPrevious: () => void;
   onSettings: () => void;
-  isWorking: boolean;
   isLoaded: boolean | undefined;
   isSignedIn: boolean | undefined;
   error: string;
 };
 
 export function MainMenuScreen({
-  onCreate,
   onJoin,
   onPrevious,
   onSettings,
-  isWorking,
   isLoaded,
   isSignedIn,
   error,
@@ -29,17 +25,20 @@ export function MainMenuScreen({
       <div className="flex w-full flex-col gap-3">
         <button
           className={`${menuOptionButton} text-yellow-200`}
-          disabled={isWorking || !isLoaded || !isSignedIn}
-          onClick={onCreate}
+          aria-describedby="create-room-status"
+          disabled
           type="button"
         >
           Create room
         </button>
+        <p id="create-room-status" className="-mt-2 px-5 text-sm uppercase text-cyan-100/60">
+          New cases coming soon
+        </p>
         <button className={menuOptionButton} onClick={onJoin} type="button">
           Join room
         </button>
         <button className={menuOptionButton} onClick={onPrevious} type="button">
-          Previous games
+          Previous cases
         </button>
         <button className={menuOptionButton} onClick={onSettings} type="button">
           Settings

@@ -34,6 +34,11 @@
 - The city and buildings never change between cases; places use addresses or business names so any new cast can live and work there.
 - Some cameras can be faulty in a case, so camera coverage is not the same every time.
 - One hand-written easy case is kept for building the game UI and testing, so we don't spend AI tokens regenerating cases during development.
+- A lobby is the waiting state of a session, not a separate table. Each new session links to one passed case; gameplay reads derive that case from the authenticated player's session instead of accepting a client-selected case id.
+- The main menu stays fixed; only the Previous cases panel scrolls when its cards exceed the game viewport.
+- Case cards wrap the full public brief summary; hidden solution and generation data never enter the list response.
+- Leaving from the bureau/game screen removes the player from the active room before returning to the main menu.
+- Create room is reserved for the generate-a-new-case flow and stays disabled until that flow is deliberately opened to players; replaying passed cases remains separate.
 - Each lie says how the person reacts when caught: tells the whole truth, admits only what the proof shows, or switches to a backup lie (which needs different proof).
 - Finding something taken from the victim's home inside the killer's home counts as decisive evidence.
 - The victim's phone is found "on the body" at the scene.

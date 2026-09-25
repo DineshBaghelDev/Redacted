@@ -5,8 +5,8 @@ export function LoadingScreen() {
         Loading case...
       </h1>
       <div className="space-y-3 text-left text-2xl text-cyan-200">
-        <p>Opening Union Station Death...</p>
-        <p>Loading fixed case file...</p>
+        <p>Opening case file...</p>
+        <p>Loading investigation...</p>
         <p>Entering bureau...</p>
       </div>
     </div>

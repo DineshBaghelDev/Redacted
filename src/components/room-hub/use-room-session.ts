@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import type { Screen } from "./constants";
 
 function screenForPath(pathname: string): Screen {
@@ -52,8 +53,6 @@ export function useRoomSession(nickname: string) {
   const [roomCode, setRoomCode] = useState(initialRoomCode);
   const [joinedRoomCode, setJoinedRoomCode] = useState(initialRoomCode);
   const [showRoom, setShowRoom] = useState(() => Boolean(initialRoomCode) && isLobbyPath(pathname));
-  const [freshStartCase, setFreshStartCase] = useState("");
-  const [activeCaseId, setActiveCaseId] = useState("");
   const [error, setError] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
   const [isWorking, setIsWorking] = useState(false);
@@ -68,20 +67,20 @@ export function useRoomSession(nickname: string) {
     router.push(pathForScreen(nextScreen, joinedRoomCode));
   }
 
-  async function createOrJoin(action: "create" | "join") {
+  async function createOrJoin(action: "create" | "join", generationJobId?: Id<"generationJobs">) {
     if (!isLoaded || !isSignedIn) {
       setError("Still signing in. Try again in a moment.");
       return;
     }
-
     setIsWorking(true);
     setError("");
 
     try {
-      const result =
-        action === "create"
-          ? await createRoom({ nickname })
-          : await joinRoom({ roomCode, nickname });
+      const result = action === "create"
+        ? generationJobId
+          ? await createRoom({ nickname, generationJobId })
+          : { roomCode: "", message: "Choose a case first." }
+        : await joinRoom({ roomCode, nickname });
       if (!result.roomCode) {
         setError(
           "message" in result
@@ -148,14 +147,13 @@ export function useRoomSession(nickname: string) {
       setShowRoom(false);
       setJoinedRoomCode("");
       setRoomCode("");
-      router.push("/");
+      navigateTo("menu");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not leave the room.");
     }
   }
 
-  function openBrief(caseId = "") {
-    setActiveCaseId(caseId);
+  function openBrief() {
     setShowRoom(false);
     navigateTo("loading");
     window.setTimeout(() => navigateTo("bureau"), 1200);
@@ -169,9 +167,6 @@ export function useRoomSession(nickname: string) {
     joinedRoomCode,
     room,
     showRoom,
-    freshStartCase,
-    setFreshStartCase,
-    activeCaseId,
     error,
     setError,
     copiedCode,

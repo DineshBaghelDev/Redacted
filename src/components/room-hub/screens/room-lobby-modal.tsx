@@ -3,6 +3,7 @@ import { menuButton, panel } from "../constants";
 export type RoomLobbyState = {
   roomCode: string;
   status: "waiting" | "playing";
+  caseTitle: string;
   playerCount: number;
   allReady: boolean;
   meReady: boolean;
@@ -45,6 +46,7 @@ export function RoomLobbyModal({
             {copiedCode ? "Copied" : "Copy code"}
           </button>
         </div>
+        <p className="mt-3 text-lg uppercase text-yellow-200">{room?.caseTitle ?? "Loading case..."}</p>
         <p className="mt-4 text-xl uppercase text-cyan-100">Connected players</p>
         <ul className="mt-2 space-y-2 text-xl text-cyan-200">
           {(room?.players?.length

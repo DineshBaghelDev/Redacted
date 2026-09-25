@@ -108,6 +108,12 @@
 
 ### Case generation — remaining
 
+- Passed generated cases now appear in Previous cases. Choosing one creates an immutable public case record, links a new lobby session to it, and scopes the lobby and bureau case brief to that selected case.
+- Only the Previous cases panel scrolls inside the fixed-height game screen, so every card remains reachable without moving the main menu.
+- Previous-case cards show the full player-safe public brief summary instead of clipping it or showing the generation date.
+- The bureau/game screen has a persistent Leave game control that removes the player from the room and returns to the main menu.
+- Create room is disabled in the main menu until player-facing case generation is ready. Passed cases remain playable through Previous cases.
+
 - **Freeze into playable cases (Stage 13):** a passed job still lives in `generationJobs`/`generationDrafts`. Writing it into the game's case tables (`cases`, `caseSolutions`, `caseEvents`, `npcScripts`, …) waits for those tables, which the game builds first on the hand-written case.
 - **Restart with a new seed:** a job that still fails after its repairs is marked failed; the spec's "restart with a new seed, fail after 2 restarts" isn't built.
 - **Player-facing progress text** ("Writing suspects…"): deferred with loading screens.

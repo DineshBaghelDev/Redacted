@@ -6,6 +6,7 @@ import { jobStatus } from "../schema";
 import { runAiAttempt } from "./aiStage";
 import { crimeKind, type CrimeCore } from "./core/crimes";
 import { getStage } from "./stages";
+import { ensureCaseForJob } from "../cases";
 
 // Running stages for a generation job, shared by the dev tester (one stage at a time) and the
 // workflow ("Run all"). Drafts hold hidden case data: nothing here is client-callable.
@@ -109,6 +110,7 @@ export const setStatus = internalMutation({
       ...(status === "running" ? { startedAt: Date.now() } : {}),
       ...(done ? { finishedAt: Date.now() } : {}),
     });
+    if (status === "passed") await ensureCaseForJob(ctx, jobId);
   },
 });
 

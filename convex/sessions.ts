@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { requireUserId } from "./lib/auth";
+import { ensureCaseForJob } from "./cases";
 
 const MAX_PLAYERS = 2;
 const ROOM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -15,9 +16,11 @@ function makeRoomCode() {
 }
 
 export const create = mutation({
-  args: { nickname: v.string() },
-  handler: async (ctx, { nickname }) => {
+  args: { nickname: v.string(), generationJobId: v.id("generationJobs") },
+  returns: v.object({ sessionId: v.id("sessions"), playerId: v.id("sessionPlayers"), roomCode: v.string() }),
+  handler: async (ctx, { nickname, generationJobId }) => {
     const authUserId = await requireUserId(ctx);
+    const caseId = await ensureCaseForJob(ctx, generationJobId);
     const now = Date.now();
     let roomCode = makeRoomCode();
 
@@ -31,6 +34,7 @@ export const create = mutation({
     }
 
     const sessionId = await ctx.db.insert("sessions", {
+      caseId,
       roomCode,
       status: "waiting",
       createdAt: now,
@@ -181,6 +185,15 @@ export const leave = mutation({
 
 export const get = query({
   args: { roomCode: v.string() },
+  returns: v.union(v.null(), v.object({
+    roomCode: v.string(),
+    status: v.union(v.literal("waiting"), v.literal("playing")),
+    caseTitle: v.string(),
+    playerCount: v.number(),
+    allReady: v.boolean(),
+    meReady: v.boolean(),
+    players: v.array(v.object({ name: v.string(), isReady: v.boolean() })),
+  })),
   handler: async (ctx, { roomCode }) => {
     const authUserId = await requireUserId(ctx);
     const session = await ctx.db
@@ -192,6 +205,12 @@ export const get = query({
       return null;
     }
 
+    const currentPlayer = await ctx.db
+      .query("sessionPlayers")
+      .withIndex("by_sessionId_authUserId", (q) => q.eq("sessionId", session._id).eq("authUserId", authUserId))
+      .unique();
+    if (!currentPlayer) return null;
+
     const players = await ctx.db
       .query("sessionPlayers")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
@@ -200,6 +219,7 @@ export const get = query({
     return {
       roomCode: session.roomCode,
       status: session.status,
+      caseTitle: session.caseId ? (await ctx.db.get(session.caseId))?.title ?? "Case" : "Case",
       playerCount: players.length,
       allReady: players.length > 0 && players.every((player) => player.isReady),
       meReady: players.some((player) => player.authUserId === authUserId && player.isReady),
