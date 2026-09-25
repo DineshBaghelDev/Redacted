@@ -20,10 +20,10 @@ const PROVIDERS = {
  * Keeps thinking low everywhere: generation needs careful rule-following, not long reasoning, and low
  * thinking is faster and cheaper. reasoningEffort is the SDK's own option (a raw reasoning_effort gets overwritten); other keys go into the request body as-is.
  */
-function thinkingOptions(provider: keyof typeof PROVIDERS, id: string): Record<string, JSONValue> {
+function thinkingOptions(provider: keyof typeof PROVIDERS, id: string, effort = "low"): Record<string, JSONValue> {
   if (provider === "moonshot") return id === "kimi-k3" ? { reasoningEffort: "low" } : { thinking: { type: "disabled" } };
   // OpenAI's strict schema mode needs every field required, and ours has optional ones: the schema guides, code checks.
-  if (provider === "codex") return { reasoningEffort: process.env.CODEX_REASONING ?? "low", strictJsonSchema: false };
+  if (provider === "codex") return { reasoningEffort: effort, strictJsonSchema: false };
   if (provider === "gemini" || provider === "groq") return { reasoningEffort: "low" };
   if (provider === "openrouter") return { reasoning: { effort: "low" } };
   return {};
@@ -40,29 +40,41 @@ export const MODELS = {
 const KIMI_K3 = "moonshot:kimi-k3";
 /** Paid, cheaper and without thinking: for small rewriting jobs. */
 const KIMI_FAST = "moonshot:kimi-k2.6";
+/**
+ * The owner's ChatGPT subscription through a local server: fast, and after the richer prompts as rich as
+ * Kimi. Only used where CODEX_API_KEY is set (Convex can't reach the owner's PC without a tunnel).
+ * "@medium" raises thinking for the story, where it makes the writing fuller (and first-try right).
+ */
+const SOL = "codex:gpt-6-sol";
+const SOL_MEDIUM = "codex:gpt-6-sol@medium";
 const GEMINI_FLASH = "gemini:gemini-3.5-flash";
 const GROQ_FAST = "groq:openai/gpt-oss-120b";
 const NEMOTRON_FREE = "openrouter:nvidia/nemotron-3-super-120b-a12b:free";
 
 /**
- * Models per AI stage, tried in order: the next one takes over when a call fails. Kimi K3 (paid, low
- * thinking) leads the stages that need careful rule-following; Kimi K2.6 without thinking missed the
+ * Models per AI stage, tried in order: the next one takes over when a call fails. GPT-6 Sol leads where
+ * it is reachable (a full normal case in ~2.5–5 min, every stage right first try or after one repair);
+ * Kimi K3 (paid, low thinking) is next for the stages that need careful rule-following; Kimi K2.6 without thinking missed the
  * crime's time band three tries in a row, so it only rewrites text. Free Groq goes first for the small
  * prompts (its free cap is 8k tokens a minute); free Gemini Flash (20 calls a day) and NIM are backups.
  * Picked from side-by-side runs (2026-09-25).
  */
 const STAGE_MODELS: Record<string, string[]> = {
-  crime: [KIMI_K3, GEMINI_FLASH, MODELS.main],
-  cast: [KIMI_K3, GEMINI_FLASH, NEMOTRON_FREE, MODELS.main],
-  story: [KIMI_K3, GEMINI_FLASH, NEMOTRON_FREE, MODELS.main],
-  lies: [KIMI_K3, GEMINI_FLASH, MODELS.main],
-  text: [GROQ_FAST, KIMI_FAST, GEMINI_FLASH, MODELS.main],
-  brief: [GROQ_FAST, KIMI_FAST, MODELS.main],
+  crime: [SOL, KIMI_K3, GEMINI_FLASH, MODELS.main],
+  cast: [SOL, KIMI_K3, GEMINI_FLASH, NEMOTRON_FREE, MODELS.main],
+  story: [SOL_MEDIUM, KIMI_K3, GEMINI_FLASH, NEMOTRON_FREE, MODELS.main],
+  lies: [SOL, KIMI_K3, GEMINI_FLASH, MODELS.main],
+  text: [GROQ_FAST, SOL, KIMI_FAST, GEMINI_FLASH, MODELS.main],
+  brief: [GROQ_FAST, SOL, KIMI_FAST, MODELS.main],
 };
 
-/** The models to try for a stage, in order. */
+/** The models to try for a stage, in order; providers without a key in this environment are skipped. */
 export function modelsFor(stage: string) {
-  return STAGE_MODELS[stage] ?? [MODELS.main];
+  const list = (STAGE_MODELS[stage] ?? [MODELS.main]).filter((m) => {
+    const [prefix] = m.split(":");
+    return !(prefix in PROVIDERS) || !!process.env[PROVIDERS[prefix as keyof typeof PROVIDERS].key];
+  });
+  return list.length ? list : [MODELS.main];
 }
 
 /** Stop waiting before Convex's 10-minute action limit kills the try with no log. */
@@ -83,11 +95,12 @@ export type LlmCall = {
   error?: string;
 };
 
-/** The chat model for "provider:model id" (no prefix means NIM), plus its low-thinking options. */
+/** The chat model for "provider:model id[@effort]" (no prefix means NIM), plus its thinking options. */
 function chatModel(model: string, strict: boolean) {
-  const [prefix, ...rest] = model.split(":");
+  const [named, effort] = model.split("@");
+  const [prefix, ...rest] = named.split(":");
   const name = (prefix in PROVIDERS && rest.length ? prefix : "nim") as keyof typeof PROVIDERS;
-  const id = name === prefix ? rest.join(":") : model;
+  const id = name === prefix ? rest.join(":") : named;
   const { key } = PROVIDERS[name];
   const baseURL = (name === "codex" && process.env.CODEX_BASE_URL) || PROVIDERS[name].baseURL;
   const apiKey = process.env[key];
@@ -95,7 +108,7 @@ function chatModel(model: string, strict: boolean) {
   return {
     // includeUsage: streamed replies only report token counts when asked.
     model: createOpenAICompatible({ name, baseURL, apiKey, supportsStructuredOutputs: strict, includeUsage: true }).chatModel(id),
-    providerOptions: { [name]: thinkingOptions(name, id) },
+    providerOptions: { [name]: thinkingOptions(name, id, effort) },
   };
 }
 
