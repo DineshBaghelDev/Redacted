@@ -1,6 +1,6 @@
 import { wrongPartsOfDay } from "./clock";
 import { crimeKind } from "./crimes";
-import { formatTime, type Brief, type Cast, type CrimeBase, type Story } from "./schemas";
+import { escapeRegExp, formatTime, type Brief, type Cast, type CrimeBase, type Story } from "./schemas";
 import type { City } from "./city";
 
 // Stage 9: what investigators legitimately know at the start. The crime kind says what that is.
@@ -38,7 +38,7 @@ export function briefProblems(city: City, crime: CrimeBase, cast: Cast, story: S
   for (const id of [crime.culpritId, crime.accomplice?.id].filter(Boolean)) {
     const person = cast.characters.find((c) => c.id === id);
     for (const part of person?.name.split(" ").filter((p) => p.length > 2 && !p.endsWith(".") && !safe.has(p.toLowerCase())) ?? []) {
-      if (new RegExp(`\\b${part}\\b`, "i").test(text)) problems.push(`The brief names ${person!.name}, who is a culprit.`);
+      if (new RegExp(`\\b${escapeRegExp(part)}\\b`, "i").test(text)) problems.push(`The brief names ${person!.name}, who is a culprit.`);
     }
   }
   if (lower.includes(crime.method.toLowerCase().slice(0, 40))) problems.push("The brief copies the hidden method.");

@@ -148,7 +148,7 @@ export function buildEvidence(
     );
   }
 
-  evidence.push(...forensics(crime, cast, story, kind.keyItemIds, nameOf));
+  evidence.push(...forensics(city, crime, cast, story, kind.keyItemIds, nameOf));
   evidence.push(...kind.evidence({ city, crime, cast, story }, difficulty, nameOf));
   evidence.push(...witnessStatements(crime, story, timeline, nameOf));
   evidence.push(...buildClutter(city, relevantRooms(city, cast, story), difficulty, createRng(seed + 1)));
@@ -178,7 +178,7 @@ function relevantRooms(city: City, cast: Cast, story: Story) {
  * "wipe-prints" cover-up), shoe prints at side doors the culprit used, and prints and clothing fibers
  * at the scene.
  */
-function forensics(crime: CrimeBase, cast: Cast, story: Story, keyItemIds: string[], nameOf: (id: string) => string): Evidence[] {
+function forensics(city: City, crime: CrimeBase, cast: Cast, story: Story, keyItemIds: string[], nameOf: (id: string) => string): Evidence[] {
   const out: Evidence[] = [];
   const wiped = crime.coverUp.includes("wipe-prints");
   const act = crimeEvent(crime, story);
@@ -233,7 +233,8 @@ function forensics(crime: CrimeBase, cast: Cast, story: Story, keyItemIds: strin
 
   // The scene itself.
   const sceneId = `room:${crime.sceneRoomId}`;
-  const residents = cast.characters.filter((c) => c.homeUnitId.startsWith(`${scenePlace}:`)).map((c) => c.id);
+  // Only people whose home includes the scene room: every room of a house, but just the one flat or hotel room.
+  const residents = cast.characters.filter((c) => homeRooms(city, c.homeUnitId).has(crime.sceneRoomId)).map((c) => c.id);
   const visitors = story.events.filter((e) => e.roomId === crime.sceneRoomId && e.start <= crime.discovery.time).flatMap((e) => e.actors);
   const scenePrints = [...new Set([...residents, ...visitors])].filter((id) => !(wiped && id === crime.culpritId));
   out.push({

@@ -46,6 +46,13 @@ export function buildScripts(city: City, crime: CrimeBase, cast: Cast, story: St
     return found ? `${found.place.name}, ${found.room.name}` : roomId;
   };
   const placeName = (placeId: string) => city.places.find((p) => p.id === placeId)?.name ?? placeId;
+  // A house's home unit isn't a room id, so resolve the unit: "14 Keel Street" or "Carver Towers, Flat 3A".
+  const homeName = (unitId: string) => {
+    const unit = city.places.flatMap((p) => p.building.homeUnits).find((u) => u.id === unitId);
+    if (!unit) return unitId;
+    const place = placeName(unit.placeId);
+    return unit.label === place ? place : `${place}, ${unit.label}`;
+  };
   const nameOf = (id: string) => cast.characters.find((c) => c.id === id)?.name ?? id;
   const kind = crimeKind(crime);
   const discovery = story.events.find((e) => e.actors.includes(crime.discovery.byId) && e.roomId === crime.sceneRoomId);
@@ -88,7 +95,7 @@ export function buildScripts(city: City, crime: CrimeBase, cast: Cast, story: St
         age: c.age,
         gender: c.gender,
         job: c.job ? `${c.job.title} at ${placeName(c.job.placeId)}` : "no job",
-        home: where(c.homeUnitId),
+        home: homeName(c.homeUnitId),
         personality: c.traits,
         relationshipToVictim: c.relationshipToVictim,
         secret: c.secret,

@@ -231,7 +231,11 @@ export const murder: CrimeKind<MurderCore> = {
     const killerItems = new Set(story.items.filter((i) => i.ownerId === killer).map((i) => i.id));
     const weaponName = crime.weapon.name.toLowerCase();
 
-    const bloodOnKillerItem = forensic.filter((e) => e.data.bloodOf === crime.victimId && killerItems.has(e.data.subjectId.replace("item:", "")));
+    // The killer's own things, not the weapon: blood on the weapon only ties it to the victim.
+    const bloodOnKillerItem = forensic.filter((e) => {
+      const itemId = e.data.subjectId.replace("item:", "");
+      return e.data.bloodOf === crime.victimId && itemId !== "weapon" && killerItems.has(itemId);
+    });
     const killerPrintsOnWeapon = forensic.filter((e) => e.data.subjectId === "item:weapon" && e.data.printsOf?.includes(killer));
     const weaponAtScene = forensic.filter(
       (e) =>

@@ -12,7 +12,7 @@ import { buildScripts, scriptProblems } from "./scripts";
 import { applyTexts, textProblems, textTargets } from "./text";
 import { buildTimeline, checkTimeline } from "./timeline";
 import { castBrief, tidyCast } from "./crimeCast";
-import { clockTimesIn } from "./clock";
+import { clockTimesIn, wrongPartsOfDay } from "./clock";
 
 const SEED = 1234;
 const timeline = buildTimeline(city, crimeCore, cast, story, SEED);
@@ -281,5 +281,42 @@ describe("code fixes before a cast is checked", () => {
     const victim = fixed.characters.find((c) => c.id === crimeCore.victimId)!;
     expect(victim.routine).toBe(victimRoutine);
     if (victimRoutine === "unemployed" || victimRoutine === "student") expect(victim.hangoutPlaceId).toBeTruthy();
+  });
+});
+
+describe("fixes from the PR review", () => {
+  it("scene prints only include people living in the scene room, not the whole block", () => {
+    const block = city.places.find((p) => p.building.homeUnits.length > 2)!;
+    const [flatA, flatB] = block.building.homeUnits;
+    const [a, b] = cast.characters.filter((c) => c.role === "witness");
+    const blockCast = { characters: cast.characters.map((c) => (c.id === a.id ? { ...c, homeUnitId: flatA.id } : c.id === b.id ? { ...c, homeUnitId: flatB.id } : c)) };
+    const inFlat = { ...crimeCore, sceneRoomId: flatA.roomId };
+    const t = buildTimeline(city, inFlat, blockCast, story, SEED);
+    const prints = buildEvidence(city, inFlat, blockCast, story, t, "easy", SEED).evidence.find((e) => e.id === "forensic/scene/prints")!;
+    expect(prints.aboutIds).toContain(a.id);
+    expect(prints.aboutIds).not.toContain(b.id);
+  });
+
+  it("blood on a weapon the killer owns isn't decisive", () => {
+    const owned = { ...story, items: story.items.map((i) => (i.id === "weapon" ? { ...i, ownerId: crimeCore.culpritId } : i)) };
+    const t = buildTimeline(city, crimeCore, cast, owned, SEED);
+    const f = buildFacts(city, crimeCore, cast, owned, buildEvidence(city, crimeCore, cast, owned, t, "easy", SEED));
+    expect(f.decisiveIds).not.toContain("forensic/weapon/blood");
+  });
+
+  it("an NPC in a house gets a readable home, not a raw id", () => {
+    const scripts = buildScripts(city, crimeCore, cast, story, set, lies);
+    for (const s of scripts) expect(s.home).not.toMatch(/:home$/);
+  });
+
+  it("names with regex characters don't break the name checks", () => {
+    const odd = { characters: cast.characters.map((c) => (c.id === crimeCore.culpritId ? { ...c, name: "Victor (Vic) Hale+" } : c)) };
+    expect(() => briefProblems(city, crimeCore, odd, story, brief)).not.toThrow();
+    const targets = [{ id: "t", kind: "statement" as const, people: [], source: "x" }];
+    expect(() => textProblems(city, odd, targets, { texts: [{ id: "t", text: "Hi" }] })).not.toThrow();
+  });
+
+  it("a part of day is checked at the span's last minute too", () => {
+    expect(wrongPartsOfDay("late that night", 1440 + 1139, 1440 + 1145)).toEqual([]);
   });
 });

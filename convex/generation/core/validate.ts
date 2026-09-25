@@ -3,7 +3,7 @@ import { capitalize, crimeKind, makeCheck } from "./crimes";
 import type { Evidence, EvidenceSet } from "./evidence/types";
 import type { Facts } from "./facts";
 import { checkLies, liarCountProblems } from "./lies";
-import { formatTime, type Cast, type CrimeBase, type Lies, type Story } from "./schemas";
+import { escapeRegExp as escape, formatTime, type Cast, type CrimeBase, type Lies, type Story } from "./schemas";
 
 export type CaseCheck = {
   id: string;
@@ -17,7 +17,6 @@ export type CaseCheck = {
 
 import type { Difficulty } from "./crimeCast";
 
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * Final solvability check: can players reach every star, is the answer unique, and can every lie be

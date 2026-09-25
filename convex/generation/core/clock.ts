@@ -43,7 +43,7 @@ export function wrongPartsOfDay(text: string, start: number, end: number) {
     // "night shift", "last night", "the evening before" name something else, not when this happens.
     const said = new RegExp(`(?<!(last|previous|yesterday|tomorrow|next) )\\b${word}\\b(?! (shift|shifts|before|after|round|rounds|patrol|guard|bus|train|class|school|run|staff|manager|porter|nurse))`, "i");
     if (!said.test(text)) return false;
-    for (let t = start; t <= end; t += 15) {
+    for (const t of [...Array.from({ length: Math.floor((end - start) / 15) + 1 }, (_, i) => start + i * 15), end]) {
       const hour = Math.floor((((t % 1440) + 1440) % 1440) / 60);
       if (from <= to ? hour >= from && hour < to : hour >= from || hour < to) return false;
     }

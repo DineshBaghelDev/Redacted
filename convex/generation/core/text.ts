@@ -1,6 +1,6 @@
 import type { City } from "./city";
 import type { EvidenceSet } from "./evidence/types";
-import type { Cast, Story, Texts } from "./schemas";
+import { escapeRegExp, type Cast, type Story, type Texts } from "./schemas";
 
 // Stage 7: the AI rewrites plain code-made wording into natural text. It may not add facts.
 
@@ -56,7 +56,7 @@ export function textProblems(city: City, cast: Cast, targets: TextTarget[], { te
     const allowed = `${target.source} ${target.people.join(" ")}`.toLowerCase();
     for (const c of cast.characters) {
       for (const part of c.name.split(" ").filter((p) => p.length > 2 && !p.endsWith("."))) {
-        if (new RegExp(`\\b${part}\\b`, "i").test(text) && !allowed.includes(part.toLowerCase())) {
+        if (new RegExp(`\\b${escapeRegExp(part)}\\b`, "i").test(text) && !allowed.includes(part.toLowerCase())) {
           problems.push(`Text "${id}" mentions ${c.name}, who isn't in its source.`);
           break;
         }

@@ -82,6 +82,8 @@
 
 - Convex now reaches GPT-6 Sol: the owner's Codex server runs with a password (`CODEX_API_KEY` in `.env.local`), a Cloudflare quick tunnel exposes it over HTTPS (requests without the password get 401, checked through the tunnel), and the Convex env has `CODEX_API_KEY` and `CODEX_BASE_URL`. The quick tunnel's address changes on every restart. Every other provider stays configured. README gained a "Case generation" section (models, keys, tunnel steps, tester); TOOLING.md lists the providers; `.env.example` has `CODEX_API_KEY`. First case on Convex through the tunnel: a normal case passed with every big stage on Sol (crime 9 s, cast 38 s, story 87 + 57 s, lies 11 + 14 s) and text and brief on Groq, about 3.7 min of AI time and no Kimi spend.
 
+- CodeRabbit review of PR #5 (skill files, generated code, lock files and recorded data now skipped via `.coderabbit.yaml`). Fixed: scene fingerprints only include people who live in the scene room (a flat block's or hotel's other residents used to get false prints, which could even pass the "culprit at the scene" check); blood on a weapon the killer owns no longer counts as decisive; NPC scripts give house residents a readable home ("14 Keel Street", not "keel-14:home"); AI-written name parts are escaped before going into a search pattern (a bracket or plus sign would have crashed the brief or text stage); the part-of-day check also looks at a span's last minute. Regression tests for each. 122 tests.
+
 ## Pending
 
 ### Case generation — remaining
@@ -91,6 +93,11 @@
 - **Player-facing progress text** ("Writing suspects…"): deferred with loading screens.
 - **Offline eval suite (50–100 cases):** runs 8–12 give a baseline (12 of 15 passed, 4–9 min, $0.25–0.55 each); the full suite waits on budget.
 - **More crime kinds:** theft and robbery plug in as one module each, plus their own case-close stars.
+
+### Dev tester: known limits (by design for now)
+
+- Every allowlisted developer can see and control every job (a shared dev tool, not per-user).
+- "Stop waiting" clears a job's running marker without cancelling the attempt already in flight, which can still write its log and draft afterwards. Harmless for a single developer; give each attempt an id if the tester is shared more widely.
 
 ### Known limits of AI cases (after runs 8–12)
 

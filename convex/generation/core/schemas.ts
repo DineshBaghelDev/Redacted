@@ -185,6 +185,9 @@ export function schemaProblems(schema: z.ZodType, data: unknown) {
   return result.success ? [] : result.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`);
 }
 
+/** Text made safe to put inside a RegExp (AI-written names can contain brackets, dots, plus signs). */
+export const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 /** Case minutes to "Day 2 22:30". */
 export function formatTime(minutes: number) {
   const day = Math.floor(minutes / 1440) + 1;
