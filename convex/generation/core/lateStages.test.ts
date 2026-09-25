@@ -234,19 +234,9 @@ describe("brief part of day", () => {
 });
 
 describe("parts of the day in events", () => {
-  it("flags 'evening' for an event after midnight", () => {
-    const at = (action: string, start: number) => ({ ...story, events: [{ ...story.events[0], id: "e", action, start, end: start + 120 }] });
-    expect(clockProblems(at("Bianca sits at the bar all evening.", 1440))).toHaveLength(1);
-    expect(clockProblems(at("Bianca sits at the bar all night.", 1440))).toEqual([]);
-    expect(clockProblems(at("She spends the evening at home.", 1440 + 1140))).toEqual([]);
-  });
-});
-
-describe("parts of the day that name something else", () => {
-  it("ignores 'night shift' and 'last night'", () => {
-    const at = (action: string, start: number) => ({ ...story, events: [{ ...story.events[0], id: "e", action, start, end: start + 20 }] });
-    expect(clockProblems(at("After clocking off his night shift, George buys a pasty.", 1440 + 465))).toEqual([]);
-    expect(clockProblems(at("She tells him about last night.", 1440 + 600))).toEqual([]);
+  it("are not checked: actions often mention plans or other times", () => {
+    const at = (action: string, start: number) => ({ ...story, events: [{ ...story.events[0], id: "e", action, start, end: start + 12 }] });
+    expect(clockProblems(at("Clara tells Hana she has a family matter to settle that afternoon.", 1440 + 120))).toEqual([]);
   });
 });
 

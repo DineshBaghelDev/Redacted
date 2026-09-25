@@ -98,6 +98,8 @@ describe("prompts", () => {
     const crime = crimePrompt(city, 7, "easy");
     for (const rule of [...crimeRules(words), ...crimeKind("murder").crimeRules]) expect(crime).toContain(rule);
     for (const line of crimeBrief(city, 7).picks.lines) expect(crime).toContain(line);
+    const band = crimeBrief(city, 7).crimeTime;
+    expect(crime).toContain(`so crimeTime is ${band.from}–${band.to - 1}`);
     expect(crime).toContain(crimeBrief(city, 7).scenePlaceId);
     expect(crime).toContain("keel-14:kitchen");
     expect(crimePrompt(city, 7, "easy", ["money, a crowbar: Tom wanted the shop."])).toContain("- money, a crowbar: Tom wanted the shop.");

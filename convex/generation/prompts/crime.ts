@@ -24,7 +24,7 @@ Brief (must follow):
 ${brief.picks.lines.map((l) => `- ${l}`).join("\n")}
 - crime scene place: ${brief.scenePlaceId}
 - accomplice: ${brief.accomplice ? `yes, the ${kind.words.culprit} has a helper` : `none, the ${kind.words.culprit} acts alone`}
-- when: Day 2, ${brief.crimeTime.label}
+- when: Day 2, ${brief.crimeTime.label}, so crimeTime is ${brief.crimeTime.from}–${brief.crimeTime.to - 1}
 - first names to pick ids from: ${brief.firstNames.join(", ")}
 
 Rules:

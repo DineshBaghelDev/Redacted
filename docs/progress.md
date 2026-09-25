@@ -74,6 +74,8 @@
 
 - Test run 11: normal (9 min) and hard (9 min) passed; easy crashed at story when a Kimi reply died midway: the AI SDK's own result promises rejected with nobody listening, which killed the step with no log. AI replies are now read only from the stream parts, and a refused call for Kimi's one-at-a-time limit waits too. Wording checks widened: an event's parts of day must fit its time ("all evening" for a 00:00–03:00 event; "night shift" and "last night" don't count), and the text stage accepts a time written in 12-hour form ("9:30" for "21:30"; 11 false problems in one try). Note: the owner's running `convex dev` deploys each saved file, so check changes go live mid-run. 115 tests.
 
+- Test run 12: 3 of 3 passed (easy 5 min, normal 9 min, hard 7 min). The story check now returns every problem it can find before building the evidence in one go (it used to stop at the first kind, e.g. duplicate ids, costing an extra repair each time). Parts of the day are no longer checked in event wording: actions often mention plans or other times ("a family matter to settle that afternoon" in a 02:00 event), so the check caused paid false repairs; explicit clock times still are, and the brief's part of day is too. The crime prompt now gives the exact crimeTime range for the brief's part of Day 2 (the most common first-try crime miss). Runs 8–12 with Kimi: 12 of 15 cases passed; the 3 failures were pipeline bugs, each fixed (a switched-off camera only checked in a code stage, a fall expecting a weapon link, a reply dying midway crashing the step). Passing cases take 4–9 min and about $0.25–0.55 of Kimi each. 114 tests.
+
 ## Pending
 
 ### Case generation — remaining chunks

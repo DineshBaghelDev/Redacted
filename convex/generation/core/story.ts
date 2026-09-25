@@ -5,7 +5,7 @@ import { listCameras } from "./evidence/cctv";
 import { buildFacts, factProblems } from "./facts";
 import { formatTime, type Cast, type CrimeBase, type Story } from "./schemas";
 import { buildTimeline, checkTimeline } from "./timeline";
-import { clockTimesIn, nearSpan, wrongPartsOfDay } from "./clock";
+import { clockTimesIn, nearSpan } from "./clock";
 import type { Difficulty } from "./crimeCast";
 import { validateCase, validationProblems } from "./validate";
 
@@ -98,12 +98,11 @@ export function evidencePlan(city: City, crime: CrimeBase, difficulty: Difficult
 export function clockProblems(story: Story) {
   return story.events.flatMap((e) => {
     const says = (what: string) => `Event "${e.id}" says "${what}" but happens at ${formatTime(e.start)}–${formatTime(e.end)}: change the wording or the time so they agree.`;
-    return [
-      ...clockTimesIn(e.action)
-        .filter((t) => !t.minutes.some((m) => nearSpan(m, e.start, e.end, 30)))
-        .map((t) => says(t.said)),
-      ...wrongPartsOfDay(e.action, e.start, e.end).map(says),
-    ];
+    // Only explicit clock times: parts of the day in an action are often plans or other times ("a family
+    // matter to settle that afternoon" in a 02:00 event), so checking them caused false repairs.
+    return clockTimesIn(e.action)
+      .filter((t) => !t.minutes.some((m) => nearSpan(m, e.start, e.end, 30)))
+      .map((t) => says(t.said));
   });
 }
 
@@ -114,21 +113,23 @@ export function clockProblems(story: Story) {
  * @returns Plain problem descriptions; empty when fine.
  */
 export function storyProblems(city: City, crime: CrimeBase, cast: Cast, story: Story, difficulty: Difficulty, seed: number) {
+  // Everything that can be checked without the evidence goes back in one repair, not one kind per try.
+  const early: string[] = [];
   const ids = [...story.events, ...story.comms, ...story.purchases, ...story.items].map((x) => x.id);
   const dupes = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
-  if (dupes.length) return [`These ids are used twice: ${dupes.join(", ")}.`];
+  if (dupes.length) early.push(`These ids are used twice: ${dupes.join(", ")}.`);
   // NPC scripts are built from the story; the scripts check rejects the solution's own wording.
   const text = JSON.stringify(story);
-  const copied = [...(text.includes(crime.method) ? ["method"] : []), ...(text.includes(crime.motive.details) ? ["motive details"] : [])];
-  if (copied.length) return copied.map((what) => `The story copies the crime core's ${what} word for word; describe it in your own words.`);
+  for (const what of [...(text.includes(crime.method) ? ["method"] : []), ...(text.includes(crime.motive.details) ? ["motive details"] : [])]) {
+    early.push(`The story copies the crime core's ${what} word for word; describe it in your own words.`);
+  }
   const inStory = new Set([...story.events.flatMap((e) => e.actors), ...story.comms.flatMap((m) => [m.from, m.to]), ...story.purchases.map((p) => p.who)]);
   const missing = cast.characters.filter((c) => c.role === "suspect" && !inStory.has(c.id)).map((c) => `${c.name} (${c.id})`);
-  const clock = clockProblems(story);
-  if (clock.length) return clock;
-  if (missing.length) return [`These suspects don't appear in the story, so nothing backs up why police would suspect them: ${missing.join(", ")}. Give each one an event, call, message or purchase that does.`];
+  if (missing.length) early.push(`These suspects don't appear in the story, so nothing backs up why police would suspect them: ${missing.join(", ")}. Give each one an event, call, message or purchase that does.`);
+  early.push(...clockProblems(story));
   const timeline = buildTimeline(city, crime, cast, story, seed);
-  const timelineProblems = checkTimeline(city, crime, cast, story, timeline);
-  if (timelineProblems.length) return timelineProblems;
+  early.push(...checkTimeline(city, crime, cast, story, timeline));
+  if (early.length) return early;
   const set = buildEvidence(city, crime, cast, story, timeline, difficulty, seed);
   // The switched-off camera needs someone there to switch it off; only the story can fix that.
   const cameraProblems = evidenceProblems(crime, timeline, set);
