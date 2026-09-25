@@ -16,11 +16,11 @@ const PROVIDERS = {
 
 /**
  * Keeps thinking low everywhere: generation needs careful rule-following, not long reasoning, and low
- * thinking is faster and cheaper. Sent as-is in the request body.
+ * thinking is faster and cheaper. reasoningEffort is the SDK's own option (a raw reasoning_effort gets overwritten); other keys go into the request body as-is.
  */
 function thinkingOptions(provider: keyof typeof PROVIDERS, id: string): Record<string, JSONValue> {
-  if (provider === "moonshot") return id === "kimi-k3" ? { reasoning_effort: "low" } : { thinking: { type: "disabled" } };
-  if (provider === "gemini" || provider === "groq") return { reasoning_effort: "low" };
+  if (provider === "moonshot") return id === "kimi-k3" ? { reasoningEffort: "low" } : { thinking: { type: "disabled" } };
+  if (provider === "gemini" || provider === "groq") return { reasoningEffort: "low" };
   if (provider === "openrouter") return { reasoning: { effort: "low" } };
   return {};
 }
