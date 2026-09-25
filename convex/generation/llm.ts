@@ -88,7 +88,8 @@ function chatModel(model: string, strict: boolean) {
   const apiKey = process.env[key];
   if (!apiKey) throw new Error(`${key} is not set in the Convex environment.`);
   return {
-    model: createOpenAICompatible({ name, baseURL, apiKey, supportsStructuredOutputs: strict }).chatModel(id),
+    // includeUsage: streamed replies only report token counts when asked.
+    model: createOpenAICompatible({ name, baseURL, apiKey, supportsStructuredOutputs: strict, includeUsage: true }).chatModel(id),
     providerOptions: { [name]: thinkingOptions(name, id) },
   };
 }
@@ -122,30 +123,46 @@ export async function generateJson(args: {
   model?: string;
   /** Quick retries of a failed call on the same model (AI SDK default 2). */
   maxRetries?: number;
+  /** Give up after this long (default 9 minutes). */
+  timeoutMs?: number;
 }): Promise<LlmCall> {
   const model = args.model ?? MODELS.main;
   const started = Date.now();
   const base = { model, ms: 0, rawText: "", output: null, problems: [] as string[] };
 
-  for (const mode of ["strict", "json"] as const) {
+  const deadline = started + (args.timeoutMs ?? TIMEOUT_MS);
+  // Kimi's strict-schema mode is far slower than plain JSON (cast: 264 s against 70 s), so it skips it.
+  const modes = model.startsWith("moonshot:") ? (["json"] as const) : (["strict", "json"] as const);
+  for (const mode of modes) {
     const strict = mode === "strict";
     const prompt = strict ? args.prompt : `${args.prompt}\n\nReply with one JSON object matching this JSON schema:\n${JSON.stringify(z.toJSONSchema(args.schema, { io: "input" }))}`;
     try {
       // Streamed: a long reply sent in one piece can stall until the timeout (seen on Kimi and NIM).
+      let streamError: unknown;
       const result = streamText({
         ...chatModel(model, strict),
         system: args.system,
         prompt,
         output: Output.object({ schema: args.schema }),
-        abortSignal: AbortSignal.timeout(TIMEOUT_MS - (Date.now() - started)),
+        abortSignal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
         maxRetries: args.maxRetries,
+        // Errors (a timeout included) end up here instead of escaping as uncaught promise rejections.
+        onError: ({ error }) => {
+          streamError ??= error;
+        },
       });
-      // The reply is parsed and checked below; the SDK's own parse would only fail again.
-      result.output.then(undefined, () => {});
-      let streamError: unknown;
-      for await (const part of result.stream) if (part.type === "error") streamError = part.error;
+      // The reply is parsed and checked below; these are awaited only when the stream ends cleanly.
+      const quiet = <T,>(p: PromiseLike<T>) => Promise.resolve(p).catch(() => undefined);
+      const [, text, usage] = [quiet(result.output), quiet(result.text), quiet(result.usage)];
+      try {
+        for await (const part of result.stream) if (part.type === "error") streamError ??= part.error;
+      } catch (error) {
+        streamError ??= error;
+      }
       if (streamError) throw streamError;
-      const [rawText, usage] = await Promise.all([result.text, result.usage]);
+      if (Date.now() >= deadline) throw new Error(`No complete reply within ${Math.round((deadline - started) / 1000)} s.`);
+      const rawText = (await text) ?? "";
+      const tokens = await usage;
       // Some models (e.g. Kimi on NIM) answer a strict-schema request with an empty reply: ask again in JSON mode.
       if (strict && !rawText.trim()) continue;
       let output: unknown = null;
@@ -157,7 +174,7 @@ export async function generateJson(args: {
       } catch {
         problems = ["The reply wasn't valid JSON."];
       }
-      return { ...base, mode, output, problems, rawText, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens, ms: Date.now() - started };
+      return { ...base, mode, output, problems, rawText, inputTokens: tokens?.inputTokens, outputTokens: tokens?.outputTokens, ms: Date.now() - started };
     } catch (error) {
       // NIM refused the strict request (e.g. unsupported response_format): fall back to JSON mode.
       if (strict && APICallError.isInstance(error) && error.statusCode !== undefined && error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 401 && error.statusCode !== 429) {
