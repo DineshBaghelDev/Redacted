@@ -130,8 +130,10 @@ export async function generateJson(args: {
       };
     } catch (error) {
       if (NoObjectGeneratedError.isInstance(error)) {
-        // Output didn't parse or match the schema: salvage what we can and report the problems.
         const rawText = error.text ?? "";
+        // Some NIM models (e.g. Kimi) answer a strict-schema request with an empty reply: ask again in JSON mode.
+        if (strict && !rawText.trim()) continue;
+        // Output didn't parse or match the schema: salvage what we can and report the problems.
         let output: unknown = null;
         let problems: string[];
         try {

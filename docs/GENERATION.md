@@ -29,6 +29,20 @@ A stronger model handles primary generation. A cheaper model may handle targeted
 
 Plus the V1 city fixture.
 
+## Crime kinds
+
+The pipeline is shared by every kind of crime; what is specific to one kind lives in one module under `core/crimes/` (`murder.ts` is the only one in V1; theft and robbery are planned). A kind (`CrimeKind` in `core/crimes/kind.ts`) supplies:
+
+- **Words** the shared rules and messages use (murder: "killer", "time of death", "the body is found", "whoever finds the body").
+- **Crime core**: its extra fields on top of the shared base (murder adds the weapon; it narrows motive types, accomplice roles and cover-up steps), its seeded picks (murder: motive type, weapon category), rules, field notes and checks, and a one-line summary for "don't repeat recent cases".
+- **Story**: its own rules (murder: the murder event with killer, victim and weapon; the victim does nothing after), the "items" hint, evidence notes, when the victim's day ends, its decisive-evidence kinds, its evidence routes (murder: link the weapon to the killer) and its timeline checks.
+- **Evidence, facts, checks**: the evidence only it produces (murder: autopsy, blood, weapon fibers, toxicology/ballistics/ligature), its key items (wiped by "wipe-prints"), where the victim's phone is, its facts and decisive evidence, its own solvability checks (murder: weapon, method), what "points at an innocent", and the verbs that give the answer away.
+- **Scripts and brief**: the culprit/accomplice/innocent script rules, the news line everyone hears, and the brief's rules, facts and leak checks.
+
+Shared by every kind: the crime-core base (`crimeBaseSchema`: victim, culprit, accomplice, motive, method, scene, crime time, discovery, cover-up, switched-off camera), the seeded brief (kind, scene place, accomplice, part of Day 2, names), the cast, routines and timeline, cameras, phones, card records, public records, items and device files, prints on items, shoe prints, scene prints and fibers, witnesses, the culprit placed at the scene by two kinds of evidence, motive, "taken from the scene" and "on the scene camera" as decisive evidence, alibis, lies, text, scripts, estimate and the solvability checks.
+
+Adding a kind: write `core/crimes/<kind>.ts`, register it in `core/crimes/index.ts` (`KINDS`, `ENABLED_TYPES`), turn `crimeCoreSchema` into a union on `type`, and give the crime stage the job's kind schema. Case-close scoring (five stars: killer, motive, weapon, evidence, method) is murder's; other kinds need their own star list before they ship.
+
 ## Stage 0 — City and interiors (code)
 
 V1 uses one **ready-made city** with **20 places**, reused across cases. Players learning the city is a feature.
@@ -56,9 +70,9 @@ Code: `convex/fixtures/city.ts`, `convex/generation/core/{buildings,city}.ts`.
 
 Input: difficulty, a **seeded brief** (motive type, weapon category, crime-scene place, accomplice yes/no (about 1 case in 5), the part of Day 2 the death falls in (night, morning, afternoon, evening), and 24 first names plus 20 surnames from `core/names.ts`; all picked by code from the seed so cases vary), every city room id, every camera id, and one-line summaries (motive type, weapon, motive details) of the 10 newest AI crimes from other jobs, which the prompt says not to repeat. No check enforces this; judging "too similar" is left to later evals.
 
-Output shape: `crimeCoreSchema` in `core/schemas.ts` — victim/killer/accomplice ids (short lowercase first names), motive, weapon, method, scene room, time of death, windowStart, discovery, cover-up, optional switched-off camera.
+Output shape: `crimeCoreSchema` in `core/crimes/` — the shared base (`type`, victim/culprit/accomplice ids as short lowercase first names, motive, method, scene room, `crimeTime`, windowStart, discovery, cover-up, optional switched-off camera) plus the kind's own fields (murder: weapon).
 
-Rules and checks live together in `core/crimeCast.ts` (`CRIME_RULES` goes into the prompt word for word; `crimeProblems` enforces it): rooms exist and the scene allows crimes; victim, killer, accomplice and finder are different people; windowStart is Day 1 00:00; death on Day 2; body found after the death and by the end of Day 3; AI output follows the brief (the hand-written case is exempt from the brief).
+Rules and checks live together in `core/crimeCast.ts` (`crimeRules` plus the kind's rules go into the prompt word for word; `crimeProblems` enforces them): rooms exist and the scene allows crimes; victim, culprit, accomplice and finder are different people; windowStart is Day 1 00:00; the crime on Day 2; discovered after it and by the end of Day 3; AI output follows the brief (the hand-written case is exempt from the brief). The cover-up can't move the body: the scene is always where the body is found.
 
 One crime per case. Whether there is an accomplice comes from the seed (about 1 case in 5): left to the AI it never chose one, so that path went untested.
 
@@ -105,7 +119,7 @@ Checks on the merged timeline:
 
 Repair: exact violations are sent back to the LLM.
 
-Implemented (`core/story.ts`, prompt `prompts/story.ts`): the AI gets the crime core, cast, every room (entrances and search spots marked), travel minutes between all places, `STORY_RULES`, and `EVIDENCE_NOTES` (how code turns the story into evidence, so it can plan a solvable case). The story check runs end to end: duplicate ids, then the timeline checks, then, if those pass, evidence + facts + the stage 11 checks (except lies, not written yet). So repairs aim at "nothing clears Lena", not only at timing.
+Implemented (`core/story.ts`, prompt `prompts/story.ts`): the AI gets the crime core, cast, every room (entrances and search spots marked), travel minutes between all places, `storyRules` and `evidenceNotes` (shared plus the kind's; how code turns the story into evidence, so it can plan a solvable case), and a plan of the ways this crime can get decisive evidence and pass each evidence check (placing the culprit at the scene with two kinds, the kind's links such as the weapon, the accomplice). The same ways go back with a repair when a check fails. The story check runs end to end: duplicate ids, then the timeline checks, then, if those pass, evidence + facts + the stage 11 checks (except lies, not written yet). So repairs aim at "nothing clears Lena", not only at timing.
 
 ## Stage 4 — Evidence derivation (code, no LLM)
 
@@ -165,7 +179,7 @@ Checks (`core/lies.ts`, implemented): the person exists and isn't the victim; tr
 
 A witness who lies about an event never counts as telling what they saw of it, so their statement can't clear anyone.
 
-AI version (`prompts/lies.ts`): gets `LIE_RULES` and, per person, only their traits, secret (if any), why police might suspect them, what they did, and the evidence about them (no clutter, no everyday camera rows, no phone entries). After repairs run out, lies that still fail are dropped (`keepValidLies`); a lie whose only problem is its backup lie keeps the main lie and switches to "admit-shown". A missing killer whereabouts lie stays a problem. `truthIds` is required in the shape (the AI skipped it when it was optional).
+AI version (`prompts/lies.ts`): gets `lieRules` and, per person, only their traits, secret (if any), why police might suspect them, what they did, and the evidence about them (no clutter, no everyday camera rows, no phone entries). After repairs run out, lies that still fail are dropped (`keepValidLies`); a lie whose only problem is its backup lie keeps the main lie and switches to "admit-shown". A missing killer whereabouts lie stays a problem. `truthIds` is required in the shape (the AI skipped it when it was optional).
 
 ## Stage 7 — Text writing (LLM, fenced)
 

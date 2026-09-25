@@ -4,7 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { internalAction, internalMutation, internalQuery, type ActionCtx } from "../_generated/server";
 import { jobStatus } from "../schema";
 import { runAiAttempt } from "./aiStage";
-import type { CrimeCore } from "./core/schemas";
+import { crimeKind, type CrimeCore } from "./core/crimes";
 import { getStage } from "./stages";
 
 // Running stages for a generation job, shared by the dev tester (one stage at a time) and the
@@ -157,7 +157,7 @@ export const recentCrimes = internalQuery({
       .slice(0, RECENT_CRIMES)
       .map((d) => {
         const crime = d.output as CrimeCore;
-        return `${crime.motive.type}, ${crime.weapon.name}: ${crime.motive.details}`;
+        return crimeKind(crime).summary(crime);
       });
   },
 });

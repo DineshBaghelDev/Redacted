@@ -1,11 +1,13 @@
-import { at, type Brief, type Cast, type CrimeCore, type Lies, type Story, type Texts } from "../generation/core/schemas";
+import type { CrimeCore } from "../generation/core/crimes";
+import { at, type Brief, type Cast, type Lies, type Story, type Texts } from "../generation/core/schemas";
 
 // Hand-written easy case ("The Keel Street Ledger"). Used to build and test the game UI and every
 // code stage without spending LLM tokens. It stands in for the outputs of every AI stage.
 
 export const crimeCore: CrimeCore = {
+  type: "murder",
   victimId: "daniel",
-  killerId: "victor",
+  culpritId: "victor",
   accomplice: null,
   motive: {
     type: "cover-up",
@@ -15,7 +17,7 @@ export const crimeCore: CrimeCore = {
   weapon: { name: "Cast-iron doorstop", category: "blunt", originRoomId: "keel-14:kitchen" },
   method: "Struck once on the back of the head with a cast-iron doorstop during an argument in Daniel's kitchen.",
   sceneRoomId: "keel-14:kitchen",
-  timeOfDeath: at(2, "22:30"),
+  crimeTime: at(2, "22:30"),
   windowStart: at(1, "00:00"),
   discovery: { time: at(3, "08:15"), byId: "rosa" },
   coverUp: ["wipe-prints", "hide-weapon", "remove-item"],

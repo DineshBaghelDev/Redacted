@@ -1,11 +1,13 @@
 import { findRoom, type City } from "./city";
+import { capitalize, crimeKind, crimeTypeFor, type CrimeWords } from "./crimes";
 import { listCameras } from "./evidence/cctv";
 import { FIRST_NAMES, SURNAMES } from "./names";
 import { createRng } from "./rng";
-import { crimeCoreSchema, routineTypes, type Cast, type CrimeCore } from "./schemas";
+import { routineTypes, type Cast, type CrimeBase } from "./schemas";
 
 // Rules for the crime core and cast. The same text goes into the AI prompts and the checks below
-// enforce it, so the AI is told exactly what the checker will reject.
+// enforce it, so the AI is told exactly what the checker will reject. Rules every crime kind shares
+// live here; each kind adds its own (see crimes/).
 
 export type Difficulty = "easy" | "normal" | "hard";
 
@@ -14,29 +16,30 @@ const DAY = 1440;
 export const SUSPECTS: Record<Difficulty, [number, number]> = { easy: [3, 4], normal: [6, 7], hard: [10, 12] };
 export const WITNESSES: [number, number] = [3, 6];
 
-export const CRIME_RULES = [
-  "Ids are lowercase first names from the brief's name list (e.g. \"amara\"). The cast stage creates these people later.",
-  "The victim, killer, accomplice and whoever finds the body are all different people. Nobody finds their own crime.",
+/** Crime-core rules every kind shares. */
+export const crimeRules = (w: CrimeWords) => [
+  'Ids are lowercase first names from the brief\'s name list (e.g. "amara"). The cast stage creates these people later.',
+  `The victim, the ${w.culprit} (culpritId), any accomplice and ${w.finder} (discovery.byId) are all different people. Nobody discovers their own crime.`,
   "Times are whole minutes from Day 1 00:00 (Day 2 00:00 = 1440). windowStart is 0.",
-  "The death happens on Day 2 (1440–2879). The body is found after the death, before the end of Day 3 (4319).",
-  "sceneRoomId and weapon.originRoomId must be room ids from the city list; the scene must be at the place given in the brief.",
-  "Follow the brief: motive type, weapon category, whether there is an accomplice, and the part of Day 2 the death happens in.",
-  "coverUp lists only what the killer really does, each step once. If it includes \"disable-camera\", fill disabledCamera with a camera id from the list; otherwise leave it out.",
+  `The ${w.crime} happens on Day 2: crimeTime (the ${w.crimeTime}) is 1440–2879. discovery.time (when ${w.discovery}) comes after it, before the end of Day 3 (4319).`,
+  "sceneRoomId must be a room id from the city list, at the place given in the brief.",
+  "Follow the brief: every choice it lists, whether there is an accomplice, and the part of Day 2 it happens in.",
+  'coverUp lists only what the culprit really does, each step once. If it includes "disable-camera", fill disabledCamera with a camera id from the list; otherwise leave it null.',
 ];
 
-export const castRules = (difficulty: Difficulty) => [
-  "Create every person the crime core names, using exactly those ids: the victim (role \"victim\"), the killer and any accomplice (role \"suspect\"), and whoever finds the body.",
-  `Exactly one victim, ${SUSPECTS[difficulty][0]}–${SUSPECTS[difficulty][1]} suspects (the killer included), ${WITNESSES[0]}–${WITNESSES[1]} witnesses. Ids are unique.`,
+export const castRules = (difficulty: Difficulty, w: CrimeWords) => [
+  `Create every person the crime core names, using exactly those ids: the victim (role "victim"), the ${w.culprit} and any accomplice (role "suspect"), and ${w.finder}.`,
+  `Exactly one victim, ${SUSPECTS[difficulty][0]}–${SUSPECTS[difficulty][1]} suspects (the ${w.culprit} included), ${WITNESSES[0]}–${WITNESSES[1]} witnesses. Ids are unique.`,
   "homeUnitId must be a home id from the list. People may share a home only if they live together.",
-  "job is null or uses a place id and a job title from that place's jobs; \"cashier ×2\" means at most 2 people in the cast have that job there. job.roomId, if given, is a room of that place.",
+  'job is null or uses a place id and a job title from that place\'s jobs; "cashier ×2" means at most 2 people in the cast have that job there. job.roomId, if given, is a room of that place.',
   "routine is one of: office, night-shift, shop, unemployed, student. Unemployed people and students need a hangoutPlaceId (a public place id).",
-  "Innocent suspects need a reason police would look at them (fakeMotive: a motive, a grudge, or just being near at the wrong time). At least 2 of them have a motive as serious as the killer's (money, revenge, jealousy, a secret the victim could expose), so the killer isn't obvious. The killer has no fakeMotive.",
+  `Innocent suspects need a reason police would look at them (fakeMotive: a motive, a grudge, or just being near at the wrong time). At least 2 of them have a motive as serious as the ${w.culprit}'s (money, revenge, jealousy, a secret the victim could expose), so the ${w.culprit} isn't obvious. The ${w.culprit} has no fakeMotive.`,
   "secret and protects only where the person really has something serious to hide (it could get them arrested, fired, or ruin their reputation or family) or someone to shield; leave them out otherwise. Most people have none.",
   "appearance is what a camera would see: height, build, usual clothing, and shoes for anyone who might leave footprints.",
 ];
 
-/** Parts of Day 2 the death can fall in, as [from, to) game minutes. */
-const DEATH_TIMES = [
+/** Parts of Day 2 the crime can fall in, as [from, to) game minutes. */
+const CRIME_TIMES = [
   { label: "night (00:00–06:00)", from: DAY, to: DAY + 360 },
   { label: "morning (06:00–12:00)", from: DAY + 360, to: DAY + 720 },
   { label: "afternoon (12:00–18:00)", from: DAY + 720, to: DAY + 1080 },
@@ -47,21 +50,22 @@ const DEATH_TIMES = [
 const ACCOMPLICE_SHARE = 0.2;
 
 /**
- * The seed's choices for the crime, so cases vary: motive type, weapon category, crime-scene place,
- * accomplice or not, the part of Day 2 the death falls in, and the names this case may use.
+ * The seed's choices for the crime, so cases vary: the kind of crime and its own choices (for a murder,
+ * motive type and weapon category), the crime-scene place, accomplice or not, the part of Day 2 it
+ * falls in, and the names this case may use.
  */
 export function crimeBrief(city: City, seed: number) {
   const rng = createRng(seed + 7);
-  const motives = crimeCoreSchema.shape.motive.shape.type.options;
-  const weapons = crimeCoreSchema.shape.weapon.shape.category.options;
+  const type = crimeTypeFor(seed);
+  // The kind's picks come first so existing seeds keep their motive and weapon.
+  const picks = crimeKind(type).picks(rng);
   const scenes = city.places.filter((p) => p.crimeSceneAllowed);
-  // New picks go after the old ones so existing seeds keep their motive, weapon and scene.
   return {
-    motiveType: rng.pick(motives),
-    weaponCategory: rng.pick(weapons),
+    type,
+    picks,
     scenePlaceId: rng.pick(scenes).id,
     accomplice: rng.next() < ACCOMPLICE_SHARE,
-    deathTime: rng.pick(DEATH_TIMES),
+    crimeTime: rng.pick(CRIME_TIMES),
     firstNames: rng.shuffle(FIRST_NAMES).slice(0, 24),
     surnames: rng.shuffle(SURNAMES).slice(0, 20),
   };
@@ -75,19 +79,22 @@ export function castBrief(seed: number, difficulty: Difficulty) {
 }
 
 /**
- * Checks the crime core on its own: rooms exist, times fit the window, it follows the brief.
+ * Checks the crime core on its own: rooms exist, times fit the window, it follows the brief, plus the
+ * kind's own checks.
  *
  * @returns Plain problem descriptions; empty when fine.
  */
-export function crimeProblems(city: City, crime: CrimeCore, brief?: ReturnType<typeof crimeBrief>) {
+export function crimeProblems(city: City, crime: CrimeBase, brief?: ReturnType<typeof crimeBrief>) {
   const problems: string[] = [];
+  const kind = crimeKind(crime);
+  const w = kind.words;
   const scene = findRoom(city, crime.sceneRoomId);
   if (!scene) problems.push(`Crime scene room ${crime.sceneRoomId} doesn't exist.`);
   else if (!scene.place.crimeSceneAllowed) problems.push(`${scene.place.name} can't be a crime scene.`);
-  if (!findRoom(city, crime.weapon.originRoomId)) problems.push(`Weapon starts in unknown room ${crime.weapon.originRoomId}.`);
+  problems.push(...kind.crimeProblems(city, crime));
 
-  const people = [crime.victimId, crime.killerId, crime.accomplice?.id, crime.discovery.byId].filter(Boolean);
-  if (new Set(people).size !== people.length) problems.push("Victim, killer, accomplice and whoever finds the body must be different people.");
+  const people = [crime.victimId, crime.culpritId, crime.accomplice?.id, crime.discovery.byId].filter(Boolean);
+  if (new Set(people).size !== people.length) problems.push(`The victim, ${w.culprit}, accomplice and ${w.finder} must be different people.`);
 
   if (new Set(crime.coverUp).size !== crime.coverUp.length) problems.push("The cover-up lists the same step twice.");
   if (crime.coverUp.includes("disable-camera") !== !!crime.disabledCamera) {
@@ -98,17 +105,17 @@ export function crimeProblems(city: City, crime: CrimeCore, brief?: ReturnType<t
   }
 
   if (crime.windowStart !== 0) problems.push("windowStart must be 0 (Day 1 00:00).");
-  if (crime.timeOfDeath < DAY || crime.timeOfDeath >= 2 * DAY) problems.push("The death must happen on Day 2.");
-  if (crime.discovery.time <= crime.timeOfDeath) problems.push("The body is found before the death.");
-  if (crime.discovery.time >= 3 * DAY) problems.push("The body must be found by the end of Day 3.");
+  if (crime.crimeTime < DAY || crime.crimeTime >= 2 * DAY) problems.push(`The ${w.crime} must happen on Day 2 (crimeTime 1440–2879).`);
+  if (crime.discovery.time <= crime.crimeTime) problems.push(`discovery.time must be after crimeTime: ${w.discovery} after the ${w.crime}.`);
+  if (crime.discovery.time >= 3 * DAY) problems.push("discovery.time must be before the end of Day 3 (4319).");
 
   if (brief) {
-    if (crime.motive.type !== brief.motiveType) problems.push(`Motive type must be "${brief.motiveType}".`);
-    if (crime.weapon.category !== brief.weaponCategory) problems.push(`Weapon category must be "${brief.weaponCategory}".`);
+    if (crime.type !== brief.type) problems.push(`This case is a ${brief.type}.`);
+    else problems.push(...brief.picks.problems(crime));
     if (scene && scene.place.id !== brief.scenePlaceId) problems.push(`The crime must happen at ${brief.scenePlaceId}.`);
     if (!!crime.accomplice !== brief.accomplice) problems.push(brief.accomplice ? "This case needs an accomplice." : "This case has no accomplice.");
-    const { deathTime } = brief;
-    if (crime.timeOfDeath < deathTime.from || crime.timeOfDeath >= deathTime.to) problems.push(`The death must happen on Day 2 in the ${deathTime.label}.`);
+    const band = brief.crimeTime;
+    if (crime.crimeTime < band.from || crime.crimeTime >= band.to) problems.push(`The ${w.crime} must happen on Day 2 in the ${band.label}.`);
     const names = new Set(brief.firstNames.map((n) => n.toLowerCase()));
     for (const id of people) if (!names.has(id!)) problems.push(`"${id}" isn't a lowercase first name from the name list.`);
   }
@@ -120,18 +127,19 @@ export function crimeProblems(city: City, crime: CrimeCore, brief?: ReturnType<t
  *
  * @returns Plain problem descriptions; empty when fine.
  */
-export function castProblems(city: City, crime: CrimeCore, cast: Cast, difficulty?: Difficulty, seed?: number) {
+export function castProblems(city: City, crime: CrimeBase, cast: Cast, difficulty?: Difficulty, seed?: number) {
   const problems: string[] = [];
+  const w = crimeKind(crime).words;
   const people = new Map(cast.characters.map((c) => [c.id, c]));
 
   if (people.size !== cast.characters.length) problems.push("Two people share an id.");
   if (people.get(crime.victimId)?.role !== "victim") problems.push("The victim is missing from the cast or not marked as the victim.");
-  if (people.get(crime.killerId)?.role !== "suspect") problems.push("The killer is missing from the cast or not marked as a suspect.");
-  if (!people.has(crime.discovery.byId)) problems.push("Whoever finds the body is not in the cast.");
+  if (people.get(crime.culpritId)?.role !== "suspect") problems.push(`The ${w.culprit} is missing from the cast or not marked as a suspect.`);
+  if (!people.has(crime.discovery.byId)) problems.push(`${capitalize(w.finder)} (${crime.discovery.byId}) is not in the cast.`);
   if (crime.accomplice && people.get(crime.accomplice.id)?.role !== "suspect") problems.push("The accomplice must be a suspect.");
-  if (people.get(crime.killerId)?.fakeMotive) problems.push("The killer shouldn't have a fake motive.");
+  if (people.get(crime.culpritId)?.fakeMotive) problems.push(`The ${w.culprit} shouldn't have a fake motive.`);
   for (const c of cast.characters) {
-    if (c.role === "suspect" && c.id !== crime.killerId && c.id !== crime.accomplice?.id && !c.fakeMotive?.trim()) {
+    if (c.role === "suspect" && c.id !== crime.culpritId && c.id !== crime.accomplice?.id && !c.fakeMotive?.trim()) {
       problems.push(`${c.name} is a suspect with no reason police would look at them: give a fakeMotive tied to the victim (a motive, a grudge, or being near at the wrong time), or make them a witness.`);
     }
   }
@@ -196,8 +204,8 @@ export function castProblems(city: City, crime: CrimeCore, cast: Cast, difficult
  * witnesses (without their fake motive), then extra witnesses are removed. People the crime names are
  * never touched. Safe because nothing is built on the cast yet.
  */
-export function trimCast(crime: CrimeCore, cast: Cast, seed: number, difficulty: Difficulty): Cast {
-  const named = new Set([crime.victimId, crime.killerId, crime.accomplice?.id, crime.discovery.byId]);
+export function trimCast(crime: CrimeBase, cast: Cast, seed: number, difficulty: Difficulty): Cast {
+  const named = new Set([crime.victimId, crime.culpritId, crime.accomplice?.id, crime.discovery.byId]);
   const { suspects } = castBrief(seed, difficulty);
   let extraSuspects = cast.characters.filter((c) => c.role === "suspect").length - suspects;
   let characters = cast.characters.map((c) => {

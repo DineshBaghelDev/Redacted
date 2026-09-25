@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { cast, crimeCore, story } from "../../fixtures/caseEasy";
 import { city } from "../../fixtures/city";
-import { at, castSchema, crimeCoreSchema, schemaProblems, storySchema, type Cast, type CrimeCore, type Story } from "./schemas";
+import { crimeCoreSchema, type CrimeCore } from "./crimes";
+import { at, castSchema, schemaProblems, storySchema, type Cast, type Story } from "./schemas";
 import { buildEvidence } from "./evidence";
 import { findRoom } from "./city";
 import { buildTimeline, checkTimeline } from "./timeline";
@@ -38,7 +39,7 @@ describe("hand-written easy case", () => {
     const { entries } = buildTimeline(city, crimeCore, cast, story, SEED);
     const last = entries.filter((e) => e.actorId === "daniel").at(-1)!;
     expect(last.roomId).toBe("keel-14:kitchen");
-    expect(last.start).toBeLessThanOrEqual(crimeCore.timeOfDeath);
+    expect(last.start).toBeLessThanOrEqual(crimeCore.crimeTime);
   });
 });
 

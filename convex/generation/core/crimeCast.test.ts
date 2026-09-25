@@ -4,7 +4,10 @@ import { city } from "../../fixtures/city";
 import { parseJson } from "../llm";
 import { castPrompt } from "../prompts/cast";
 import { crimePrompt } from "../prompts/crime";
-import { castBrief, castProblems, castRules, CRIME_RULES, crimeBrief, crimeProblems, trimCast } from "./crimeCast";
+import { castBrief, castProblems, castRules, crimeBrief, crimeProblems, crimeRules, trimCast } from "./crimeCast";
+import { crimeKind } from "./crimes";
+
+const words = crimeKind("murder").words;
 
 describe("crime core checks", () => {
   it("hand-written crime passes", () => {
@@ -12,10 +15,10 @@ describe("crime core checks", () => {
   });
 
   it("catches the same person in two roles and a death on the wrong day", () => {
-    const broken = { ...crimeCore, discovery: { ...crimeCore.discovery, byId: "victor" }, timeOfDeath: 100 };
+    const broken = { ...crimeCore, discovery: { ...crimeCore.discovery, byId: "victor" }, crimeTime: 100 };
     const problems = crimeProblems(city, broken);
-    expect(problems).toContain("Victim, killer, accomplice and whoever finds the body must be different people.");
-    expect(problems).toContain("The death must happen on Day 2.");
+    expect(problems).toContain("The victim, killer, accomplice and whoever finds the body must be different people.");
+    expect(problems).toContain("The murder must happen on Day 2 (crimeTime 1440–2879).");
   });
 
   it("catches a repeated cover-up and a switched-off camera with no details", () => {
@@ -26,16 +29,19 @@ describe("crime core checks", () => {
 
   it("AI output must follow the seeded brief", () => {
     const brief = crimeBrief(city, 42);
-    expect(crimeBrief(city, 42)).toEqual(brief);
-    const other = { ...brief, motiveType: brief.motiveType === "money" ? ("revenge" as const) : ("money" as const) };
-    expect(crimeProblems(city, crimeCore, other).join("\n")).toMatch(/Motive type must be/);
+    expect(crimeBrief(city, 42).picks.lines).toEqual(brief.picks.lines);
+    const [motive, weapon] = brief.picks.lines.map((l) => l.split(": ")[1]);
+    const follows = { ...crimeCore, motive: { ...crimeCore.motive, type: motive }, weapon: { ...crimeCore.weapon, category: weapon } } as typeof crimeCore;
+    expect(brief.picks.problems(follows)).toEqual([]);
+    const other = { ...follows, motive: { ...follows.motive, type: motive === "money" ? "revenge" : "money" } } as typeof crimeCore;
+    expect(crimeProblems(city, other, brief).join("\n")).toMatch(/Motive type must be/);
   });
 
   it("the brief also fixes accomplice, time of death and names", () => {
     const brief = {
       ...crimeBrief(city, 42),
       accomplice: true,
-      deathTime: { label: "night (00:00–06:00)", from: 1440, to: 1800 },
+      crimeTime: { label: "night (00:00–06:00)", from: 1440, to: 1800 },
       firstNames: ["Amara"] as ReturnType<typeof crimeBrief>["firstNames"],
     };
     const problems = crimeProblems(city, crimeCore, brief).join("\n");
@@ -49,7 +55,8 @@ describe("crime core checks", () => {
     const withAccomplice = briefs.filter((b) => b.accomplice).length;
     expect(withAccomplice).toBeGreaterThan(50);
     expect(withAccomplice).toBeLessThan(150);
-    expect(new Set(briefs.map((b) => b.deathTime.label)).size).toBe(4);
+    expect(new Set(briefs.map((b) => b.crimeTime.label)).size).toBe(4);
+    expect(new Set(briefs.map((b) => b.picks.lines.join())).size).toBeGreaterThan(20);
     expect(new Set(briefs.map((b) => b.firstNames[0])).size).toBeGreaterThan(30);
   });
 });
@@ -89,13 +96,14 @@ describe("cast checks", () => {
 describe("prompts", () => {
   it("carry the same rules the checks use, and real city ids", () => {
     const crime = crimePrompt(city, 7, "easy");
-    for (const rule of CRIME_RULES) expect(crime).toContain(rule);
+    for (const rule of [...crimeRules(words), ...crimeKind("murder").crimeRules]) expect(crime).toContain(rule);
+    for (const line of crimeBrief(city, 7).picks.lines) expect(crime).toContain(line);
     expect(crime).toContain(crimeBrief(city, 7).scenePlaceId);
     expect(crime).toContain("keel-14:kitchen");
     expect(crimePrompt(city, 7, "easy", ["money, a crowbar: Tom wanted the shop."])).toContain("- money, a crowbar: Tom wanted the shop.");
     expect(crime).not.toContain("Recent cases");
     const castText = castPrompt(city, crimeCore, "normal", 7);
-    for (const rule of castRules("normal")) expect(castText).toContain(rule);
+    for (const rule of castRules("normal", words)) expect(castText).toContain(rule);
     expect(castText).toContain("carver-towers:unit-5a");
     expect(castText).toContain(`exactly ${castBrief(7, "normal").suspects} suspects`);
     expect(crime).toContain(crimeBrief(city, 7).firstNames.join(", "));
@@ -125,7 +133,7 @@ describe("trimming an AI cast to the exact counts", () => {
     const trimmed = trimCast(crimeCore, big, seed, "easy");
     expect(trimmed.characters.filter((c) => c.role === "suspect")).toHaveLength(target);
     expect(trimmed.characters.filter((c) => c.role === "witness").length).toBeLessThanOrEqual(6);
-    for (const id of [crimeCore.victimId, crimeCore.killerId, crimeCore.discovery.byId]) {
+    for (const id of [crimeCore.victimId, crimeCore.culpritId, crimeCore.discovery.byId]) {
       expect(trimmed.characters.find((c) => c.id === id)?.role).toBe(big.characters.find((c) => c.id === id)?.role);
     }
     expect(trimmed.characters.filter((c) => c.role === "witness").every((c) => !c.fakeMotive)).toBe(true);

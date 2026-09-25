@@ -1,8 +1,9 @@
 import { findRoom, streetRoute, type City } from "./city";
+import { crimeKind, inSceneAt } from "./crimes";
 import { createRng } from "./rng";
 import { castProblems, crimeProblems } from "./crimeCast";
 import { buildRoutine } from "./routine";
-import { formatTime, type Cast, type CrimeCore, type Story } from "./schemas";
+import { formatTime, type Cast, type CrimeBase, type Story } from "./schemas";
 
 const MIN_BLOCK = 5;
 
@@ -29,15 +30,15 @@ const placeOf = (roomId: string) => roomId.split(":")[0];
  * Builds the full timeline: everyone's routine, with story events cut in and routine trimmed so there is
  * always time to travel. Story events are never moved; clashes between them are left for checkTimeline.
  */
-export function buildTimeline(city: City, crime: CrimeCore, cast: Cast, story: Story, seed: number): Timeline {
+export function buildTimeline(city: City, crime: CrimeBase, cast: Cast, story: Story, seed: number): Timeline {
   const windowStart = crime.windowStart;
   const windowEnd = crime.discovery.time;
   const entries: TimelineEntry[] = [];
+  const victimEnd = crimeKind(crime).victimEndsAt?.(crime);
 
   for (const character of cast.characters) {
     const rng = createRng(seed + hash(character.id));
-    const isVictim = character.id === crime.victimId;
-    const routineEnd = isVictim ? crime.timeOfDeath : windowEnd;
+    const routineEnd = character.id === crime.victimId && victimEnd !== undefined ? victimEnd : windowEnd;
 
     const storyEntries: TimelineEntry[] = story.events
       .filter((e) => e.actors.includes(character.id))
@@ -129,8 +130,10 @@ function hash(text: string) {
  *
  * @returns Plain problem descriptions; empty when everything fits.
  */
-export function checkTimeline(city: City, crime: CrimeCore, cast: Cast, story: Story, timeline: Timeline) {
+export function checkTimeline(city: City, crime: CrimeBase, cast: Cast, story: Story, timeline: Timeline) {
   const problems: string[] = [];
+  const kind = crimeKind(crime);
+  const w = kind.words;
   const people = new Map(cast.characters.map((c) => [c.id, c]));
   const nameOf = (id: string) => people.get(id)?.name ?? id;
   const itemIds = new Set(story.items.map((i) => i.id));
@@ -200,35 +203,21 @@ export function checkTimeline(city: City, crime: CrimeCore, cast: Cast, story: S
     }
   }
 
-  // The crime itself
-  const tod = crime.timeOfDeath;
-  const atScene = (id: string) => covering(id, tod).some((e) => e.roomId === crime.sceneRoomId && e.source === "story");
-  if (!atScene(crime.killerId)) problems.push(`The killer isn't in the crime scene at ${formatTime(tod)}.`);
-  if (!atScene(crime.victimId)) problems.push(`The victim isn't in the crime scene at ${formatTime(tod)}.`);
-  if (timeline.entries.some((e) => e.actorId === crime.victimId && e.start > tod)) problems.push("The victim does something after dying.");
-  if (story.comms.some((c) => c.from === crime.victimId && c.time > tod)) problems.push("The victim calls or messages someone after dying.");
-  if (story.purchases.some((p) => p.who === crime.victimId && p.time > tod)) problems.push("The victim buys something after dying.");
-
-  const weapon = story.items.find((i) => i.id === "weapon");
-  if (!weapon) problems.push('The story has no item with id "weapon".');
-  else {
-    if (weapon.startRoomId !== crime.weapon.originRoomId) problems.push("The weapon starts somewhere other than the crime says.");
-    const used = story.events.some((e) => e.roomId === crime.sceneRoomId && e.itemsUsed.includes("weapon") && e.start <= tod && tod <= e.end);
-    if (!used) problems.push("No event uses the weapon at the crime scene at the time of death.");
-  }
+  // The crime itself: the shared part, then the kind's own (e.g. murder: the victim and the weapon).
+  if (!inSceneAt(crime, timeline, crime.culpritId, crime.crimeTime)) problems.push(`The ${w.culprit} isn't in the crime scene at ${formatTime(crime.crimeTime)}.`);
+  problems.push(...kind.timelineProblems({ city, crime, cast, story }, timeline));
 
   if (crime.accomplice) {
     const { id: acc } = crime.accomplice;
     const linked =
-      story.comms.some((c) => [c.from, c.to].includes(acc) && [c.from, c.to].includes(crime.killerId)) ||
-      story.events.some((e) => e.actors.includes(acc) && e.actors.includes(crime.killerId));
-    if (!linked) problems.push("The killer and accomplice never talk or meet.");
+      story.comms.some((c) => [c.from, c.to].includes(acc) && [c.from, c.to].includes(crime.culpritId)) ||
+      story.events.some((e) => e.actors.includes(acc) && e.actors.includes(crime.culpritId));
+    if (!linked) problems.push(`The ${w.culprit} and accomplice never talk or meet.`);
   }
-
 
   const finder = crime.discovery.byId;
   if (!covering(finder, crime.discovery.time).some((e) => e.roomId === crime.sceneRoomId)) {
-    problems.push(`${nameOf(finder)} isn't at the crime scene when the body is found.`);
+    problems.push(`${nameOf(finder)} isn't at the crime scene when ${w.discovery} (${formatTime(crime.discovery.time)}); ${w.finder} needs an event there then.`);
   }
 
   return problems;

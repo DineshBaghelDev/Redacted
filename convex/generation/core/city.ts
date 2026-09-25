@@ -153,3 +153,11 @@ export function cityCapacity(city: City) {
     roomCameras: city.places.reduce((n, p) => n + p.building.cameraRoomIds.length, 0),
   };
 }
+
+/** Room ids of someone's home: every room of a house, or just the flat/hotel room. */
+export function homeRooms(city: City, homeUnitId: string) {
+  const place = city.places.find((p) => homeUnitId.startsWith(`${p.id}:`));
+  if (place?.kind === "home" && place.building.homeUnits.length === 1) return new Set(place.building.rooms.map((r) => r.id));
+  const unit = place?.building.homeUnits.find((u) => u.id === homeUnitId);
+  return new Set([unit?.roomId ?? homeUnitId]);
+}

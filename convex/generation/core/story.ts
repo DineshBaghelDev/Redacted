@@ -1,74 +1,91 @@
 import { findRoom, type City } from "./city";
+import { capitalize, crimeKind, type CrimeKind } from "./crimes";
 import { buildEvidence } from "./evidence";
+import { listCameras } from "./evidence/cctv";
 import { buildFacts } from "./facts";
-import type { Cast, CrimeCore, Story } from "./schemas";
+import type { Cast, CrimeBase, Story } from "./schemas";
 import { buildTimeline, checkTimeline } from "./timeline";
 import type { Difficulty } from "./crimeCast";
 import { validateCase, validationProblems } from "./validate";
 
-// Story rules: the same text goes into the AI prompt, and storyProblems enforces it.
+// Story rules: the same text goes into the AI prompt, and storyProblems enforces it. Shared rules come
+// first, then the crime kind's own.
 
-export const STORY_RULES = [
-  "Ids of events, messages, purchases and items are short, unique and kebab-case. Actors, senders and buyers are cast ids.",
-  "Times are whole minutes from Day 1 00:00. Everything happens between 0 and the time the body is found. Every event lasts at least 1 minute (end is after start); a quick action takes 2–5 minutes.",
-  "Every roomId is copied from the room list. enteredVia/leftVia, when given, is an [entrance] room of the same building.",
-  "Nobody is in two events at once, and there is enough travel time between events at different places (see travel minutes). Everyday routines are added by code around your events; you only write what matters.",
-  "The murder is one event in the crime scene room with the killer and the victim, covering the time of death, with \"weapon\" in itemsUsed. The victim does nothing after it (no events, messages or purchases).",
-  "Exactly one item has id \"weapon\" and kind \"weapon\", starting in the crime's weapon origin room. An item that ends in a different room from where it starts needs an event in its final room that uses it. finalSlot is where in the room it ends up (e.g. a drawer, the bin); rooms marked [no items] can't hold one.",
-  "Whoever finds the body has an event in the crime scene room starting at the discovery time.",
-  "Every suspect appears in the story (an event, call, message or purchase) in a way that backs up why police would suspect them: a clash with the victim, a debt, being near the scene around the time of death.",
-  "At least one innocent suspect has no alibi or is out near the scene around the time of death, so the killer isn't the only one who could have done it.",
-  "The victim's last hours make sense: the story shows why they were at the scene at that time (a meeting, a late shift, going home).",
-  "Nobody states a plan to kill or confesses in a message or call. Motive evidence is indirect: a debt notice, a letter about the will, an argument someone overheard.",
-  "Everything the killer does has a reason in the story; never add an action only to create evidence.",
-  "If there is an accomplice, the killer and accomplice must meet or talk in the story.",
-  "Write every action, gist and file in your own words; never copy the crime core's method or motive text (NPC scripts are built from the story and must not contain it).",
-  "Visibility: \"public\" events can be seen by anyone at the same place; \"private\" events are known only to their actors.",
-  "Tag with proves [\"motive\"] the messages, items, device files that show the killer's real motive; at least two things (records count) must prove it.",
-];
+export function storyRules(kind: CrimeKind) {
+  const w = kind.words;
+  return [
+    "Ids of events, messages, purchases and items are short, unique and kebab-case. Actors, senders and buyers are cast ids.",
+    `Times are whole minutes from Day 1 00:00. Everything happens between 0 and the time ${w.discovery}. Every event lasts at least 1 minute (end is after start); a quick action takes 2–5 minutes.`,
+    "Every roomId is copied from the room list. enteredVia/leftVia, when given, is an [entrance] room of the same building.",
+    "Nobody is in two events at once, and there is enough travel time between events at different places (see travel minutes). Everyday routines are added by code around your events; you only write what matters.",
+    ...kind.storyRules,
+    "An item that ends in a different room from where it starts needs an event in its final room that uses it. finalSlot is where in the room it ends up (e.g. a drawer, the bin); rooms marked [no items] can't hold one.",
+    `${capitalize(w.finder)} has an event in the crime scene room starting at the discovery time.`,
+    `Every suspect appears in the story (an event, call, message or purchase) in a way that backs up why police would suspect them: a clash with the victim, a debt, being near the scene around the ${w.crimeTime}.`,
+    `At least one innocent suspect has no alibi or is out near the scene around the ${w.crimeTime}, so the ${w.culprit} isn't the only one who could have done it.`,
+    "Nobody states a plan to commit the crime or confesses in a message or call. Motive evidence is indirect: a debt notice, a letter about the will, an argument someone overheard.",
+    `Everything the ${w.culprit} does has a reason in the story; never add an action only to create evidence.`,
+    `If there is an accomplice, the ${w.culprit} and accomplice must meet or talk in the story.`,
+    "Write every action, gist and file in your own words; never copy the crime core's method or motive text (NPC scripts are built from the story and must not contain it).",
+    'Visibility: "public" events can be seen by anyone at the same place; "private" events are known only to their actors.',
+    `Tag with proves ["motive"] the messages, items, device files that show the ${w.culprit}'s real motive; at least two things (records count) must prove it.`,
+  ];
+}
 
 /** How code turns the story into evidence, so the AI can plan a solvable case. */
-export const EVIDENCE_NOTES = [
-  "Cameras record people passing or staying where cameras are (by appearance, never by name).",
-  "Calls and messages are on both phones. Card purchases leave a record; cash leaves nothing.",
-  "Items are found where they end up. Anyone who handled an item (owner or actor in an event using it) leaves prints on it, unless the cover-up wipes the weapon.",
-  "Clothing owned by the killer and listed in the murder event's itemsUsed gets the victim's blood (blunt or sharp weapons) and leaves fibers on the weapon and at the scene.",
-  "Side doors (enteredVia/leftVia) the killer uses at the scene building get their shoe prints.",
-  "The weapon links to the killer through their prints on it (not with wipe-prints), fibers from their clothing, or the killer caught on camera in the weapon's origin room during a story event there that uses the weapon (e.g. taking poison from a pharmacy store with a camera).",
-  "Anyone at the same place during a public event becomes a witness to it.",
-  "At least 2 different kinds of evidence must place the killer at or near the scene around the time of death (e.g. a camera, a witness at a public event, a card purchase, shoe prints at a side door, fibers or prints at the scene). One kind twice is not enough.",
-  "Decisive evidence (at least 2 pieces on easy): the victim's blood on the killer's clothing, the killer's prints on the weapon, the killer on the scene room's camera at the time of death, or something taken from the scene that ends up in the killer's home.",
-  "Innocent suspects may or may not have a provable alibi (a public event elsewhere that others see, a camera, a card purchase); the story decides. Nothing decisive may point at an innocent.",
-];
+export function evidenceNotes(kind: CrimeKind) {
+  const w = kind.words;
+  const decisive = [...kind.decisiveKinds, `the ${w.culprit} on the scene room's camera at the ${w.crimeTime}`, `something taken from the scene that ends up in the ${w.culprit}'s home`];
+  return [
+    "Cameras record people passing or staying where cameras are (by appearance, never by name).",
+    "Calls and messages are on both phones. Card purchases leave a record; cash leaves nothing.",
+    "Items are found where they end up. Anyone who handled an item (owner or actor in an event using it) leaves prints on it, unless the cover-up wipes it.",
+    `Clothing owned by the ${w.culprit} and listed in the ${w.crime} event's itemsUsed leaves fibers at the scene. Doors (enteredVia/leftVia) the ${w.culprit} uses at the scene building get their shoe prints.`,
+    ...kind.evidenceNotes,
+    "Anyone at the same place during a public event becomes a witness to it.",
+    `At least 2 different kinds of evidence must place the ${w.culprit} at or near the scene around the ${w.crimeTime}. Lab traces at the scene (prints, fibers, shoe prints) are one kind; add a camera, a witness at a public event, or a card purchase at the scene's place.`,
+    `Decisive evidence (at least 2 pieces on easy): ${decisive.join(", ")}.`,
+    "Innocent suspects may or may not have a provable alibi (a public event elsewhere that others see, a camera, a card purchase); the story decides. Nothing decisive may point at an innocent.",
+  ];
+}
 
 /**
  * The ways this crime allows to meet the evidence checks the story is most often short of (decisive
- * evidence, linking the weapon to the killer, linking the accomplice), so the story can plan them
- * instead of finding out from the checks.
+ * evidence, placing the culprit at the scene, the kind's own links, the accomplice), so the story can
+ * plan them instead of finding out from the checks.
  */
-export function evidencePlan(city: City, crime: CrimeCore, difficulty: Difficulty) {
-  const hasCamera = (roomId: string) =>
-    !!findRoom(city, roomId)?.place.building.cameraRoomIds.includes(roomId) && crime.disabledCamera?.cameraId !== `cam:${roomId}`;
+export function evidencePlan(city: City, crime: CrimeBase, difficulty: Difficulty) {
+  const kind = crimeKind(crime);
+  const w = kind.words;
+  const own = kind.plan({ city, crime }, difficulty);
+  const off = crime.disabledCamera?.cameraId;
+  const scenePlace = crime.sceneRoomId.split(":")[0];
+  const sceneHasCamera = !!findRoom(city, crime.sceneRoomId)?.place.building.cameraRoomIds.includes(crime.sceneRoomId) && off !== `cam:${crime.sceneRoomId}`;
+  const nearCameras = listCameras(city)
+    .filter((c) => c.id !== off && (c.placeId === scenePlace || c.streetId?.split("~").includes(scenePlace)))
+    .map((c) => c.id);
   const wiped = crime.coverUp.includes("wipe-prints");
-  const clothing = "a clothing item with ownerId set to the killer, listed in the murder event's itemsUsed together with \"weapon\"";
   // Simplest first: the prompt tells the story to use the first ones it needs.
   const decisive = [
-    ...(wiped ? [] : ["the killer's prints on the weapon: the killer handles the weapon in the murder event"]),
-    ...(hasCamera(crime.sceneRoomId) ? ["the killer on the scene room's camera at the time of death: the killer is in the scene room then"] : []),
-    ...(["blunt", "sharp"].includes(crime.weapon.category) ? [`the victim's blood on the killer's clothing: ${clothing}`] : []),
-    "something the killer takes from the scene for a reason the story makes clear (e.g. the document they killed over) and that ends up in their home: an item starting in the scene building, not owned by the killer, whose final room is in the killer's home, with an event there that uses it",
+    ...own.decisive.slice(0, 1),
+    ...(sceneHasCamera ? [`the ${w.culprit} on the scene room's camera at the ${w.crimeTime}: the ${w.culprit} is in the scene room then`] : []),
+    ...own.decisive.slice(1),
+    `something the ${w.culprit} takes from the scene for a reason the story makes clear (e.g. the document it was about) and that ends up in their home: an item starting in the scene building, not owned by the ${w.culprit}, whose final room is in the ${w.culprit}'s home, with an event there that uses it`,
   ];
-  const weaponToKiller = [
-    ...(wiped ? [] : ["the killer's prints on the weapon: the killer is an actor in an event that uses the weapon"]),
-    `fibers from the killer's clothing on the weapon: ${clothing}`,
-    ...(hasCamera(crime.weapon.originRoomId)
-      ? [`the killer on camera where the weapon came from: an event in ${crime.weapon.originRoomId} with the killer as an actor and "weapon" in itemsUsed`]
+  const atScene = [
+    `lab traces at the scene count as one kind: ${wiped ? "fibers from clothing the " + w.culprit + " wears in the " + w.crime + " event, or" : "their prints in the scene room (automatic), fibers, or"} shoe prints (an enteredVia or leftVia on their event at the scene, with shoes in their appearance)`,
+    ...(nearCameras.length ? [`a camera: the ${w.culprit} passes or stays in view of ${nearCameras.join(", ")} within an hour of the ${w.crimeTime}`] : []),
+    `a witness: a public event at the scene's place (${scenePlace}) within an hour of the ${w.crimeTime} where someone sees the ${w.culprit}`,
+    `a card purchase by the ${w.culprit} at ${scenePlace} within an hour of the ${w.crimeTime}`,
+  ];
+  const routes = [
+    { checkId: "culprit", label: `Place the ${w.culprit} at the scene with 2 different kinds of evidence`, ways: atScene },
+    ...own.routes,
+    ...(crime.accomplice
+      ? [{ checkId: "accomplice", label: `Link the accomplice to the ${w.culprit} (at least 1)`, ways: [`a call or message between the ${w.culprit} and the accomplice`, 'a message, item or device file tagged proves ["accomplice"]'] }]
       : []),
   ];
-  const accomplice = crime.accomplice
-    ? ["a call or message between the killer and the accomplice", 'a message, item or device file tagged proves ["accomplice"]']
-    : [];
-  return { needed: difficulty === "easy" ? 2 : 1, decisive, weaponToKiller, accomplice };
+  return { needed: difficulty === "easy" ? 2 : 1, decisive, routes };
 }
 
 /**
@@ -77,16 +94,13 @@ export function evidencePlan(city: City, crime: CrimeCore, difficulty: Difficult
  *
  * @returns Plain problem descriptions; empty when fine.
  */
-export function storyProblems(city: City, crime: CrimeCore, cast: Cast, story: Story, difficulty: Difficulty, seed: number) {
+export function storyProblems(city: City, crime: CrimeBase, cast: Cast, story: Story, difficulty: Difficulty, seed: number) {
   const ids = [...story.events, ...story.comms, ...story.purchases, ...story.items].map((x) => x.id);
   const dupes = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
   if (dupes.length) return [`These ids are used twice: ${dupes.join(", ")}.`];
   // NPC scripts are built from the story; the scripts check rejects the solution's own wording.
   const text = JSON.stringify(story);
-  const copied = [
-    ...(text.includes(crime.method) ? ["method"] : []),
-    ...(text.includes(crime.motive.details) ? ["motive details"] : []),
-  ];
+  const copied = [...(text.includes(crime.method) ? ["method"] : []), ...(text.includes(crime.motive.details) ? ["motive details"] : [])];
   if (copied.length) return copied.map((what) => `The story copies the crime core's ${what} word for word; describe it in your own words.`);
   const inStory = new Set([...story.events.flatMap((e) => e.actors), ...story.comms.flatMap((m) => [m.from, m.to]), ...story.purchases.map((p) => p.who)]);
   const missing = cast.characters.filter((c) => c.role === "suspect" && !inStory.has(c.id)).map((c) => `${c.name} (${c.id})`);
@@ -102,7 +116,6 @@ export function storyProblems(city: City, crime: CrimeCore, cast: Cast, story: S
   const plan = evidencePlan(city, crime, difficulty);
   const failed = (id: string) => checks.some((c) => c.id === id && !c.ok);
   if (failed("evidence")) problems.push(`Ways to get decisive evidence in this case: ${plan.decisive.join("; ")}.`);
-  if (failed("weapon")) problems.push(`Ways to link the weapon to the killer in this case: ${plan.weaponToKiller.join("; ")}.`);
-  if (failed("accomplice")) problems.push(`Ways to link the accomplice: ${plan.accomplice.join("; ")}.`);
+  for (const route of plan.routes) if (failed(route.checkId)) problems.push(`${route.label}. Ways in this case: ${route.ways.join("; ")}.`);
   return problems;
 }

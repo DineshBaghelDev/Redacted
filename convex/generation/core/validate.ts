@@ -1,8 +1,9 @@
 import { findRoom, type City } from "./city";
+import { capitalize, crimeKind, makeCheck } from "./crimes";
 import type { Evidence, EvidenceSet } from "./evidence/types";
 import type { Facts } from "./facts";
 import { checkLies, liarCountProblems } from "./lies";
-import type { Cast, CrimeCore, Lies, Story } from "./schemas";
+import type { Cast, CrimeBase, Lies, Story } from "./schemas";
 
 export type CaseCheck = {
   id: string;
@@ -16,8 +17,6 @@ export type CaseCheck = {
 
 import type { Difficulty } from "./crimeCast";
 
-// "<killer> killed <victim>" in one sentence would hand players the answer.
-const KILL_WORDS = "killed|murdered|shot|stabbed|poisoned|strangled|pushed";
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
@@ -26,7 +25,7 @@ const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
  */
 export function validateCase(
   city: City,
-  crime: CrimeCore,
+  crime: CrimeBase,
   cast: Cast,
   story: Story,
   set: EvidenceSet,
@@ -34,6 +33,9 @@ export function validateCase(
   lies: Lies,
   difficulty: Difficulty,
 ): CaseCheck[] {
+  const kind = crimeKind(crime);
+  const w = kind.words;
+  const parts = { city, crime, cast, story };
   const byId = new Map(set.evidence.map((e) => [e.id, e]));
   const fact = (id: string) => facts.facts.find((f) => f.id === id)?.evidenceIds ?? [];
   const nameOf = (id: string) => cast.characters.find((c) => c.id === id)?.name ?? id;
@@ -41,64 +43,50 @@ export function validateCase(
     const e = byId.get(id);
     return !!e && whyUnreachable(city, crime, cast, set, lies, e) === null;
   };
-  const check = (id: string, label: string, evidenceIds: string[], problems: string[]): CaseCheck => ({
-    id,
-    label,
-    ok: problems.length === 0,
-    problems,
-    evidenceIds,
-  });
+  const check = makeCheck;
   const atLeast = (ids: string[], n: number, what: string) => {
     const ok = ids.filter(reachable);
     return ok.length >= n ? [] : [`Only ${ok.length} reachable piece(s) of evidence ${what}; need ${n}.`];
   };
 
-  // Killer: at least two kinds of evidence put them at/near the scene or break their alibi lie.
-  const alibiLieProof = lies.lies.filter((l) => l.npcId === crime.killerId && l.topic === "whereabouts").flatMap((l) => l.disprovingEvidenceIds);
-  const killerIds = [...new Set([...fact("killer-at-scene"), ...fact("killer-near-scene"), ...alibiLieProof])].filter(reachable);
-  const killerTypes = new Set(killerIds.map((id) => byId.get(id)!.type));
+  // Culprit: at least two kinds of evidence put them at/near the scene or break their alibi lie.
+  const alibiLieProof = lies.lies.filter((l) => l.npcId === crime.culpritId && l.topic === "whereabouts").flatMap((l) => l.disprovingEvidenceIds);
+  const culpritIds = [...new Set([...fact("culprit-at-scene"), ...fact("culprit-near-scene"), ...alibiLieProof])].filter(reachable);
+  const culpritTypes = new Set(culpritIds.map((id) => byId.get(id)!.type));
 
-  const innocents = cast.characters.filter((c) => c.role === "suspect" && c.id !== crime.killerId && c.id !== crime.accomplice?.id);
+  const innocents = cast.characters.filter((c) => c.role === "suspect" && c.id !== crime.culpritId && c.id !== crime.accomplice?.id);
 
   // Innocents may lack an alibi (a difficulty choice), but no decisive-type evidence may point at them:
-  // the victim's blood on their things, their prints on a weapon they don't own, or them on the scene camera at the death.
-  const weaponOwner = story.items.find((i) => i.id === "weapon")?.ownerId;
-  const pointsAt = (id: string) =>
-    set.evidence.filter((e) => {
-      if (e.type === "forensic") {
-        const itemId = e.data.subjectId.replace("item:", "");
-        const owner = story.items.find((i) => i.id === itemId)?.ownerId;
-        if (e.data.bloodOf === crime.victimId && owner === id && itemId !== "weapon") return true;
-        if (e.data.subjectId === "item:weapon" && e.data.test === "fingerprints" && e.data.printsOf?.includes(id) && weaponOwner !== id) return true;
-      }
-      return (
+  // them on the scene camera at the crime time, or the kind's own sort (murder: the victim's blood on
+  // their things, their prints on a weapon they don't own).
+  const pointsAt = (id: string) => [
+    ...kind.pointsAt(parts, set, id),
+    ...set.evidence.filter(
+      (e) =>
         e.type === "cctv" &&
         e.aboutIds.includes(id) &&
         e.access.tool === "cctv" &&
         e.access.cameraId === `cam:${crime.sceneRoomId}` &&
-        e.time! <= crime.timeOfDeath + 15 &&
-        e.end! >= crime.timeOfDeath - 15
-      );
-    });
+        e.time! <= crime.crimeTime + 15 &&
+        e.end! >= crime.crimeTime - 15,
+    ),
+  ];
+  const decisiveKinds = [...kind.decisiveKinds, `the ${w.culprit} on the scene room's camera at the ${w.crimeTime}`, `something taken from the scene found in the ${w.culprit}'s home`];
 
   const checks = [
-    check("killer", "Killer can be placed at the scene", killerIds, killerTypes.size >= 2 ? [] : [
-      `Only ${killerTypes.size} kind(s) of evidence place ${nameOf(crime.killerId)} at the scene${killerTypes.size ? ` (${[...killerTypes].join(", ")})` : ""}; need 2 different kinds, e.g. a camera, a witness at a public event, a card purchase, shoe prints at a side door, fibers or prints at the scene.`,
+    check("culprit", `${capitalize(w.culprit)} can be placed at the scene`, culpritIds, culpritTypes.size >= 2 ? [] : [
+      `Only ${culpritTypes.size} kind(s) of evidence place ${nameOf(crime.culpritId)} at the scene${culpritTypes.size ? ` (${[...culpritTypes].join(", ")})` : ""}; need 2 different kinds, e.g. a camera, a witness at a public event, a card purchase, shoe prints at a side door, fibers or prints at the scene.`,
     ]),
     check("motive", "Motive is backed by evidence", fact("motive"), atLeast(fact("motive"), 2, "for the motive")),
-    check("weapon", "Weapon is linked to the victim and the killer", [...fact("weapon-at-scene"), ...fact("weapon-to-killer")], [
-      ...atLeast(fact("weapon-at-scene"), 1, "linking the weapon to the victim"),
-      ...atLeast(fact("weapon-to-killer"), 1, "linking the weapon to the killer"),
-    ]),
-    check("method", "Method is backed by the lab", fact("method"), atLeast(fact("method"), 1, "for the method")),
+    ...kind.checks(parts, facts, atLeast),
     check("evidence", "Decisive evidence exists", facts.decisiveIds, atLeast(facts.decisiveIds, difficulty === "easy" ? 2 : 1, "that is decisive").map(
-      (p) => `${p} Decisive means: the victim's blood on the killer's clothing, the killer's prints on the weapon, the killer on the scene room's camera at the time of death, or something taken from the scene found in the killer's home.`,
+      (p) => `${p} Decisive means: ${decisiveKinds.join(", ")}.`,
     )),
     check(
       "unique",
       "Nothing decisive points at an innocent",
       innocents.flatMap((c) => fact(`alibi:${c.id}`)),
-      innocents.flatMap((c) => pointsAt(c.id).map((e) => `"${e.title}" points at ${c.name} as strongly as at the killer.`)),
+      innocents.flatMap((c) => pointsAt(c.id).map((e) => `"${e.title}" points at ${c.name} as strongly as at the ${w.culprit}.`)),
     ),
     ...(crime.accomplice
       ? [check("accomplice", "Accomplice can be linked", fact("accomplice-link"), atLeast(fact("accomplice-link"), 1, "linking the accomplice"))]
@@ -123,17 +111,17 @@ export function validateCase(
       [],
       set.evidence
         .filter((e) => {
-          const [killer, victim] = [crime.killerId, crime.victimId].map((id) => escape(nameOf(id).split(" ")[0]));
-          return new RegExp(`\\b${killer}\\b(\\s+[\\w']+){0,2}\\s+(${KILL_WORDS})(\\s+[\\w']+){0,3}?\\s+${victim}\\b`, "i").test(e.summary);
+          const [culprit, victim] = [crime.culpritId, crime.victimId].map((id) => escape(nameOf(id).split(" ")[0]));
+          return new RegExp(`\\b${culprit}\\b(\\s+[\\w']+){0,2}\\s+(${kind.shortcutVerbs})(\\s+[\\w']+){0,3}?\\s+${victim}\\b`, "i").test(e.summary);
         })
-        .map((e) => `"${e.title}" names the killer outright.`),
+        .map((e) => `"${e.title}" names the ${w.culprit} outright.`),
     ),
   ];
   return checks;
 }
 
 /** Why a player couldn't get to this evidence, or null when they can. */
-function whyUnreachable(city: City, crime: CrimeCore, cast: Cast, set: EvidenceSet, lies: Lies, e: Evidence): string | null {
+function whyUnreachable(city: City, crime: CrimeBase, cast: Cast, set: EvidenceSet, lies: Lies, e: Evidence): string | null {
   // A witness who lies about an event won't tell players what they saw of it.
   if (e.type === "witness" && lies.lies.some((l) => l.npcId === e.data.witnessId && l.truthIds.includes(e.data.eventId))) {
     return `${e.data.witnessId} lies about this`;

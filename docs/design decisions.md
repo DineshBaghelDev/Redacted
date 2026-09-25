@@ -49,6 +49,9 @@
 - Every innocent suspect has a reason police would suspect them and appears in the story; at least two have a motive as serious as the killer's, and at least one lacks an alibi, so the killer isn't obvious.
 - If the AI cast still has the wrong number of suspects or witnesses after repairs, code turns extra innocent suspects into witnesses and removes extra witnesses.
 - V1 cases are murders only. Other crimes would need a different case-close scoring.
+- The pipeline is built so theft, robbery and other crimes can be added as one module each; everything that isn't specific to murder is shared.
+- A murder's cover-up can't move the body: the crime scene is always where the body is found.
+- The murder weapon hidden in the killer's home counts as decisive evidence once the lab ties it to the victim, and the killer buying the weapon by card links it to them.
 - Lying isn't compulsory: innocent people tell the truth to clear themselves and lie only when the truth would do real damage (arrest, job, reputation, family). The killer always has a cover story. At most 2/3/4 innocent liars on easy/normal/hard.
 - Innocent suspects don't need a provable alibi; some cases leave people unaccounted for. Nothing decisive may point at an innocent.
 - Not everyone has a secret.

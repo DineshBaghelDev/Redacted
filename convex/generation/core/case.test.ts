@@ -45,7 +45,7 @@ describe("lies", () => {
 
   it("the killer needs a whereabouts lie hiding the murder", () => {
     const l = { lies: lies.lies.filter((x) => x.id !== "victor-home") };
-    expect(checkLies(crimeCore, cast, story, set, l)).toContain("Victor Hale needs a whereabouts lie that hides the murder.");
+    expect(checkLies(crimeCore, cast, story, set, l).join(" | ")).toMatch(/Victor Hale needs a whereabouts lie that hides the murder/);
   });
 
   it("a backup lie needs its own proof", () => {

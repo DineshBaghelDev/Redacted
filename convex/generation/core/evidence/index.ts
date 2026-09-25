@@ -1,6 +1,7 @@
-import { findRoom, type City } from "../city";
+import { findRoom, homeRooms, type City } from "../city";
+import { crimeEvent, crimeKind } from "../crimes";
 import { createRng } from "../rng";
-import { formatTime, type Cast, type CrimeCore, type Story } from "../schemas";
+import { formatTime, type Cast, type CrimeBase, type Story } from "../schemas";
 import type { Timeline } from "../timeline";
 import { buildCctv } from "./cctv";
 import { buildClutter } from "./clutter";
@@ -8,24 +9,13 @@ import type { Evidence, EvidenceSet } from "./types";
 
 type Difficulty = "easy" | "normal" | "hard";
 
-const CAUSE = {
-  blunt: "Blunt force trauma to the head",
-  sharp: "Stab wounds",
-  poison: "Poisoning",
-  firearm: "Gunshot wound",
-  strangulation: "Asphyxia from strangulation",
-  fall: "Injuries from a fall",
-} as const;
-
-const TIME_OF_DEATH_SPREAD = { easy: 45, normal: 90, hard: 120 } as const;
-
 /**
  * Builds every piece of evidence from the checked timeline: CCTV, phone records, card payments,
  * forensics, items, devices, public records and witness statements. Deterministic for a seed.
  */
 export function buildEvidence(
   city: City,
-  crime: CrimeCore,
+  crime: CrimeBase,
   cast: Cast,
   story: Story,
   timeline: Timeline,
@@ -33,6 +23,7 @@ export function buildEvidence(
   seed: number,
 ): EvidenceSet {
   const people = cast.characters;
+  const kind = crimeKind(crime);
   const nameOf = (id: string) => people.find((p) => p.id === id)?.name ?? id;
   const placeName = (id: string) => city.places.find((p) => p.id === id)?.name ?? id;
   const roomName = (id: string) => {
@@ -62,17 +53,14 @@ export function buildEvidence(
     }
   }
 
-  // Devices: the victim's phone is with the body; others must be handed over by their owner.
+  // Devices: people hand their phone over when questioned; the kind may put the victim's elsewhere (a murder victim's is on the body).
   for (const p of people) {
     evidence.push({
       id: `device/phone:${p.id}`,
       type: "device",
       title: `${p.name}'s phone`,
       summary: `${p.name}'s mobile phone.`,
-      access:
-        p.id === crime.victimId
-          ? { tool: "search", roomId: crime.sceneRoomId, slot: "on the body" }
-          : { tool: "interrogation", witnessId: p.id },
+      access: (p.id === crime.victimId && kind.victimPhone?.(crime)) || { tool: "interrogation", witnessId: p.id },
       aboutIds: [p.id],
       sourceIds: [],
       data: { deviceId: `phone:${p.id}`, ownerId: p.id },
@@ -160,18 +148,11 @@ export function buildEvidence(
     );
   }
 
-  evidence.push(...forensics(crime, cast, story, difficulty, nameOf));
+  evidence.push(...forensics(crime, cast, story, kind.keyItemIds, nameOf));
+  evidence.push(...kind.evidence({ city, crime, cast, story }, difficulty, nameOf));
   evidence.push(...witnessStatements(crime, story, timeline, nameOf));
   evidence.push(...buildClutter(city, relevantRooms(city, cast, story), difficulty, createRng(seed + 1)));
   return { cameras, evidence };
-}
-
-/** Room ids of someone's home: every room of a house, or just the flat/hotel room. */
-export function homeRooms(city: City, homeUnitId: string) {
-  const place = city.places.find((p) => homeUnitId.startsWith(`${p.id}:`));
-  if (place?.kind === "home" && place.building.homeUnits.length === 1) return new Set(place.building.rooms.map((r) => r.id));
-  const unit = place?.building.homeUnits.find((u) => u.id === homeUnitId);
-  return new Set([unit?.roomId ?? homeUnitId]);
 }
 
 /** Rooms that matter to the case, grouped by place: story rooms, homes and workplaces of the cast. */
@@ -192,18 +173,18 @@ function relevantRooms(city: City, cast: Cast, story: Story) {
   return byPlace;
 }
 
-function forensics(crime: CrimeCore, cast: Cast, story: Story, difficulty: Difficulty, nameOf: (id: string) => string): Evidence[] {
+/**
+ * Physical traces any crime leaves: prints on story items (the kind's key items are wiped by a
+ * "wipe-prints" cover-up), shoe prints at side doors the culprit used, and prints and clothing fibers
+ * at the scene.
+ */
+function forensics(crime: CrimeBase, cast: Cast, story: Story, keyItemIds: string[], nameOf: (id: string) => string): Evidence[] {
   const out: Evidence[] = [];
-  const tod = crime.timeOfDeath;
-  const spread = TIME_OF_DEATH_SPREAD[difficulty];
-  const bloody = crime.weapon.category === "blunt" || crime.weapon.category === "sharp";
   const wiped = crime.coverUp.includes("wipe-prints");
-  const murder = story.events.find(
-    (e) => e.roomId === crime.sceneRoomId && e.actors.includes(crime.killerId) && e.start <= tod && tod <= e.end,
-  );
-  const killerClothing = story.items.filter(
-    (i) => i.kind === "clothing" && i.ownerId === crime.killerId && murder?.itemsUsed.includes(i.id),
-  );
+  const act = crimeEvent(crime, story);
+  const actIds = act ? [act.id] : [];
+  // Clothing the culprit wore during the crime sheds fibers at the scene.
+  const culpritClothing = story.items.filter((i) => i.kind === "clothing" && i.ownerId === crime.culpritId && act?.itemsUsed.includes(i.id));
   const handlers = (itemId: string) => [
     ...new Set([
       ...story.items.filter((i) => i.id === itemId && i.ownerId).map((i) => i.ownerId!),
@@ -213,37 +194,9 @@ function forensics(crime: CrimeCore, cast: Cast, story: Story, difficulty: Diffi
   const lab = (subjectId: string) => ({ tool: "lab" as const, subjectId });
   const list = (ids: string[]) => ids.map(nameOf).join(", ");
 
-  const lo = Math.floor((tod - spread) / 15) * 15;
-  const hi = Math.ceil((tod + spread) / 15) * 15;
-  out.push({
-    id: "forensic/autopsy",
-    type: "forensic",
-    title: "Autopsy report",
-    summary: `${CAUSE[crime.weapon.category]}. Died between ${formatTime(lo)} and ${formatTime(hi)}.`,
-    access: lab(`body:${crime.victimId}`),
-    aboutIds: [crime.victimId],
-    sourceIds: murder ? [murder.id] : [],
-    data: { test: "autopsy", subjectId: `body:${crime.victimId}` },
-  });
-
   for (const item of story.items) {
     const subjectId = `item:${item.id}`;
-    const usedInMurder = murder?.itemsUsed.includes(item.id) ?? false;
-    if (item.id === "weapon" || (item.kind === "clothing" && usedInMurder)) {
-      if (bloody) {
-        out.push({
-          id: `forensic/${item.id}/blood`,
-          type: "forensic",
-          title: `Blood test · ${item.name}`,
-          summary: `Blood found on the ${item.name.toLowerCase()}. It matches ${nameOf(crime.victimId)}.`,
-          access: lab(subjectId),
-          aboutIds: [crime.victimId, ...(item.ownerId ? [item.ownerId] : [])],
-          sourceIds: [item.id, ...(murder ? [murder.id] : [])],
-          data: { test: "blood", subjectId, bloodOf: crime.victimId },
-        });
-      }
-    }
-    const prints = item.id === "weapon" && wiped ? [] : handlers(item.id);
+    const prints = wiped && keyItemIds.includes(item.id) ? [] : handlers(item.id);
     out.push({
       id: `forensic/${item.id}/prints`,
       type: "forensic",
@@ -254,72 +207,35 @@ function forensics(crime: CrimeCore, cast: Cast, story: Story, difficulty: Diffi
       sourceIds: [item.id],
       data: { test: "fingerprints", subjectId, printsOf: prints },
     });
-    if (item.id === "weapon") {
-      for (const cloth of killerClothing) {
-        out.push({
-          id: `forensic/weapon/fibers/${cloth.id}`,
-          type: "forensic",
-          title: `Fibers · ${item.name}`,
-          summary: `Fibers found on the ${item.name.toLowerCase()} match the ${cloth.name.toLowerCase()}.`,
-          access: lab(subjectId),
-          aboutIds: [cloth.ownerId!],
-          sourceIds: [item.id, cloth.id],
-          data: { test: "fibers", subjectId, fibersFromItemId: cloth.id },
-        });
-      }
-    }
   }
 
-  // Weapon-type specific tests.
-  const weapon = story.items.find((i) => i.id === "weapon");
-  const weaponName = (weapon?.name ?? crime.weapon.name).toLowerCase();
-  const bodyId = `body:${crime.victimId}`;
-  const special = {
-    poison: { test: "toxicology" as const, subjectId: bodyId, title: "Toxicology report", text: `Traces of ${weaponName} found in the blood.` },
-    firearm: { test: "ballistics" as const, subjectId: "item:weapon", title: `Ballistics · ${weapon?.name ?? "weapon"}`, text: `The bullet from the body was fired by the ${weaponName}.` },
-    strangulation: { test: "ligature" as const, subjectId: bodyId, title: "Ligature marks", text: `Marks on the neck match the ${weaponName}.` },
-  } as const;
-  const weaponTest = special[crime.weapon.category as keyof typeof special];
-  if (weaponTest) {
-    out.push({
-      id: `forensic/${weaponTest.test}`,
-      type: "forensic",
-      title: weaponTest.title,
-      summary: weaponTest.text,
-      access: lab(weaponTest.subjectId),
-      aboutIds: [crime.victimId],
-      sourceIds: ["weapon", ...(murder ? [murder.id] : [])],
-      data: { test: weaponTest.test, subjectId: weaponTest.subjectId },
-    });
-  }
-
-  // Footprints at doors the killer used at the scene building.
-  const killerShoes = cast.characters.find((c) => c.id === crime.killerId)?.appearance.shoes;
+  // Footprints at doors the culprit used at the scene building.
+  const shoes = cast.characters.find((c) => c.id === crime.culpritId)?.appearance.shoes;
   const scenePlace = crime.sceneRoomId.split(":")[0];
   const doors = new Set(
     story.events
-      .filter((e) => e.actors.includes(crime.killerId) && e.roomId.startsWith(`${scenePlace}:`))
+      .filter((e) => e.actors.includes(crime.culpritId) && e.roomId.startsWith(`${scenePlace}:`))
       .flatMap((e) => [e.enteredVia, e.leftVia])
       .filter((d): d is string => !!d),
   );
-  for (const door of killerShoes ? doors : []) {
+  for (const door of shoes ? doors : []) {
     out.push({
       id: `forensic/footprints/${door}`,
       type: "forensic",
       title: "Shoe prints",
-      summary: `Fresh shoe prints by the ${door.split(":")[1].replace(/-/g, " ")}: ${killerShoes}.`,
+      summary: `Fresh shoe prints by the ${door.split(":")[1].replace(/-/g, " ")}: ${shoes}.`,
       access: lab(`room:${door}`),
-      aboutIds: [crime.killerId],
-      sourceIds: murder ? [murder.id] : [],
-      data: { test: "footprints", subjectId: `room:${door}`, printsOf: [crime.killerId] },
+      aboutIds: [crime.culpritId],
+      sourceIds: actIds,
+      data: { test: "footprints", subjectId: `room:${door}`, printsOf: [crime.culpritId] },
     });
   }
 
   // The scene itself.
   const sceneId = `room:${crime.sceneRoomId}`;
-  const residents = cast.characters.filter((c) => c.homeUnitId.startsWith(`${crime.sceneRoomId.split(":")[0]}:`)).map((c) => c.id);
+  const residents = cast.characters.filter((c) => c.homeUnitId.startsWith(`${scenePlace}:`)).map((c) => c.id);
   const visitors = story.events.filter((e) => e.roomId === crime.sceneRoomId && e.start <= crime.discovery.time).flatMap((e) => e.actors);
-  const scenePrints = [...new Set([...residents, ...visitors])].filter((id) => !(wiped && id === crime.killerId));
+  const scenePrints = [...new Set([...residents, ...visitors])].filter((id) => !(wiped && id === crime.culpritId));
   out.push({
     id: "forensic/scene/prints",
     type: "forensic",
@@ -327,10 +243,10 @@ function forensics(crime: CrimeCore, cast: Cast, story: Story, difficulty: Diffi
     summary: `Fingerprints at the scene match: ${list(scenePrints)}.`,
     access: lab(sceneId),
     aboutIds: scenePrints,
-    sourceIds: murder ? [murder.id] : [],
+    sourceIds: actIds,
     data: { test: "fingerprints", subjectId: sceneId, printsOf: scenePrints },
   });
-  for (const cloth of killerClothing) {
+  for (const cloth of culpritClothing) {
     out.push({
       id: `forensic/scene/fibers/${cloth.id}`,
       type: "forensic",
@@ -338,7 +254,7 @@ function forensics(crime: CrimeCore, cast: Cast, story: Story, difficulty: Diffi
       summary: `Fibers found at the scene match the ${cloth.name.toLowerCase()}.`,
       access: lab(sceneId),
       aboutIds: [cloth.ownerId!],
-      sourceIds: [cloth.id, ...(murder ? [murder.id] : [])],
+      sourceIds: [cloth.id, ...actIds],
       data: { test: "fibers", subjectId: sceneId, fibersFromItemId: cloth.id },
     });
   }
@@ -346,7 +262,7 @@ function forensics(crime: CrimeCore, cast: Cast, story: Story, difficulty: Diffi
 }
 
 /** People who saw a public story event: other people in it, plus anyone at the same place then. */
-function witnessStatements(crime: CrimeCore, story: Story, timeline: Timeline, nameOf: (id: string) => string): Evidence[] {
+function witnessStatements(crime: CrimeBase, story: Story, timeline: Timeline, nameOf: (id: string) => string): Evidence[] {
   const out: Evidence[] = [];
   for (const e of story.events.filter((e) => e.visibility === "public")) {
     const placeId = e.roomId.split(":")[0];
@@ -379,7 +295,7 @@ function witnessStatements(crime: CrimeCore, story: Story, timeline: Timeline, n
  *
  * @returns Plain problem descriptions; empty when fine.
  */
-export function evidenceProblems(crime: CrimeCore, timeline: Timeline, set: EvidenceSet) {
+export function evidenceProblems(crime: CrimeBase, timeline: Timeline, set: EvidenceSet) {
   const problems: string[] = [];
   const wantsCamera = crime.coverUp.includes("disable-camera");
   const off = crime.disabledCamera;
@@ -390,7 +306,7 @@ export function evidenceProblems(crime: CrimeCore, timeline: Timeline, set: Evid
     if (!camera) problems.push(`Switched-off camera ${off.cameraId} doesn't exist.`);
     if (off.to <= off.from) problems.push("Camera is switched back on before it is switched off.");
     const placeIds = camera?.placeId ? [camera.placeId] : (camera?.streetId?.split("~") ?? []);
-    const culprits = [crime.killerId, ...(crime.accomplice ? [crime.accomplice.id] : [])];
+    const culprits = [crime.culpritId, ...(crime.accomplice ? [crime.accomplice.id] : [])];
     const there = timeline.entries.some(
       (e) => culprits.includes(e.actorId) && placeIds.includes(e.placeId) && e.start <= off.from && e.end >= off.from - 30,
     );

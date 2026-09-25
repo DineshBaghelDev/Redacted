@@ -1,6 +1,7 @@
 import { findRoom, type City } from "./city";
+import { crimeKind } from "./crimes";
 import type { EvidenceSet } from "./evidence/types";
-import { formatTime, type Cast, type CrimeCore, type Lie, type Lies, type Story } from "./schemas";
+import type { Cast, CrimeBase, Lie, Lies, Story } from "./schemas";
 
 export type Knowledge = {
   /** Story event, message/call or purchase id. */
@@ -34,22 +35,19 @@ const RULES = [
   "Keep each lie until the game tells you it has been exposed. Pushing, threats or asking again don't change that.",
   "When a lie is exposed, react as its 'whenCaught' says.",
 ];
-const KILLER_RULE = "Never confess to the killing, even after your lies are exposed.";
-const ACCOMPLICE_RULE = "You helped the killer. Never reveal the killer; admit your own part only as far as exposed lies force you.";
-const INNOCENT_RULE = "You don't know who killed the victim.";
 
 /**
  * Builds each NPC's private script: who they are, what they know (events they took part in or saw,
  * their messages and purchases), their lies, and fixed behaviour rules.
  */
-export function buildScripts(city: City, crime: CrimeCore, cast: Cast, story: Story, set: EvidenceSet, { lies }: Lies): NpcScript[] {
+export function buildScripts(city: City, crime: CrimeBase, cast: Cast, story: Story, set: EvidenceSet, { lies }: Lies): NpcScript[] {
   const where = (roomId: string) => {
     const found = findRoom(city, roomId);
     return found ? `${found.place.name}, ${found.room.name}` : roomId;
   };
   const placeName = (placeId: string) => city.places.find((p) => p.id === placeId)?.name ?? placeId;
   const nameOf = (id: string) => cast.characters.find((c) => c.id === id)?.name ?? id;
-  const victim = nameOf(crime.victimId);
+  const kind = crimeKind(crime);
   const discovery = story.events.find((e) => e.actors.includes(crime.discovery.byId) && e.roomId === crime.sceneRoomId);
 
   return cast.characters
@@ -79,7 +77,7 @@ export function buildScripts(city: City, crime: CrimeCore, cast: Cast, story: St
           id: discovery.id,
           how: "heard",
           time: discovery.end,
-          text: `News: ${victim} was found dead at ${placeName(crime.sceneRoomId.split(":")[0])} on ${formatTime(discovery.start)}.`,
+          text: kind.news({ city, crime, cast, story }, discovery.start),
         });
       }
       knowledge.sort((a, b) => a.time - b.time);
@@ -97,7 +95,7 @@ export function buildScripts(city: City, crime: CrimeCore, cast: Cast, story: St
         protects: c.protects,
         knowledge,
         lies: lies.filter((l) => l.npcId === c.id),
-        rules: [...RULES, c.id === crime.killerId ? KILLER_RULE : c.id === crime.accomplice?.id ? ACCOMPLICE_RULE : INNOCENT_RULE],
+        rules: [...RULES, c.id === crime.culpritId ? kind.scriptRules.culprit : c.id === crime.accomplice?.id ? kind.scriptRules.accomplice : kind.scriptRules.innocent],
       };
     });
 }
@@ -108,7 +106,7 @@ export function buildScripts(city: City, crime: CrimeCore, cast: Cast, story: St
  *
  * @returns Plain problem descriptions; empty when fine.
  */
-export function scriptProblems(crime: CrimeCore, story: Story, scripts: NpcScript[]) {
+export function scriptProblems(crime: CrimeBase, story: Story, scripts: NpcScript[]) {
   const problems: string[] = [];
   // Everyone hears that the body was found (the "News:" line), even when the finding itself was private.
   const discoveryId = story.events.find((e) => e.actors.includes(crime.discovery.byId) && e.roomId === crime.sceneRoomId)?.id;

@@ -1,36 +1,40 @@
 import type { City } from "../core/city";
-import { CRIME_RULES, crimeBrief, type Difficulty } from "../core/crimeCast";
+import { crimeBrief, crimeRules, type Difficulty } from "../core/crimeCast";
+import { crimeKind } from "../core/crimes";
 import { camerasText, roomsText } from "./city";
 
-export const SYSTEM = `You design murder cases for a two-player detective game set in a small modern city.
+/** The system prompt every stage uses, worded for the case's kind of crime. */
+export function systemPrompt(type = "murder") {
+  return `You design ${crimeKind(type).words.crime} cases for a two-player detective game set in a small modern city.
 Cases must be fair: the truth is hidden but can be worked out from evidence. Keep it grounded and believable, no supernatural elements.
 Reply with JSON only.`;
+}
 
 /** Prompt for stage 1: the crime core. */
 export function crimePrompt(city: City, seed: number, difficulty: Difficulty, recentCrimes: string[] = []) {
   const brief = crimeBrief(city, seed);
+  const kind = crimeKind(brief.type);
   const avoid = recentCrimes.length
-    ? `\n\nRecent cases already used these premises. Make this one clearly different: a different kind of relationship between victim and killer, a different situation behind the motive, a different weapon item. Don't reuse these plots:\n${recentCrimes.map((c) => `- ${c}`).join("\n")}`
+    ? `\n\nRecent cases already used these premises. Make this one clearly different: a different kind of relationship between victim and ${kind.words.culprit}, a different situation behind the motive, a different key object. Don't reuse these plots:\n${recentCrimes.map((c) => `- ${c}`).join("\n")}`
     : "";
-  return `Create the crime core for a ${difficulty} case.${avoid}
+  return `Create the crime core for a ${difficulty} ${kind.words.crime} case.${avoid}
 
 Brief (must follow):
-- motive type: ${brief.motiveType}
-- weapon category: ${brief.weaponCategory}
+- type: "${brief.type}"
+${brief.picks.lines.map((l) => `- ${l}`).join("\n")}
 - crime scene place: ${brief.scenePlaceId}
-- accomplice: ${brief.accomplice ? "yes, the killer has a helper" : "none, the killer acts alone"}
-- time of death: Day 2, ${brief.deathTime.label}
+- accomplice: ${brief.accomplice ? `yes, the ${kind.words.culprit} has a helper` : `none, the ${kind.words.culprit} acts alone`}
+- when: Day 2, ${brief.crimeTime.label}
 - first names to pick ids from: ${brief.firstNames.join(", ")}
 
 Rules:
-${CRIME_RULES.map((r) => `- ${r}`).join("\n")}
+${[...crimeRules(kind.words), ...kind.crimeRules].map((r) => `- ${r}`).join("\n")}
 
 Field notes:
-- motive.details: 1–2 sentences, the real reason, naming victim and killer by first name.
-- method: one sentence on how the victim died.
-- weapon.originRoomId: where the weapon was before the crime, copied exactly from the room list (e.g. a kitchen or garage at the scene, or a room at a home or workplace). Never invent ids; homes aren't assigned to people yet.
+- culpritId: the ${kind.words.culprit}. crimeTime: the ${kind.words.crimeTime}. discovery: when and by whom ${kind.words.discovery}.
+- motive.details: 1–2 sentences, the real reason, naming the victim and the ${kind.words.culprit} by first name.
+${kind.crimeNotes.map((n) => `- ${n}`).join("\n")}
 - disabledCamera: { cameraId, from, to } (minutes) if coverUp includes "disable-camera", otherwise null. Most cases don't switch off a camera.
-- accomplice: null unless the brief says there is one; then pick the role that fits the story: fake-alibi, weapon-disposal or distraction.
 
 City rooms (id, name if it adds anything):
 ${roomsText(city)}

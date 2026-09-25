@@ -27,7 +27,7 @@ function physicalProblems(timeline: Timeline) {
       if (next.start - e.end < travel) problems.push(`${actor}: too fast ${e.id} -> ${next.id}`);
     });
   }
-  const dead = timeline.entries.filter((e) => e.actorId === crimeCore.victimId && e.start > crimeCore.timeOfDeath);
+  const dead = timeline.entries.filter((e) => e.actorId === crimeCore.victimId && e.start > crimeCore.crimeTime);
   if (dead.length) problems.push("victim acts after death");
   return problems;
 }

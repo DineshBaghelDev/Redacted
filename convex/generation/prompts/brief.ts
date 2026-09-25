@@ -1,16 +1,14 @@
-import { BRIEF_RULES, type briefInput } from "../core/brief";
+import { briefFacts, briefRules } from "../core/brief";
+import type { City } from "../core/city";
+import type { Cast, CrimeBase, Story } from "../core/schemas";
 
 /** Prompt for stage 9: the case brief players start with. */
-export function briefPrompt(input: ReturnType<typeof briefInput>) {
+export function briefPrompt(city: City, crime: CrimeBase, cast: Cast, story: Story) {
   return `Write the case brief investigators receive when they are called in.
 
 Rules:
-${BRIEF_RULES.map((r) => `- ${r}`).join("\n")}
+${briefRules(crime).map((r) => `- ${r}`).join("\n")}
 
 Known at the start:
-- victim: ${input.victim}
-- body found at: ${input.foundAt}
-- found at: ${input.foundAtTime}
-- reported by: ${input.reportedBy}
-${input.weaponAtScene ? `- left at the scene: ${input.weaponAtScene}` : "- no weapon was found at the scene"}`;
+${briefFacts(city, crime, cast, story).map((f) => `- ${f}`).join("\n")}`;
 }

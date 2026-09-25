@@ -1,29 +1,33 @@
+import { crimeKind, type CrimeWords } from "./crimes";
 import type { EvidenceSet } from "./evidence/types";
-import type { Cast, CrimeCore, Lie, Lies, Story } from "./schemas";
+import type { Cast, CrimeBase, Lie, Lies, Story } from "./schemas";
 
 // Lie rules: the same text goes into the AI prompt, and checkLies enforces it.
 /** Most innocent people who may lie in a case; a ceiling, not a target. */
 export const MAX_INNOCENT_LIARS = { easy: 2, normal: 3, hard: 4 } as const;
 
-export const LIE_RULES = [
+export const lieRules = (w: CrimeWords) => [
   "Nobody has to lie. Innocent people tell the truth, because they want to clear themselves. An innocent lies only when telling the truth would do them real damage: arrest, losing their job, a ruined reputation, a broken marriage or family, or exposing someone they protect. Embarrassment, awkwardness or a small rule broken at work is not enough.",
   "A secret alone is not a reason to lie: they lie about it only if police questions about this case would touch it and the truth would do that kind of damage.",
-  "The killer always lies to clear themselves, with a convincing cover story. Only the killer's whereabouts lie is required; any other lie must be earned by the story.",
-  "The killer must have a \"whereabouts\" lie whose truthIds include the murder event.",
+  `The ${w.culprit} always lies to clear themselves, with a convincing cover story. Only the ${w.culprit}'s whereabouts lie is required; any other lie must be earned by the story.`,
+  `The ${w.culprit} must have a "whereabouts" lie whose truthIds include the ${w.crime} event.`,
   "truthIds are ids of story events, messages/calls or purchases the lie hides (may be empty for a secret with no event).",
   "disprovingEvidenceIds are evidence ids copied exactly from that person's evidence list (never invented or placeholder ids). Each must be about the liar or come from something the lie hides. Never a background item, and never the liar's own statement.",
   "whenCaught is what this person would do once shown proof, judged from their personality and situation: tell the whole truth (\"full-truth\"), admit only what the proof shows (\"admit-shown\"), or switch to a backup lie (\"backup-lie\"), which then must exist and needs at least one piece of proof the first lie doesn't use.",
   "Lie ids are unique. The victim can't lie.",
 ];
 
+/** The problem text for a missing culprit alibi lie starts with this (keepValidLies skips it). */
+const NEEDS_ALIBI_LIE = "needs a whereabouts lie";
+
 /**
  * Checks each lie can be caught in play: it hides something real, and evidence that exists and is
- * about the liar (or comes from what the lie hides) disproves it. The killer must have a whereabouts
- * lie about the murder.
+ * about the liar (or comes from what the lie hides) disproves it. The culprit must have a whereabouts
+ * lie about the crime.
  *
  * @returns Plain problem descriptions; empty when fine.
  */
-export function checkLies(crime: CrimeCore, cast: Cast, story: Story, set: EvidenceSet, { lies }: Lies) {
+export function checkLies(crime: CrimeBase, cast: Cast, story: Story, set: EvidenceSet, { lies }: Lies) {
   const problems: string[] = [];
   const truthIds = new Set([...story.events, ...story.comms, ...story.purchases].map((x) => x.id));
   const evidence = new Map(set.evidence.map((e) => [e.id, e]));
@@ -65,9 +69,10 @@ export function checkLies(crime: CrimeCore, cast: Cast, story: Story, set: Evide
     }
   }
 
-  const murderIds = story.events.filter((e) => e.roomId === crime.sceneRoomId && e.actors.includes(crime.killerId)).map((e) => e.id);
-  const killerAlibiLie = lies.some((l) => l.npcId === crime.killerId && l.topic === "whereabouts" && l.truthIds.some((t) => murderIds.includes(t)));
-  if (!killerAlibiLie) problems.push(`${nameOf(crime.killerId)} needs a whereabouts lie that hides the murder.`);
+  const w = crimeKind(crime).words;
+  const crimeIds = story.events.filter((e) => e.roomId === crime.sceneRoomId && e.actors.includes(crime.culpritId)).map((e) => e.id);
+  const alibiLie = lies.some((l) => l.npcId === crime.culpritId && l.topic === "whereabouts" && l.truthIds.some((t) => crimeIds.includes(t)));
+  if (!alibiLie) problems.push(`${nameOf(crime.culpritId)} ${NEEDS_ALIBI_LIE} that hides the ${w.crime} (an event in the scene room: ${crimeIds.join(", ") || "none yet"}).`);
 
   const ids = lies.map((l) => l.id);
   for (const id of new Set(ids)) if (ids.filter((x) => x === id).length > 1) problems.push(`Two lies share the id "${id}".`);
@@ -75,8 +80,8 @@ export function checkLies(crime: CrimeCore, cast: Cast, story: Story, set: Evide
 }
 
 /** Too many innocent liars makes a case noise, not challenge. */
-export function liarCountProblems(crime: CrimeCore, cast: Cast, { lies }: Lies, difficulty: keyof typeof MAX_INNOCENT_LIARS) {
-  const liars = new Set(lies.map((l) => l.npcId).filter((id) => id !== crime.killerId && id !== crime.accomplice?.id));
+export function liarCountProblems(crime: CrimeBase, cast: Cast, { lies }: Lies, difficulty: keyof typeof MAX_INNOCENT_LIARS) {
+  const liars = new Set(lies.map((l) => l.npcId).filter((id) => id !== crime.culpritId && id !== crime.accomplice?.id));
   const max = MAX_INNOCENT_LIARS[difficulty];
   if (liars.size <= max) return [];
   const names = [...liars].map((id) => cast.characters.find((c) => c.id === id)?.name ?? id).join(", ");
@@ -84,13 +89,13 @@ export function liarCountProblems(crime: CrimeCore, cast: Cast, { lies }: Lies, 
 }
 
 /**
- * Drops lies that can't be caught in play (as the design says), keeping the rest. The killer's
+ * Drops lies that can't be caught in play (as the design says), keeping the rest. The culprit's
  * required whereabouts lie is reported by checkLies, not fixed here.
  */
-export function keepValidLies(crime: CrimeCore, cast: Cast, story: Story, set: EvidenceSet, lies: Lies): Lies {
+export function keepValidLies(crime: CrimeBase, cast: Cast, story: Story, set: EvidenceSet, lies: Lies): Lies {
   const ok = (lie: Lie) =>
-    lie.disprovingEvidenceIds.length > 0 && checkLies(crime, cast, story, set, { lies: [lie] }).filter((p) => !p.includes("needs a whereabouts lie")).length === 0;
-  // One bad proof id shouldn't cost a whole lie (e.g. the killer's alibi): keep only the ids that work.
+    lie.disprovingEvidenceIds.length > 0 && checkLies(crime, cast, story, set, { lies: [lie] }).filter((p) => !p.includes(NEEDS_ALIBI_LIE)).length === 0;
+  // One bad proof id shouldn't cost a whole lie (e.g. the culprit's alibi): keep only the ids that work.
   const works = (lie: Lie, id: string) => ok({ ...lie, disprovingEvidenceIds: [id], backupLie: undefined, whenCaught: "admit-shown" });
   const prune = (lie: Lie): Lie => ({
     ...lie,

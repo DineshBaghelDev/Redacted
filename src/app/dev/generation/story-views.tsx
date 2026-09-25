@@ -2,7 +2,8 @@
 
 import { city } from "../../../../convex/fixtures/city";
 import { findRoom } from "../../../../convex/generation/core/city";
-import { formatTime, type Cast, type CrimeCore, type Story } from "../../../../convex/generation/core/schemas";
+import { capitalize, crimeKind, type CrimeCore } from "../../../../convex/generation/core/crimes";
+import { formatTime, type Cast, type Story } from "../../../../convex/generation/core/schemas";
 
 // Visual views for the crime, cast and story stages.
 
@@ -38,23 +39,31 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+/** Crime cores saved before crime kinds used killerId and timeOfDeath. */
+type OldCrime = { killerId?: string; timeOfDeath?: number };
+
 export function CrimeView({ crime, names }: { crime: CrimeCore; names: Names }) {
   const who = (id: string) => names.get(id) ?? id;
+  const w = crimeKind(crime).words;
+  const culpritId = crime.culpritId ?? (crime as OldCrime).killerId;
+  const crimeTime = crime.crimeTime ?? (crime as OldCrime).timeOfDeath;
   return (
     <div className="grid gap-3 border border-red-400/40 p-3 sm:grid-cols-2">
       <Field label="Victim">{who(crime.victimId)}</Field>
-      <Field label="Killer">
-        <span className="text-red-400">{who(crime.killerId)}</span>
+      <Field label={capitalize(w.culprit)}>
+        <span className="text-red-400">{who(culpritId)}</span>
         {crime.accomplice && ` + accomplice ${who(crime.accomplice.id)} (${crime.accomplice.role})`}
       </Field>
       <Field label={`Motive · ${crime.motive.type}`}>{crime.motive.details}</Field>
-      <Field label={`Weapon · ${crime.weapon.category}`}>
-        {crime.weapon.name} <span className="opacity-60">(from {where(crime.weapon.originRoomId)})</span>
-      </Field>
+      {"weapon" in crime && (
+        <Field label={`Weapon · ${crime.weapon.category}`}>
+          {crime.weapon.name} <span className="opacity-60">(from {where(crime.weapon.originRoomId)})</span>
+        </Field>
+      )}
       <Field label="Method">{crime.method}</Field>
       <Field label="Scene">{where(crime.sceneRoomId)}</Field>
-      <Field label="Time of death">{formatTime(crime.timeOfDeath)}</Field>
-      <Field label="Body found">
+      <Field label={capitalize(w.crimeTime)}>{formatTime(crimeTime)}</Field>
+      <Field label="Discovered">
         {formatTime(crime.discovery.time)} by {who(crime.discovery.byId)}
       </Field>
       <Field label="Story window">
@@ -84,7 +93,7 @@ export function CastView({ cast, crime }: { cast: Cast; crime?: CrimeCore }) {
             <span className="text-base text-yellow-200">{c.name}</span>
             <span className="text-xs opacity-60">
               {c.age} · {c.gender} · {c.role}
-              {crime?.killerId === c.id && <span className="text-red-400"> · KILLER</span>}
+              {crime && (crime.culpritId ?? (crime as OldCrime).killerId) === c.id && <span className="text-red-400"> · {crimeKind(crime).words.culprit.toUpperCase()}</span>}
               {crime?.accomplice?.id === c.id && <span className="text-red-400"> · ACCOMPLICE</span>}
             </span>
           </div>

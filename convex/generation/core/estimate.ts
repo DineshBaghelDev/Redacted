@@ -38,16 +38,16 @@ function step(city: City, e: Evidence): EstimateStep {
 
 /**
  * The shortest useful investigation: decisive evidence, one piece per fact, each alibi, and proof for
- * the killer's lies, plus items that must be found before a lab test or device read.
+ * the culprit's lies, plus items that must be found before a lab test or device read.
  *
  * @returns Steps, travel minutes for a simple route from the bureau and back, and their total as a lower bound.
  */
-export function estimateInput(city: City, set: EvidenceSet, facts: Facts, lies: Lies, killerId: string) {
+export function estimateInput(city: City, set: EvidenceSet, facts: Facts, lies: Lies, culpritId: string) {
   const byId = new Map(set.evidence.map((e) => [e.id, e]));
   const wanted = new Set([
     ...facts.decisiveIds,
     ...facts.facts.flatMap((f) => f.evidenceIds.slice(0, f.kind === "motive" ? 2 : 1)),
-    ...lies.lies.filter((l) => l.npcId === killerId).map((l) => l.disprovingEvidenceIds[0]),
+    ...lies.lies.filter((l) => l.npcId === culpritId).map((l) => l.disprovingEvidenceIds[0]),
   ]);
   for (const id of [...wanted]) {
     const a = byId.get(id)?.access;
@@ -79,8 +79,8 @@ export type Estimate = ReturnType<typeof estimateTime>;
  * How long a good investigation should take: the shortest one times the difficulty's dead-end factor,
  * rounded up to 15 minutes.
  */
-export function estimateTime(city: City, set: EvidenceSet, facts: Facts, lies: Lies, killerId: string, difficulty: Difficulty) {
-  const input = estimateInput(city, set, facts, lies, killerId);
+export function estimateTime(city: City, set: EvidenceSet, facts: Facts, lies: Lies, culpritId: string, difficulty: Difficulty) {
+  const input = estimateInput(city, set, facts, lies, culpritId);
   const factor = DEAD_ENDS[difficulty];
   const estimatedOptimalMinutes = Math.ceil((input.lowerBound * factor) / 15) * 15;
   const reasoningSummary = `A perfect investigation takes ${input.lowerBound} min (${input.steps.length} steps, ${input.travelMinutes} min travel). Times ${factor} for dead ends on ${difficulty}.`;

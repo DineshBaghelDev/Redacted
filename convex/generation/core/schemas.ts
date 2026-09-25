@@ -3,33 +3,33 @@ import { z } from "zod";
 // Shapes of the story stages. Later these are also the LLM's structured-output schemas.
 // Times are whole minutes from Day 1 00:00 (Day 2 starts at 1440).
 
-const id = z.string().min(1);
+export const id = z.string().min(1);
 
 /** What a piece of story material helps prove. Code derives the rest (presence, alibis, weapon links). */
 const proves = z.array(z.enum(["motive", "accomplice"])).default([]);
 
-export const crimeCoreSchema = z.object({
+/**
+ * What every crime has, whatever its kind. Each kind (core/crimes/) extends this with its own fields
+ * (murder adds the weapon) and narrows the loose ones (motive type, accomplice role, cover-up steps).
+ */
+export const crimeBaseSchema = z.object({
+  type: z.string(),
   victimId: id,
-  killerId: id,
-  /** null when the killer acts alone (most cases). Required-but-null so the AI decides instead of skipping it. */
-  accomplice: z.object({ id, role: z.enum(["fake-alibi", "weapon-disposal", "distraction"]) }).nullable(),
-  motive: z.object({
-    type: z.enum(["money", "jealousy", "revenge", "cover-up", "power"]),
-    details: z.string(),
-  }),
-  weapon: z.object({
-    name: z.string(),
-    category: z.enum(["blunt", "sharp", "poison", "firearm", "strangulation", "fall"]),
-    originRoomId: id,
-  }),
+  culpritId: id,
+  /** null when the culprit acts alone (most cases). Required-but-null so the AI decides instead of skipping it. */
+  accomplice: z.object({ id, role: z.string() }).nullable(),
+  motive: z.object({ type: z.string(), details: z.string() }),
+  /** One sentence on how the crime was done. Hidden: never copied into anything players or NPCs see. */
   method: z.string(),
   sceneRoomId: id,
-  timeOfDeath: z.number().int(),
+  /** When the crime itself happens (for a murder, the time of death). */
+  crimeTime: z.number().int(),
   windowStart: z.number().int(),
   discovery: z.object({ time: z.number().int(), byId: id }),
   /** Required when coverUp includes "disable-camera": which camera went dark and when. */
   disabledCamera: z.object({ cameraId: id, from: z.number().int(), to: z.number().int() }).nullable(),
-  coverUp: z.array(z.enum(["wipe-prints", "hide-weapon", "move-body", "disable-camera", "remove-item"])).max(5),
+  /** Every kind understands "wipe-prints" and "disable-camera"; kinds add their own steps. */
+  coverUp: z.array(z.string()).max(5),
 });
 
 export const routineTypes = ["office", "night-shift", "shop", "unemployed", "student"] as const;
@@ -109,10 +109,12 @@ export const storySchema = z.object({
       placeId: id,
       time: z.number().int(),
       item: z.string(),
+      /** The story item bought, if it is one (e.g. "weapon" for poison bought at a pharmacy). */
+      itemId: id.optional(),
       payment: z.enum(["card", "cash"]),
     }),
   ),
-  /** Story items (weapon included, id "weapon"): where they start and where they end up. */
+  /** Story items (a murder's weapon included, id "weapon"): where they start and where they end up. */
   items: z.array(
     z.object({
       id,
@@ -163,7 +165,7 @@ export const briefSchema = z.object({
   initialFacts: z.array(z.string()),
 });
 
-export type CrimeCore = z.infer<typeof crimeCoreSchema>;
+export type CrimeBase = z.infer<typeof crimeBaseSchema>;
 export type Texts = z.infer<typeof textsSchema>;
 export type Brief = z.infer<typeof briefSchema>;
 export type Lie = z.infer<typeof lieSchema>;

@@ -64,7 +64,7 @@ describe("new evidence kinds", () => {
 
   it("finds Victor's shoe prints by the back door", () => {
     expect(byId("forensic/footprints/keel-14:back-door").summary).toContain("size 11 leather dress shoes");
-    expect(fact("killer-at-scene")).toContain("forensic/footprints/keel-14:back-door");
+    expect(fact("culprit-at-scene")).toContain("forensic/footprints/keel-14:back-door");
   });
 
   it("poison gets a toxicology report that links the weapon", () => {
@@ -121,7 +121,7 @@ describe("facts for the easy case", () => {
 
   it("links motive and contact to Victor", () => {
     expect(fact("motive")).toEqual(expect.arrayContaining(["item/ledger", "record/victor/0", "message/warning-message/nora"]));
-    expect(fact("killer-contact")).toContain("call/victor-call/daniel");
+    expect(fact("culprit-contact")).toContain("call/victor-call/daniel");
   });
 
   it("a weapon with prints left on it becomes decisive", () => {

@@ -1,22 +1,24 @@
 import type { EvidenceSet } from "../core/evidence/types";
-import { LIE_RULES, MAX_INNOCENT_LIARS } from "../core/lies";
-import { formatTime, type Cast, type CrimeCore, type Story } from "../core/schemas";
+import { crimeKind } from "../core/crimes";
+import { lieRules, MAX_INNOCENT_LIARS } from "../core/lies";
+import { formatTime, type Cast, type CrimeBase, type Story } from "../core/schemas";
 
 /**
  * Prompt for stage 6: lies. Each person gets only their own part of the story and the evidence about
  * them (no background items, no everyday camera rows), which keeps the prompt small.
  */
-export function liesPrompt(crime: CrimeCore, cast: Cast, story: Story, set: EvidenceSet, difficulty: keyof typeof MAX_INNOCENT_LIARS) {
+export function liesPrompt(crime: CrimeBase, cast: Cast, story: Story, set: EvidenceSet, difficulty: keyof typeof MAX_INNOCENT_LIARS) {
   const nameOf = (id: string) => cast.characters.find((c) => c.id === id)?.name ?? id;
   const useful = set.evidence.filter(
     (e) => !(e.type === "item" && e.data.clutter) && !(e.type === "cctv" && e.sourceIds[0]?.startsWith("routine/")) && e.type !== "device",
   );
-  const murderId = story.events.find((e) => e.roomId === crime.sceneRoomId && e.actors.includes(crime.killerId))?.id ?? "(missing)";
+  const w = crimeKind(crime).words;
+  const crimeId = story.events.find((e) => e.roomId === crime.sceneRoomId && e.actors.includes(crime.culpritId))?.id ?? "(missing)";
 
   const people = cast.characters
     .filter((c) => c.role !== "victim")
     .map((c) => {
-      const role = c.id === crime.killerId ? "KILLER" : c.id === crime.accomplice?.id ? "ACCOMPLICE" : c.role;
+      const role = c.id === crime.culpritId ? w.culprit.toUpperCase() : c.id === crime.accomplice?.id ? "ACCOMPLICE" : c.role;
       const events = story.events.filter((e) => e.actors.includes(c.id));
       const comms = story.comms.filter((m) => m.from === c.id || m.to === c.id);
       const buys = story.purchases.filter((p) => p.who === c.id);
@@ -41,13 +43,13 @@ export function liesPrompt(crime: CrimeCore, cast: Cast, story: Story, set: Evid
     })
     .join("\n\n");
 
-  return `Decide who lies about what in this case. The killer is ${nameOf(crime.killerId)}; the murder event is ${murderId}.
+  return `Decide who lies about what in this case. The ${w.culprit} is ${nameOf(crime.culpritId)}; the ${w.crime} event is ${crimeId}.
 
 Rules:
-${LIE_RULES.map((r) => `- ${r}`).join("\n")}
+${lieRules(w).map((r) => `- ${r}`).join("\n")}
 
 People:
 ${people}
 
-Write the killer's cover story (the required whereabouts lie, plus a backup if they are cunning). Add other lies only where the story and the person give a real reason. This is a ${difficulty} case: at most ${MAX_INNOCENT_LIARS[difficulty]} innocent people may lie, usually fewer, and often none. Most people tell the truth.`;
+Write the ${w.culprit}'s cover story (the required whereabouts lie, plus a backup if they are cunning). Add other lies only where the story and the person give a real reason. This is a ${difficulty} case: at most ${MAX_INNOCENT_LIARS[difficulty]} innocent people may lie, usually fewer, and often none. Most people tell the truth.`;
 }

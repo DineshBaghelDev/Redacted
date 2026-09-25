@@ -4,20 +4,19 @@ import { city } from "../fixtures/city";
 import { checkCity, cityCapacity } from "./core/city";
 import { castProblems, crimeBrief, crimeProblems, trimCast } from "./core/crimeCast";
 import { castPrompt } from "./prompts/cast";
-import { crimePrompt, SYSTEM } from "./prompts/crime";
-import { briefInput, briefProblems } from "./core/brief";
+import { crimePrompt, systemPrompt } from "./prompts/crime";
+import { briefProblems } from "./core/brief";
+import { crimeCoreSchema, crimeTypeFor, type CrimeCore } from "./core/crimes";
 import { estimateTime } from "./core/estimate";
 import {
   briefSchema,
   castSchema,
-  crimeCoreSchema,
   liesSchema,
   schemaProblems,
   storySchema,
   textsSchema,
   type Brief,
   type Cast,
-  type CrimeCore,
   type Lies,
   type Story,
   type Texts,
@@ -93,7 +92,7 @@ export const stages: StageDef[] = [
     inputs: [],
     schema: crimeCoreSchema,
     handWritten: easyCase.crimeCore,
-    prompt: (_inputs, job) => ({ system: SYSTEM, prompt: crimePrompt(city, job.seed, job.difficulty, job.recentCrimes) }),
+    prompt: (_inputs, job) => ({ system: systemPrompt(crimeTypeFor(job.seed)), prompt: crimePrompt(city, job.seed, job.difficulty, job.recentCrimes) }),
     // The seeded brief only binds AI output; the hand-written case predates it.
     check: (output, _inputs, job, fromAi) => crimeProblems(city, output as CrimeCore, fromAi ? crimeBrief(city, job.seed) : undefined),
     // A switched-off camera the AI never names: drop that cover-up step rather than fail the case.
@@ -109,7 +108,7 @@ export const stages: StageDef[] = [
     inputs: ["crime"],
     schema: castSchema,
     handWritten: easyCase.cast,
-    prompt: (inputs, job) => ({ system: SYSTEM, prompt: castPrompt(city, inputs.crime as CrimeCore, job.difficulty, job.seed) }),
+    prompt: (inputs, job) => ({ system: systemPrompt((inputs.crime as CrimeCore).type), prompt: castPrompt(city, inputs.crime as CrimeCore, job.difficulty, job.seed) }),
     // The seeded brief only binds AI output; the hand-written case predates it.
     check: (output, inputs, job, fromAi) => castProblems(city, inputs.crime as CrimeCore, output as Cast, job.difficulty, fromAi ? job.seed : undefined),
     // Counts still off after repairs: turn extra suspects into witnesses and drop extra witnesses.
@@ -124,7 +123,7 @@ export const stages: StageDef[] = [
     handWritten: easyCase.story,
     prompt: (inputs, job) => {
       const { crime, cast } = get(inputs);
-      return { system: SYSTEM, prompt: storyPrompt(city, crime, cast, job.difficulty) };
+      return { system: systemPrompt(crime.type), prompt: storyPrompt(city, crime, cast, job.difficulty) };
     },
     check: (output, inputs, job) => {
       const { crime, cast } = get(inputs);
@@ -174,7 +173,7 @@ export const stages: StageDef[] = [
     handWritten: easyCase.lies,
     prompt: (inputs, job) => {
       const { crime, cast, story, evidence } = get(inputs);
-      return { system: SYSTEM, prompt: liesPrompt(crime, cast, story, evidence, job.difficulty) };
+      return { system: systemPrompt(crime.type), prompt: liesPrompt(crime, cast, story, evidence, job.difficulty) };
     },
     check: (output, inputs, job) => {
       const { crime, cast, story, evidence } = get(inputs);
@@ -189,12 +188,12 @@ export const stages: StageDef[] = [
     name: "text",
     label: "7 · Written text (messages, files, statements)",
     kind: "llm",
-    inputs: ["cast", "story", "evidence"],
+    inputs: ["crime", "cast", "story", "evidence"],
     schema: textsSchema,
     handWritten: easyCase.texts,
     prompt: (inputs) => {
-      const { cast, story, evidence } = get(inputs);
-      return { system: SYSTEM, prompt: textPrompt(textTargets(cast, story, evidence)) };
+      const { crime, cast, story, evidence } = get(inputs);
+      return { system: systemPrompt(crime.type), prompt: textPrompt(textTargets(cast, story, evidence)) };
     },
     check: (output, inputs) => {
       const { cast, story, evidence } = get(inputs);
@@ -227,11 +226,11 @@ export const stages: StageDef[] = [
     handWritten: easyCase.brief,
     prompt: (inputs) => {
       const { crime, cast, story } = get(inputs);
-      return { system: SYSTEM, prompt: briefPrompt(briefInput(city, crime, cast, story)) };
+      return { system: systemPrompt(crime.type), prompt: briefPrompt(city, crime, cast, story) };
     },
     check: (output, inputs) => {
       const { crime, cast, story } = get(inputs);
-      return briefProblems(crime, cast, story, output as Brief);
+      return briefProblems(city, crime, cast, story, output as Brief);
     },
   },
   {
@@ -241,7 +240,7 @@ export const stages: StageDef[] = [
     inputs: ["crime", "evidence", "facts", "lies"],
     run: (inputs, job) => {
       const { crime, evidence, facts, lies } = get(inputs);
-      return { output: estimateTime(city, evidence, facts, lies, crime.killerId, job.difficulty), checkErrors: [] };
+      return { output: estimateTime(city, evidence, facts, lies, crime.culpritId, job.difficulty), checkErrors: [] };
     },
   },
   {

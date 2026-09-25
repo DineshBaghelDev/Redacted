@@ -7,7 +7,8 @@ import { estimateInput, estimateTime } from "./estimate";
 import { buildEvidence } from "./evidence";
 import { buildFacts } from "./facts";
 import { keepValidLies } from "./lies";
-import { evidencePlan, STORY_RULES, storyProblems } from "./story";
+import { crimeKind } from "./crimes";
+import { evidencePlan, storyProblems, storyRules } from "./story";
 import { buildScripts, scriptProblems } from "./scripts";
 import { applyTexts, textProblems, textTargets } from "./text";
 import { buildTimeline } from "./timeline";
@@ -21,7 +22,7 @@ describe("story check", () => {
   it("hand-written story passes, and the prompt carries every rule", () => {
     expect(storyProblems(city, crimeCore, cast, story, "easy", SEED)).toEqual([]);
     const prompt = storyPrompt(city, crimeCore, cast, "easy");
-    for (const rule of STORY_RULES) expect(prompt).toContain(rule);
+    for (const rule of storyRules(crimeKind("murder"))) expect(prompt).toContain(rule);
     expect(prompt).toContain("keel-14:back-door [entrance] [no items]");
   });
 
@@ -80,9 +81,9 @@ describe("written text", () => {
 
 describe("brief", () => {
   it("hand-written brief passes; naming the killer or the hidden weapon fails", () => {
-    expect(briefProblems(crimeCore, cast, story, brief)).toEqual([]);
+    expect(briefProblems(city, crimeCore, cast, story, brief)).toEqual([]);
     const leaky = { ...brief, initialFacts: [...brief.initialFacts.slice(0, 3), "Victor Hale was seen nearby with a cast-iron doorstop."] };
-    const problems = briefProblems(crimeCore, cast, story, leaky);
+    const problems = briefProblems(city, crimeCore, cast, story, leaky);
     expect(problems.join("\n")).toMatch(/names Victor Hale/);
     expect(problems.join("\n")).toMatch(/names the weapon/);
   });
@@ -116,13 +117,17 @@ describe("evidence plan", () => {
     const plan = evidencePlan(city, crimeCore, "easy");
     expect(plan.needed).toBe(2);
     expect(plan.decisive.join(" | ")).toMatch(/blood on the killer's clothing/);
-    expect(plan.accomplice).toEqual([]);
-    const wiped = evidencePlan(city, { ...crimeCore, coverUp: ["wipe-prints"], weapon: { ...crimeCore.weapon, category: "firearm" } }, "hard");
+    expect(plan.routes.map((r) => r.checkId)).toEqual(["culprit", "weapon"]);
+    const wiped = evidencePlan(city, { ...crimeCore, coverUp: ["wipe-prints"], weapon: { ...crimeCore.weapon, category: "firearm" } } as typeof crimeCore, "hard");
     expect(wiped.needed).toBe(1);
     expect(wiped.decisive.join(" | ")).not.toMatch(/prints on the weapon|blood on the killer's clothing/);
     expect(wiped.decisive.join(" | ")).toMatch(/killer's home/);
-    expect(wiped.weaponToKiller.join(" | ")).not.toMatch(/prints/);
-    expect(wiped.weaponToKiller.join(" | ")).toMatch(/ownerId set to the killer/);
+    const weaponWays = wiped.routes.find((r) => r.checkId === "weapon")!.ways.join(" | ");
+    expect(weaponWays).not.toMatch(/prints on the weapon/);
+    expect(weaponWays).toMatch(/ownerId set to the killer/);
+    expect(weaponWays).toMatch(/buys the weapon by card/);
+    const withHelper = evidencePlan(city, { ...crimeCore, accomplice: { id: "lena", role: "fake-alibi" } }, "normal");
+    expect(withHelper.routes.map((r) => r.checkId)).toContain("accomplice");
   });
 
   it("goes into the story prompt", () => {
@@ -168,13 +173,13 @@ describe("brief and a hidden weapon", () => {
     const hiddenAtScene = { ...story, items: story.items.map((i) => (i.id === "weapon" ? { ...i, finalRoomId: crimeCore.sceneRoomId } : i)) };
     const weapon = hiddenAtScene.items.find((i) => i.id === "weapon")!;
     const naming = { ...brief, initialFacts: [...brief.initialFacts.slice(0, 3), `A ${weapon.name.toLowerCase()} was found nearby.`] };
-    expect(briefProblems(crimeCore, cast, hiddenAtScene, naming).join(" | ")).toMatch(/isn't in plain sight/);
+    expect(briefProblems(city, crimeCore, cast, hiddenAtScene, naming).join(" | ")).toMatch(/isn't in plain sight/);
   });
 });
 
 describe("lie clean-up", () => {
   it("drops only the bad proof ids and keeps the lie", () => {
-    const main = lies.lies.find((l) => l.npcId === crimeCore.killerId && l.topic === "whereabouts")!;
+    const main = lies.lies.find((l) => l.npcId === crimeCore.culpritId && l.topic === "whereabouts")!;
     const withBad = { lies: lies.lies.map((l) => (l.id === main.id ? { ...l, disprovingEvidenceIds: [...l.disprovingEvidenceIds, "no-such-evidence"] } : l)) };
     const kept = keepValidLies(crimeCore, cast, story, set, withBad).lies.find((l) => l.id === main.id);
     expect(kept?.disprovingEvidenceIds).toEqual(main.disprovingEvidenceIds);

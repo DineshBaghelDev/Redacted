@@ -56,7 +56,7 @@
               {
                 "kind": "debt",
                 "proves": [],
-                "summary": "Owes roughly \u00a34,200 on a store card, mostly behind on minimum payments."
+                "summary": "Owes roughly £4,200 on a store card, mostly behind on minimum payments."
               }
             ],
             "relationshipToVictim": "the victim",
@@ -142,7 +142,7 @@
               {
                 "kind": "debt",
                 "proves": [],
-                "summary": "Payday loan of \u00a3900 outstanding, taken out the week after his demotion."
+                "summary": "Payday loan of £900 outstanding, taken out the week after his demotion."
               },
               {
                 "kind": "complaint",
@@ -173,7 +173,7 @@
               "height": "5'6\"",
               "shoes": "low black heels"
             },
-            "fakeMotive": "Stands to collect \u00a3120,000 on Martin's life insurance policy.",
+            "fakeMotive": "Stands to collect £120,000 on Martin's life insurance policy.",
             "gender": "female",
             "homeUnitId": "carver-towers:unit-3b",
             "id": "sandra",
@@ -188,7 +188,7 @@
               {
                 "kind": "insurance",
                 "proves": [],
-                "summary": "Martin's life policy, \u00a3120,000, still lists Sandra Holloway as sole beneficiary; premiums paid to date."
+                "summary": "Martin's life policy, £120,000, still lists Sandra Holloway as sole beneficiary; premiums paid to date."
               },
               {
                 "kind": "property",
@@ -219,7 +219,7 @@
               "height": "5'9\"",
               "shoes": "canvas trainers with a split sole"
             },
-            "fakeMotive": "Martin owed him \u00a32,500 from their grey-market parts deal and had stopped paying.",
+            "fakeMotive": "Martin owed him £2,500 from their grey-market parts deal and had stopped paying.",
             "gender": "male",
             "homeUnitId": "linden-court:unit-3a",
             "id": "caleb",
@@ -234,7 +234,7 @@
               {
                 "kind": "debt",
                 "proves": [],
-                "summary": "Text messages and a handwritten IOU recovered in a past civil dispute mention \u00a32,500 owed by 'Holloway' to Rusk."
+                "summary": "Text messages and a handwritten IOU recovered in a past civil dispute mention £2,500 owed by 'Holloway' to Rusk."
               },
               {
                 "kind": "criminal",
@@ -261,7 +261,7 @@
             "age": 29,
             "appearance": {
               "build": "petite",
-              "clothing": "denim jacket over a caf\u00e9 apron, chunky rings",
+              "clothing": "denim jacket over a café apron, chunky rings",
               "height": "5'3\"",
               "shoes": "black ankle boots"
             },
@@ -367,7 +367,7 @@
             "relationshipToVictim": "no connection; found Martin collapsed on the concourse",
             "role": "witness",
             "routine": "office",
-            "secret": "She had stepped away from her booth to chat with the caf\u00e9 vendor when Martin collapsed, which breaches station rules.",
+            "secret": "She had stepped away from her booth to chat with the café vendor when Martin collapsed, which breaches station rules.",
             "traits": [
               "observant",
               "motherly",
@@ -396,13 +396,13 @@
               {
                 "kind": "other",
                 "proves": [],
-                "summary": "His incident report claims a continuous patrol, but a caf\u00e9 loyalty-app purchase timestamps him at Ember Caf\u00e9 at 7.14am."
+                "summary": "His incident report claims a continuous patrol, but a café loyalty-app purchase timestamps him at Ember Café at 7.14am."
               }
             ],
             "relationshipToVictim": "no connection; first security officer on scene",
             "role": "witness",
             "routine": "office",
-            "secret": "He left the concourse unattended to buy a coffee at Ember Caf\u00e9 across the road shortly before the collapse.",
+            "secret": "He left the concourse unattended to buy a coffee at Ember Café across the road shortly before the collapse.",
             "traits": [
               "eager",
               "careful",
@@ -484,6 +484,7 @@
     },
     "crime": {
       "output": {
+        "type": "murder",
         "coverUp": [
           "wipe-prints",
           "hide-weapon"
@@ -492,14 +493,14 @@
           "byId": "ruth",
           "time": 1938
         },
-        "killerId": "elena",
+        "culpritId": "elena",
         "method": "Elena slipped a stolen dose of fentanyl into Martin's morning coffee while he checked the departure board, and he collapsed on the concourse minutes later.",
         "motive": {
           "details": "Elena blamed Martin for her brother's death after Martin, his supervisor at the warehouse, falsified a safety report that freed him of blame for a fatal accident. She spent two years waiting for a chance to make him pay.",
           "type": "revenge"
         },
         "sceneRoomId": "union-station:concourse",
-        "timeOfDeath": 1920,
+        "crimeTime": 1920,
         "victimId": "martin",
         "weapon": {
           "category": "poison",
@@ -678,7 +679,7 @@
           {
             "durationMinutes": 6,
             "from": "caleb",
-            "gist": "Caleb demands the \u00a32,500 Martin owes from the parts deal; Martin laughs and says a suspended sentence means Caleb cannot go near the police.",
+            "gist": "Caleb demands the £2,500 Martin owes from the parts deal; Martin laughs and says a suspended sentence means Caleb cannot go near the police.",
             "id": "caleb-martin-debt-call",
             "proves": [],
             "time": 810,
@@ -710,7 +711,7 @@
             "visibility": "public"
           },
           {
-            "action": "Caleb confronts Martin over the missing \u00a32,500 from their parts deal, and Martin tells him he will pay when he feels like it.",
+            "action": "Caleb confronts Martin over the missing £2,500 from their parts deal, and Martin tells him he will pay when he feels like it.",
             "actors": [
               "martin",
               "caleb"
@@ -813,7 +814,7 @@
             "visibility": "public"
           },
           {
-            "action": "Nadia works the morning rush at Ember Caf\u00e9, pulling shots and calling out orders for a room full of commuters.",
+            "action": "Nadia works the morning rush at Ember Café, pulling shots and calling out orders for a room full of commuters.",
             "actors": [
               "nadia"
             ],
@@ -944,7 +945,7 @@
             "visibility": "private"
           },
           {
-            "action": "Returning from her unauthorised chat with the caf\u00e9 vendor, Ruth finds Martin collapsed and unresponsive near the departure board and screams for help; Farid runs over and radios for an ambulance.",
+            "action": "Returning from her unauthorised chat with the café vendor, Ruth finds Martin collapsed and unresponsive near the departure board and screams for help; Farid runs over and radios for an ambulance.",
             "actors": [
               "ruth",
               "farid"
@@ -1112,11 +1113,11 @@
           },
           {
             "id": "elena-clinic-lie",
-            "text": "Sorry, I need to leave early on Thursday morning \u2014 I've got a dental appointment I can't move."
+            "text": "Sorry, I need to leave early on Thursday morning — I've got a dental appointment I can't move."
           },
           {
             "id": "martin-sandra-property",
-            "text": "Martin, you still haven't signed the Harlow Lane deed transfer. It'd be a shame if someone found out you never updated your policy paperwork. \u2014 I don't know what you mean, and please stop bringing this up."
+            "text": "Martin, you still haven't signed the Harlow Lane deed transfer. It'd be a shame if someone found out you never updated your policy paperwork. — I don't know what you mean, and please stop bringing this up."
           },
           {
             "id": "nadia-martin-row-texts",
@@ -1128,7 +1129,7 @@
           },
           {
             "id": "file/elena-phone/0",
-            "text": "Photo \u2014 Tomas on the Pier 9 loading bay. Private caption: 'Two years. Still nothing.'"
+            "text": "Photo — Tomas on the Pier 9 loading bay. Private caption: 'Two years. Still nothing.'"
           },
           {
             "id": "file/elena-phone/1",
@@ -1136,15 +1137,15 @@
           },
           {
             "id": "witness/derek/derek-threat",
-            "text": "He told me my demotion stands, just like that. I lost it \u2014 I shouted in front of the whole loading crew that Martin would get what's coming to him."
+            "text": "He told me my demotion stands, just like that. I lost it — I shouted in front of the whole loading crew that Martin would get what's coming to him."
           },
           {
             "id": "witness/caleb/caleb-debt-row",
-            "text": "I confronted him about the \u00a32,500 from our parts deal that's gone missing. He just shrugged and said he'd pay when he feels like it."
+            "text": "I confronted him about the £2,500 from our parts deal that's gone missing. He just shrugged and said he'd pay when he feels like it."
           },
           {
             "id": "witness/nadia/nadia-harlow-row",
-            "text": "We argued on the doorstep about his texts to Sandra. I told him I'm keeping his wallet and spare key until he apologises \u2014 one of the neighbours must have heard me."
+            "text": "We argued on the doorstep about his texts to Sandra. I told him I'm keeping his wallet and spare key until he apologises — one of the neighbours must have heard me."
           },
           {
             "id": "witness/derek/george-quikstop-breakfast",
@@ -1156,7 +1157,7 @@
           },
           {
             "id": "witness/farid/nadia-opens-cafe",
-            "text": "Nadia worked the morning rush at Ember Caf\u00e9 \u2014 pulling shots and calling out orders for a room full of commuters."
+            "text": "Nadia worked the morning rush at Ember Café — pulling shots and calling out orders for a room full of commuters."
           },
           {
             "id": "witness/nadia/farid-coffee-run",
@@ -1172,11 +1173,11 @@
           },
           {
             "id": "witness/margo/orian-buys-coffee",
-            "text": "I saw Orian queuing at the coffee kiosk behind a heavyset man in a navy work jacket \u2014 he was meant to be at a lecture. Then he drifted towards the departure board."
+            "text": "I saw Orian queuing at the coffee kiosk behind a heavyset man in a navy work jacket — he was meant to be at a lecture. Then he drifted towards the departure board."
           },
           {
             "id": "witness/elena/orian-buys-coffee",
-            "text": "I saw Orian queuing at the coffee kiosk behind a heavyset man in a navy work jacket \u2014 he was meant to be at a lecture. Then he drifted towards the departure board."
+            "text": "I saw Orian queuing at the coffee kiosk behind a heavyset man in a navy work jacket — he was meant to be at a lecture. Then he drifted towards the departure board."
           },
           {
             "id": "witness/margo/elena-on-concourse",
@@ -1188,23 +1189,23 @@
           },
           {
             "id": "witness/margo/martin-gets-coffee",
-            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train \u2014 the one for the freight managers' meeting."
+            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train — the one for the freight managers' meeting."
           },
           {
             "id": "witness/elena/martin-gets-coffee",
-            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train \u2014 the one for the freight managers' meeting."
+            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train — the one for the freight managers' meeting."
           },
           {
             "id": "witness/orian/martin-gets-coffee",
-            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train \u2014 the one for the freight managers' meeting."
+            "text": "Martin bought his usual large black coffee at the kiosk and stood checking the departure board for the 8.20 train — the one for the freight managers' meeting."
           },
           {
             "id": "witness/ruth/ruth-finds-body",
-            "text": "I'd popped out to chat with the caf\u00e9 vendor, which I shouldn't have done. When I came back I found Martin collapsed and unresponsive near the departure board. I screamed for help, and Farid ran over and radioed for an ambulance."
+            "text": "I'd popped out to chat with the café vendor, which I shouldn't have done. When I came back I found Martin collapsed and unresponsive near the departure board. I screamed for help, and Farid ran over and radioed for an ambulance."
           },
           {
             "id": "witness/farid/ruth-finds-body",
-            "text": "Ruth had been off chatting with the caf\u00e9 vendor when she should have been on duty. When she came back she found Martin collapsed and unresponsive near the departure board \u2014 she screamed for help, and I ran over and radioed for an ambulance."
+            "text": "Ruth had been off chatting with the café vendor when she should have been on duty. When she came back she found Martin collapsed and unresponsive near the departure board — she screamed for help, and I ran over and radioed for an ambulance."
           }
         ]
       },
