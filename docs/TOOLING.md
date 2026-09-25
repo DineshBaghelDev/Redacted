@@ -58,6 +58,16 @@ Role:
 
 One configured generation model, one NPC model, one repair model, one judge model; some may be the same provider/model initially.
 
+Providers, all OpenAI-compatible through `@ai-sdk/openai-compatible`, with an ordered model list per generation stage (`STAGE_MODELS` in `convex/generation/llm.ts`; details and results in GENERATION.md "Model strategy"):
+
+- **Codex (GPT-6 Sol)**: the owner's ChatGPT subscription through [openai-api-server-via-codex](https://github.com/hotchpotch/openai-api-server-via-codex) on the owner's PC, reached from Convex through a Cloudflare quick tunnel (`cloudflared`). First choice for every AI stage when `CODEX_API_KEY` is set.
+- **Moonshot (Kimi K3, K2.6)**: paid; the fallback for the big stages.
+- **Groq (`openai/gpt-oss-120b`)**: free; first for the small text and brief stages.
+- **Gemini, OpenRouter (Nemotron), NVIDIA NIM**: free backups.
+- NPC roleplay (planned): `moonshotai/kimi-k2.6`.
+
+Calls stream through `streamText` + `Output.object` with Zod; code checks every reply against the stage's schema. Strict schema mode is tried where the provider handles it (Kimi uses JSON mode; Codex gets a non-strict schema), with a JSON-mode fallback. Thinking is kept low through the SDK's `reasoningEffort` option (medium for Sol's story). `ai` and `@ai-sdk/openai-compatible` must share the same `@ai-sdk/provider` version (bump them together). Keys live in the Convex environment; a provider without a key is skipped.
+
 No dynamic model router in V1.
 
 ### Zod
@@ -92,7 +102,7 @@ Convex dashboard/logs are sufficient for developer data/function inspection. No 
 
 ### Vitest
 
-Role:
+Role (plus `convex-test` for workflow/function tests with stubbed LLM stages):
 
 - deterministic unit tests,
 - generation validators,
@@ -167,6 +177,8 @@ NPC/case context is bounded structured case data. Do not add embeddings/vector s
 ### Custom admin dashboard
 
 Not needed for developer-only debugging. Use Sentry + Convex dashboard.
+
+Exception: one **dev-only, read-only case viewer** page (timeline, evidence, lies, validator results), hidden in production by an env flag. It never creates or edits data.
 
 ## Operational note
 

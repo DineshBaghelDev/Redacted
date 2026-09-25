@@ -241,6 +241,17 @@ NPC dialogue does not automatically:
 - change suspicion scores,
 - interpret what the player should conclude.
 
+### Lies and showing proof
+
+- A lie breaks only when a player shows evidence that disproves it. Asking again or pushing harder never forces the truth.
+- Proof can be any evidence the players have found: physical items, lab results, CCTV records, calls and messages, public records, device files, or another person's statement.
+- Players can attach found evidence to a message ("show evidence").
+- The server checks the shown evidence against the lie's stored disproving evidence. The LLM never decides whether a lie is caught.
+- On a match, the lie is marked exposed for the session (shared by both players) and the NPC prompt is told it is exposed.
+- Reaction to exposure comes from personality: nervous NPCs tell the full truth on that topic, stubborn ones admit only what the proof shows, cunning ones switch to a backup lie that needs different proof.
+- The killer may admit smaller lies but never confesses the murder; the player proves it at case close.
+- Without proof, NPCs stay in character (nervous, annoyed, deflecting) but keep the lie.
+
 Both players see the same NPC conversation live.
 
 Both may send concurrently. Messages are ordered and processed one NPC turn at a time for that conversation.
@@ -303,7 +314,7 @@ Deadline:
 
 ```text
 starting game time
-+ AI-estimated optimal investigation minutes
++ code-estimated optimal investigation minutes
 + 1440 minutes
 ```
 

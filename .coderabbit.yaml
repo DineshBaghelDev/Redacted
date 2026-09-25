@@ -1,0 +1,11 @@
+# CodeRabbit: review our code, not vendored agent skills, generated code or recorded test data.
+reviews:
+  path_filters:
+    - "!.claude/**"
+    - "!.agents/**"
+    - "!skills-lock.json"
+    - "!convex/_generated/**"
+    - "!package-lock.json"
+    - "!**/__snapshots__/**"
+    - "!convex/fixtures/recorded/**"
+    - "!public/**"

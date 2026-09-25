@@ -18,3 +18,48 @@
 - Main-menu options render as plain text and only reveal their bordered pixel-noir styling on hover or keyboard focus.
 - The join-room dialog takes the room code as six single-character OTP-style boxes and shows join errors inside the dialog.
 - Only waiting rooms accept joins, and room actions require an authenticated session-player membership.
+
+## 2026-09-24
+
+- Case generation plans the crime first, then derives all evidence from one timeline with code; the LLM writes people, motives, story events and wording only.
+- V1 uses one ready-made 20-place city with street and in-building cameras.
+- Timeline window is up to 2 days before the crime; older backstory is NPC talk only.
+- One crime per case with an optional accomplice; naming the accomplice earns a bonus badge, not a sixth star.
+- NPC lies come from personality and what they protect, and every lie can be disproved by evidence.
+- CCTV rows describe appearance, not names; players filter by camera and time.
+- Evidence star is earned by picking a key item from the case's decisive set.
+- NPC lies break only when players show proof, never from repeated pushing; the killer never confesses the murder.
+- Use NVIDIA NIM with Kimi K3 for case generation and Kimi K2.6 for NPC conversations.
+- Allow one dev-only, read-only case viewer page for inspecting generated cases until the game UI exists.
+- The city and buildings never change between cases; places use addresses or business names so any new cast can live and work there.
+- Some cameras can be faulty in a case, so camera coverage is not the same every time.
+- One hand-written easy case is kept for building the game UI and testing, so we don't spend AI tokens regenerating cases during development.
+- Each lie says how the person reacts when caught: tells the whole truth, admits only what the proof shows, or switches to a backup lie (which needs different proof).
+- Finding something taken from the victim's home inside the killer's home counts as decisive evidence.
+- The victim's phone is found "on the body" at the scene.
+- Any evidence the players have found can be shown to break a lie, not only physical items they picked up.
+- For variety, code picks each AI case's motive type, weapon type and crime-scene place from the seed; the AI builds the case around them.
+- Witnesses per case: 3–6.
+- When AI output fails the checks, the AI gets its answer back with the exact problems, up to 2 times; lies and written texts that still fail are dropped rather than failing the case.
+- The case brief tells players only who died, where, when, who reported it, and the weapon only if it was left at the scene.
+- The time estimate is worked out by code, not AI: the minimum a perfect investigation needs × 2 (easy), 2.5 (normal) or 3 (hard) for dead ends, rounded up to 15 minutes.
+- "Run all" stops a case at the first stage that still has problems after its repairs (no new-seed restart yet). Failed AI calls (network, rate limit, timeout) are retried up to 3 times with a growing wait; failed checks go to repairs instead.
+- Test runs are 3 cases (easy, normal, hard), generated one after another so each case's time isn't slowed by the others.
+- Generation time left is predicted from the average AI time per stage over the last 5 passed cases of the same difficulty.
+- For variety the seed also picks: accomplice or not (about 1 in 5), the part of Day 2 the death happens in, the exact number of suspects, the victim's daily routine, and the names the case may use. The cover-up stays the AI's choice because it depends on the story.
+- To stop every case looking the same, the crime prompt lists the last 10 generated crimes and asks for a clearly different premise (relationship, situation behind the motive, weapon item). Seeded story ingredients and story complications were considered and left out for now.
+- Case generation uses free tiers only (no Moonshot, which is paid). Each AI stage has a fixed list of models; when one fails (rate limit, quota, overload) the next takes over, with NIM as the backup everywhere.
+- If the story leaves an item in a spot its room doesn't have, the item goes in the room's first spot instead of sending the story back: which drawer doesn't change the case.
+- Every innocent suspect has a reason police would suspect them and appears in the story; at least two have a motive as serious as the killer's, and at least one lacks an alibi, so the killer isn't obvious.
+- If the AI cast still has the wrong number of suspects or witnesses after repairs, code turns extra innocent suspects into witnesses and removes extra witnesses.
+- V1 cases are murders only. Other crimes would need a different case-close scoring.
+- The pipeline is built so theft, robbery and other crimes can be added as one module each; everything that isn't specific to murder is shared.
+- A murder's cover-up can't move the body: the crime scene is always where the body is found.
+- A murder by a fall has no weapon item: the push is the weapon, and the autopsy proves it.
+- Kimi generates in plain JSON mode rather than strict schema mode (faster, cheaper); code checks every reply against the schema.
+- Only the weapon's move must happen in a story event; other items can end up somewhere without one, since players find them where they end up.
+- Case briefs never use weekdays (cases run on Day 1, Day 2...), and generated character descriptions give no clock times; the story sets every time.
+- The murder weapon hidden in the killer's home counts as decisive evidence once the lab ties it to the victim, and the killer buying the weapon by card links it to them.
+- Lying isn't compulsory: innocent people tell the truth to clear themselves and lie only when the truth would do real damage (arrest, job, reputation, family). The killer always has a cover story. At most 2/3/4 innocent liars on easy/normal/hard.
+- Innocent suspects don't need a provable alibi; some cases leave people unaccounted for. Nothing decisive may point at an innocent.
+- Not everyone has a secret.

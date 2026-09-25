@@ -1,5 +1,6 @@
-import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { requireUserId } from "./lib/auth";
 
 const MAX_PLAYERS = 2;
 const ROOM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -11,20 +12,6 @@ const ROOM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
  */
 function makeRoomCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
-}
-
-/**
- * Retrieves the authenticated user's identity.
- *
- * @returns The authenticated user's subject identifier.
- * @throws If no authenticated user is present.
- */
-async function requireUserId(ctx: MutationCtx | QueryCtx) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) {
-    throw new Error("Sign in first.");
-  }
-  return identity.subject;
 }
 
 export const create = mutation({
