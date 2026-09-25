@@ -309,6 +309,11 @@ Testing:
   - Kimi runs in plain JSON mode (the schema is written into the prompt); strict schema mode was about 40% slower with about 20% more output. Other providers try strict mode first and fall back to JSON mode if refused or given an empty reply. Every reply is checked against the schema in code either way.
   - Cost: about $0.25–0.55 of Kimi per case (easy to hard, with a few repairs), 4–9 minutes.
   - Tried and not used: NIM models alone (slow, often empty or broken JSON), Gemini 3.8/3.7/3.5 Flash as the main model (overloaded, 20 a day), Gemini 3.1 Pro (not in the free quota).
+- **Reaching the local Codex server from Convex** (dev setup): Convex runs in the cloud and can't see the owner's PC, so a Cloudflare quick tunnel exposes the server over HTTPS, protected by a password:
+  1. Start the server with the password from `.env.local` (`CODEX_API_KEY`), still bound to `127.0.0.1`: `uvx openai-api-server-via-codex --api-key <CODEX_API_KEY>`.
+  2. Start the tunnel: `cloudflared tunnel --url http://127.0.0.1:18080`. It prints an `https://….trycloudflare.com` address, which changes on every restart (a free Cloudflare account gives a fixed one).
+  3. Set the Convex env: `CODEX_API_KEY` (the same password) and `CODEX_BASE_URL` (the address plus `/v1`). Update `CODEX_BASE_URL` whenever the tunnel restarts.
+  When the PC, server or tunnel is off, Sol's calls fail and the next model in the list (Kimi) takes over. Removing `CODEX_API_KEY` from the Convex env turns Sol off entirely. Every provider stays configured, so switching models is only a change to `STAGE_MODELS`.
 - `NPC_MODEL`: `moonshotai/kimi-k2.6` on NVIDIA NIM,
 - `REPAIR_MODEL`: cheaper structured-output model,
 - `JUDGE_MODEL`: grader for motive/method at case close; may equal NPC or generation model initially.
