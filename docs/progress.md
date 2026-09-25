@@ -80,24 +80,19 @@
 
 ## Pending
 
-### Case generation — remaining chunks
+### Case generation — remaining
 
-- **F.** ~~Full workflow ("Run all", retries, repair loop)~~ done; first real 5-case test run, cost per case (after provider choice), parallel stages, Promptfoo evals.
+- **Freeze into playable cases (Stage 13):** a passed job still lives in `generationJobs`/`generationDrafts`. Writing it into the game's case tables (`cases`, `caseSolutions`, `caseEvents`, `npcScripts`, …) waits for those tables, which the game builds first on the hand-written case.
+- **Restart with a new seed:** a job that still fails after its repairs is marked failed; the spec's "restart with a new seed, fail after 2 restarts" isn't built.
+- **Player-facing progress text** ("Writing suspects…"): deferred with loading screens.
+- **Offline eval suite (50–100 cases):** runs 8–12 give a baseline (12 of 15 passed, 4–9 min, $0.25–0.55 each); the full suite waits on budget.
+- **More crime kinds:** theft and robbery plug in as one module each, plus their own case-close stars.
 
-### Making AI-generated cases trustworthy
+### Known limits of AI cases (after runs 8–12)
 
-Today the same code path and checks run for hand-written and AI output, but that does not yet guarantee AI cases work:
-
-- **Solvability check is rule-based.** It proves each star has reachable evidence, not that players will connect it. Story sense is still for evals.
-- **Story sense not checked.** Only later evals (chunk F) judge whether a case makes sense.
-- **Only one test case, written alongside the checker.** Untested paths: accomplice, unemployed/student routines and hangouts, hotel guests, events crossing midnight, 3+ people meeting, firearm/strangulation/fall cases end to end (poison lab test is covered), public-place crime scenes.
-- **Repair via plain-English problems is untested.** Unknown whether the AI can fix its output from the checker's messages.
-- **Brief can add small invented details** (seen: "construction foreman" for a warehouse foreman, "near the ticket gates"). The leak check only blocks the solution; a check or eval for added facts is still missing.
-- **Checks can't catch text that contradicts the data.** Seen in a real cast: a witness described as "Elliot's neighbour at Carver Towers" whose home is 14 Keel Street. Needs a later text-vs-data check or eval.
-- **AI is slow.** ~60 s crime, ~150 s cast, story first try ~9 min (right at the 10-minute Convex action limit; now cut off at 9). A full case takes 20+ minutes. Consider a faster model for the story or generating cases ahead of time.
-- **NIM free endpoint queues requests:** a one-sentence `kimi-k3` call took ~3 min on NIM vs ~10 s on Moonshot's own API (thinking isn't the cause). A normal-case story hit the 9-min timeout on NIM. Provider choice deferred during development.
-- **Fresh-case check of the new lie rules not finished** (normal, seed 2024: crime and cast pass, story timed out on NIM).
-- **NPC model id `moonshotai/kimi-k2.6` not tried yet.**
+- **Solvability is rule-based and story sense is judged by reading cases.** No AI judge in V1 (per VALIDATION_EVALS.md).
+- **Wording vs data:** checked in code for clock times, weekdays and the brief's part of day, messages to oneself, and claimed evidence in suspects' reasons. Other small contradictions still slip through (a witness "who cleaned the hotel rooms where the dinner was discussed" when the dinner was at a flat). Filler witnesses with nothing to do are accepted.
+- **Groq's text rewrite** sometimes adds a time; one free repair fixes it.
 
 Planned fixes:
 
