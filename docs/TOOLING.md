@@ -58,12 +58,15 @@ Role:
 
 One configured generation model, one NPC model, one repair model, one judge model; some may be the same provider/model initially.
 
-Provider: **NVIDIA NIM** (OpenAI-compatible, `https://integrate.api.nvidia.com/v1`) through `@ai-sdk/openai-compatible`.
+Providers, all OpenAI-compatible through `@ai-sdk/openai-compatible`, with an ordered model list per generation stage (`STAGE_MODELS` in `convex/generation/llm.ts`; details and results in GENERATION.md "Model strategy"):
 
-- Generation (and repair/judge initially): `moonshotai/kimi-k3`
-- NPC roleplay: `moonshotai/kimi-k2.6`
+- **Codex (GPT-6 Sol)**: the owner's ChatGPT subscription through [openai-api-server-via-codex](https://github.com/hotchpotch/openai-api-server-via-codex) on the owner's PC, reached from Convex through a Cloudflare quick tunnel (`cloudflared`). First choice for every AI stage when `CODEX_API_KEY` is set.
+- **Moonshot (Kimi K3, K2.6)**: paid; the fallback for the big stages.
+- **Groq (`openai/gpt-oss-120b`)**: free; first for the small text and brief stages.
+- **Gemini, OpenRouter (Nemotron), NVIDIA NIM**: free backups.
+- NPC roleplay (planned): `moonshotai/kimi-k2.6`.
 
-Structured output uses `generateText` + `Output.object` with Zod (`convex/generation/llm.ts`). Each call first asks NIM for strict `json_schema`; if NIM rejects the request, it retries in JSON mode with the schema written into the prompt, and Zod checks the reply. The mode used is logged per call; as of the first runs, strict mode works for `moonshotai/kimi-k3`. `ai` and `@ai-sdk/openai-compatible` must share the same `@ai-sdk/provider` version (bump them together). Needs `NIM_API_KEY` in the Convex environment.
+Calls stream through `streamText` + `Output.object` with Zod; code checks every reply against the stage's schema. Strict schema mode is tried where the provider handles it (Kimi uses JSON mode; Codex gets a non-strict schema), with a JSON-mode fallback. Thinking is kept low through the SDK's `reasoningEffort` option (medium for Sol's story). `ai` and `@ai-sdk/openai-compatible` must share the same `@ai-sdk/provider` version (bump them together). Keys live in the Convex environment; a provider without a key is skipped.
 
 No dynamic model router in V1.
 
