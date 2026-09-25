@@ -12,6 +12,8 @@ const PROVIDERS = {
   groq: { baseURL: "https://api.groq.com/openai/v1", key: "GROQ_API_KEY" },
   openrouter: { baseURL: "https://openrouter.ai/api/v1", key: "OPENROUTER_API_KEY" },
   moonshot: { baseURL: "https://api.moonshot.ai/v1", key: "MOONSHOT_API_KEY" },
+  /** The owner's local OpenAI-compatible server over Codex (CODEX_BASE_URL overrides, e.g. a tunnel); any non-empty key works. */
+  codex: { baseURL: "http://127.0.0.1:18080/v1", key: "CODEX_API_KEY" },
 } as const;
 
 /**
@@ -20,6 +22,8 @@ const PROVIDERS = {
  */
 function thinkingOptions(provider: keyof typeof PROVIDERS, id: string): Record<string, JSONValue> {
   if (provider === "moonshot") return id === "kimi-k3" ? { reasoningEffort: "low" } : { thinking: { type: "disabled" } };
+  // OpenAI's strict schema mode needs every field required, and ours has optional ones: the schema guides, code checks.
+  if (provider === "codex") return { reasoningEffort: process.env.CODEX_REASONING ?? "low", strictJsonSchema: false };
   if (provider === "gemini" || provider === "groq") return { reasoningEffort: "low" };
   if (provider === "openrouter") return { reasoning: { effort: "low" } };
   return {};
@@ -84,7 +88,8 @@ function chatModel(model: string, strict: boolean) {
   const [prefix, ...rest] = model.split(":");
   const name = (prefix in PROVIDERS && rest.length ? prefix : "nim") as keyof typeof PROVIDERS;
   const id = name === prefix ? rest.join(":") : model;
-  const { baseURL, key } = PROVIDERS[name];
+  const { key } = PROVIDERS[name];
+  const baseURL = (name === "codex" && process.env.CODEX_BASE_URL) || PROVIDERS[name].baseURL;
   const apiKey = process.env[key];
   if (!apiKey) throw new Error(`${key} is not set in the Convex environment.`);
   return {

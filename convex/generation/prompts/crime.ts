@@ -32,7 +32,7 @@ ${[...crimeRules(kind.words), ...kind.crimeRules].map((r) => `- ${r}`).join("\n"
 
 Field notes:
 - culpritId: the ${kind.words.culprit}. crimeTime: the ${kind.words.crimeTime}. discovery: when and by whom ${kind.words.discovery}.
-- motive.details: 1–2 sentences, the real reason, naming the victim and the ${kind.words.culprit} by first name.
+- motive.details: 2–3 sentences: the history between them, what just happened to set it off, and what the ${kind.words.culprit} gains or avoids. Name the victim and the ${kind.words.culprit} by first name.
 ${kind.crimeNotes.map((n) => `- ${n}`).join("\n")}
 - disabledCamera: { cameraId, from, to } (minutes) if coverUp includes "disable-camera", otherwise null. Most cases don't switch off a camera.
 

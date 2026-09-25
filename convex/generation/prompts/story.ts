@@ -31,9 +31,9 @@ ${list(plan.decisive.slice(0, plan.needed))}${plan.decisive.length > plan.needed
 ${plan.routes.map((r) => `- ${r.label}:\n${list(r.ways)}`).join("\n")}
 
 What to write:
-- events: the ${w.crime} and any cover-up, earlier conflicts that give each suspect their reason to be suspected, where people really were around the ${w.crimeTime} (some provable, some not), the discovery. Every suspect appears at least once. Usually 15–30 events. action is one plain sentence.
-- comms: calls and messages between two different people that matter (gist = what was said). durationMinutes for calls. Drafts and notes go in a device's contents instead.
-- purchases: things bought that matter (card or cash); itemId when the thing bought is a story item.
+- events: the ${w.crime} and any cover-up, earlier conflicts that give each suspect their reason to be suspected, where people really were around the ${w.crimeTime} (some provable, some not), the discovery. Every suspect appears at least once, most of them twice. Usually 18–30 events. action is one or two concrete sentences (about 15–35 words): who does what, where, and one telling detail (something said, an object, a mood).
+- comms: calls and messages between two different people (gist = what was said, in a sentence or two). Usually 5–10: plans, arguments, alibis being set up, and the ordinary messages people really send. durationMinutes for calls. Drafts and notes go in a device's contents instead.
+- purchases: usually 1–4 that matter: a meal or drink that gives someone an alibi, supplies, the weapon (card leaves a record, cash doesn't); itemId when the thing bought is a story item.
 - ${kind.storyItems}
 
 Rooms by place (id, name if it adds anything, [entrance], [no items]):

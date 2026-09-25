@@ -51,5 +51,5 @@ ${lieRules(w).map((r) => `- ${r}`).join("\n")}
 People:
 ${people}
 
-Write the ${w.culprit}'s cover story (the required whereabouts lie, plus a backup if they are cunning). Add other lies only where the story and the person give a real reason. This is a ${difficulty} case: at most ${MAX_INNOCENT_LIARS[difficulty]} innocent people may lie, usually fewer, and often none. Most people tell the truth.`;
+Write the ${w.culprit}'s cover story (the required whereabouts lie, plus a backup if they are cunning). Innocent people whose secret the investigation would touch usually lie to protect it; people with nothing serious to hide tell the truth. This is a ${difficulty} case: usually 1 to ${MAX_INNOCENT_LIARS[difficulty]} innocent people lie (never more).`;
 }
