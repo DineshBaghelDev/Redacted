@@ -151,18 +151,21 @@ export async function generateJson(args: {
           streamError ??= error;
         },
       });
-      // The reply is parsed and checked below; these are awaited only when the stream ends cleanly.
-      const quiet = <T,>(p: PromiseLike<T>) => Promise.resolve(p).catch(() => undefined);
-      const [, text, usage] = [quiet(result.output), quiet(result.text), quiet(result.usage)];
+      // Text, usage and errors are read from the stream parts only. The result's own promises (text,
+      // usage, output) can reject with nobody listening when a reply dies midway, which crashes the step.
+      let rawText = "";
+      let tokens: { inputTokens?: number; outputTokens?: number } | undefined;
       try {
-        for await (const part of result.stream) if (part.type === "error") streamError ??= part.error;
+        for await (const part of result.stream) {
+          if (part.type === "text-delta") rawText += part.text;
+          else if (part.type === "finish") tokens = part.totalUsage;
+          else if (part.type === "error") streamError ??= part.error;
+        }
       } catch (error) {
         streamError ??= error;
       }
       if (streamError) throw streamError;
       if (Date.now() >= deadline) throw new Error(`No complete reply within ${Math.round((deadline - started) / 1000)} s.`);
-      const rawText = (await text) ?? "";
-      const tokens = await usage;
       // Some models (e.g. Kimi on NIM) answer a strict-schema request with an empty reply: ask again in JSON mode.
       if (strict && !rawText.trim()) continue;
       let output: unknown = null;

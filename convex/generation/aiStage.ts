@@ -53,8 +53,8 @@ export async function runAiAttempt(
     // Only the last model retries a failed call; before that, moving on is faster (e.g. a used-up daily quota).
     const call = () => generateJson({ schema: stage.schema!, system, prompt, model: next, maxRetries: i === models.length - 1 ? undefined : 0 });
     let result = await call();
-    // Kimi's paid account allows 3 calls a minute: waiting out the minute beats falling back to a weaker model.
-    for (let wait = 0; wait < 3 && result.error?.includes("max RPM"); wait++) {
+    // Kimi's paid account allows 3 calls a minute, one at a time: waiting beats falling back to a weaker model.
+    for (let wait = 0; wait < 3 && /max RPM|max organization concurrency/.test(result.error ?? ""); wait++) {
       await new Promise((r) => setTimeout(r, 25_000));
       result = await call();
     }
