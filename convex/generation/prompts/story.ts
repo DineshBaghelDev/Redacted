@@ -14,10 +14,10 @@ export function storyPrompt(city: City, crime: CrimeBase, cast: Cast, difficulty
   return `Write the story events for this ${difficulty} ${w.crime} case: everything that matters in the two days up to when ${w.discovery}.
 
 Crime core (${w.crimeTime} ${formatTime(crime.crimeTime)}, discovered ${formatTime(crime.discovery.time)}):
-${JSON.stringify(crime, null, 2)}
+${JSON.stringify(crime)}
 
 Cast:
-${JSON.stringify(cast, null, 2)}
+${JSON.stringify(cast)}
 
 Rules:
 ${storyRules(crime).map((r) => `- ${r}`).join("\n")}

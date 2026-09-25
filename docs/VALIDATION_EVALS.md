@@ -9,7 +9,7 @@ Do not add an extra LLM "solvability judge" in V1. Use deterministic generation 
 
 ## Per-stage schema validation
 
-Every LLM generation stage must use strict structured output and validate:
+Every LLM generation stage must return structured output that code validates against the stage's schema (strict schema mode where the provider handles it well; Kimi uses plain JSON mode because strict mode was about 40% slower, see GENERATION.md "Model strategy"), checking:
 
 - valid JSON/structured response,
 - exact schema version,

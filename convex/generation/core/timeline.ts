@@ -182,7 +182,10 @@ export function checkTimeline(city: City, crime: CrimeBase, cast: Cast, story: S
     if (finalRoom && finalRoom.itemSlots.length === 0) {
       problems.push(`Item "${item.id}" ends in ${finalRoom.name} (${finalRoom.id}), which has nowhere to leave an item; end it in another room.`);
     }
-    if (item.startRoomId !== item.finalRoomId && !story.events.some((e) => e.roomId === item.finalRoomId && e.itemsUsed.includes(item.id))) {
+    // Only a key item's move (the weapon) must happen in an event: who moved it is evidence. Players
+    // find any other item where it ends up either way.
+    const moved = item.startRoomId !== item.finalRoomId && !story.events.some((e) => e.roomId === item.finalRoomId && e.itemsUsed.includes(item.id));
+    if (moved && kind.keyItemIds.includes(item.id)) {
       problems.push(
         `Nothing in the story takes "${item.name}" (${item.id}) from ${item.startRoomId} to ${item.finalRoomId}: add an event in ${item.finalRoomId} with "${item.id}" in itemsUsed, or end it where it starts.`,
       );

@@ -92,6 +92,32 @@ export function evidencePlan(city: City, crime: CrimeBase, difficulty: Difficult
 }
 
 /**
+ * Code fixes for an AI story before it is checked. A duplicate event, message or purchase id gets a
+ * suffix (nothing refers to those yet; item ids are left alone because events use them). An item that
+ * moves with no event in the room it ends in is added to its owner's latest event there, if there is
+ * one; players find the item where it ends up either way.
+ */
+export function tidyStory(story: Story): Story {
+  const used = new Set(story.items.map((i) => i.id));
+  const unique = <T extends { id: string }>(list: T[]) =>
+    list.map((x) => {
+      let id = x.id;
+      for (let n = 2; used.has(id); n++) id = `${x.id}-${n}`;
+      used.add(id);
+      return id === x.id ? x : { ...x, id };
+    });
+  const events = unique(story.events);
+  for (const item of story.items) {
+    if (item.startRoomId === item.finalRoomId || !item.ownerId) continue;
+    if (events.some((e) => e.roomId === item.finalRoomId && e.itemsUsed.includes(item.id))) continue;
+    const owners = events.filter((e) => e.roomId === item.finalRoomId && e.actors.includes(item.ownerId!));
+    const last = owners.sort((a, b) => b.start - a.start)[0];
+    if (last) events[events.indexOf(last)] = { ...last, itemsUsed: [...last.itemsUsed, item.id] };
+  }
+  return { ...story, events, comms: unique(story.comms), purchases: unique(story.purchases) };
+}
+
+/**
  * Events whose wording names a clock time that disagrees with the event's own time, e.g. "dozed
  * through his two o'clock round" in an event at 21:00. A time within half an hour of the event is fine.
  */

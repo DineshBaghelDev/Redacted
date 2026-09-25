@@ -52,6 +52,8 @@
 - The pipeline is built so theft, robbery and other crimes can be added as one module each; everything that isn't specific to murder is shared.
 - A murder's cover-up can't move the body: the crime scene is always where the body is found.
 - A murder by a fall has no weapon item: the push is the weapon, and the autopsy proves it.
+- Kimi generates in plain JSON mode rather than strict schema mode (faster, cheaper); code checks every reply against the schema.
+- Only the weapon's move must happen in a story event; other items can end up somewhere without one, since players find them where they end up.
 - Case briefs never use weekdays (cases run on Day 1, Day 2...), and generated character descriptions give no clock times; the story sets every time.
 - The murder weapon hidden in the killer's home counts as decisive evidence once the lab ties it to the victim, and the killer buying the weapon by card links it to them.
 - Lying isn't compulsory: innocent people tell the truth to clear themselves and lie only when the truth would do real damage (arrest, job, reputation, family). The killer always has a cover story. At most 2/3/4 innocent liars on easy/normal/hard.

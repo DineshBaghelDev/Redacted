@@ -2,7 +2,7 @@ import type { z } from "zod";
 import * as easyCase from "../fixtures/caseEasy";
 import { city } from "../fixtures/city";
 import { checkCity, cityCapacity } from "./core/city";
-import { castProblems, crimeBrief, crimeProblems, trimCast } from "./core/crimeCast";
+import { castProblems, crimeBrief, crimeProblems, tidyCast, trimCast } from "./core/crimeCast";
 import { castPrompt } from "./prompts/cast";
 import { crimePrompt, systemPrompt } from "./prompts/crime";
 import { briefProblems } from "./core/brief";
@@ -21,7 +21,7 @@ import {
   type Story,
   type Texts,
 } from "./core/schemas";
-import { storyProblems } from "./core/story";
+import { storyProblems, tidyStory } from "./core/story";
 import { textProblems, textTargets } from "./core/text";
 import { briefPrompt } from "./prompts/brief";
 import { liesPrompt } from "./prompts/lies";
@@ -60,6 +60,8 @@ export type StageDef = {
   check?: (output: unknown, inputs: Record<string, unknown>, job: StageJob, fromAi: boolean) => string[];
   /** LLM stages with AI built: the prompt for this job. */
   prompt?: (inputs: Record<string, unknown>, job: StageJob) => { system: string; prompt: string };
+  /** LLM stages: safe code fixes applied to every AI answer before it is checked, so they don't cost a repair. */
+  tidy?: (output: unknown, inputs: Record<string, unknown>, job: StageJob) => unknown;
   /** LLM stages: last clean-up after repairs run out (e.g. drop lies that still can't be caught). */
   finalize?: (output: unknown, inputs: Record<string, unknown>, job: StageJob) => unknown;
 };
@@ -111,6 +113,8 @@ export const stages: StageDef[] = [
     prompt: (inputs, job) => ({ system: systemPrompt((inputs.crime as CrimeCore).type), prompt: castPrompt(city, inputs.crime as CrimeCore, job.difficulty, job.seed) }),
     // The seeded brief only binds AI output; the hand-written case predates it.
     check: (output, inputs, job, fromAi) => castProblems(city, inputs.crime as CrimeCore, output as Cast, job.difficulty, fromAi ? job.seed : undefined),
+    // Ids that aren't the lowercase first name, and a victim routine off the brief, are fixed in code.
+    tidy: (output, inputs, job) => tidyCast(city, inputs.crime as CrimeCore, output as Cast, job.seed, job.difficulty),
     // Counts still off after repairs: turn extra suspects into witnesses and drop extra witnesses.
     finalize: (output, inputs, job) => trimCast(inputs.crime as CrimeCore, output as Cast, job.seed, job.difficulty),
   },
@@ -129,6 +133,8 @@ export const stages: StageDef[] = [
       const { crime, cast } = get(inputs);
       return storyProblems(city, crime, cast, output as Story, job.difficulty, job.seed);
     },
+    // Duplicate ids renamed; an item's move given to its owner's event in the room it ends in.
+    tidy: (output) => tidyStory(output as Story),
   },
   {
     name: "timeline",

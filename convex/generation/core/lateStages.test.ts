@@ -7,10 +7,11 @@ import { estimateInput, estimateTime } from "./estimate";
 import { buildEvidence } from "./evidence";
 import { buildFacts } from "./facts";
 import { keepValidLies } from "./lies";
-import { clockProblems, evidencePlan, storyProblems, storyRules } from "./story";
+import { clockProblems, evidencePlan, storyProblems, storyRules, tidyStory } from "./story";
 import { buildScripts, scriptProblems } from "./scripts";
 import { applyTexts, textProblems, textTargets } from "./text";
-import { buildTimeline } from "./timeline";
+import { buildTimeline, checkTimeline } from "./timeline";
+import { castBrief, tidyCast } from "./crimeCast";
 import { clockTimesIn } from "./clock";
 
 const SEED = 1234;
@@ -245,5 +246,40 @@ describe("text times", () => {
     const targets = [{ id: "t", kind: "statement" as const, people: [], source: "Day 2 21:30–Day 2 21:45: Tom left." }];
     expect(textProblems(city, cast, targets, { texts: [{ id: "t", text: "I saw Tom leave at 9:30." }] })).toEqual([]);
     expect(textProblems(city, cast, targets, { texts: [{ id: "t", text: "I saw Tom leave at 9:50." }] })).toHaveLength(1);
+  });
+});
+
+describe("code fixes before a story is checked", () => {
+  it("renames duplicate ids and gives an owned item's move to its owner's event there", () => {
+    const e0 = story.events[0];
+    const dupe = { ...story, events: [...story.events, { ...e0 }], comms: [...story.comms, { ...story.comms[0] }] };
+    const fixed = tidyStory(dupe);
+    const ids = [...fixed.events, ...fixed.comms].map((x) => x.id);
+    expect(new Set(ids).size).toBe(ids.length);
+
+    const owner = cast.characters.find((c) => c.role === "suspect")!;
+    const ownerEvent = { ...e0, id: "owner-home", actors: [owner.id], roomId: "keel-14:living", itemsUsed: [] };
+    const bag = { ...story.items[0], id: "bag", kind: "other" as const, ownerId: owner.id, startRoomId: "keel-14:kitchen", finalRoomId: "keel-14:living" };
+    const moved = tidyStory({ ...story, events: [...story.events, ownerEvent], items: [...story.items, bag] });
+    expect(moved.events.find((e) => e.id === "owner-home")!.itemsUsed).toContain("bag");
+  });
+
+  it("only requires an event for the weapon's move", () => {
+    const stray = { ...story.items[0], id: "note", kind: "document" as const, ownerId: undefined, startRoomId: "keel-14:kitchen", finalRoomId: "keel-14:living" };
+    const withStray = { ...story, items: [...story.items, stray] };
+    expect(checkTimeline(city, crimeCore, cast, withStray, buildTimeline(city, crimeCore, cast, withStray, SEED)).join(" | ")).not.toMatch(/"note"/);
+  });
+});
+
+describe("code fixes before a cast is checked", () => {
+  it("renames ids to the lowercase first name and sets the victim's routine", () => {
+    const seed = 5;
+    const { victimRoutine } = castBrief(seed, "easy");
+    const off = { characters: cast.characters.map((c) => (c.role === "witness" && c.id !== crimeCore.discovery.byId ? { ...c, id: `${c.id}-x` } : c.id === crimeCore.victimId ? { ...c, routine: victimRoutine === "office" ? ("shop" as const) : ("office" as const) } : c)) };
+    const fixed = tidyCast(city, crimeCore, off, seed, "easy");
+    for (const c of fixed.characters) if (c.role === "witness" && c.id !== crimeCore.discovery.byId) expect(c.id).toBe(c.name.split(" ")[0].toLowerCase());
+    const victim = fixed.characters.find((c) => c.id === crimeCore.victimId)!;
+    expect(victim.routine).toBe(victimRoutine);
+    if (victimRoutine === "unemployed" || victimRoutine === "student") expect(victim.hangoutPlaceId).toBeTruthy();
   });
 });

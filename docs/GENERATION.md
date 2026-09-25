@@ -299,12 +299,15 @@ Testing:
 
 ## Model strategy
 
-- Generation models are set per AI stage in `convex/generation/llm.ts` (`STAGE_MODELS`) as a fixed, ordered list written `provider:model` (providers: NIM, Gemini, Groq, OpenRouter, all through their OpenAI-compatible APIs). When a call fails (rate limit, daily quota, overload) the next model in the list takes over. Current lists (from a side-by-side run on 2026-09-25):
-  - Gemini `gemini-3.5-flash` first for crime, cast, story and lies (fastest; free tier is 20 requests a day per model, so the next model takes over once it's used up).
-  - crime, text, brief: Groq `openai/gpt-oss-120b` (a few seconds; Groq's free per-minute token cap only fits these small prompts), then NIM `moonshotai/kimi-k3`.
-  - cast, story: OpenRouter `nvidia/nemotron-3-super-120b-a12b:free` (cast right first try in 82 s, story in 137 s with 2 repairs; free tier is 50 calls a day), then NIM.
-  - lies: NIM only (about 16k-token prompt).
-  - Tried and not used: Gemini 3.8/3.7/3.5 Flash (overloaded, 503 on full prompts that day), Gemini 3.1 Pro (not in the free quota), Gemini 2.5 (no longer offered to new keys). Moonshot's own API is paid, so not used.
+- Generation models are set per AI stage in `convex/generation/llm.ts` (`STAGE_MODELS`) as a fixed, ordered list written `provider:model` (providers: Moonshot (Kimi), NIM, Gemini, Groq, OpenRouter, all through their OpenAI-compatible APIs via the Vercel AI SDK). When a call fails (rate limit, daily quota, overload, timeout) the next model in the list takes over. Current lists (runs 8–12, 2026-09-25):
+  - crime, cast, story, lies: Kimi `kimi-k3` on the owner's paid Moonshot key, low thinking; then free Gemini `gemini-3.5-flash` (20 calls a day), OpenRouter Nemotron (cast, story; 50 a day) and NIM. Kimi K2.6 without thinking missed the crime's time band three tries in a row, so it isn't used for these.
+  - text, brief: free Groq `openai/gpt-oss-120b` (1–5 s), then Kimi `kimi-k2.6` without thinking, then NIM.
+  - Thinking is low on every provider (`reasoningEffort: "low"`; Kimi K2.6 `thinking: disabled`). It must go through the SDK's own `reasoningEffort` option: a raw `reasoning_effort` field is overwritten, which left every call thinking at full length (slow, costly, timing out).
+  - The Moonshot account allows 3 calls a minute and one at a time: a refused call waits 25 s and tries again (3 times) instead of moving to a weaker model.
+  - Calls stream their reply; text, token counts and errors are read from the stream parts, and a call that runs past 9 minutes comes back as a logged error.
+  - Kimi runs in plain JSON mode (the schema is written into the prompt); strict schema mode was about 40% slower with about 20% more output. Other providers try strict mode first and fall back to JSON mode if refused or given an empty reply. Every reply is checked against the schema in code either way.
+  - Cost: about $0.25–0.55 of Kimi per case (easy to hard, with a few repairs), 4–9 minutes.
+  - Tried and not used: NIM models alone (slow, often empty or broken JSON), Gemini 3.8/3.7/3.5 Flash as the main model (overloaded, 20 a day), Gemini 3.1 Pro (not in the free quota).
 - `NPC_MODEL`: `moonshotai/kimi-k2.6` on NVIDIA NIM,
 - `REPAIR_MODEL`: cheaper structured-output model,
 - `JUDGE_MODEL`: grader for motive/method at case close; may equal NPC or generation model initially.

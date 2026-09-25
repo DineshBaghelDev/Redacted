@@ -19,7 +19,7 @@ Brief (must follow):
 - each id is the lowercase first name
 
 Crime core:
-${JSON.stringify(crime, null, 2)}
+${JSON.stringify(crime)}
 
 Rules:
 ${castRules(difficulty, w).map((r) => `- ${r}`).join("\n")}

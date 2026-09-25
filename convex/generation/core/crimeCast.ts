@@ -208,6 +208,32 @@ export function castProblems(city: City, crime: CrimeBase, cast: Cast, difficult
 }
 
 /**
+ * Code fixes for an AI cast before it is checked: an id that isn't the lowercase first name is renamed
+ * (unless the crime core already uses it, or the name is taken), and the victim gets the brief's
+ * routine (with a public hangout place when the routine needs one). Nothing refers to the cast yet.
+ */
+export function tidyCast(city: City, crime: CrimeBase, cast: Cast, seed: number, difficulty: Difficulty): Cast {
+  const named = new Set([crime.victimId, crime.culpritId, crime.accomplice?.id, crime.discovery.byId]);
+  const taken = new Set(cast.characters.map((c) => c.id));
+  const { victimRoutine } = castBrief(seed, difficulty);
+  const hangouts = city.places.filter((p) => p.kind === "public");
+  const characters = cast.characters.map((c) => {
+    let fixed = c;
+    const wanted = c.name.split(" ")[0].toLowerCase();
+    if (c.id !== wanted && !named.has(c.id) && !taken.has(wanted)) {
+      taken.add(wanted);
+      fixed = { ...fixed, id: wanted };
+    }
+    if (c.id === crime.victimId && c.routine !== victimRoutine) {
+      const needsHangout = (victimRoutine === "unemployed" || victimRoutine === "student") && !c.hangoutPlaceId;
+      fixed = { ...fixed, routine: victimRoutine, ...(needsHangout && hangouts.length ? { hangoutPlaceId: hangouts[seed % hangouts.length].id } : {}) };
+    }
+    return fixed;
+  });
+  return { characters };
+}
+
+/**
  * Last clean-up for an AI cast whose counts are still off after repairs: extra innocent suspects become
  * witnesses (without their fake motive), then extra witnesses are removed. People the crime names are
  * never touched. Safe because nothing is built on the cast yet.

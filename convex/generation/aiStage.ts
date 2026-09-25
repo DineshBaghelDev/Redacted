@@ -65,7 +65,8 @@ export async function runAiAttempt(
   const failedCalls = calls.slice(0, -1);
   if (call.error) return { call, system, prompt, output: previous?.output ?? null, problems: call.problems, retry: false, failedCalls };
 
-  let output = call.output;
+  // Safe mechanical fixes first (e.g. a duplicate id), so they don't cost a repair.
+  let output = !call.problems.length && stage.tidy ? stage.tidy(call.output, inputs, job) : call.output;
   let problems = call.problems.length ? call.problems : checkOutput(stage, output, inputs, job, true);
   // An unusable reply (not JSON, wrong shape) never replaces a usable earlier answer: the next repair
   // works on that answer again, and it's what's kept if the repairs run out.
