@@ -320,3 +320,14 @@ describe("fixes from the PR review", () => {
     expect(wrongPartsOfDay("late that night", 1440 + 1139, 1440 + 1145)).toEqual([]);
   });
 });
+
+describe("part of day by overlap", () => {
+  it("finds a boundary inside a short span and across midnight", () => {
+    const d2 = 1440;
+    expect(wrongPartsOfDay("that night", d2 + 18 * 60 + 57, d2 + 19 * 60 + 4)).toEqual([]);
+    expect(wrongPartsOfDay("that night", d2 + 12 * 60, d2 + 12 * 60 + 30)).toEqual(["night"]);
+    expect(wrongPartsOfDay("that evening", d2 + 23 * 60 + 50, d2 + 24 * 60 + 10)).toEqual([]);
+    expect(wrongPartsOfDay("that evening", d2 + 60, d2 + 90)).toEqual(["evening"]);
+    expect(wrongPartsOfDay("that afternoon", d2, d2 + 1440)).toEqual([]);
+  });
+});

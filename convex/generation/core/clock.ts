@@ -43,10 +43,16 @@ export function wrongPartsOfDay(text: string, start: number, end: number) {
     // "night shift", "last night", "the evening before" name something else, not when this happens.
     const said = new RegExp(`(?<!(last|previous|yesterday|tomorrow|next) )\\b${word}\\b(?! (shift|shifts|before|after|round|rounds|patrol|guard|bus|train|class|school|run|staff|manager|porter|nurse))`, "i");
     if (!said.test(text)) return false;
-    for (const t of [...Array.from({ length: Math.floor((end - start) / 15) + 1 }, (_, i) => start + i * 15), end]) {
-      const hour = Math.floor((((t % 1440) + 1440) % 1440) / 60);
-      if (from <= to ? hour >= from && hour < to : hour >= from || hour < to) return false;
-    }
-    return true;
+    return !overlapsDaily(start, end, from * 60, to * 60);
   }).map(([word]) => word);
+}
+
+/** Does the case-time span [start, end] overlap the daily window [from, to) (minutes of the day; to < from wraps midnight)? */
+function overlapsDaily(start: number, end: number, from: number, to: number) {
+  if (end - start >= 1440) return true;
+  // Both as plain minute ranges within one or two days, so nothing wraps.
+  const s = ((start % 1440) + 1440) % 1440;
+  const span: [number, number] = [s, s + (end - start)];
+  const windows: [number, number][] = from <= to ? [[from, to], [from + 1440, to + 1440]] : [[0, to], [from, to + 1440], [from + 1440, 2880]];
+  return windows.some(([a, b]) => span[0] < b && a <= span[1]);
 }
