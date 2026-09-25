@@ -9,7 +9,7 @@ Do not add an extra LLM "solvability judge" in V1. Use deterministic generation 
 
 ## Per-stage schema validation
 
-Every LLM generation stage must use strict structured output and validate:
+Every LLM generation stage must return structured output that code validates against the stage's schema (strict schema mode where the provider handles it well; Kimi uses plain JSON mode because strict mode was about 40% slower, see GENERATION.md "Model strategy"), checking:
 
 - valid JSON/structured response,
 - exact schema version,
@@ -79,6 +79,8 @@ Check:
 - required NPC interrogation is possible by calling the NPC to the bureau or visiting the NPC,
 - no grading-required evidence depends on inaccessible data,
 - no required chain depends on a nonexistent/hidden action.
+
+Implemented in `convex/generation/core/validate.ts` (stage 11 in `GENERATION.md`), together with lie checks (`core/lies.ts`: every lie is breakable by found evidence about the liar) and the NPC script leak check (`core/scripts.ts`). A witness who lies about an event doesn't count as a source for it. Not yet built: CCTV query ranges per access point and case-brief leakage checks.
 
 ## Case-brief leakage checks
 

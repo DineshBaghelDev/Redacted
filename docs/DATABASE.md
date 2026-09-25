@@ -233,7 +233,15 @@ Create an actual corridor room only if the corridor itself is searchable/interac
   experiences: string[],
   knowledge: string[],
   secrets: string[],
-  intentionalLies: string[],
+  intentionalLies: {
+    topic: "whereabouts" | "relationship" | "motive" | "item" | "secret",
+    claim: string,
+    truthIds: string[],
+    reason: string,
+    disprovingEvidenceIds: string[],
+    whenCaught: "full-truth" | "admit-shown" | "backup-lie",
+    backupLie?: { claim: string, disprovingEvidenceIds: string[] },
+  }[],
   behavioralRules: string[],
 }
 ```
@@ -308,8 +316,10 @@ Mutable per session.
 ```ts
 {
   caseId: Id<"cases">,
-  placeId: Id<"places">,
+  placeId?: Id<"places">,       // interior camera
   roomId?: Id<"rooms">,
+  streetFromPlaceId?: Id<"places">, // street camera on a graph edge
+  streetToPlaceId?: Id<"places">,
   name: string,
   description: string,
 }
@@ -323,9 +333,9 @@ Mutable per session.
   cameraId: Id<"cctvCameras">,
   startTime: number,
   endTime: number,
-  npcIds: Id<"npcs">[],
+  npcIds: Id<"npcs">[],     // server-only, for validation; never returned to clients
   vehicleIds: Id<"vehicles">[],
-  description: string,
+  description: string,      // appearance description, not names
 }
 ```
 
@@ -677,3 +687,59 @@ case
    |- N clue-board nodes -> N edges
    `- N accusations (normally one final accepted submission)
 ```
+
+## Case generation (dev/pipeline) — server-only
+
+### `generationJobs`
+
+```ts
+{
+  seed: number,
+  difficulty: "easy" | "normal" | "hard",
+  createdBy: string,
+  createdAt: number,
+  running?: { stage: string, attempt: number }, // set while an AI stage runs in the background
+}
+```
+
+### `generationDrafts`
+
+One document per (job, stage); rerunning a stage replaces it. Holds hidden case data — only dev-tool (allowlisted) or internal functions may read it.
+
+```ts
+{
+  jobId: Id<"generationJobs">,
+  stage: string,
+  output: any,
+  checkErrors: string[],
+  source: "hand-written" | "code" | "llm",
+  updatedAt: number,
+}
+```
+
+Index: `by_job_stage` (`jobId`, `stage`).
+
+### `generationLogs`
+
+One document per AI call made while generating. Dev-tool/internal only.
+
+```ts
+{
+  jobId: Id<"generationJobs">,
+  stage: string,
+  model: string,
+  mode: "strict" | "json", // strict = NIM enforced the JSON schema; json = schema only in the prompt
+  system: string,
+  prompt: string,
+  rawText: string,
+  problems: string[],
+  error?: string,
+  inputTokens?: number,
+  outputTokens?: number,
+  ms: number,
+  attempt?: number, // 0 = first try, 1–2 = repairs
+  createdAt: number,
+}
+```
+
+Index: `by_job` (`jobId`).

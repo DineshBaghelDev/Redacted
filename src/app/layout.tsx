@@ -20,6 +20,11 @@ export const metadata: Metadata = {
   description: "A Next.js app with shadcn/ui and Convex ready.",
 };
 
+/**
+ * Provides the root HTML structure and application providers for the page content.
+ *
+ * @param children - The content rendered within the application layout
+ */
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html

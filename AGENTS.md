@@ -25,7 +25,7 @@ This repository's technical decisions are split across the files below. Agents s
 | [VALIDATION_EVALS.md](./VALIDATION_EVALS.md) | Deterministic validation, LLM evals, multiplayer tests, acceptance gates |
 | [SECURITY.md](./SECURITY.md) | Hidden solution boundaries, Clerk authentication, authorization, abuse/rate-limit rules |
 | [TOOLING.md](./TOOLING.md) | Libraries/services chosen and explicitly rejected |
-| [DECISIONS.md](./DECISIONS.md) | Locked decisions, rejected alternatives, unresolved items |
+[DECISIONS.md](./DECISIONS.md) | Locked decisions, rejected alternatives, unresolved items |
 |  |
 | [progress.md](./docs/progress.md) | Current implementation progress and latest shipped UI/backend changes |
 | [design decisions.md](./docs/design decisions.md) | Product and UI decisions made during implementation |
@@ -43,7 +43,7 @@ This repository's technical decisions are split across the files below. Agents s
 9. Game time is deterministic integer minutes. LLMs do not decide action duration during play.
 10. Case close is scored out of five stars: killer, motive, weapon, evidence, method.
 11. Core backend interface is Convex functions, not REST.
-12. Keep V1 small. Do not add Redis, Socket.IO, Fastify, PostgreSQL, Liveblocks, LangChain, vector search, or a custom admin panel unless this spec is deliberately revised.
+12. Keep V1 small. Do not add Redis, Socket.IO, Fastify, PostgreSQL, Liveblocks, LangChain, vector search, or a custom admin panel unless this spec is deliberately revised. Exception: one dev-only, read-only case viewer page (hidden in production) for inspecting generated cases.
 
 ## Agent implementation rules
 
@@ -80,5 +80,21 @@ If a task conflicts with this file or another linked source-of-truth file, stop 
 - Always follow the laziest and fastest path, No over-engineering
 - Avoid using Technical language in UI. Think like a typical user
 - follow YAGNI method
+- keep the codebase readable, modular, simple, clean and structured.
+- Always make the smallest possible part as client component, rest as server.
 - use necessary skills of the tools you are working with.
 - Keep `docs/progress.md` and `docs/design decisions.md` updated when making implementation or product/design changes.
+
+<!-- convex-ai-start -->
+
+This project uses [Convex](https://convex.dev) as its backend.
+
+When working on Convex code, **always read
+`convex/_generated/ai/guidelines.md` first** for important guidelines on
+how to correctly use Convex APIs and patterns. The file contains rules that
+override what you may have learned about Convex from training data.
+
+Convex agent skills for common tasks can be installed by running
+`npx convex ai-files install`.
+
+<!-- convex-ai-end -->
