@@ -63,7 +63,7 @@ export const murder: CrimeKind<MurderCore> = {
   crimeRules: ["weapon.originRoomId must be a room id from the city list."],
   crimeNotes: [
     "method: one sentence on how the victim died.",
-    "weapon.name: the actual object: for poison, the poison and what it was in; for strangulation, the cord or scarf. For a fall there is no object: weapon.name says how they fell (e.g. \"pushed down the back stairs\") and weapon.originRoomId is the scene room.",
+    "weapon.name: the actual object: for poison, the poison and what it was in (one that kills within the hour, since the killer is with the victim when they die); for strangulation, the cord or scarf. For a fall there is no object: weapon.name says how they fell (e.g. \"pushed down the back stairs\") and weapon.originRoomId is the scene room.",
     "weapon.originRoomId: where the weapon was before the crime, copied exactly from the room list (e.g. a kitchen or garage at the scene, a shop's stock room, or a room at a home or workplace). Never invent ids; homes aren't assigned to people yet.",
     "accomplice: null unless the brief says there is one; then pick the role that fits the story: fake-alibi, weapon-disposal or distraction.",
   ],
@@ -260,8 +260,11 @@ export const murder: CrimeKind<MurderCore> = {
     const ids = (list: Evidence[]) => list.map((e) => e.id);
     return {
       facts: [
-        { id: "weapon-at-scene", kind: "weapon", text: `The ${weaponName} was used on the victim`, evidenceIds: ids(weaponAtScene) },
-        { id: "weapon-to-killer", kind: "weapon", text: `The ${weaponName} links to ${nameOf(killer)}`, evidenceIds: ids(weaponToKiller) },
+        hasWeaponItem(crime)
+          ? { id: "weapon-at-scene", kind: "weapon", text: `The ${weaponName} was used on the victim`, evidenceIds: ids(weaponAtScene) }
+          : { id: "weapon-at-scene", kind: "weapon", text: `How the victim died: ${weaponName}`, evidenceIds: ids(weaponAtScene) },
+        // A fall has no weapon to link to the killer.
+        ...(hasWeaponItem(crime) ? [{ id: "weapon-to-killer", kind: "weapon", text: `The ${weaponName} links to ${nameOf(killer)}`, evidenceIds: ids(weaponToKiller) }] : []),
         { id: "method", kind: "method", text: crime.method, evidenceIds: ids(forensic.filter((e) => e.data.test === "autopsy")) },
       ],
       decisive: [...bloodOnKillerItem, ...killerPrintsOnWeapon, ...weaponAtHome],

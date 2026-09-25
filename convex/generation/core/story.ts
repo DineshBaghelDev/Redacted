@@ -2,7 +2,7 @@ import { findRoom, type City } from "./city";
 import { capitalize, crimeKind, type CrimeKind } from "./crimes";
 import { buildEvidence, evidenceProblems } from "./evidence";
 import { listCameras } from "./evidence/cctv";
-import { buildFacts } from "./facts";
+import { buildFacts, factProblems } from "./facts";
 import { formatTime, type Cast, type CrimeBase, type Story } from "./schemas";
 import { buildTimeline, checkTimeline } from "./timeline";
 import { clockTimesIn, nearSpan } from "./clock";
@@ -130,6 +130,9 @@ export function storyProblems(city: City, crime: CrimeBase, cast: Cast, story: S
   const cameraProblems = evidenceProblems(crime, timeline, set);
   if (cameraProblems.length) return cameraProblems;
   const facts = buildFacts(city, crime, cast, story, set);
+  // The same checks the later code stages run, so nothing fails there that a story repair could have fixed.
+  const earlyProblems = factProblems(facts);
+  if (earlyProblems.length) return earlyProblems;
   const checks = validateCase(city, crime, cast, story, set, facts, { lies: [] }, difficulty).filter((c) => c.id !== "lies");
   const problems = validationProblems(checks);
   // The general messages don't say which ways this crime allows; the repair needs that.

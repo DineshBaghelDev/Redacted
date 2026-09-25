@@ -215,5 +215,20 @@ describe("a fall has no weapon item", () => {
     expect(plan.decisive.join(" | ")).not.toMatch(/weapon/);
     expect(storyRules(fall).join(" | ")).toMatch(/A fall has no weapon/);
     expect(storyProblems(city, fall, cast, story, "normal", 1234).join(" | ")).toMatch(/remove the item with id "weapon"/);
+    // Without the weapon item, nothing asks to link a weapon to the killer.
+    const noWeapon = { ...story, items: story.items.filter((i) => i.id !== "weapon"), events: story.events.map((e) => ({ ...e, itemsUsed: e.itemsUsed.filter((i) => i !== "weapon") })) };
+    const facts = buildFacts(city, fall, cast, noWeapon, buildEvidence(city, fall, cast, noWeapon, buildTimeline(city, fall, cast, noWeapon, SEED), "normal", SEED));
+    expect(facts.facts.map((f) => f.id)).not.toContain("weapon-to-killer");
+    expect(storyProblems(city, fall, cast, noWeapon, "normal", SEED).join(" | ")).not.toMatch(/weapon to the killer|links to Victor/);
+  });
+});
+
+describe("brief part of day", () => {
+  it("rejects a part of day that doesn't fit the discovery time", () => {
+    // The hand-written body is found at Day 3 08:15.
+    const evening = { ...brief, summary: `${brief.summary} Her friend came by that evening.` };
+    expect(briefProblems(city, crimeCore, cast, story, evening).join(" | ")).toMatch(/says "evening"/);
+    const morning = { ...brief, summary: `${brief.summary} It was found in the morning.` };
+    expect(briefProblems(city, crimeCore, cast, story, morning)).toEqual([]);
   });
 });

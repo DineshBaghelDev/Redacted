@@ -138,6 +138,11 @@ export function checkTimeline(city: City, crime: CrimeBase, cast: Cast, story: S
   const nameOf = (id: string) => people.get(id)?.name ?? id;
   const itemIds = new Set(story.items.map((i) => i.id));
   const roomOk = (id: string) => !!findRoom(city, id);
+  // For an invented room at a real place, the rooms it does have, so the repair can pick one.
+  const roomsOf = (roomId: string) => {
+    const place = city.places.find((p) => p.id === roomId.split(":")[0]);
+    return place ? ` ${place.name} has: ${place.building.rooms.map((r) => r.id).join(", ")}.` : "";
+  };
   const covering = (actorId: string, time: number) =>
     timeline.entries.filter((e) => e.actorId === actorId && e.start <= time && time <= e.end);
 
@@ -147,7 +152,7 @@ export function checkTimeline(city: City, crime: CrimeBase, cast: Cast, story: S
   // Story references
   for (const e of story.events) {
     const where = findRoom(city, e.roomId);
-    if (!where) problems.push(`Event "${e.id}" happens in unknown room ${e.roomId}.`);
+    if (!where) problems.push(`Event "${e.id}" happens in unknown room ${e.roomId}.${roomsOf(e.roomId)}`);
     for (const via of [e.enteredVia, e.leftVia]) {
       if (!via) continue;
       const door = findRoom(city, via);
@@ -171,7 +176,7 @@ export function checkTimeline(city: City, crime: CrimeBase, cast: Cast, story: S
     if (!city.places.some((pl) => pl.id === p.placeId)) problems.push(`Purchase "${p.id}" is at an unknown place.`);
   }
   for (const item of story.items) {
-    if (!roomOk(item.startRoomId) || !roomOk(item.finalRoomId)) problems.push(`Item "${item.id}" is in an unknown room.`);
+    for (const r of [item.startRoomId, item.finalRoomId]) if (!roomOk(r)) problems.push(`Item "${item.id}" is in unknown room ${r}.${roomsOf(r)}`);
     const finalRoom = findRoom(city, item.finalRoomId)?.room;
     // A wrong spot in a room that has spots is fixed by the evidence builder (it uses the first one).
     if (finalRoom && finalRoom.itemSlots.length === 0) {
