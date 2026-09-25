@@ -479,7 +479,7 @@ export const texts: Texts = {
 export const brief: Brief = {
   title: "The Keel Street Kitchen",
   summary:
-    "Daniel Reyes, 52, an accountant, was found dead in the kitchen of his house at 14 Keel Street on Thursday morning. His housekeeper, Rosa Delgado, found him when she came in to clean and called the police. He had a head wound. No weapon was found in the house.",
+    "Daniel Reyes, 52, an accountant, was found dead in the kitchen of his house at 14 Keel Street on the morning of Day 3. His housekeeper, Rosa Delgado, found him when she came in to clean and called the police. He had a head wound. No weapon was found in the house.",
   initialFacts: [
     "Victim: Daniel Reyes, 52, accountant at Meridian Tower.",
     "Found: Day 3 08:15, kitchen of 14 Keel Street.",

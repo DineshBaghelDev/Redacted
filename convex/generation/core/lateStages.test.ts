@@ -8,7 +8,7 @@ import { buildEvidence } from "./evidence";
 import { buildFacts } from "./facts";
 import { keepValidLies } from "./lies";
 import { crimeKind } from "./crimes";
-import { evidencePlan, storyProblems, storyRules } from "./story";
+import { clockProblems, evidencePlan, storyProblems, storyRules } from "./story";
 import { buildScripts, scriptProblems } from "./scripts";
 import { applyTexts, textProblems, textTargets } from "./text";
 import { buildTimeline } from "./timeline";
@@ -183,5 +183,20 @@ describe("lie clean-up", () => {
     const withBad = { lies: lies.lies.map((l) => (l.id === main.id ? { ...l, disprovingEvidenceIds: [...l.disprovingEvidenceIds, "no-such-evidence"] } : l)) };
     const kept = keepValidLies(crimeCore, cast, story, set, withBad).lies.find((l) => l.id === main.id);
     expect(kept?.disprovingEvidenceIds).toEqual(main.disprovingEvidenceIds);
+  });
+});
+
+describe("wording that disagrees with the data", () => {
+  it("flags a clock time an event's own time contradicts", () => {
+    const at = (action: string, start: number) => ({ ...story, events: [{ ...story.events[0], id: "e", action, start, end: start + 30 }] });
+    expect(clockProblems(at("He dozed through his two o'clock round.", 1260))).toHaveLength(1);
+    expect(clockProblems(at("She arrived at 9:30 pm sharp.", 1290))).toEqual([]);
+    expect(clockProblems(at("He left at 2 a.m. for the docks.", 1440 + 120))).toEqual([]);
+    expect(clockProblems(at("They met for the eight o'clock briefing.", 1440 + 1200))).toEqual([]);
+  });
+
+  it("rejects a brief that invents a weekday", () => {
+    const tuesday = { ...brief, summary: `${brief.summary} It happened early Tuesday.` };
+    expect(briefProblems(city, crimeCore, cast, story, tuesday).join(" | ")).toMatch(/Tuesday/);
   });
 });

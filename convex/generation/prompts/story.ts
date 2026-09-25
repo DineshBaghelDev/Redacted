@@ -32,7 +32,7 @@ ${plan.routes.map((r) => `- ${r.label}:\n${list(r.ways)}`).join("\n")}
 
 What to write:
 - events: the ${w.crime} and any cover-up, earlier conflicts that give each suspect their reason to be suspected, where people really were around the ${w.crimeTime} (some provable, some not), the discovery. Every suspect appears at least once. Usually 15–30 events. action is one plain sentence.
-- comms: calls and messages that matter (gist = what was said). durationMinutes for calls.
+- comms: calls and messages between two different people that matter (gist = what was said). durationMinutes for calls. Drafts and notes go in a device's contents instead.
 - purchases: things bought that matter (card or cash); itemId when the thing bought is a story item.
 - ${kind.storyItems}
 

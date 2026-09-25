@@ -12,8 +12,16 @@ exports[`replay > union-station-poison.json gives the same problems as before 1`
   "facts": [],
   "lies": [],
   "scripts": [],
-  "story": [],
+  "story": [
+    "Call/message "elena-marta-message" is from Elena Vasquez to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.",
+    "Call/message "elena-dental-fake" is from Elena Vasquez to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.",
+    "Call/message "elena-clinic-lie" is from Elena Vasquez to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.",
+  ],
   "text": [],
-  "timeline": [],
+  "timeline": [
+    "Call/message "elena-marta-message" is from Elena Vasquez to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.",
+    "Call/message "elena-dental-fake" is from Elena Vasquez to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.",
+    "Call/message "elena-clinic-lie" is from Elena Vasquez to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.",
+  ],
 }
 `;

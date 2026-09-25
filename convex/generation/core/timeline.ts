@@ -161,6 +161,7 @@ export function checkTimeline(city: City, crime: CrimeBase, cast: Cast, story: S
     if (e.start < timeline.windowStart || e.start > timeline.windowEnd) problems.push(`Event "${e.id}" is outside the story window.`);
   }
   for (const c of story.comms) {
+    if (c.from === c.to) problems.push(`Call/message "${c.id}" is from ${nameOf(c.from)} to themself: a call or message is between two people. An unsent draft or a note belongs in a device's contents.`);
     for (const who of [c.from, c.to]) {
       if (!people.has(who)) problems.push(`Call/message "${c.id}" has "${who}", who isn't a cast id. Use one of: ${[...people.keys()].join(", ")}.`);
     }

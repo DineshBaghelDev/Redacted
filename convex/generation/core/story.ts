@@ -3,7 +3,7 @@ import { capitalize, crimeKind, type CrimeKind } from "./crimes";
 import { buildEvidence } from "./evidence";
 import { listCameras } from "./evidence/cctv";
 import { buildFacts } from "./facts";
-import type { Cast, CrimeBase, Story } from "./schemas";
+import { formatTime, type Cast, type CrimeBase, type Story } from "./schemas";
 import { buildTimeline, checkTimeline } from "./timeline";
 import type { Difficulty } from "./crimeCast";
 import { validateCase, validationProblems } from "./validate";
@@ -26,6 +26,7 @@ export function storyRules(kind: CrimeKind) {
     "Nobody states a plan to commit the crime or confesses in a message or call. Motive evidence is indirect: a debt notice, a letter about the will, an argument someone overheard.",
     `Everything the ${w.culprit} does has a reason in the story; never add an action only to create evidence.`,
     `If there is an accomplice, the ${w.culprit} and accomplice must meet or talk in the story.`,
+    "An event's action happens at that event's own time: never mention a clock time or part of day in it that disagrees with its start and end.",
     "Write every action, gist and file in your own words; never copy the crime core's method or motive text (NPC scripts are built from the story and must not contain it).",
     'Visibility: "public" events can be seen by anyone at the same place; "private" events are known only to their actors.',
     `Tag with proves ["motive"] the messages, items, device files that show the ${w.culprit}'s real motive; at least two things (records count) must prove it.`,
@@ -88,6 +89,40 @@ export function evidencePlan(city: City, crime: CrimeBase, difficulty: Difficult
   return { needed: difficulty === "easy" ? 2 : 1, decisive, routes };
 }
 
+const WORD_HOURS = ["twelve", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"];
+
+/**
+ * Events whose wording names a clock time that disagrees with the event's own time, e.g. "dozed
+ * through his two o'clock round" in an event at 21:00. Reads "2 a.m.", "7:30 pm" and "two o'clock"
+ * ("o'clock" could be morning or evening); a time within an hour of the event is fine.
+ */
+export function clockProblems(story: Story) {
+  const problems: string[] = [];
+  const pattern = /\b(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s?m\b\.?|\b(\d{1,2}|twelve|one|two|three|four|five|six|seven|eight|nine|ten|eleven)\s+o'clock\b/gi;
+  for (const e of story.events) {
+    for (const m of e.action.matchAll(pattern)) {
+      const minute = m[2] ? Number(m[2]) : 0;
+      let hours: number[];
+      if (m[3]) {
+        const h = Number(m[1]) % 12;
+        hours = [m[3].toLowerCase() === "p" ? h + 12 : h];
+      } else {
+        const word = m[4].toLowerCase();
+        const h = (/^\d+$/.test(word) ? Number(word) : WORD_HOURS.indexOf(word)) % 12;
+        hours = [h, h + 12];
+      }
+      const near = hours.some((h) => {
+        const said = h * 60 + minute;
+        const at = (t: number) => ((t % 1440) + 1440) % 1440;
+        const [from, to] = [at(e.start - 60), at(e.end + 60)];
+        return from <= to ? said >= from && said <= to : said >= from || said <= to;
+      });
+      if (!near) problems.push(`Event "${e.id}" says "${m[0]}" but happens at ${formatTime(e.start)}–${formatTime(e.end)}: change the wording or the time so they agree.`);
+    }
+  }
+  return problems;
+}
+
 /**
  * Checks the story end to end: timeline first, then (if that passes) whether the evidence it produces
  * makes the case solvable. Lies aren't written yet, so their checks are skipped.
@@ -104,6 +139,8 @@ export function storyProblems(city: City, crime: CrimeBase, cast: Cast, story: S
   if (copied.length) return copied.map((what) => `The story copies the crime core's ${what} word for word; describe it in your own words.`);
   const inStory = new Set([...story.events.flatMap((e) => e.actors), ...story.comms.flatMap((m) => [m.from, m.to]), ...story.purchases.map((p) => p.who)]);
   const missing = cast.characters.filter((c) => c.role === "suspect" && !inStory.has(c.id)).map((c) => `${c.name} (${c.id})`);
+  const clock = clockProblems(story);
+  if (clock.length) return clock;
   if (missing.length) return [`These suspects don't appear in the story, so nothing backs up why police would suspect them: ${missing.join(", ")}. Give each one an event, call, message or purchase that does.`];
   const timeline = buildTimeline(city, crime, cast, story, seed);
   const timelineProblems = checkTimeline(city, crime, cast, story, timeline);

@@ -5,10 +5,14 @@ import type { City } from "./city";
 // Stage 9: what investigators legitimately know at the start. The crime kind says what that is.
 
 const SHAPE_RULE = "title: 2–5 words, like a case file name. summary: 2–4 plain sentences. initialFacts: 3–5 short facts.";
+/** Case days have no weekday, so any weekday in the brief is invented. */
+const WEEKDAYS = /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i;
+const ONLY_FACTS_RULE =
+  "Use only the known facts below, worded plainly: no weekdays (cases use Day 1, Day 2...), no part of day that disagrees with the times given, and no actions or details that aren't listed (e.g. why someone came to the room).";
 
 /** The brief's rules: the kind's, plus the shape every brief has. */
 export function briefRules(crime: CrimeBase) {
-  return [...crimeKind(crime).briefRules, SHAPE_RULE];
+  return [...crimeKind(crime).briefRules, ONLY_FACTS_RULE, SHAPE_RULE];
 }
 
 /** What the police know when called in, worked out by code (as "label: value" lines). */
@@ -39,6 +43,8 @@ export function briefProblems(city: City, crime: CrimeBase, cast: Cast, story: S
   if (lower.includes(crime.method.toLowerCase().slice(0, 40))) problems.push("The brief copies the hidden method.");
   if (lower.includes(crime.motive.details.toLowerCase().slice(0, 40))) problems.push("The brief copies the hidden motive.");
   problems.push(...crimeKind(crime).briefProblems({ city, crime, cast, story }, brief));
+  const weekday = text.match(WEEKDAYS);
+  if (weekday) problems.push(`The brief says "${weekday[0]}", but cases have no weekdays: use the day and time given.`);
   if (brief.initialFacts.length < 3 || brief.initialFacts.length > 5) problems.push("The brief needs 3–5 initial facts.");
   return problems;
 }
