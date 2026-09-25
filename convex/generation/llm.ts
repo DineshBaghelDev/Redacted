@@ -1,5 +1,5 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { APICallError, generateText, NoObjectGeneratedError, Output } from "ai";
+import { APICallError, Output, streamText, type JSONValue } from "ai";
 import { z } from "zod";
 import { schemaProblems } from "./core/schemas";
 
@@ -11,7 +11,19 @@ const PROVIDERS = {
   gemini: { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai", key: "GEMINI_API_KEY" },
   groq: { baseURL: "https://api.groq.com/openai/v1", key: "GROQ_API_KEY" },
   openrouter: { baseURL: "https://openrouter.ai/api/v1", key: "OPENROUTER_API_KEY" },
+  moonshot: { baseURL: "https://api.moonshot.ai/v1", key: "MOONSHOT_API_KEY" },
 } as const;
+
+/**
+ * Keeps thinking low everywhere: generation needs careful rule-following, not long reasoning, and low
+ * thinking is faster and cheaper. Sent as-is in the request body.
+ */
+function thinkingOptions(provider: keyof typeof PROVIDERS, id: string): Record<string, JSONValue> {
+  if (provider === "moonshot") return id === "kimi-k3" ? { reasoning_effort: "low" } : { thinking: { type: "disabled" } };
+  if (provider === "gemini" || provider === "groq") return { reasoning_effort: "low" };
+  if (provider === "openrouter") return { reasoning: { effort: "low" } };
+  return {};
+}
 
 export const MODELS = {
   /** Case generation (crime, cast, story, lies, writing). */
@@ -20,23 +32,28 @@ export const MODELS = {
   npc: "moonshotai/kimi-k2.6",
 } as const;
 
+/** Paid (the owner's Kimi key): the most reliable for the big stages. $3 in / $15 out per 1M tokens. */
+const KIMI_K3 = "moonshot:kimi-k3";
+/** Paid, cheaper and without thinking: for small rewriting jobs. */
+const KIMI_FAST = "moonshot:kimi-k2.6";
 const GEMINI_FLASH = "gemini:gemini-3.5-flash";
 const GROQ_FAST = "groq:openai/gpt-oss-120b";
 const NEMOTRON_FREE = "openrouter:nvidia/nemotron-3-super-120b-a12b:free";
 
 /**
- * Models per AI stage, tried in order: the next one takes over when a call fails (rate limit, daily
- * quota, overload). Gemini Flash is the fastest by far (cast in ~20 s) but is sometimes overloaded;
- * Groq's free cap is 8k tokens a minute, so it only fits the small prompts; OpenRouter's free tier
- * allows 50 calls a day. NIM is the backup everywhere. Picked from side-by-side runs (2026-09-25).
+ * Models per AI stage, tried in order: the next one takes over when a call fails. Kimi K3 (paid, low
+ * thinking) leads the stages that need careful rule-following; Kimi K2.6 without thinking missed the
+ * crime's time band three tries in a row, so it only rewrites text. Free Groq goes first for the small
+ * prompts (its free cap is 8k tokens a minute); free Gemini Flash (20 calls a day) and NIM are backups.
+ * Picked from side-by-side runs (2026-09-25).
  */
 const STAGE_MODELS: Record<string, string[]> = {
-  crime: [GEMINI_FLASH, GROQ_FAST, MODELS.main],
-  cast: [GEMINI_FLASH, NEMOTRON_FREE, MODELS.main],
-  story: [GEMINI_FLASH, NEMOTRON_FREE, MODELS.main],
-  lies: [GEMINI_FLASH, MODELS.main],
-  text: [GROQ_FAST, GEMINI_FLASH, MODELS.main],
-  brief: [GROQ_FAST, GEMINI_FLASH, MODELS.main],
+  crime: [KIMI_K3, GEMINI_FLASH, MODELS.main],
+  cast: [KIMI_K3, GEMINI_FLASH, NEMOTRON_FREE, MODELS.main],
+  story: [KIMI_K3, GEMINI_FLASH, NEMOTRON_FREE, MODELS.main],
+  lies: [KIMI_K3, GEMINI_FLASH, MODELS.main],
+  text: [GROQ_FAST, KIMI_FAST, GEMINI_FLASH, MODELS.main],
+  brief: [GROQ_FAST, KIMI_FAST, MODELS.main],
 };
 
 /** The models to try for a stage, in order. */
@@ -62,7 +79,7 @@ export type LlmCall = {
   error?: string;
 };
 
-/** The chat model for "provider:model id" (no prefix means NIM). */
+/** The chat model for "provider:model id" (no prefix means NIM), plus its low-thinking options. */
 function chatModel(model: string, strict: boolean) {
   const [prefix, ...rest] = model.split(":");
   const name = (prefix in PROVIDERS && rest.length ? prefix : "nim") as keyof typeof PROVIDERS;
@@ -70,7 +87,10 @@ function chatModel(model: string, strict: boolean) {
   const { baseURL, key } = PROVIDERS[name];
   const apiKey = process.env[key];
   if (!apiKey) throw new Error(`${key} is not set in the Convex environment.`);
-  return createOpenAICompatible({ name, baseURL, apiKey, supportsStructuredOutputs: strict }).chatModel(id);
+  return {
+    model: createOpenAICompatible({ name, baseURL, apiKey, supportsStructuredOutputs: strict }).chatModel(id),
+    providerOptions: { [name]: thinkingOptions(name, id) },
+  };
 }
 
 /** A failed call's message plus, for provider errors, the status and the start of the reply body. */
@@ -111,49 +131,34 @@ export async function generateJson(args: {
     const strict = mode === "strict";
     const prompt = strict ? args.prompt : `${args.prompt}\n\nReply with one JSON object matching this JSON schema:\n${JSON.stringify(z.toJSONSchema(args.schema, { io: "input" }))}`;
     try {
-      const result = await generateText({
-        model: chatModel(model, strict),
+      // Streamed: a long reply sent in one piece can stall until the timeout (seen on Kimi and NIM).
+      const result = streamText({
+        ...chatModel(model, strict),
         system: args.system,
         prompt,
         output: Output.object({ schema: args.schema }),
         abortSignal: AbortSignal.timeout(TIMEOUT_MS - (Date.now() - started)),
         maxRetries: args.maxRetries,
       });
-      return {
-        ...base,
-        mode,
-        output: result.output,
-        rawText: result.text,
-        inputTokens: result.usage.inputTokens,
-        outputTokens: result.usage.outputTokens,
-        ms: Date.now() - started,
-      };
-    } catch (error) {
-      if (NoObjectGeneratedError.isInstance(error)) {
-        const rawText = error.text ?? "";
-        // Some NIM models (e.g. Kimi) answer a strict-schema request with an empty reply: ask again in JSON mode.
-        if (strict && !rawText.trim()) continue;
-        // Output didn't parse or match the schema: salvage what we can and report the problems.
-        let output: unknown = null;
-        let problems: string[];
-        try {
-          output = parseJson(rawText);
-          problems = schemaProblems(args.schema, output);
-          if (problems.length === 0) output = args.schema.parse(output);
-        } catch {
-          problems = ["The reply wasn't valid JSON."];
-        }
-        return {
-          ...base,
-          mode,
-          output,
-          problems,
-          rawText,
-          inputTokens: error.usage?.inputTokens,
-          outputTokens: error.usage?.outputTokens,
-          ms: Date.now() - started,
-        };
+      // The reply is parsed and checked below; the SDK's own parse would only fail again.
+      result.output.then(undefined, () => {});
+      let streamError: unknown;
+      for await (const part of result.stream) if (part.type === "error") streamError = part.error;
+      if (streamError) throw streamError;
+      const [rawText, usage] = await Promise.all([result.text, result.usage]);
+      // Some models (e.g. Kimi on NIM) answer a strict-schema request with an empty reply: ask again in JSON mode.
+      if (strict && !rawText.trim()) continue;
+      let output: unknown = null;
+      let problems: string[];
+      try {
+        output = parseJson(rawText);
+        problems = schemaProblems(args.schema, output);
+        if (problems.length === 0) output = args.schema.parse(output);
+      } catch {
+        problems = ["The reply wasn't valid JSON."];
       }
+      return { ...base, mode, output, problems, rawText, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens, ms: Date.now() - started };
+    } catch (error) {
       // NIM refused the strict request (e.g. unsupported response_format): fall back to JSON mode.
       if (strict && APICallError.isInstance(error) && error.statusCode !== undefined && error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 401 && error.statusCode !== 429) {
         continue;
@@ -161,5 +166,6 @@ export async function generateJson(args: {
       return { ...base, mode, problems: ["The AI call failed."], error: describeError(error), ms: Date.now() - started };
     }
   }
-  throw new Error("unreachable");
+  // Both modes gave an empty reply.
+  return { ...base, mode: "json", problems: ["The reply wasn't valid JSON."], ms: Date.now() - started };
 }
