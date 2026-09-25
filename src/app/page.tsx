@@ -2,7 +2,6 @@ import {
   Show,
   SignInButton,
   SignUpButton,
-  UserButton,
 } from "@clerk/nextjs";
 import { RoomHub } from "@/components/room-hub/room-hub";
 
@@ -13,10 +12,10 @@ import { RoomHub } from "@/components/room-hub/room-hub";
  */
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#050712] p-2 text-cyan-100 sm:p-3">
+    <main className="min-h-screen w-full bg-[#050712] text-cyan-100">
       <Show when="signed-out">
         <section
-          className="flex min-h-[calc(100vh-1rem)] items-center justify-start border border-cyan-400/70 bg-cover bg-center px-6 shadow-[inset_0_0_24px_rgba(34,211,238,0.22)] sm:min-h-[calc(100vh-1.5rem)] sm:px-16"
+          className="flex min-h-screen w-full items-center justify-start border-0 bg-cover bg-center px-6 shadow-[inset_0_0_24px_rgba(34,211,238,0.22)] sm:px-16"
           style={{
             backgroundImage:
               "linear-gradient(90deg, rgba(5,7,18,0.82), rgba(5,7,18,0.18)), url('/home-background.png')",
@@ -42,15 +41,8 @@ export default function Home() {
 
       <Show when="signed-in">
         <section
-          className="relative flex min-h-[calc(100vh-1rem)] items-center justify-start border border-cyan-400/70 bg-cover bg-center px-6 py-12 shadow-[inset_0_0_24px_rgba(34,211,238,0.22)] sm:min-h-[calc(100vh-1.5rem)] sm:px-16"
-          style={{
-            backgroundImage:
-              "linear-gradient(90deg, rgba(5,7,18,0.82), rgba(5,7,18,0.18)), url('/home-background.png')",
-          }}
+          className="relative flex h-screen w-full items-center justify-start overflow-hidden border-0 bg-[#050712] px-0 shadow-[inset_0_0_24px_rgba(34,211,238,0.22)]"
         >
-          <div className="absolute right-6 top-6">
-            <UserButton />
-          </div>
           <RoomHub />
         </section>
       </Show>

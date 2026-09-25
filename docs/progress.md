@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-09-26
+
+- New rooms now enter the fixed Union Station Death development case without running generation; added the bureau image as the first playable investigation surface with clickable Interrogate, CCTV, Clueboard, and Evidence stations.
+- Removed the account profile badge and made the app shell and bureau use the full viewport width.
+- Removed the signed-in home background and locked the bureau scene to the viewport with no page scroll.
+- Removed the bureau header and bottom instruction panel so the scene is unobstructed.
+
 ## 2026-09-24
 
 - Restricted the Sentry demo page and error API to development; enabled example logging and disabled collection of user details and request bodies.

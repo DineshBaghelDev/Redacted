@@ -63,3 +63,8 @@
 - Lying isn't compulsory: innocent people tell the truth to clear themselves and lie only when the truth would do real damage (arrest, job, reputation, family). The killer always has a cover story. At most 2/3/4 innocent liars on easy/normal/hard.
 - Innocent suspects don't need a provable alibi; some cases leave people unaccounted for. Nothing decisive may point at an innocent.
 - Not everyone has a secret.
+# Development case
+
+- During UI development, a new room opens the completed Union Station Death case as a fixed fixture. Case generation is intentionally bypassed until the gameplay surfaces are ready.
+- The game shell is full-screen; account profile controls are not shown during play.
+- The bureau scene owns the full viewport on the signed-in home screen; the shell does not add a second background or scrolling page.

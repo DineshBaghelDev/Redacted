@@ -2,12 +2,12 @@ export function LoadingScreen() {
   return (
     <div className="mx-auto flex min-h-[55vh] w-full max-w-xl flex-col items-center justify-center gap-8 text-center">
       <h1 className="text-4xl uppercase tracking-[0.18em] text-cyan-50 sm:text-5xl">
-        Preparing case...
+        Loading case...
       </h1>
       <div className="space-y-3 text-left text-2xl text-cyan-200">
-        <p>Generating city...</p>
-        <p>Preparing records...</p>
-        <p>Building case...</p>
+        <p>Opening Union Station Death...</p>
+        <p>Loading fixed case file...</p>
+        <p>Entering bureau...</p>
       </div>
     </div>
   );

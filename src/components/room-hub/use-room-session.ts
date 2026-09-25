@@ -116,7 +116,7 @@ export function useRoomSession(nickname: string) {
     setActiveCaseId(caseId);
     setShowRoom(false);
     setScreen("loading");
-    window.setTimeout(() => setScreen("brief"), 1200);
+    window.setTimeout(() => setScreen("bureau"), 1200);
   }
 
   return {

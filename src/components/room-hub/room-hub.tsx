@@ -11,6 +11,7 @@ import { PreviousGamesScreen } from "./screens/previous-games";
 import { RoomLobbyModal } from "./screens/room-lobby-modal";
 import { SettingsPanel } from "./screens/settings-panel";
 import { CaseBriefScreen, LoadingScreen } from "./screens/status-screens";
+import { BureauScreen } from "./screens/bureau-screen";
 
 const DETECTIVE_NAME_KEY = "redacted.detectiveName";
 
@@ -90,6 +91,10 @@ export function RoomHub() {
 
   if (screen === "brief") {
     return <CaseBriefScreen caseId={activeCaseId} />;
+  }
+
+  if (screen === "bureau") {
+    return <BureauScreen />;
   }
 
   return (
