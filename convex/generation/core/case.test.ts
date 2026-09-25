@@ -104,7 +104,7 @@ describe("can the case be solved", () => {
   it("fails when decisive-type evidence points at an innocent", () => {
     const prints = set.evidence.find((e) => e.id === "forensic/weapon/prints")!;
     const s = { ...set, evidence: set.evidence.map((e) => (e.id === prints.id && e.type === "forensic" ? { ...e, data: { ...e.data, printsOf: ["lena"] } } : e)) };
-    expect(validate(s)).toContain('Nothing decisive points at an innocent: "Fingerprints · Cast-iron doorstop" points at Lena Ortiz as strongly as at the killer.');
+    expect(validate(s)).toContain(`Nothing decisive points at an innocent: "Fingerprints · Cast-iron doorstop" points at Lena Ortiz as strongly as at the killer: change the story so this evidence doesn't involve Lena Ortiz (lena).`);
   });
 
   it("fails when a lie's proof is missing", () => {

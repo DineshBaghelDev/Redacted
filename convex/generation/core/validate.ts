@@ -3,7 +3,7 @@ import { capitalize, crimeKind, makeCheck } from "./crimes";
 import type { Evidence, EvidenceSet } from "./evidence/types";
 import type { Facts } from "./facts";
 import { checkLies, liarCountProblems } from "./lies";
-import type { Cast, CrimeBase, Lies, Story } from "./schemas";
+import { formatTime, type Cast, type CrimeBase, type Lies, type Story } from "./schemas";
 
 export type CaseCheck = {
   id: string;
@@ -86,7 +86,17 @@ export function validateCase(
       "unique",
       "Nothing decisive points at an innocent",
       innocents.flatMap((c) => fact(`alibi:${c.id}`)),
-      innocents.flatMap((c) => pointsAt(c.id).map((e) => `"${e.title}" points at ${c.name} as strongly as at the ${w.culprit}.`)),
+      innocents.flatMap((c) =>
+        pointsAt(c.id).map((e) => {
+          const said = `"${e.title}" points at ${c.name} as strongly as at the ${w.culprit}`;
+          // The scene camera: say exactly which minutes the innocent must stay out of the scene room.
+          if (e.type === "cctv") {
+            const [from, to] = [crime.crimeTime - 15, crime.crimeTime + 15];
+            return `${said}: they are in view of the scene room's camera near the ${w.crimeTime}. Keep ${c.name} (${c.id}) out of ${crime.sceneRoomId} from ${formatTime(from)} to ${formatTime(to)}, e.g. end their event there before ${formatTime(from)} or start it after ${formatTime(to)}. If they are only there for their everyday routine (work or home), give them a story event somewhere else at that time.`;
+          }
+          return `${said}: change the story so this evidence doesn't involve ${c.name} (${c.id}).`;
+        }),
+      ),
     ),
     ...(crime.accomplice
       ? [check("accomplice", "Accomplice can be linked", fact("accomplice-link"), atLeast(fact("accomplice-link"), 1, "linking the accomplice"))]
