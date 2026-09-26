@@ -7,6 +7,8 @@
 - Camera faults and temporary outages now come from each case, and the timeline adapts to that case's recorded window on mobile and desktop.
 - Replaced the map placeholder with the permanent 20-place city and its real street connections, travel minutes, and camera-marked routes.
 - The city map is room-member-only, supports place and direct-route inspection, and adapts into a stacked layout on small screens.
+- Starting a ready room now opens the selected case's full public briefing instead of skipping from a decorative loading screen straight to the bureau.
+- The room-scoped briefing survives reloads and gives players explicit Begin investigation and Leave room actions on mobile and desktop.
 
 ## 2026-09-26
 

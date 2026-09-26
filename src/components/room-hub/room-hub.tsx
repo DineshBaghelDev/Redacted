@@ -9,7 +9,7 @@ import { NameEntryScreen } from "./screens/name-entry";
 import { PreviousGamesScreen } from "./screens/previous-games";
 import { RoomLobbyModal } from "./screens/room-lobby-modal";
 import { SettingsPanel } from "./screens/settings-panel";
-import { CaseBriefScreen, LoadingScreen } from "./screens/status-screens";
+import { CaseBriefScreen } from "./screens/status-screens";
 import { BureauScreen } from "./screens/bureau-screen";
 
 const DETECTIVE_NAME_KEY = "redacted.detectiveName";
@@ -78,12 +78,15 @@ export function RoomHub() {
     );
   }
 
-  if (screen === "loading") {
-    return <LoadingScreen />;
-  }
-
   if (screen === "brief") {
-    return <CaseBriefScreen />;
+    return (
+      <CaseBriefScreen
+        error={error}
+        onBegin={() => setScreen("bureau")}
+        onLeave={leaveRoom}
+        roomCode={joinedRoomCode}
+      />
+    );
   }
 
   if (screen === "bureau") {

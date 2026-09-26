@@ -10,11 +10,8 @@ function screenForPath(pathname: string): Screen {
   if (pathname === "/join") return "join";
   if (pathname === "/previous") return "previous";
   if (pathname === "/settings") return "settings";
-  if (pathname === "/brief") return "brief";
-  if (pathname === "/game/loading") return "loading";
   if (pathname === "/game" || pathname.startsWith("/game/")) return "bureau";
   if (/^\/lobby\/[^/]+\/(?:bureau(?:\/.*)?|map|case)$/.test(pathname)) return "bureau";
-  if (/^\/lobby\/[^/]+\/game-loading$/.test(pathname)) return "loading";
   if (/^\/lobby\/[^/]+\/brief$/.test(pathname)) return "brief";
   return "menu";
 }
@@ -23,8 +20,7 @@ function pathForScreen(screen: Screen, roomCode: string) {
   if (screen === "join") return "/join";
   if (screen === "previous") return "/previous";
   if (screen === "settings") return "/settings";
-  if (screen === "loading") return roomCode ? `/lobby/${roomCode}/game-loading` : "/game/loading";
-  if (screen === "brief") return roomCode ? `/lobby/${roomCode}/brief` : "/brief";
+  if (screen === "brief") return roomCode ? `/lobby/${roomCode}/brief` : "/";
   if (screen === "bureau") return roomCode ? `/lobby/${roomCode}/bureau` : "/game";
   return "/";
 }
@@ -155,8 +151,7 @@ export function useRoomSession(nickname: string) {
 
   function openBrief() {
     setShowRoom(false);
-    navigateTo("loading");
-    window.setTimeout(() => navigateTo("bureau"), 1200);
+    navigateTo("brief");
   }
 
   return {
