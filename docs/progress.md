@@ -10,6 +10,7 @@
 - Starting a ready room now opens the selected case's full public briefing instead of skipping from a decorative loading screen straight to the bureau.
 - The room-scoped briefing survives reloads and gives players explicit Begin investigation and Leave room actions on mobile and desktop.
 - Added a dedicated mobile bureau station menu so every investigation surface has a reliable touch target even when the room artwork is cropped on narrow screens.
+- Join and lobby overlays now use native modal dialogs, keeping keyboard focus inside the active room flow and announcing errors to assistive technology.
 
 ## 2026-09-26
 

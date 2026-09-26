@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import { menuButton, panel } from "../constants";
 
 export type RoomLobbyState = {
@@ -33,11 +36,26 @@ export function RoomLobbyModal({
   onStart,
   onLeave,
 }: RoomLobbyModalProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+    return () => {
+      if (dialog?.open) dialog.close();
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/70 p-4">
+    <dialog
+      aria-labelledby="room-lobby-title"
+      className="fixed inset-0 z-20 m-0 hidden h-full max-h-none w-full max-w-none items-center justify-center bg-black/70 p-4 text-cyan-100 open:flex"
+      onCancel={(event) => event.preventDefault()}
+      ref={dialogRef}
+    >
       <div className={`${panel} w-full max-w-lg`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-3xl uppercase text-cyan-50">Room {joinedRoomCode}</h2>
+          <h2 className="text-3xl uppercase text-cyan-50" id="room-lobby-title">Room {joinedRoomCode}</h2>
           <button
             className="h-10 border border-cyan-300 bg-[#06142d] px-4 text-base uppercase text-yellow-200"
             onClick={onCopyCode}
@@ -88,8 +106,8 @@ export function RoomLobbyModal({
               : `${room.playerCount}/2 detectives connected. Waiting for ready.`}
           </p>
         ) : null}
-        {error ? <p className="mt-3 text-center text-sm text-red-300">{error}</p> : null}
+        {error ? <p className="mt-3 text-center text-sm text-red-300" role="alert">{error}</p> : null}
       </div>
-    </div>
+    </dialog>
   );
 }
