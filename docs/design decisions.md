@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-09-27 — Interview station starts with a safe case roster
+
+The interview desk may show public character details before live questioning exists. It never reads generation drafts, private NPC scripts, or the canonical solution; presence-gated questions will be added with the time engine.
+
 ## 2026-09-27 — Generated IDs remain publish-time mapping keys
 
 Generated character IDs are stored as case-scoped `npcs.sourceId` values only to map immutable generation output into normalized Convex rows. Runtime relationships use Convex document IDs, including the private solution's culprit reference.

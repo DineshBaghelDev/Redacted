@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Case-specific interview roster
+
+- The bureau interview station now shows the selected case's normalized victim, people of interest, and witnesses in a responsive case-file layout.
+- The public NPC query is room-member scoped and omits generated source IDs and all private scripts/solution data.
+- Asking questions remains deferred until the shared multiplayer clock rule is decided.
+
 ## 2026-09-27 — Private solution freeze
 
 - Passed generated cases now freeze their cast into normalized NPC rows and store one server-only canonical solution before play.

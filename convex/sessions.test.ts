@@ -127,6 +127,13 @@ test("a lobby keeps the selected passed case", async () => {
       { description: "Decisive evidence", requiredEvidenceIds: ["evidence/culprit"] },
     ]),
   });
+  const publicPeople = await user.query(api.npcs.list, { roomCode: created.roomCode });
+  expect(publicPeople).toHaveLength(cast.characters.length);
+  expect(publicPeople?.find((person) => person.id === frozen.culprit?._id)).toMatchObject({
+    name: frozen.culprit?.name,
+    role: "suspect",
+  });
+  expect(JSON.stringify(publicPeople)).not.toContain("sourceId");
   expect(await user.query(api.sessions.get, { roomCode: created.roomCode })).toMatchObject({
     caseTitle: "The Selected Case",
   });
@@ -169,4 +176,5 @@ test("a lobby keeps the selected passed case", async () => {
   expect(await stranger.query(api.cases.getCctv, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).toBeNull();
   expect(await stranger.query(api.world.getMap, { roomCode: created.roomCode })).toBeNull();
+  expect(await stranger.query(api.npcs.list, { roomCode: created.roomCode })).toBeNull();
 });
