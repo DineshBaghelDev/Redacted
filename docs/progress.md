@@ -5,6 +5,8 @@
 - Replaced the client-only Union Station CCTV demo data with the selected case's generated cameras and appearance-only records.
 - CCTV reads are scoped through the authenticated room membership and omit hidden people, source events, and solution data.
 - Camera faults and temporary outages now come from each case, and the timeline adapts to that case's recorded window on mobile and desktop.
+- Replaced the map placeholder with the permanent 20-place city and its real street connections, travel minutes, and camera-marked routes.
+- The city map is room-member-only, supports place and direct-route inspection, and adapts into a stacked layout on small screens.
 
 ## 2026-09-26
 

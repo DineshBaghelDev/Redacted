@@ -82,9 +82,17 @@ test("a lobby keeps the selected passed case", async () => {
       kind: "pass",
     }],
   });
+  const cityMap = await user.query(api.world.getMap, { roomCode: created.roomCode });
+  expect(cityMap?.places).toHaveLength(20);
+  expect(cityMap?.places.find((place) => place.id === "police-bureau")).toMatchObject({
+    name: "Police Bureau",
+    kind: "bureau",
+  });
+  expect(cityMap?.streets.some((street) => street.a === "police-bureau" && street.b === "forensic-lab" && street.minutes === 2)).toBe(true);
 
   const stranger = t.withIdentity({ subject: "player-2" });
   expect(await stranger.query(api.sessions.get, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.cases.getBrief, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.cases.getCctv, { roomCode: created.roomCode })).toBeNull();
+  expect(await stranger.query(api.world.getMap, { roomCode: created.roomCode })).toBeNull();
 });

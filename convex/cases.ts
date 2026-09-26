@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { query, type MutationCtx } from "./_generated/server";
-import { requireUserId } from "./lib/auth";
+import { getRoomMember, requireUserId } from "./lib/auth";
 
 type Brief = {
   title?: unknown;
@@ -154,20 +154,10 @@ export const getBrief = query({
   args: { roomCode: v.string() },
   returns: v.union(v.null(), v.object({ title: v.string(), summary: v.string(), initialFacts: v.array(v.string()) })),
   handler: async (ctx, { roomCode }) => {
-    const authUserId = await requireUserId(ctx);
-    const session = await ctx.db
-      .query("sessions")
-      .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase()))
-      .unique();
-    if (!session?.caseId || session.expiresAt < Date.now()) return null;
+    const member = await getRoomMember(ctx, roomCode);
+    if (!member?.session.caseId) return null;
 
-    const player = await ctx.db
-      .query("sessionPlayers")
-      .withIndex("by_sessionId_authUserId", (q) => q.eq("sessionId", session._id).eq("authUserId", authUserId))
-      .unique();
-    if (!player) return null;
-
-    const playableCase = await ctx.db.get(session.caseId);
+    const playableCase = await ctx.db.get(member.session.caseId);
     return playableCase
       ? { title: playableCase.title, summary: playableCase.summary, initialFacts: playableCase.initialFacts }
       : null;
@@ -178,20 +168,10 @@ export const getCctv = query({
   args: { roomCode: v.string() },
   returns: v.union(v.null(), cctvData),
   handler: async (ctx, { roomCode }) => {
-    const authUserId = await requireUserId(ctx);
-    const session = await ctx.db
-      .query("sessions")
-      .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase()))
-      .unique();
-    if (!session?.caseId || session.expiresAt < Date.now()) return null;
+    const member = await getRoomMember(ctx, roomCode);
+    if (!member?.session.caseId) return null;
 
-    const player = await ctx.db
-      .query("sessionPlayers")
-      .withIndex("by_sessionId_authUserId", (q) => q.eq("sessionId", session._id).eq("authUserId", authUserId))
-      .unique();
-    if (!player) return null;
-
-    const playableCase = await ctx.db.get(session.caseId);
+    const playableCase = await ctx.db.get(member.session.caseId);
     if (!playableCase) return null;
     const draft = await ctx.db
       .query("generationDrafts")

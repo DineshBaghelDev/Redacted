@@ -52,6 +52,7 @@ import type * as generation_stages from "../generation/stages.js";
 import type * as generation_workflow from "../generation/workflow.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as sessions from "../sessions.js";
+import type * as world from "../world.js";
 
 import type {
   ApiFromModules,
@@ -104,6 +105,7 @@ declare const fullApi: ApiFromModules<{
   "generation/workflow": typeof generation_workflow;
   "lib/auth": typeof lib_auth;
   sessions: typeof sessions;
+  world: typeof world;
 }>;
 
 /**

@@ -4,6 +4,7 @@
 
 - The CCTV console reads only the selected room's case. Its public response includes camera labels, faults, times, appearance/movement wording, and outage rows; it excludes identities, source events, and every hidden solution field.
 - Generated CCTV drafts remain server-side while gameplay tables are built. The public query is a narrow compatibility read, not permission to expose generation drafts to the client.
+- The first city-map slice is a read-only route planner using the permanent city graph. It deliberately does not offer travel until the shared multiplayer clock rule is resolved.
 
 ## 2026-09-26
 

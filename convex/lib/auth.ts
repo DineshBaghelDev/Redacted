@@ -1,6 +1,7 @@
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
 
 type AnyCtx = QueryCtx | MutationCtx | ActionCtx;
+type DbCtx = QueryCtx | MutationCtx;
 
 /**
  * Retrieves the authenticated user's identity.
@@ -14,6 +15,21 @@ export async function requireUserId(ctx: AnyCtx) {
     throw new Error("Sign in first.");
   }
   return identity.subject;
+}
+
+/** Returns a room and the signed-in member, or null when the room is unavailable to them. */
+export async function getRoomMember(ctx: DbCtx, roomCode: string) {
+  const authUserId = await requireUserId(ctx);
+  const session = await ctx.db
+    .query("sessions")
+    .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase()))
+    .unique();
+  if (!session || session.expiresAt < Date.now()) return null;
+  const player = await ctx.db
+    .query("sessionPlayers")
+    .withIndex("by_sessionId_authUserId", (q) => q.eq("sessionId", session._id).eq("authUserId", authUserId))
+    .unique();
+  return player ? { session, player } : null;
 }
 
 /**

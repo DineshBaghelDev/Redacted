@@ -13,6 +13,10 @@ const CctvScreen = dynamic(() =>
   import("./cctv-screen").then((module) => module.CctvScreen),
 );
 
+const MapScreen = dynamic(() =>
+  import("./map-screen").then((module) => module.MapScreen),
+);
+
 type Station = "interrogate" | "cctv" | "clueboard" | "evidence" | "map" | "case";
 
 const stations: Record<Station, { label: string; description: string }> = {
@@ -100,7 +104,11 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         <CctvScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
       ) : null}
 
-      {activeStation && station !== "clueboard" && station !== "cctv" ? (
+      {station === "map" ? (
+        <MapScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
+      ) : null}
+
+      {activeStation && station !== "clueboard" && station !== "cctv" && station !== "map" ? (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#020817]/75 p-4 backdrop-blur-[2px]">
           <div className="w-full max-w-lg border border-cyan-300 bg-[#06142d] p-6 text-cyan-100 shadow-[0_0_28px_rgba(34,211,238,0.3)]">
             <div className="flex items-start justify-between gap-4">
