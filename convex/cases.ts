@@ -1,6 +1,9 @@
 import { v } from "convex/values";
+import { z } from "zod";
 import type { Id } from "./_generated/dataModel";
 import { query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { crimeCoreSchema } from "./generation/core/crimes";
+import { castSchema } from "./generation/core/schemas";
 import { getRoomMember, requireUserId } from "./lib/auth";
 
 type Brief = {
@@ -37,6 +40,15 @@ const cctvData = v.object({
     name: v.string(),
     faulty: v.boolean(),
   })),
+});
+
+const solutionFactsSchema = z.object({
+  facts: z.array(z.object({
+    kind: z.string(),
+    text: z.string(),
+    evidenceIds: z.array(z.string()),
+  })),
+  decisiveIds: z.array(z.string()),
 });
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -93,6 +105,73 @@ function readCctv(output: unknown) {
   return { start, end, cameras, records };
 }
 
+async function getDraft(ctx: MutationCtx, jobId: Id<"generationJobs">, stage: string) {
+  return await ctx.db
+    .query("generationDrafts")
+    .withIndex("by_job_stage", (q) => q.eq("jobId", jobId).eq("stage", stage))
+    .unique();
+}
+
+async function ensureCaseSolution(ctx: MutationCtx, caseId: Id<"cases">, generationJobId: Id<"generationJobs">) {
+  const existing = await ctx.db
+    .query("caseSolutions")
+    .withIndex("by_caseId", (q) => q.eq("caseId", caseId))
+    .unique();
+  if (existing) return;
+
+  const [crimeDraft, castDraft, factsDraft] = await Promise.all([
+    getDraft(ctx, generationJobId, "crime"),
+    getDraft(ctx, generationJobId, "cast"),
+    getDraft(ctx, generationJobId, "facts"),
+  ]);
+  const crime = crimeCoreSchema.safeParse(crimeDraft?.output);
+  const cast = castSchema.safeParse(castDraft?.output);
+  const facts = solutionFactsSchema.safeParse(factsDraft?.output);
+  if (!crime.success || !cast.success || !facts.success) {
+    throw new Error("This case has no valid private solution.");
+  }
+
+  const npcIds = new Map<string, Id<"npcs">>();
+  for (const character of cast.data.characters) {
+    const stored = await ctx.db
+      .query("npcs")
+      .withIndex("by_caseId_and_sourceId", (q) => q.eq("caseId", caseId).eq("sourceId", character.id))
+      .unique();
+    const npcId = stored?._id ?? await ctx.db.insert("npcs", {
+      caseId,
+      sourceId: character.id,
+      role: character.role,
+      name: character.name,
+      age: character.age,
+      occupation: character.job?.title,
+      publicDescription: `${character.appearance.height}, ${character.appearance.build}, wearing ${character.appearance.clothing}.`,
+    });
+    npcIds.set(character.id, npcId);
+  }
+
+  const culpritNpcId = npcIds.get(crime.data.culpritId);
+  const culprit = cast.data.characters.find((character) => character.id === crime.data.culpritId);
+  const victim = cast.data.characters.find((character) => character.id === crime.data.victimId);
+  if (!culpritNpcId || !culprit || !victim) throw new Error("This case solution names an unknown person.");
+
+  const relevantFacts = facts.data.facts.filter(
+    (fact) => ["culprit", "motive", "weapon", "method", "accomplice"].includes(fact.kind) && fact.evidenceIds.length > 0,
+  );
+  await ctx.db.insert("caseSolutions", {
+    caseId,
+    culpritNpcId,
+    motive: crime.data.motive.details,
+    weaponDescription: crime.data.weapon.name,
+    method: crime.data.method,
+    canonicalExplanation: `${culprit.name} killed ${victim.name}. ${crime.data.motive.details} ${crime.data.method}`,
+    keyReasoningPoints: relevantFacts.map((fact) => fact.text),
+    evidenceGroups: [
+      { description: "Decisive evidence", requiredEvidenceIds: facts.data.decisiveIds },
+      ...relevantFacts.map((fact) => ({ description: fact.text, requiredEvidenceIds: fact.evidenceIds })),
+    ],
+  });
+}
+
 async function loadCctv(ctx: QueryCtx, roomCode: string) {
   const member = await getRoomMember(ctx, roomCode);
   if (!member?.session.caseId) return null;
@@ -111,10 +190,14 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     .query("cases")
     .withIndex("by_generationJobId", (q) => q.eq("generationJobId", generationJobId))
     .unique();
-  if (existing) return existing._id;
 
   const job = await ctx.db.get(generationJobId);
   if (!job || job.status !== "passed") throw new Error("This case is not ready to play.");
+
+  if (existing) {
+    await ensureCaseSolution(ctx, existing._id, generationJobId);
+    return existing._id;
+  }
 
   const draft = await ctx.db
     .query("generationDrafts")
@@ -123,12 +206,14 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
   const brief = readBrief(draft?.output);
   if (!brief) throw new Error("This case has no playable brief.");
 
-  return await ctx.db.insert("cases", {
+  const caseId = await ctx.db.insert("cases", {
     generationJobId,
     difficulty: job.difficulty,
     ...brief,
     createdAt: Date.now(),
   });
+  await ensureCaseSolution(ctx, caseId, generationJobId);
+  return caseId;
 }
 
 export const listPassed = query({

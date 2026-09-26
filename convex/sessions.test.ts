@@ -3,6 +3,7 @@
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { api } from "./_generated/api";
+import { cast, crimeCore } from "./fixtures/caseEasy";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -17,6 +18,36 @@ test("a lobby keeps the selected passed case", async () => {
       createdAt: 1,
       status: "passed",
       finishedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "crime",
+      output: crimeCore,
+      checkErrors: [],
+      source: "hand-written",
+      updatedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "cast",
+      output: cast,
+      checkErrors: [],
+      source: "hand-written",
+      updatedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "facts",
+      output: {
+        facts: [
+          { id: "culprit-at-scene", kind: "culprit", text: "Private culprit marker", evidenceIds: ["evidence/culprit"] },
+          { id: "motive", kind: "motive", text: "Private motive marker", evidenceIds: ["evidence/motive"] },
+        ],
+        decisiveIds: ["evidence/culprit"],
+      },
+      checkErrors: [],
+      source: "code",
+      updatedAt: 2,
     });
     await ctx.db.insert("generationDrafts", {
       jobId,
@@ -74,6 +105,28 @@ test("a lobby keeps the selected passed case", async () => {
   }]);
 
   const created = await user.mutation(api.sessions.create, { nickname: "Detective", generationJobId });
+  await user.mutation(api.sessions.create, { nickname: "Detective", generationJobId });
+  const frozen = await t.run(async (ctx) => {
+    const session = await ctx.db.get(created.sessionId);
+    const solution = session?.caseId
+      ? await ctx.db.query("caseSolutions").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).unique()
+      : null;
+    const culprit = solution ? await ctx.db.get(solution.culpritNpcId) : null;
+    const npcs = session?.caseId
+      ? await ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    return { solution, culprit, npcs };
+  });
+  expect(frozen.culprit).toMatchObject({ sourceId: crimeCore.culpritId, role: "suspect" });
+  expect(frozen.npcs).toHaveLength(cast.characters.length);
+  expect(frozen.solution).toMatchObject({
+    motive: crimeCore.motive.details,
+    method: crimeCore.method,
+    weaponDescription: crimeCore.weapon.name,
+    evidenceGroups: expect.arrayContaining([
+      { description: "Decisive evidence", requiredEvidenceIds: ["evidence/culprit"] },
+    ]),
+  });
   expect(await user.query(api.sessions.get, { roomCode: created.roomCode })).toMatchObject({
     caseTitle: "The Selected Case",
   });
@@ -82,6 +135,8 @@ test("a lobby keeps the selected passed case", async () => {
     summary: "A specific mystery.",
     initialFacts: ["One fact."],
   });
+  expect(JSON.stringify(await user.query(api.cases.listPassed, {}))).not.toContain(crimeCore.motive.details);
+  expect(JSON.stringify(await user.query(api.cases.getBrief, { roomCode: created.roomCode }))).not.toContain(crimeCore.method);
   expect(await user.query(api.cases.getCctv, { roomCode: created.roomCode })).toEqual({
     caseTitle: "The Selected Case",
     start: 120,

@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Private solution freeze
+
+- Passed generated cases now freeze their cast into normalized NPC rows and store one server-only canonical solution before play.
+- Existing passed cases are backfilled idempotently the next time a new session is created; no client-callable function exposes the solution.
+- The weapon uses the documented text fallback until physical case items are published.
+
 ## 2026-09-27
 
 - Replaced the client-only Union Station CCTV demo data with the selected case's generated cameras and appearance-only records.

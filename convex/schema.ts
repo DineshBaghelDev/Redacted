@@ -13,6 +13,31 @@ export default defineSchema({
     initialFacts: v.array(v.string()),
     createdAt: v.number(),
   }).index("by_generationJobId", ["generationJobId"]),
+  npcs: defineTable({
+    caseId: v.id("cases"),
+    sourceId: v.string(),
+    role: v.union(v.literal("victim"), v.literal("suspect"), v.literal("witness")),
+    name: v.string(),
+    age: v.optional(v.number()),
+    occupation: v.optional(v.string()),
+    publicDescription: v.string(),
+  })
+    .index("by_caseId", ["caseId"])
+    .index("by_caseId_and_sourceId", ["caseId", "sourceId"]),
+  // Canonical answers never receive a public query. Only case-close internals may read them.
+  caseSolutions: defineTable({
+    caseId: v.id("cases"),
+    culpritNpcId: v.id("npcs"),
+    motive: v.string(),
+    weaponDescription: v.optional(v.string()),
+    method: v.string(),
+    canonicalExplanation: v.string(),
+    keyReasoningPoints: v.array(v.string()),
+    evidenceGroups: v.array(v.object({
+      description: v.string(),
+      requiredEvidenceIds: v.array(v.string()),
+    })),
+  }).index("by_caseId", ["caseId"]),
   sessions: defineTable({
     caseId: v.optional(v.id("cases")),
     roomCode: v.string(),

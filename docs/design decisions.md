@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-09-27 — Generated IDs remain publish-time mapping keys
+
+Generated character IDs are stored as case-scoped `npcs.sourceId` values only to map immutable generation output into normalized Convex rows. Runtime relationships use Convex document IDs, including the private solution's culprit reference.
+
 ## 2026-09-27
 
 - The CCTV console reads only the selected room's case. Its public response includes camera labels, faults, times, appearance/movement wording, and outage rows; it excludes identities, source events, and every hidden solution field.

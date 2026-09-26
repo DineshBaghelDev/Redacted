@@ -213,6 +213,8 @@ Create an actual corridor room only if the corridor itself is searchable/interac
 ```ts
 {
   caseId: Id<"cases">,
+  sourceId: string, // stable id from the immutable generated case
+  role: "victim" | "suspect" | "witness",
   name: string,
   age?: number,
   occupation?: string,
