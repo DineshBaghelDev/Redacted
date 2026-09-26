@@ -9,6 +9,7 @@
 - Desktop keeps the bureau's in-world hotspots; mobile uses a compact station menu because image-coordinate doors are unreliable after portrait cropping.
 - Room overlays use the browser's native modal dialog behavior for focus containment; Escape closes the join dialog but cannot silently leave an active room.
 - Room actions expose one clear in-progress state at a time; clipboard denial is a normal recoverable UI error, not a silent failure.
+- Mobile map navigation uses a native named place picker as the reliable touch path; numbered map markers remain a compact spatial aid.
 
 ## 2026-09-26
 

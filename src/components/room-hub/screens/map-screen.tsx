@@ -44,6 +44,17 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
 
       <div className="grid min-h-0 flex-1 grid-rows-[minmax(19rem,3fr)_minmax(12rem,2fr)] lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-1">
         <div className="min-h-0 overflow-auto p-3 sm:p-5">
+          <label className="mb-3 block text-xs uppercase tracking-[0.18em] text-cyan-100/65 sm:hidden" htmlFor="mobile-place-picker">
+            Find a place
+            <select
+              className="mt-2 min-h-11 w-full border border-cyan-300/50 bg-[#07111b] px-3 text-base uppercase text-cyan-50"
+              id="mobile-place-picker"
+              onChange={(event) => setSelectedId(event.target.value)}
+              value={selected.id}
+            >
+              {city.places.map((place, index) => <option key={place.id} value={place.id}>{index + 1}. {place.name}</option>)}
+            </select>
+          </label>
           <div className="relative mx-auto aspect-[5/4] h-full min-h-[18rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden border border-[#c6a96d]/35 bg-[#11151b] shadow-[inset_0_0_40px_rgba(0,0,0,0.7)]">
             <div className="absolute inset-x-0 top-0 h-[34%] bg-[#18303a]/25" />
             <div className="absolute inset-x-0 top-[34%] h-[38%] bg-[#3a3020]/20" />
@@ -77,7 +88,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
                 <button
                   aria-label={`Review ${place.name}`}
                   aria-pressed={active}
-                  className={`group absolute z-10 h-7 w-7 -translate-x-1/2 -translate-y-1/2 border text-[10px] shadow-[0_2px_0_rgba(0,0,0,0.5)] transition sm:h-9 sm:w-9 sm:text-xs ${active ? "border-yellow-100 bg-yellow-300 text-[#17120a]" : "border-cyan-300/60 bg-[#07111b] text-cyan-100 hover:border-yellow-200"}`}
+                  className={`group absolute z-10 h-8 w-8 -translate-x-1/2 -translate-y-1/2 border text-[10px] shadow-[0_2px_0_rgba(0,0,0,0.5)] transition sm:h-9 sm:w-9 sm:text-xs ${active ? "border-yellow-100 bg-yellow-300 text-[#17120a]" : "border-cyan-300/60 bg-[#07111b] text-cyan-100 hover:border-yellow-200"}`}
                   key={place.id}
                   onClick={() => setSelectedId(place.id)}
                   style={{ left: `${place.x}%`, top: `${place.y}%` }}

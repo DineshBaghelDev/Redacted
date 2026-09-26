@@ -13,6 +13,7 @@
 - Join and lobby overlays now use native modal dialogs, keeping keyboard focus inside the active room flow and announcing errors to assistive technology.
 - Lobby actions now prevent repeat submissions, show their active state, and report clipboard failures instead of silently doing nothing.
 - Changed the previous-case action from technical `Play in lobby` wording to the player-facing `Play case`.
+- Added a named mobile place picker above the city map so players do not have to guess numbered map markers or hit tightly spaced dots.
 
 ## 2026-09-26
 
