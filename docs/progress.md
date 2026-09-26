@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27
+
+- Replaced the client-only Union Station CCTV demo data with the selected case's generated cameras and appearance-only records.
+- CCTV reads are scoped through the authenticated room membership and omit hidden people, source events, and solution data.
+- Camera faults and temporary outages now come from each case, and the timeline adapts to that case's recorded window on mobile and desktop.
+
 ## 2026-09-26
 
 - New rooms now enter the fixed Union Station Death development case without running generation; added the bureau image as the first playable investigation surface with clickable Interrogate, CCTV, Clueboard, and Evidence stations.
@@ -12,12 +18,12 @@
 - Investigation routes are room-scoped: `/lobby/:roomCode/bureau` and `/lobby/:roomCode/bureau/:station`.
 - Added bureau hotspots for the window map (`/map`) and desk case file (`/case`).
 - The desk case route now renders the fixed Union Station Death brief and initial facts.
-- Case brief content now comes from the latest passed Convex generation job through a public-fields-only query; no case facts are hardcoded in the UI.
+- Case brief content now comes from the room's selected passed case through a public-fields-only query; no case facts are hardcoded in the UI.
 - Gated room and case queries on Clerk readiness to prevent unauthenticated Convex calls during lobby-route reloads.
 
 - Added the shared Convex-backed clueboard: players can create, edit, drag, and remove note cards and join their pushpins with red, gold, blue, or green strings.
 - Clueboard edits sync to both room players, consume no game time, and never modify case truth.
-- Added the first playable CCTV console: choose a station camera, drag through the case timeline, and read appearance-only records near the selected time. The development slice uses fixed Union Station records and keeps all footage, names, and hidden case data out of the client.
+- Added the first playable CCTV console: choose a camera, drag through the case timeline, and read appearance-only records near the selected time. All footage, names, and hidden case data stay out of the client.
 - Hid the bureau's persistent Leave game control while a station is open so it no longer covers the station's Back button.
 
 ## 2026-09-24

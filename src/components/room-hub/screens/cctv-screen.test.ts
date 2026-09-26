@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { recordsNearTime, type CctvRecord } from "./cctv-screen";
 
 const records: CctvRecord[] = [
-  { id: "a", cameraId: "one", start: 100, end: 110, description: "", movement: "" },
-  { id: "b", cameraId: "one", start: 151, end: 160, description: "", movement: "" },
-  { id: "c", cameraId: "two", start: 100, end: 110, description: "", movement: "" },
+  { id: "a", cameraId: "one", start: 100, end: 110, summary: "", kind: "stay" },
+  { id: "b", cameraId: "one", start: 151, end: 160, summary: "", kind: "pass" },
+  { id: "c", cameraId: "two", start: 100, end: 110, summary: "", kind: "offline" },
 ];
 
 describe("recordsNearTime", () => {

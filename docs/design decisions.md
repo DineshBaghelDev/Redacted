@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-09-27
+
+- The CCTV console reads only the selected room's case. Its public response includes camera labels, faults, times, appearance/movement wording, and outage rows; it excludes identities, source events, and every hidden solution field.
+- Generated CCTV drafts remain server-side while gameplay tables are built. The public query is a narrow compatibility read, not permission to expose generation drafts to the client.
+
 ## 2026-09-26
 
 - The clueboard uses a full-screen corkboard workspace inspired by physical evidence boards: paper notes, one visible pushpin per card, and colored strings tied between pins.

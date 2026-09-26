@@ -97,7 +97,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
       ) : null}
 
       {station === "cctv" ? (
-        <CctvScreen onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
+        <CctvScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
       ) : null}
 
       {activeStation && station !== "clueboard" && station !== "cctv" ? (
