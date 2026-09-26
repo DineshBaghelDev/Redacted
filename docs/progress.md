@@ -9,6 +9,7 @@
 - The city map is room-member-only, supports place and direct-route inspection, and adapts into a stacked layout on small screens.
 - Starting a ready room now opens the selected case's full public briefing instead of skipping from a decorative loading screen straight to the bureau.
 - The room-scoped briefing survives reloads and gives players explicit Begin investigation and Leave room actions on mobile and desktop.
+- Added a dedicated mobile bureau station menu so every investigation surface has a reliable touch target even when the room artwork is cropped on narrow screens.
 
 ## 2026-09-26
 

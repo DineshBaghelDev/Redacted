@@ -42,9 +42,11 @@ const stations: Record<Station, { label: string; description: string }> = {
   },
   case: {
     label: "Case file",
-    description: "Review the Union Station death briefing and the facts established so far.",
+    description: "Review the selected case briefing and the facts established so far.",
   },
 };
+
+const stationOrder: Station[] = ["interrogate", "cctv", "clueboard", "evidence", "map", "case"];
 
 export function BureauScreen({ error, onLeave }: { error: string; onLeave: () => void }) {
   const pathname = usePathname();
@@ -95,6 +97,22 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         <Hotspot label="Case" className="left-[18%] top-[59%] h-[39%] w-[64%]" onClick={() => openStation("case")} />
 
       </div>
+
+      {!activeStation ? (
+        <nav aria-label="Investigation stations" className="absolute inset-x-3 bottom-3 z-20 grid grid-cols-2 gap-2 border border-cyan-300/50 bg-[#050712]/95 p-3 shadow-[0_0_24px_rgba(34,211,238,0.2)] sm:hidden">
+          <p className="col-span-2 text-xs uppercase tracking-[0.2em] text-cyan-100/55">Choose a bureau station</p>
+          {stationOrder.map((item) => (
+            <button
+              className="min-h-12 border border-cyan-300/40 bg-[#06142d] px-2 text-sm uppercase text-cyan-50 active:border-yellow-200 active:text-yellow-200"
+              key={item}
+              onClick={() => openStation(item)}
+              type="button"
+            >
+              {stations[item].label}
+            </button>
+          ))}
+        </nav>
+      ) : null}
 
       {station === "clueboard" ? (
         <ClueBoardScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
@@ -174,7 +192,7 @@ function Hotspot({
   return (
     <button
       aria-label={label}
-      className={`group absolute border border-transparent transition hover:border-cyan-200/80 hover:bg-cyan-300/10 focus-visible:border-yellow-200 focus-visible:bg-yellow-200/10 ${className}`}
+      className={`group absolute hidden border border-transparent transition hover:border-cyan-200/80 hover:bg-cyan-300/10 focus-visible:border-yellow-200 focus-visible:bg-yellow-200/10 sm:block ${className}`}
       onClick={onClick}
       type="button"
     >
