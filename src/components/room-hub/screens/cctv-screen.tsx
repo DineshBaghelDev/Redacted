@@ -5,23 +5,6 @@ import { useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 
-export type CctvRecord = {
-  id: string;
-  cameraId: string;
-  start: number;
-  end: number;
-  summary: string;
-  kind: "stay" | "pass" | "offline";
-};
-
-const WINDOW_MINUTES = 20;
-
-export function recordsNearTime(allRecords: CctvRecord[], cameraId: string, minute: number) {
-  return allRecords.filter(
-    (record) => record.cameraId === cameraId && record.start <= minute + WINDOW_MINUTES && record.end >= minute - WINDOW_MINUTES,
-  );
-}
-
 function formatTime(minutes: number) {
   const day = Math.floor(minutes / 1440) + 1;
   const withinDay = minutes % 1440;
@@ -34,18 +17,22 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
   const [chosenCameraId, setCameraId] = useState("");
   const [chosenMinute, setMinute] = useState<number | null>(null);
 
+  const cameraId = data?.cameras.some((camera) => camera.id === chosenCameraId)
+    ? chosenCameraId
+    : data?.cameras[0]?.id ?? "";
+  const minute = data && chosenMinute !== null && chosenMinute >= data.start && chosenMinute <= data.end
+    ? chosenMinute
+    : data ? Math.round((data.start + data.end) / 10) * 5 : 0;
+  const visibleRecords = useQuery(
+    api.cases.getCctvWindow,
+    data && cameraId ? { roomCode, cameraId, minute } : "skip",
+  );
+
   if (data === undefined) return <CctvMessage message="Loading camera records..." onBack={onBack} />;
   if (!data) return <CctvMessage message="Camera records are not available for this case." onBack={onBack} />;
 
-  const cameraId = data.cameras.some((camera) => camera.id === chosenCameraId)
-    ? chosenCameraId
-    : data.cameras[0].id;
   const camera = data.cameras.find((item) => item.id === cameraId)!;
-  const cameraRecords = data.records.filter((record) => record.cameraId === cameraId);
-  const minute = chosenMinute !== null && chosenMinute >= data.start && chosenMinute <= data.end
-    ? chosenMinute
-    : cameraRecords[0]?.start ?? data.start;
-  const visibleRecords = camera.faulty ? [] : recordsNearTime(data.records, cameraId, minute);
+  const records = camera.faulty ? [] : visibleRecords ?? [];
 
   return (
     <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#02050a] text-cyan-50">
@@ -122,14 +109,6 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
                 type="range"
                 value={minute}
               />
-              {cameraRecords.map((record) => (
-                <span
-                  aria-hidden="true"
-                  className="absolute top-0 h-2 w-1 -translate-x-1/2 bg-cyan-200/75"
-                  key={record.id}
-                  style={{ left: `${((record.start - data.start) / (data.end - data.start)) * 100}%` }}
-                />
-              ))}
               <span className="absolute bottom-0 left-0 font-mono text-[10px] text-cyan-100/40">{formatTime(data.start)}</span>
               <span className="absolute bottom-0 right-0 font-mono text-[10px] text-cyan-100/40">{formatTime(data.end)}</span>
             </div>
@@ -139,7 +118,7 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
           <div className="mt-5">
             <div className="flex items-center justify-between gap-3">
               <h4 className="text-sm uppercase tracking-[0.18em] text-cyan-100/65">Recorded activity</h4>
-              <span className="font-mono text-xs text-cyan-100/40">{visibleRecords.length} {visibleRecords.length === 1 ? "record" : "records"}</span>
+              <span className="font-mono text-xs text-cyan-100/40">{visibleRecords === undefined ? "Checking..." : `${records.length} ${records.length === 1 ? "record" : "records"}`}</span>
             </div>
 
             {camera.faulty ? (
@@ -147,9 +126,13 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
                 <p className="uppercase">No signal</p>
                 <p className="mt-2 text-sm text-red-100/60">This camera was not recording during the case window.</p>
               </div>
-            ) : visibleRecords.length ? (
+            ) : visibleRecords === undefined ? (
+              <div className="mt-3 border border-cyan-300/20 p-6 text-center text-sm uppercase text-cyan-100/45">
+                Checking this time window...
+              </div>
+            ) : records.length ? (
               <ul className="mt-3 grid gap-3 lg:grid-cols-2">
-                {visibleRecords.map((record) => (
+                {records.map((record) => (
                   <li className={`border p-4 ${record.kind === "offline" ? "border-red-400/30 bg-red-950/20" : "border-cyan-300/25 bg-[#07111b] shadow-[inset_3px_0_0_rgba(103,232,249,0.65)]"}`} key={record.id}>
                     <p className="font-mono text-xs text-yellow-200">{formatTime(record.start)}–{formatTime(record.end).split(" · ")[1]}</p>
                     <p className="mt-3 text-base leading-relaxed text-cyan-50">{record.summary}</p>

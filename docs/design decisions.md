@@ -10,6 +10,7 @@
 - Room overlays use the browser's native modal dialog behavior for focus containment; Escape closes the join dialog but cannot silently leave an active room.
 - Room actions expose one clear in-progress state at a time; clipboard denial is a normal recoverable UI error, not a silent failure.
 - Mobile map navigation uses a native named place picker as the reliable touch path; numbered map markers remain a compact spatial aid.
+- CCTV camera names and the case time range may reach the client, but record rows are fetched only for the selected camera and nearby time window. The UI must not download all records and filter them locally.
 
 ## 2026-09-26
 

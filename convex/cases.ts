@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import { query, type MutationCtx } from "./_generated/server";
+import { query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getRoomMember, requireUserId } from "./lib/auth";
 
 type Brief = {
@@ -19,6 +19,15 @@ type PublicCctvRecord = {
   kind: CctvKind;
 };
 
+const cctvRecord = v.object({
+  id: v.string(),
+  cameraId: v.string(),
+  start: v.number(),
+  end: v.number(),
+  summary: v.string(),
+  kind: v.union(v.literal("stay"), v.literal("pass"), v.literal("offline")),
+});
+
 const cctvData = v.object({
   caseTitle: v.string(),
   start: v.number(),
@@ -27,14 +36,6 @@ const cctvData = v.object({
     id: v.string(),
     name: v.string(),
     faulty: v.boolean(),
-  })),
-  records: v.array(v.object({
-    id: v.string(),
-    cameraId: v.string(),
-    start: v.number(),
-    end: v.number(),
-    summary: v.string(),
-    kind: v.union(v.literal("stay"), v.literal("pass"), v.literal("offline")),
   })),
 });
 
@@ -90,6 +91,19 @@ function readCctv(output: unknown) {
   const start = Math.min(...records.map((record) => record.start));
   const end = Math.max(start + 5, ...records.map((record) => record.end));
   return { start, end, cameras, records };
+}
+
+async function loadCctv(ctx: QueryCtx, roomCode: string) {
+  const member = await getRoomMember(ctx, roomCode);
+  if (!member?.session.caseId) return null;
+  const playableCase = await ctx.db.get(member.session.caseId);
+  if (!playableCase) return null;
+  const draft = await ctx.db
+    .query("generationDrafts")
+    .withIndex("by_job_stage", (q) => q.eq("jobId", playableCase.generationJobId).eq("stage", "evidence"))
+    .unique();
+  const cctv = readCctv(draft?.output);
+  return cctv ? { caseTitle: playableCase.title, ...cctv } : null;
 }
 
 export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"generationJobs">) {
@@ -168,16 +182,19 @@ export const getCctv = query({
   args: { roomCode: v.string() },
   returns: v.union(v.null(), cctvData),
   handler: async (ctx, { roomCode }) => {
-    const member = await getRoomMember(ctx, roomCode);
-    if (!member?.session.caseId) return null;
+    const cctv = await loadCctv(ctx, roomCode);
+    return cctv ? { caseTitle: cctv.caseTitle, start: cctv.start, end: cctv.end, cameras: cctv.cameras } : null;
+  },
+});
 
-    const playableCase = await ctx.db.get(member.session.caseId);
-    if (!playableCase) return null;
-    const draft = await ctx.db
-      .query("generationDrafts")
-      .withIndex("by_job_stage", (q) => q.eq("jobId", playableCase.generationJobId).eq("stage", "evidence"))
-      .unique();
-    const cctv = readCctv(draft?.output);
-    return cctv ? { caseTitle: playableCase.title, ...cctv } : null;
+export const getCctvWindow = query({
+  args: { roomCode: v.string(), cameraId: v.string(), minute: v.number() },
+  returns: v.union(v.null(), v.array(cctvRecord)),
+  handler: async (ctx, { roomCode, cameraId, minute }) => {
+    const cctv = await loadCctv(ctx, roomCode);
+    if (!cctv || !Number.isFinite(minute) || !cctv.cameras.some((camera) => camera.id === cameraId)) return null;
+    return cctv.records.filter(
+      (record) => record.cameraId === cameraId && record.start <= minute + 20 && record.end >= minute - 20,
+    );
   },
 });

@@ -14,6 +14,7 @@
 - Lobby actions now prevent repeat submissions, show their active state, and report clipboard failures instead of silently doing nothing.
 - Changed the previous-case action from technical `Play in lobby` wording to the player-facing `Play case`.
 - Added a named mobile place picker above the city map so players do not have to guess numbered map markers or hit tightly spaced dots.
+- CCTV now requests only the selected camera's nearby time window from Convex; the browser no longer receives the case's full camera-record corpus or activity markers.
 
 ## 2026-09-26
 

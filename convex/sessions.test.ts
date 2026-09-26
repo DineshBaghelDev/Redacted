@@ -31,18 +31,32 @@ test("a lobby keeps the selected passed case", async () => {
       stage: "evidence",
       output: {
         cameras: [{ id: "cam:station", name: "Union Station · concourse", faulty: false }],
-        evidence: [{
-          id: "cctv/1",
-          type: "cctv",
-          title: "Hidden title",
-          summary: "Tall person in a dark coat: crosses the concourse.",
-          access: { tool: "cctv", cameraId: "cam:station" },
-          time: 120,
-          end: 125,
-          aboutIds: ["hidden-person-id"],
-          sourceIds: ["hidden-event-id"],
-          data: { placeId: "station", kind: "pass" },
-        }],
+        evidence: [
+          {
+            id: "cctv/1",
+            type: "cctv",
+            title: "Hidden title",
+            summary: "Tall person in a dark coat: crosses the concourse.",
+            access: { tool: "cctv", cameraId: "cam:station" },
+            time: 120,
+            end: 125,
+            aboutIds: ["hidden-person-id"],
+            sourceIds: ["hidden-event-id"],
+            data: { placeId: "station", kind: "pass" },
+          },
+          {
+            id: "cctv/2",
+            type: "cctv",
+            title: "Later record",
+            summary: "Short person with an umbrella: waits by the doors.",
+            access: { tool: "cctv", cameraId: "cam:station" },
+            time: 300,
+            end: 305,
+            aboutIds: ["another-hidden-person"],
+            sourceIds: ["another-hidden-event"],
+            data: { placeId: "station", kind: "stay" },
+          },
+        ],
       },
       checkErrors: [],
       source: "code",
@@ -71,17 +85,21 @@ test("a lobby keeps the selected passed case", async () => {
   expect(await user.query(api.cases.getCctv, { roomCode: created.roomCode })).toEqual({
     caseTitle: "The Selected Case",
     start: 120,
-    end: 125,
+    end: 305,
     cameras: [{ id: "cam:station", name: "Union Station · concourse", faulty: false }],
-    records: [{
+  });
+  expect(await user.query(api.cases.getCctvWindow, {
+    roomCode: created.roomCode,
+    cameraId: "cam:station",
+    minute: 120,
+  })).toEqual([{
       id: "cctv/1",
       cameraId: "cam:station",
       start: 120,
       end: 125,
       summary: "Tall person in a dark coat: crosses the concourse.",
       kind: "pass",
-    }],
-  });
+  }]);
   const cityMap = await user.query(api.world.getMap, { roomCode: created.roomCode });
   expect(cityMap?.places).toHaveLength(20);
   expect(cityMap?.places.find((place) => place.id === "police-bureau")).toMatchObject({
@@ -94,5 +112,6 @@ test("a lobby keeps the selected passed case", async () => {
   expect(await stranger.query(api.sessions.get, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.cases.getBrief, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.cases.getCctv, { roomCode: created.roomCode })).toBeNull();
+  expect(await stranger.query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).toBeNull();
   expect(await stranger.query(api.world.getMap, { roomCode: created.roomCode })).toBeNull();
 });
