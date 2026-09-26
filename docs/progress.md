@@ -11,6 +11,8 @@
 - The room-scoped briefing survives reloads and gives players explicit Begin investigation and Leave room actions on mobile and desktop.
 - Added a dedicated mobile bureau station menu so every investigation surface has a reliable touch target even when the room artwork is cropped on narrow screens.
 - Join and lobby overlays now use native modal dialogs, keeping keyboard focus inside the active room flow and announcing errors to assistive technology.
+- Lobby actions now prevent repeat submissions, show their active state, and report clipboard failures instead of silently doing nothing.
+- Changed the previous-case action from technical `Play in lobby` wording to the player-facing `Play case`.
 
 ## 2026-09-26
 

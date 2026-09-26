@@ -6,6 +6,8 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { Screen } from "./constants";
 
+type WorkingAction = "create" | "join" | "ready" | "start" | "copy" | "leave" | null;
+
 function screenForPath(pathname: string): Screen {
   if (pathname === "/join") return "join";
   if (pathname === "/previous") return "previous";
@@ -51,7 +53,8 @@ export function useRoomSession(nickname: string) {
   const [showRoom, setShowRoom] = useState(() => Boolean(initialRoomCode) && isLobbyPath(pathname));
   const [error, setError] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
-  const [isWorking, setIsWorking] = useState(false);
+  const [workingAction, setWorkingAction] = useState<WorkingAction>(null);
+  const isWorking = workingAction !== null;
 
   const room = useQuery(
     api.sessions.get,
@@ -68,7 +71,7 @@ export function useRoomSession(nickname: string) {
       setError("Still signing in. Try again in a moment.");
       return;
     }
-    setIsWorking(true);
+    setWorkingAction(action);
     setError("");
 
     try {
@@ -98,35 +101,50 @@ export function useRoomSession(nickname: string) {
             : "Something went wrong.",
       );
     } finally {
-      setIsWorking(false);
+      setWorkingAction(null);
     }
   }
 
   async function toggleReady() {
-    if (!joinedRoomCode) return;
+    if (!joinedRoomCode || workingAction) return;
+    setWorkingAction("ready");
     setError("");
     try {
       await setReady({ roomCode: joinedRoomCode, isReady: !room?.meReady });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not update your ready status.");
+    } finally {
+      setWorkingAction(null);
     }
   }
 
   async function startInvestigation() {
-    if (!joinedRoomCode || !room?.allReady) return;
+    if (!joinedRoomCode || !room?.allReady || workingAction) return;
+    setWorkingAction("start");
     setError("");
     try {
       await startRoom({ roomCode: joinedRoomCode });
       openBrief();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not start the investigation.");
+    } finally {
+      setWorkingAction(null);
     }
   }
 
   async function copyRoomCode() {
-    await navigator.clipboard.writeText(joinedRoomCode);
-    setCopiedCode(true);
-    window.setTimeout(() => setCopiedCode(false), 1200);
+    if (!joinedRoomCode || workingAction) return;
+    setWorkingAction("copy");
+    setError("");
+    try {
+      await navigator.clipboard.writeText(joinedRoomCode);
+      setCopiedCode(true);
+      window.setTimeout(() => setCopiedCode(false), 1200);
+    } catch {
+      setError("Could not copy the room code. Select it from the room heading instead.");
+    } finally {
+      setWorkingAction(null);
+    }
   }
 
   function closeJoin() {
@@ -136,7 +154,8 @@ export function useRoomSession(nickname: string) {
   }
 
   async function leaveRoom() {
-    if (!joinedRoomCode) return;
+    if (!joinedRoomCode || workingAction) return;
+    setWorkingAction("leave");
     setError("");
     try {
       await leaveSession({ roomCode: joinedRoomCode });
@@ -146,6 +165,8 @@ export function useRoomSession(nickname: string) {
       navigateTo("menu");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not leave the room.");
+    } finally {
+      setWorkingAction(null);
     }
   }
 
@@ -166,6 +187,7 @@ export function useRoomSession(nickname: string) {
     setError,
     copiedCode,
     isWorking,
+    workingAction,
     isLoaded,
     isSignedIn,
     createOrJoin,

@@ -44,6 +44,7 @@ export function RoomHub() {
     setError,
     copiedCode,
     isWorking,
+    workingAction,
     isLoaded,
     isSignedIn,
     createOrJoin,
@@ -148,6 +149,7 @@ export function RoomHub() {
           onStart={startInvestigation}
           onToggleReady={toggleReady}
           room={room}
+          workingAction={workingAction}
         />
       ) : null}
 

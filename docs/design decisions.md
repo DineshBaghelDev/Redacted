@@ -8,6 +8,7 @@
 - The case brief is a deliberate player step after lobby readiness, not a timed loading animation. Players choose when to enter the bureau after reading the known facts.
 - Desktop keeps the bureau's in-world hotspots; mobile uses a compact station menu because image-coordinate doors are unreliable after portrait cropping.
 - Room overlays use the browser's native modal dialog behavior for focus containment; Escape closes the join dialog but cannot silently leave an active room.
+- Room actions expose one clear in-progress state at a time; clipboard denial is a normal recoverable UI error, not a silent failure.
 
 ## 2026-09-26
 

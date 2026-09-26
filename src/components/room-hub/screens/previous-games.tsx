@@ -34,7 +34,7 @@ export function PreviousGamesScreen({ isWorking, onPlay }: PreviousGamesScreenPr
               onClick={() => onPlay(game.generationJobId)}
               type="button"
             >
-              Play in lobby
+              Play case
             </button>
           </article>
         ))}
