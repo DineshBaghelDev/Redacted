@@ -129,3 +129,37 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  .clue-board {
+    background-color: #6f4a32;
+    background-image:
+      radial-gradient(circle at 18% 24%, rgb(255 255 255 / 5%) 0 1px, transparent 2px),
+      radial-gradient(circle at 74% 67%, rgb(30 15 8 / 16%) 0 1px, transparent 2px),
+      linear-gradient(115deg, rgb(255 239 194 / 5%), transparent 35%, rgb(39 18 8 / 9%));
+    background-size: 17px 19px, 23px 29px, 100% 100%;
+  }
+
+  .clue-board-button {
+    @apply flex items-center gap-2 border border-[#a97a4f] bg-[#332219] px-3 py-2 text-sm uppercase text-[#f4e8c8] shadow-[2px_2px_0_#080605] hover:border-[#e8c98e] focus-visible:outline-2 focus-visible:outline-[#fff1c9];
+  }
+
+  .clue-pin.react-flow__handle {
+    top: -13px;
+    width: 18px;
+    height: 18px;
+    border: 3px solid #e8cba4;
+    background: radial-gradient(circle at 35% 30%, #ff8276 0 18%, #a8201a 45% 70%, #5f100d 72%);
+    box-shadow: 0 3px 3px rgb(31 14 8 / 55%);
+  }
+
+  .clue-string {
+    filter: drop-shadow(1px 2px 1px rgb(25 10 5 / 65%));
+  }
+
+  .clue-board .react-flow__controls-button {
+    border-color: #8b6040;
+    background: #2b1d16;
+    color: #f4e8c8;
+  }
+}

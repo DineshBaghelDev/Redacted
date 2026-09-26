@@ -1,5 +1,12 @@
 # Design Decisions
 
+## 2026-09-26
+
+- The clueboard uses a full-screen corkboard workspace inspired by physical evidence boards: paper notes, one visible pushpin per card, and colored strings tied between pins.
+- The first clueboard slice supports free-text notes only. Discovered-record cards will reuse the same board after their source systems exist.
+- String colors are red, gold, blue, and green; color expresses only the players' own organization and has no game meaning.
+- The CCTV console is a text terminal, not a video player: players choose one camera and scrub one timeline, then see appearance and movement descriptions near that time. Camera faults appear as missing recordings, never as visual footage.
+
 ## 2026-09-24
 
 - Keep Sentry error-generating demo routes available in development only, not in production.

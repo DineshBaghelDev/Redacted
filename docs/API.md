@@ -73,8 +73,8 @@ If the selected Convex agent/thread component supplies message queries, use its 
 ### Clue board
 
 ```ts
-clueBoard.getNodes({ sessionId })
-clueBoard.getEdges({ sessionId })
+clueBoard.getNodes({ roomCode })
+clueBoard.getEdges({ roomCode })
 ```
 
 ### Presence
@@ -200,12 +200,12 @@ It does not generate the reply inside the mutation.
 ### Clue board
 
 ```ts
-clueBoard.createNoteNode({ sessionId, text, x, y })
-clueBoard.createReferenceNode({ sessionId, type, referenceId, x, y })
+clueBoard.createNoteNode({ roomCode, text, x, y })
+clueBoard.createReferenceNode({ roomCode, type, referenceId, x, y })
 clueBoard.updateNode({ nodeId, text?, x?, y? })
 clueBoard.deleteNode({ nodeId })
-clueBoard.createEdge({ sessionId, sourceNodeId, targetNodeId, label? })
-clueBoard.updateEdge({ edgeId, label? })
+clueBoard.createEdge({ roomCode, sourceNodeId, targetNodeId, color, label? })
+clueBoard.updateEdge({ edgeId, color?, label? })
 clueBoard.deleteEdge({ edgeId })
 ```
 

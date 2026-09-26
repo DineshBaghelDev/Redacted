@@ -32,6 +32,27 @@ export default defineSchema({
     .index("by_sessionId", ["sessionId"])
     .index("by_sessionId_authUserId", ["sessionId", "authUserId"])
     .index("by_authUserId", ["authUserId"]),
+  clueBoardNodes: defineTable({
+    sessionId: v.id("sessions"),
+    type: v.literal("note"),
+    text: v.string(),
+    x: v.number(),
+    y: v.number(),
+    createdByPlayerId: v.id("sessionPlayers"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_sessionId", ["sessionId"]),
+  clueBoardEdges: defineTable({
+    sessionId: v.id("sessions"),
+    sourceNodeId: v.id("clueBoardNodes"),
+    targetNodeId: v.id("clueBoardNodes"),
+    color: v.union(v.literal("red"), v.literal("gold"), v.literal("blue"), v.literal("green")),
+    createdByPlayerId: v.id("sessionPlayers"),
+    createdAt: v.number(),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_sourceNodeId", ["sourceNodeId"])
+    .index("by_targetNodeId", ["targetNodeId"]),
 
   // Case generation (dev tester + pipeline). Drafts hold hidden case data: never expose outside dev tools.
   generationJobs: defineTable({

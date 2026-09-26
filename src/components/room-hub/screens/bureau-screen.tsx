@@ -1,8 +1,17 @@
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useAuth } from "@clerk/nextjs";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+
+const ClueBoardScreen = dynamic(() =>
+  import("./clue-board-screen").then((module) => module.ClueBoardScreen),
+);
+
+const CctvScreen = dynamic(() =>
+  import("./cctv-screen").then((module) => module.CctvScreen),
+);
 
 type Station = "interrogate" | "cctv" | "clueboard" | "evidence" | "map" | "case";
 
@@ -52,16 +61,18 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
 
   return (
     <section className="relative h-screen w-full overflow-hidden border border-cyan-300/70 bg-[#050712] shadow-[0_0_30px_rgba(34,211,238,0.22)]">
-      <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
-        <button
-          className="border border-red-400 bg-red-950/90 px-4 py-2 text-sm uppercase text-red-100 shadow-[0_0_16px_rgba(248,113,113,0.25)] hover:border-red-200"
-          onClick={onLeave}
-          type="button"
-        >
-          Leave game
-        </button>
-        {error ? <p className="max-w-xs bg-[#050712]/90 px-3 py-2 text-sm text-red-200">{error}</p> : null}
-      </div>
+      {!activeStation ? (
+        <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
+          <button
+            className="border border-red-400 bg-red-950/90 px-4 py-2 text-sm uppercase text-red-100 shadow-[0_0_16px_rgba(248,113,113,0.25)] hover:border-red-200"
+            onClick={onLeave}
+            type="button"
+          >
+            Leave game
+          </button>
+          {error ? <p className="max-w-xs bg-[#050712]/90 px-3 py-2 text-sm text-red-200">{error}</p> : null}
+        </div>
+      ) : null}
       <div className="relative h-full w-full bg-black">
         <Image
           alt="The investigation bureau"
@@ -81,7 +92,15 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
 
       </div>
 
-      {activeStation ? (
+      {station === "clueboard" ? (
+        <ClueBoardScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
+      ) : null}
+
+      {station === "cctv" ? (
+        <CctvScreen onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
+      ) : null}
+
+      {activeStation && station !== "clueboard" && station !== "cctv" ? (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#020817]/75 p-4 backdrop-blur-[2px]">
           <div className="w-full max-w-lg border border-cyan-300 bg-[#06142d] p-6 text-cyan-100 shadow-[0_0_28px_rgba(34,211,238,0.3)]">
             <div className="flex items-start justify-between gap-4">

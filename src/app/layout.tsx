@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { shadcn } from "@clerk/ui/themes";
 import { Geist_Mono, Pixelify_Sans } from "next/font/google";
 import { AppConvexProvider } from "@/components/convex-provider";
+import "@xyflow/react/dist/style.css";
 import "./globals.css";
 
 const pixelifySans = Pixelify_Sans({

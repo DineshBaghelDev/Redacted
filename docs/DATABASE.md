@@ -595,6 +595,7 @@ Player claims must remain claims, not canonical facts.
   sourceNodeId: Id<"clueBoardNodes">,
   targetNodeId: Id<"clueBoardNodes">,
   label?: string,
+  color: "red" | "gold" | "blue" | "green",
   createdByPlayerId: Id<"sessionPlayers">,
   createdAt: number,
 }

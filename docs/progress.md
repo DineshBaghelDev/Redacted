@@ -15,6 +15,11 @@
 - Case brief content now comes from the latest passed Convex generation job through a public-fields-only query; no case facts are hardcoded in the UI.
 - Gated room and case queries on Clerk readiness to prevent unauthenticated Convex calls during lobby-route reloads.
 
+- Added the shared Convex-backed clueboard: players can create, edit, drag, and remove note cards and join their pushpins with red, gold, blue, or green strings.
+- Clueboard edits sync to both room players, consume no game time, and never modify case truth.
+- Added the first playable CCTV console: choose a station camera, drag through the case timeline, and read appearance-only records near the selected time. The development slice uses fixed Union Station records and keeps all footage, names, and hidden case data out of the client.
+- Hid the bureau's persistent Leave game control while a station is open so it no longer covers the station's Back button.
+
 ## 2026-09-24
 
 - Restricted the Sentry demo page and error API to development; enabled example logging and disabled collection of user details and request bodies.
@@ -105,6 +110,10 @@
 - CodeRabbit review of PR #5 (skill files, generated code, lock files and recorded data now skipped via `.coderabbit.yaml`). Fixed: scene fingerprints only include people who live in the scene room (a flat block's or hotel's other residents used to get false prints, which could even pass the "culprit at the scene" check); blood on a weapon the killer owns no longer counts as decisive; NPC scripts give house residents a readable home ("14 Keel Street", not "keel-14:home"); AI-written name parts are escaped before going into a search pattern (a bracket or plus sign would have crashed the brief or text stage); the part-of-day check also looks at a span's last minute. Regression tests for each. 122 tests.
 
 ## Pending
+
+### Clue board — remaining
+
+- Add reference cards for discovered NPCs, evidence, calls, CCTV, and other case records after those discovery surfaces are playable.
 
 ### Case generation — remaining
 
