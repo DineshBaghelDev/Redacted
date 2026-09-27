@@ -95,6 +95,7 @@ Indexes:
 ```ts
 {
   caseId: Id<"cases">,
+  sourceId: string,
   startTime: number,
   endTime?: number,
   npcIds: Id<"npcs">[],
@@ -261,11 +262,20 @@ Create an actual corridor room only if the corridor itself is searchable/interac
 {
   caseId: Id<"cases">,
   npcId: Id<"npcs">,
-  personality: string,
-  goals: string[],
-  experiences: string[],
-  knowledge: string[],
-  secrets: string[],
+  personality: string[],
+  job: string,
+  home: string,
+  relationshipToVictim: string,
+  secret?: string,
+  protects?: string,
+  knowledge: {
+    sourceId: string,
+    how: "took part" | "saw" | "sent" | "received" | "bought" | "heard",
+    time: number,
+    end?: number,
+    where?: string,
+    text: string,
+  }[],
   intentionalLies: {
     topic: "whereabouts" | "relationship" | "motive" | "item" | "secret",
     claim: string,

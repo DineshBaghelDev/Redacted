@@ -54,7 +54,16 @@ test("a lobby keeps the selected passed case", async () => {
       jobId,
       stage: "story",
       output: {
-        events: [],
+        events: [{
+          id: "station-meeting",
+          actors: [crimeCore.culpritId],
+          roomId: "keel-14:kitchen",
+          start: 70,
+          end: 75,
+          action: "Waited in the kitchen.",
+          visibility: "private",
+          itemsUsed: [],
+        }],
         comms: [
           { id: "call-1", from: crimeCore.culpritId, to: crimeCore.victimId, time: 90, type: "call", durationMinutes: 2, gist: "", proves: [] },
           { id: "message-1", from: crimeCore.victimId, to: crimeCore.culpritId, time: 95, type: "message", gist: "Meet me there.", proves: [] },
@@ -213,6 +222,30 @@ test("a lobby keeps the selected passed case", async () => {
       source: "llm",
       updatedAt: 2,
     });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "scripts",
+      output: cast.characters.filter((character) => character.role !== "victim").map((character) => ({
+        npcId: character.id,
+        name: character.name,
+        age: character.age,
+        gender: character.gender,
+        job: character.job?.title ?? "no job",
+        home: character.homeUnitId,
+        personality: character.traits,
+        relationshipToVictim: character.relationshipToVictim,
+        secret: character.secret,
+        protects: character.protects,
+        knowledge: character.id === crimeCore.culpritId
+          ? [{ id: "station-meeting", how: "took part", time: 70, end: 75, where: "14 Keel Street, Kitchen", text: "Waited in the kitchen." }]
+          : [],
+        lies: [],
+        rules: ["Only discuss known events."],
+      })),
+      checkErrors: [],
+      source: "code",
+      updatedAt: 2,
+    });
     return jobId;
   });
 
@@ -282,6 +315,12 @@ test("a lobby keeps the selected passed case", async () => {
     const forensics = session?.caseId
       ? await ctx.db.query("forensicOutputs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
       : [];
+    const events = session?.caseId
+      ? await ctx.db.query("caseEvents").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const scripts = session?.caseId
+      ? await ctx.db.query("npcScripts").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
     const storedCase = session?.caseId ? await ctx.db.get(session.caseId) : null;
     const storedCity = storedCase?.cityId ? await ctx.db.get(storedCase.cityId) : null;
     const caseCity = session?.caseId
@@ -321,6 +360,8 @@ test("a lobby keeps the selected passed case", async () => {
       messages,
       records,
       forensics,
+      events,
+      scripts,
       storedCase,
       storedCity,
       caseCity,
@@ -368,6 +409,14 @@ test("a lobby keeps the selected passed case", async () => {
       turnaroundMinutes: 60,
     }),
   ]);
+  expect(frozen.events).toEqual([
+    expect.objectContaining({ sourceId: "station-meeting", startTime: 70, endTime: 75, description: "Waited in the kitchen." }),
+  ]);
+  expect(frozen.scripts).toHaveLength(cast.characters.filter((character) => character.role !== "victim").length);
+  expect(frozen.scripts.find((script) => script.npcId === frozen.culprit?._id)).toMatchObject({
+    knowledge: [expect.objectContaining({ sourceId: "station-meeting", how: "took part" })],
+    behavioralRules: ["Only discuss known events."],
+  });
   expect(frozen.storedCase?.cityId).toBe(frozen.storedCity?._id);
   expect(frozen.caseCity?._id).toBe(frozen.storedCity?._id);
   expect(frozen.storedCity).toMatchObject({ version: city.version, seed: `fixture:v${city.version}` });

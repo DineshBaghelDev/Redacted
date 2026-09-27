@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-09-27 — NPC scripts remain structured and private
+
+- Each non-victim NPC receives one immutable script linked to its frozen NPC row.
+- Knowledge keeps provenance, time, place, and wording so later roleplay context can be built without reading generation drafts.
+- Canonical events and scripts are server-only; future NPC functions must project one NPC's allowed context rather than return either document.
+
 ## 2026-09-27 — Freeze lab truth separately from requests
 
 - Forensic outputs are immutable case truth; requesting and revealing them will be mutable per-session state.

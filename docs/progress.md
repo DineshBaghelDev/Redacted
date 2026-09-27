@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Private narrative freeze
+
+- Passed cases now copy their canonical event timeline and per-NPC roleplay scripts into server-only runtime tables.
+- Event actors and locations are normalized to frozen case rows; scripts retain only that NPC's checked knowledge, lies, and behavior rules.
+- Neither table has a client-callable query, preserving the hidden-solution boundary.
+
 ## 2026-09-27 — Publication review fixes
 
 - Case publication no longer truncates cities, rooms, casts, items, or evidence-link resolution at arbitrary row counts.

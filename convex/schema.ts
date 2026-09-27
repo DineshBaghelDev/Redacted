@@ -262,6 +262,48 @@ export default defineSchema({
       requiredEvidenceIds: v.array(v.string()),
     })),
   }).index("by_caseId", ["caseId"]),
+  caseEvents: defineTable({
+    caseId: v.id("cases"),
+    sourceId: v.string(),
+    startTime: v.number(),
+    endTime: v.optional(v.number()),
+    npcIds: v.array(v.id("npcs")),
+    placeId: v.id("places"),
+    roomId: v.optional(v.id("rooms")),
+    description: v.string(),
+  })
+    .index("by_caseId", ["caseId"])
+    .index("by_caseId_and_sourceId", ["caseId", "sourceId"]),
+  npcScripts: defineTable({
+    caseId: v.id("cases"),
+    npcId: v.id("npcs"),
+    personality: v.array(v.string()),
+    job: v.string(),
+    home: v.string(),
+    relationshipToVictim: v.string(),
+    secret: v.optional(v.string()),
+    protects: v.optional(v.string()),
+    knowledge: v.array(v.object({
+      sourceId: v.string(),
+      how: v.union(v.literal("took part"), v.literal("saw"), v.literal("sent"), v.literal("received"), v.literal("bought"), v.literal("heard")),
+      time: v.number(),
+      end: v.optional(v.number()),
+      where: v.optional(v.string()),
+      text: v.string(),
+    })),
+    intentionalLies: v.array(v.object({
+      topic: v.union(v.literal("whereabouts"), v.literal("relationship"), v.literal("motive"), v.literal("item"), v.literal("secret")),
+      claim: v.string(),
+      truthIds: v.array(v.string()),
+      reason: v.string(),
+      disprovingEvidenceIds: v.array(v.string()),
+      whenCaught: v.union(v.literal("full-truth"), v.literal("admit-shown"), v.literal("backup-lie")),
+      backupLie: v.optional(v.object({ claim: v.string(), disprovingEvidenceIds: v.array(v.string()) })),
+    })),
+    behavioralRules: v.array(v.string()),
+  })
+    .index("by_caseId", ["caseId"])
+    .index("by_npcId", ["npcId"]),
   sessions: defineTable({
     caseId: v.optional(v.id("cases")),
     roomCode: v.string(),

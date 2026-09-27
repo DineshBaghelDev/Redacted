@@ -55,6 +55,7 @@ import type * as lib_publishCctv from "../lib/publishCctv.js";
 import type * as lib_publishDevices from "../lib/publishDevices.js";
 import type * as lib_publishForensics from "../lib/publishForensics.js";
 import type * as lib_publishItems from "../lib/publishItems.js";
+import type * as lib_publishNarrative from "../lib/publishNarrative.js";
 import type * as lib_publishRecords from "../lib/publishRecords.js";
 import type * as lib_publishWorld from "../lib/publishWorld.js";
 import type * as npcs from "../npcs.js";
@@ -115,6 +116,7 @@ declare const fullApi: ApiFromModules<{
   "lib/publishDevices": typeof lib_publishDevices;
   "lib/publishForensics": typeof lib_publishForensics;
   "lib/publishItems": typeof lib_publishItems;
+  "lib/publishNarrative": typeof lib_publishNarrative;
   "lib/publishRecords": typeof lib_publishRecords;
   "lib/publishWorld": typeof lib_publishWorld;
   npcs: typeof npcs;

@@ -8,6 +8,7 @@ import { getRoomMember, requireUserId } from "./lib/auth";
 import { ensureCaseCctv } from "./lib/publishCctv";
 import { ensureCaseDevices } from "./lib/publishDevices";
 import { ensureCaseForensics } from "./lib/publishForensics";
+import { ensureCaseNarrative } from "./lib/publishNarrative";
 import { ensureCaseItems } from "./lib/publishItems";
 import { ensureCaseRecords } from "./lib/publishRecords";
 import { ensureCaseWorld } from "./lib/publishWorld";
@@ -159,6 +160,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     await ensureCaseDevices(ctx, existing._id, generationJobId);
     await ensureCaseRecords(ctx, existing._id, generationJobId);
     await ensureCaseForensics(ctx, existing._id, generationJobId);
+    await ensureCaseNarrative(ctx, existing._id, generationJobId);
     return existing._id;
   }
 
@@ -182,6 +184,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
   await ensureCaseDevices(ctx, caseId, generationJobId);
   await ensureCaseRecords(ctx, caseId, generationJobId);
   await ensureCaseForensics(ctx, caseId, generationJobId);
+  await ensureCaseNarrative(ctx, caseId, generationJobId);
   return caseId;
 }
 
