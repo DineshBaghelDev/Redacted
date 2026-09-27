@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-09-27 — Records search is a bureau evidence surface
+
+- Public records use a focused terminal layout rather than a generic dashboard or raw table.
+- Search targets record titles and caps each response while preserving access to larger cases through specific searches.
+- Until travel exists, every playable session remains at the bureau, so this screen is the current location gate.
+
 ## 2026-09-27 — Replay identifies the frozen case directly
 
 - Published menu entries replay by `caseId`, matching the immutable case boundary.

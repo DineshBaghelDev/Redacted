@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Bureau records terminal
+
+- The Evidence station now provides a responsive searchable public-record terminal using the frozen case corpus.
+- Results expose only type, title, and player-facing content; normalized subject links and proof/source metadata stay server-side.
+- Room membership is enforced, with clear loading, empty, and unavailable states on mobile and desktop.
+
 ## 2026-09-27 — Case-ID replay contract
 
 - Published previous-case entries now carry their frozen case ID and create new sessions through `sessions.createReplay`.

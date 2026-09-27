@@ -59,6 +59,7 @@ import type * as lib_publishNarrative from "../lib/publishNarrative.js";
 import type * as lib_publishRecords from "../lib/publishRecords.js";
 import type * as lib_publishWorld from "../lib/publishWorld.js";
 import type * as npcs from "../npcs.js";
+import type * as publicRecords from "../publicRecords.js";
 import type * as sessions from "../sessions.js";
 import type * as world from "../world.js";
 
@@ -120,6 +121,7 @@ declare const fullApi: ApiFromModules<{
   "lib/publishRecords": typeof lib_publishRecords;
   "lib/publishWorld": typeof lib_publishWorld;
   npcs: typeof npcs;
+  publicRecords: typeof publicRecords;
   sessions: typeof sessions;
   world: typeof world;
 }>;

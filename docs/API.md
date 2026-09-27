@@ -53,7 +53,7 @@ devices.get({ sessionId, deviceId })
 calls.list({ sessionId, deviceId })
 messages.list({ sessionId, deviceId })
 
-publicRecords.search({ sessionId, query })
+publicRecords.search({ roomCode, search })
 
 forensics.listRequests({ sessionId })
 forensics.getRequest({ sessionId, requestId })

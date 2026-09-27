@@ -454,6 +454,10 @@ test("a lobby keeps the selected passed case", async () => {
   });
   expect(JSON.stringify(await user.query(api.cases.listPassed, {}))).not.toContain(crimeCore.motive.details);
   expect(JSON.stringify(await user.query(api.cases.getBrief, { roomCode: created.roomCode }))).not.toContain(crimeCore.method);
+  expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toEqual([
+    expect.objectContaining({ type: "person", title: "Address record", content: "Lives at Keel Street." }),
+  ]);
+  expect(JSON.stringify(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" }))).not.toContain("subjectNpcId");
   await t.run(async (ctx) => {
     const evidenceDraft = await ctx.db
       .query("generationDrafts")
@@ -528,6 +532,7 @@ test("a lobby keeps the selected passed case", async () => {
   expect(await stranger.query(api.sessions.listMine, {})).toEqual([]);
   expect(await stranger.query(api.sessions.get, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.cases.getBrief, { roomCode: created.roomCode })).toBeNull();
+  expect(await stranger.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toBeNull();
   expect(await stranger.query(api.cases.getCctv, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).toBeNull();
   expect(await stranger.query(api.world.getMap, { roomCode: created.roomCode })).toBeNull();
