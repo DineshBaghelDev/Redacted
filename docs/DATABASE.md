@@ -2,6 +2,8 @@
 
 The schema is normalized. Generated truth and mutable session state are deliberately separated.
 
+Current generated cases also store a `publicationVersion` marker. It is written only after every immutable runtime table for that version has been copied successfully; replay trusts a marked case rather than its generation drafts.
+
 IDs below represent Convex document IDs such as `Id<"npcs">`.
 
 ## Case generation and metadata

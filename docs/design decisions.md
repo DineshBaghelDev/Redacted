@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-09-27 — Published cases, not generation jobs, own replay truth
+
+- Generation jobs are provenance and diagnostics; after complete publication they are no longer a replay dependency.
+- `publicationVersion` is written last, so failed publication cannot advertise a partial case as playable.
+- A replay always creates new session/player state while preserving the exact frozen case identity.
+
 ## 2026-09-27 — NPC scripts remain structured and private
 
 - Each non-victim NPC receives one immutable script linked to its frozen NPC row.

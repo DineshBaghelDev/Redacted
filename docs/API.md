@@ -59,6 +59,8 @@ forensics.getRequest({ sessionId, requestId })
 Public-record search must search only the pre-generated public-record corpus for the case.
 Public-record search requires access to the bureau/public-record terminal.
 
+The previous-case list uses frozen published case metadata once available. Replaying a published case creates a fresh session without consulting mutable generation drafts.
+
 ### NPC/interrogation
 
 ```ts

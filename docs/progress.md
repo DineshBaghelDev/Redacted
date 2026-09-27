@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Frozen-case replay authority
+
+- A case receives a publication version only after all current immutable runtime tables are written successfully.
+- Previous-case listing uses frozen title, summary, and difficulty after publication, even if generation drafts or job status later change.
+- Replaying that entry creates a fresh room against the same case row without re-reading generation data.
+
 ## 2026-09-27 — Private narrative freeze
 
 - Passed cases now copy their canonical event timeline and per-NPC roleplay scripts into server-only runtime tables.

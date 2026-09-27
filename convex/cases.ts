@@ -19,6 +19,8 @@ type Brief = {
   initialFacts?: unknown;
 };
 
+const PUBLICATION_VERSION = 1;
+
 const cctvRecord = v.object({
   id: v.string(),
   cameraId: v.string(),
@@ -149,6 +151,8 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     .withIndex("by_generationJobId", (q) => q.eq("generationJobId", generationJobId))
     .unique();
 
+  if (existing?.publicationVersion === PUBLICATION_VERSION) return existing._id;
+
   const job = await ctx.db.get(generationJobId);
   if (!job || job.status !== "passed") throw new Error("This case is not ready to play.");
 
@@ -161,6 +165,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     await ensureCaseRecords(ctx, existing._id, generationJobId);
     await ensureCaseForensics(ctx, existing._id, generationJobId);
     await ensureCaseNarrative(ctx, existing._id, generationJobId);
+    await ctx.db.patch(existing._id, { publicationVersion: PUBLICATION_VERSION });
     return existing._id;
   }
 
@@ -185,6 +190,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
   await ensureCaseRecords(ctx, caseId, generationJobId);
   await ensureCaseForensics(ctx, caseId, generationJobId);
   await ensureCaseNarrative(ctx, caseId, generationJobId);
+  await ctx.db.patch(caseId, { publicationVersion: PUBLICATION_VERSION });
   return caseId;
 }
 
@@ -198,13 +204,24 @@ export const listPassed = query({
   })),
   handler: async (ctx) => {
     await requireUserId(ctx);
+    const cases = [];
+    const publishedJobIds = new Set<string>();
+    for await (const playableCase of ctx.db.query("cases").withIndex("by_publicationVersion", (q) => q.eq("publicationVersion", PUBLICATION_VERSION))) {
+      publishedJobIds.add(playableCase.generationJobId);
+      cases.push({
+        generationJobId: playableCase.generationJobId,
+        difficulty: playableCase.difficulty,
+        title: playableCase.title,
+        description: playableCase.summary,
+      });
+    }
     const jobs = await ctx.db
       .query("generationJobs")
       .withIndex("by_status", (q) => q.eq("status", "passed"))
       .order("desc")
       .collect();
-    const cases = [];
     for (const job of jobs) {
+      if (publishedJobIds.has(job._id)) continue;
       const draft = await ctx.db
         .query("generationDrafts")
         .withIndex("by_job_stage", (q) => q.eq("jobId", job._id).eq("stage", "brief"))
@@ -217,7 +234,7 @@ export const listPassed = query({
         description: brief.summary,
       });
     }
-    return cases;
+    return cases.sort((a, b) => b.generationJobId.localeCompare(a.generationJobId));
   },
 });
 

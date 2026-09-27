@@ -282,6 +282,7 @@ test("a lobby keeps the selected passed case", async () => {
   });
   await expect(user.mutation(api.sessions.create, { nickname: "Detective", generationJobId: invalidJobId })).rejects.toThrow("no decisive evidence");
   expect(await t.run(async (ctx) => ctx.db.query("cases").withIndex("by_generationJobId", (q) => q.eq("generationJobId", invalidJobId)).unique())).toBeNull();
+  await t.run(async (ctx) => ctx.db.patch(invalidJobId, { status: "failed" }));
   const frozen = await t.run(async (ctx) => {
     const session = await ctx.db.get(created.sessionId);
     const solution = session?.caseId
@@ -478,6 +479,24 @@ test("a lobby keeps the selected passed case", async () => {
       summary: "Tall person in a dark coat: crosses the concourse.",
       kind: "pass",
   }]);
+  await t.run(async (ctx) => {
+    const job = await ctx.db.get(generationJobId);
+    if (job) await ctx.db.patch(job._id, { status: "failed" });
+    const briefDraft = await ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId).eq("stage", "brief")).unique();
+    if (briefDraft) await ctx.db.patch(briefDraft._id, { output: { title: "Changed draft", summary: "Changed.", initialFacts: [] } });
+  });
+  expect(await user.query(api.cases.listPassed, {})).toEqual([{
+    generationJobId,
+    difficulty: "easy",
+    title: "The Selected Case",
+    description: "A specific mystery.",
+  }]);
+  const replayed = await user.mutation(api.sessions.create, { nickname: "Detective", generationJobId });
+  expect(replayed.sessionId).not.toBe(created.sessionId);
+  expect(await t.run(async (ctx) => {
+    const [first, second] = await Promise.all([ctx.db.get(created.sessionId), ctx.db.get(replayed.sessionId)]);
+    return first?.caseId === second?.caseId;
+  })).toBe(true);
   const cityMap = await user.query(api.world.getMap, { roomCode: created.roomCode });
   expect(cityMap?.places).toHaveLength(20);
   expect(cityMap?.places.find((place) => place.id === "police-bureau")).toMatchObject({

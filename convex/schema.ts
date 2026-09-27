@@ -12,8 +12,11 @@ export default defineSchema({
     title: v.string(),
     summary: v.string(),
     initialFacts: v.array(v.string()),
+    publicationVersion: v.optional(v.number()),
     createdAt: v.number(),
-  }).index("by_generationJobId", ["generationJobId"]),
+  })
+    .index("by_generationJobId", ["generationJobId"])
+    .index("by_publicationVersion", ["publicationVersion"]),
   cities: defineTable({
     caseId: v.id("cases"),
     name: v.string(),
