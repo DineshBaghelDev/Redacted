@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-09-27 — Records access review fix
+
+- CodeRabbit found that room membership alone could read public records before an investigation started.
+- The records query now requires both membership and a playing session; the regression test covers waiting, playing, and non-member access.
+
 ## 2026-09-27 — Replay-only home menu
 
 - Removed the disabled new-case affordance from the home screen.

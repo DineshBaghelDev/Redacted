@@ -22,7 +22,7 @@ export const search = query({
   returns: v.union(v.null(), v.array(publicRecord)),
   handler: async (ctx, { roomCode, search }) => {
     const member = await getRoomMember(ctx, roomCode);
-    if (!member?.session.caseId) return null;
+    if (!member?.session.caseId || member.session.status !== "playing") return null;
     const term = search.trim();
     if (term.length > 80) throw new Error("Search must be 80 characters or fewer.");
     const records = term

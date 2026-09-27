@@ -82,7 +82,15 @@ export async function ensureCaseNarrative(ctx: MutationCtx, caseId: Id<"cases">,
         secret: value.secret,
         protects: value.protects,
         knowledge: value.knowledge.map(({ id, ...knowledge }) => ({ sourceId: id, ...knowledge })),
-        intentionalLies: value.lies.map(({ id: _id, npcId: _npcId, ...lie }) => lie),
+        intentionalLies: value.lies.map((lie) => ({
+          topic: lie.topic,
+          claim: lie.claim,
+          truthIds: lie.truthIds,
+          reason: lie.reason,
+          disprovingEvidenceIds: lie.disprovingEvidenceIds,
+          whenCaught: lie.whenCaught,
+          backupLie: lie.backupLie,
+        })),
         behavioralRules: value.rules,
       });
     }
