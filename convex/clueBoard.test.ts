@@ -9,7 +9,7 @@ const modules = import.meta.glob("./**/*.ts");
 
 test("room partners share notes, positions, and colored strings", async () => {
   const t = convexTest(schema, modules);
-  await t.run(async (ctx) => {
+  const npcId = await t.run(async (ctx) => {
     const generationJobId = await ctx.db.insert("generationJobs", {
       seed: 1,
       difficulty: "easy",
@@ -65,6 +65,14 @@ test("room partners share notes, positions, and colored strings", async () => {
       description: "A person crossed the concourse.",
       kind: "pass",
     });
+    return await ctx.db.insert("npcs", {
+      caseId,
+      sourceId: "mara",
+      role: "suspect",
+      name: "Mara Vale",
+      occupation: "Conductor",
+      publicDescription: "A railway conductor.",
+    });
   });
 
   const player = t.withIdentity({ subject: "player-1" });
@@ -79,6 +87,9 @@ test("room partners share notes, positions, and colored strings", async () => {
   });
   const cctv = await player.mutation(api.clueBoard.createReferenceNode, {
     roomCode: "ABC123", type: "cctv", referenceId: "cctv/station/1", x: 240, y: 220,
+  });
+  const person = await player.mutation(api.clueBoard.createReferenceNode, {
+    roomCode: "ABC123", type: "npc", referenceId: npcId, x: 460, y: 220,
   });
   expect(await player.mutation(api.clueBoard.createReferenceNode, {
     roomCode: "ABC123", type: "cctv", referenceId: "cctv/station/1", x: 0, y: 0,
@@ -99,6 +110,7 @@ test("room partners share notes, positions, and colored strings", async () => {
     expect.objectContaining({ _id: first, x: 80, y: 90 }),
     expect.objectContaining({ _id: record, type: "public_record", referenceId: "record/address", text: "Address record\nLives on Keel Street." }),
     expect.objectContaining({ _id: cctv, type: "cctv", referenceId: "cctv/station/1", text: "Station camera\nA person crossed the concourse." }),
+    expect.objectContaining({ _id: person, type: "npc", referenceId: npcId, text: "Mara Vale\nsuspect · Conductor" }),
   ]));
   await expect(player.mutation(api.clueBoard.updateNode, { nodeId: record, text: "Changed" })).rejects.toThrow("cannot be edited");
   expect(await player.query(api.clueBoard.getEdges, { roomCode: "ABC123" })).toEqual([

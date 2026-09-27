@@ -1,7 +1,8 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 
 const roleLabels = {
@@ -13,6 +14,25 @@ const roleLabels = {
 export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const people = useQuery(api.npcs.list, isLoaded && isSignedIn ? { roomCode } : "skip");
+  const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
+  const createReference = useMutation(api.clueBoard.createReferenceNode);
+  const [pinning, setPinning] = useState("");
+  const [error, setError] = useState("");
+
+  function pinPerson(referenceId: string) {
+    const count = boardNodes?.length ?? 0;
+    setPinning(referenceId);
+    setError("");
+    void createReference({
+      roomCode,
+      type: "npc",
+      referenceId,
+      x: 80 + (count % 4) * 220,
+      y: 90 + (Math.floor(count / 4) % 4) * 180,
+    }).catch((caught: unknown) => {
+      setError(caught instanceof Error ? caught.message : "Could not pin this person.");
+    }).finally(() => setPinning(""));
+  }
 
   if (people === undefined) return <Message message="Opening interview files..." onBack={onBack} />;
   if (!people) return <Message message="Interview files are unavailable for this room." onBack={onBack} />;
@@ -31,6 +51,7 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
 
       <main className="min-h-0 flex-1 overflow-y-auto bg-[linear-gradient(rgba(35,27,20,0.06)_1px,transparent_1px)] bg-[size:100%_2rem] p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-6xl">
+          {error ? <p className="mb-4 border-2 border-red-800 bg-red-950/90 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
           <div className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#573821] pb-4">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-red-900">Case roster</p>
@@ -52,6 +73,14 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
                     {[person.age ? `Age ${person.age}` : null, person.occupation].filter(Boolean).join(" · ") || "No public occupation"}
                   </p>
                   <p className="mt-5 border-t border-[#8b7355]/50 pt-4 text-sm leading-relaxed text-[#3e342a]">{person.publicDescription}</p>
+                  <button
+                    className="mt-4 min-h-11 border-2 border-[#573821] px-3 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2] disabled:cursor-default disabled:opacity-55"
+                    disabled={pinning === person.id || boardNodes?.some((node) => node.type === "npc" && node.referenceId === person.id)}
+                    onClick={() => pinPerson(person.id)}
+                    type="button"
+                  >
+                    {pinning === person.id ? "Pinning..." : boardNodes?.some((node) => node.type === "npc" && node.referenceId === person.id) ? "Pinned to clueboard" : "Pin to clueboard"}
+                  </button>
                 </li>
               ))}
             </ul>

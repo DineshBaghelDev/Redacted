@@ -330,7 +330,7 @@ export default defineSchema({
     .index("by_authUserId", ["authUserId"]),
   clueBoardNodes: defineTable({
     sessionId: v.id("sessions"),
-    type: v.union(v.literal("note"), v.literal("cctv"), v.literal("public_record")),
+    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("public_record")),
     referenceId: v.optional(v.string()),
     text: v.string(),
     x: v.number(),

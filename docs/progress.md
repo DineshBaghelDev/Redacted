@@ -2,7 +2,7 @@
 
 ## 2026-09-28 — Evidence reference cards
 
-- Visible public records and CCTV rows can now be pinned directly to the shared clueboard.
+- Known people, visible public records, and CCTV rows can now be pinned directly to the shared clueboard.
 - Reference cards keep their case evidence ID, use server-derived display text, cannot be rewritten as notes, and de-duplicate across both players.
 - The clueboard remains editable only after the investigation starts; cross-case references are rejected server-side.
 
@@ -234,7 +234,7 @@
 
 ### Clue board — remaining
 
-- Add reference cards for discovered NPCs, items, calls/messages, forensics, vehicles, and places as those discovery surfaces become playable.
+- Add reference cards for discovered items, calls/messages, forensics, vehicles, and places as those discovery surfaces become playable.
 
 ### Case generation — remaining
 

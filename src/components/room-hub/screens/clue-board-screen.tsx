@@ -21,7 +21,7 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 
 type StringColor = "red" | "gold" | "blue" | "green";
 type BoardData = {
-  kind: "note" | "cctv" | "public_record";
+  kind: "note" | "npc" | "cctv" | "public_record";
   text: string;
   onChange: (id: Id<"clueBoardNodes">, text: string) => void;
   onDelete: (id: Id<"clueBoardNodes">) => void;
@@ -180,7 +180,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
 }
 
 function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
-  const label = data.kind === "cctv" ? "Camera record" : data.kind === "public_record" ? "Public record" : "Note";
+  const label = data.kind === "npc" ? "Person" : data.kind === "cctv" ? "Camera record" : data.kind === "public_record" ? "Public record" : "Note";
   return (
     <article className={`relative w-48 rotate-[-1deg] border border-[#b4a06d] bg-[#eee2bd] p-3 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(20,10,5,0.45)] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
       <Handle

@@ -7,7 +7,7 @@ const MAX_NODES = 100;
 const MAX_EDGES = 200;
 const MAX_NOTE_LENGTH = 500;
 const stringColor = v.union(v.literal("red"), v.literal("gold"), v.literal("blue"), v.literal("green"));
-const referenceType = v.union(v.literal("cctv"), v.literal("public_record"));
+const referenceType = v.union(v.literal("npc"), v.literal("cctv"), v.literal("public_record"));
 
 async function requireBoard(ctx: QueryCtx | MutationCtx, roomCode: string) {
   const member = await getRoomMember(ctx, roomCode);
@@ -32,7 +32,7 @@ export const getNodes = query({
   args: { roomCode: v.string() },
   returns: v.array(v.object({
     _id: v.id("clueBoardNodes"),
-    type: v.union(v.literal("note"), v.literal("cctv"), v.literal("public_record")),
+    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("public_record")),
     referenceId: v.optional(v.string()),
     text: v.string(),
     x: v.number(),
@@ -111,7 +111,12 @@ export const createReferenceNode = mutation({
     if (nodes.length >= MAX_NODES) throw new Error("This board is full.");
 
     let text: string;
-    if (type === "public_record") {
+    if (type === "npc") {
+      const npcId = ctx.db.normalizeId("npcs", referenceId);
+      const person = npcId ? await ctx.db.get(npcId) : null;
+      if (!person || person.caseId !== session.caseId) throw new Error("That person is not part of this case.");
+      text = `${person.name}\n${person.role}${person.occupation ? ` · ${person.occupation}` : ""}`;
+    } else if (type === "public_record") {
       const record = await ctx.db
         .query("publicRecords")
         .withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", session.caseId!).eq("evidenceId", referenceId))

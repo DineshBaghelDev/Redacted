@@ -2,7 +2,7 @@
 
 ## 2026-09-28 — Pin evidence from where it is found
 
-- Public-record and CCTV reference cards are created from their investigation screens rather than from a generic clueboard picker.
+- Person, public-record, and CCTV reference cards are created from their investigation screens rather than from a generic clueboard picker.
 - The server derives reference-card wording from the frozen case record and rejects foreign IDs; players can arrange, connect, or remove a card but cannot rewrite its evidence text.
 - Re-pinning the same record returns the existing shared card instead of creating duplicates.
 
