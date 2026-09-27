@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Digital evidence freeze
+
+- Passed cases now copy phones, call logs, and messages into immutable runtime tables before a lobby is created.
+- Message wording uses the checked text-stage rewrite when present; both participants' phone copies remain consistent.
+- Runtime records use normalized NPC/device links and no public query exposes them yet.
+
 ## 2026-09-27 — Immutable CCTV records
 
 - Cameras and appearance-only records now publish into case-owned Convex tables with real place, room, street, and NPC references.

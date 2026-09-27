@@ -52,6 +52,7 @@ import type * as generation_stages from "../generation/stages.js";
 import type * as generation_workflow from "../generation/workflow.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_publishCctv from "../lib/publishCctv.js";
+import type * as lib_publishDevices from "../lib/publishDevices.js";
 import type * as lib_publishItems from "../lib/publishItems.js";
 import type * as lib_publishWorld from "../lib/publishWorld.js";
 import type * as npcs from "../npcs.js";
@@ -109,6 +110,7 @@ declare const fullApi: ApiFromModules<{
   "generation/workflow": typeof generation_workflow;
   "lib/auth": typeof lib_auth;
   "lib/publishCctv": typeof lib_publishCctv;
+  "lib/publishDevices": typeof lib_publishDevices;
   "lib/publishItems": typeof lib_publishItems;
   "lib/publishWorld": typeof lib_publishWorld;
   npcs: typeof npcs;

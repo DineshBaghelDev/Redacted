@@ -161,6 +161,40 @@ export default defineSchema({
   })
     .index("by_caseId", ["caseId"])
     .index("by_cameraId_and_startTime", ["cameraId", "startTime"]),
+  devices: defineTable({
+    caseId: v.id("cases"),
+    sourceId: v.string(),
+    type: v.union(v.literal("phone"), v.literal("laptop")),
+    ownerNpcId: v.optional(v.id("npcs")),
+    name: v.string(),
+    description: v.string(),
+  })
+    .index("by_caseId", ["caseId"])
+    .index("by_caseId_and_sourceId", ["caseId", "sourceId"]),
+  callLogs: defineTable({
+    caseId: v.id("cases"),
+    evidenceId: v.string(),
+    deviceId: v.id("devices"),
+    otherPartyNpcId: v.optional(v.id("npcs")),
+    otherPartyLabel: v.optional(v.string()),
+    timestamp: v.number(),
+    direction: v.union(v.literal("incoming"), v.literal("outgoing")),
+    durationSeconds: v.number(),
+  })
+    .index("by_caseId", ["caseId"])
+    .index("by_deviceId_and_timestamp", ["deviceId", "timestamp"]),
+  messages: defineTable({
+    caseId: v.id("cases"),
+    evidenceId: v.string(),
+    deviceId: v.id("devices"),
+    otherPartyNpcId: v.optional(v.id("npcs")),
+    otherPartyLabel: v.optional(v.string()),
+    timestamp: v.number(),
+    direction: v.union(v.literal("incoming"), v.literal("outgoing")),
+    body: v.string(),
+  })
+    .index("by_caseId", ["caseId"])
+    .index("by_deviceId_and_timestamp", ["deviceId", "timestamp"]),
   npcs: defineTable({
     caseId: v.id("cases"),
     sourceId: v.string(),

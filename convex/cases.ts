@@ -6,6 +6,7 @@ import { crimeCoreSchema } from "./generation/core/crimes";
 import { castSchema } from "./generation/core/schemas";
 import { getRoomMember, requireUserId } from "./lib/auth";
 import { ensureCaseCctv } from "./lib/publishCctv";
+import { ensureCaseDevices } from "./lib/publishDevices";
 import { ensureCaseItems } from "./lib/publishItems";
 import { ensureCaseWorld } from "./lib/publishWorld";
 
@@ -152,6 +153,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     await ensureCaseItems(ctx, existing._id, generationJobId);
     await ensureCaseSolution(ctx, existing._id, generationJobId);
     await ensureCaseCctv(ctx, existing._id, generationJobId);
+    await ensureCaseDevices(ctx, existing._id, generationJobId);
     return existing._id;
   }
 
@@ -172,6 +174,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
   await ensureCaseItems(ctx, caseId, generationJobId);
   await ensureCaseSolution(ctx, caseId, generationJobId);
   await ensureCaseCctv(ctx, caseId, generationJobId);
+  await ensureCaseDevices(ctx, caseId, generationJobId);
   return caseId;
 }
 

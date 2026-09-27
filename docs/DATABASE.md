@@ -403,6 +403,7 @@ Mutable per session.
 ```ts
 {
   caseId: Id<"cases">,
+  sourceId: string,
   type: "phone" | "laptop",
   ownerNpcId?: Id<"npcs">,
   name: string,
@@ -417,6 +418,7 @@ This replaces the earlier incorrect `contacts` concept.
 ```ts
 {
   caseId: Id<"cases">,
+  evidenceId: string,
   deviceId: Id<"devices">,
   otherPartyNpcId?: Id<"npcs">,
   otherPartyLabel?: string,
@@ -431,6 +433,7 @@ This replaces the earlier incorrect `contacts` concept.
 ```ts
 {
   caseId: Id<"cases">,
+  evidenceId: string,
   deviceId: Id<"devices">,
   otherPartyNpcId?: Id<"npcs">,
   otherPartyLabel?: string,

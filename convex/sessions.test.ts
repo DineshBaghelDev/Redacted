@@ -54,7 +54,23 @@ test("a lobby keeps the selected passed case", async () => {
       jobId,
       stage: "story",
       output: {
-        items: [{ id: "ledger", kind: "document" }],
+        events: [],
+        comms: [
+          { id: "call-1", from: crimeCore.culpritId, to: crimeCore.victimId, time: 90, type: "call", durationMinutes: 2, gist: "", proves: [] },
+          { id: "message-1", from: crimeCore.victimId, to: crimeCore.culpritId, time: 95, type: "message", gist: "Meet me there.", proves: [] },
+        ],
+        purchases: [],
+        items: [{
+          id: "ledger",
+          name: "Private ledger",
+          kind: "document",
+          description: "A ledger hidden in the kitchen.",
+          startRoomId: "keel-14:kitchen",
+          finalRoomId: "keel-14:kitchen",
+          finalSlot: "kitchen drawer",
+          proves: ["motive"],
+          contents: [],
+        }],
       },
       checkErrors: [],
       source: "hand-written",
@@ -74,6 +90,50 @@ test("a lobby keeps the selected passed case", async () => {
       output: {
         cameras: [{ id: "cam:station", name: "Union Station · concourse", faulty: false }],
         evidence: [
+          {
+            id: `device/phone:${crimeCore.culpritId}`,
+            type: "device",
+            title: "Suspect phone",
+            summary: "A mobile phone.",
+            access: { tool: "interrogation", witnessId: crimeCore.culpritId },
+            aboutIds: [crimeCore.culpritId],
+            sourceIds: [],
+            data: { deviceId: `phone:${crimeCore.culpritId}`, ownerId: crimeCore.culpritId },
+          },
+          {
+            id: `device/phone:${crimeCore.victimId}`,
+            type: "device",
+            title: "Victim phone",
+            summary: "A mobile phone.",
+            access: { tool: "search", roomId: "keel-14:kitchen", slot: "kitchen drawer" },
+            aboutIds: [crimeCore.victimId],
+            sourceIds: [],
+            data: { deviceId: `phone:${crimeCore.victimId}`, ownerId: crimeCore.victimId },
+          },
+          ...[crimeCore.culpritId, crimeCore.victimId].flatMap((ownerId) => [
+            {
+              id: `call/call-1/${ownerId}`,
+              type: "call",
+              title: "Call",
+              summary: "Two minute call.",
+              access: { tool: "phone", deviceId: `phone:${ownerId}` },
+              time: 90,
+              aboutIds: [crimeCore.culpritId, crimeCore.victimId],
+              sourceIds: ["call-1"],
+              data: { ownerId, from: crimeCore.culpritId, to: crimeCore.victimId, proves: [] },
+            },
+            {
+              id: `message/message-1/${ownerId}`,
+              type: "message",
+              title: "Message",
+              summary: "Meet me there.",
+              access: { tool: "phone", deviceId: `phone:${ownerId}` },
+              time: 95,
+              aboutIds: [crimeCore.culpritId, crimeCore.victimId],
+              sourceIds: ["message-1"],
+              data: { ownerId, from: crimeCore.victimId, to: crimeCore.culpritId, proves: [] },
+            },
+          ]),
           {
             id: "item/ledger",
             type: "item",
@@ -114,6 +174,14 @@ test("a lobby keeps the selected passed case", async () => {
       source: "code",
       updatedAt: 2,
     });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "texts",
+      output: { texts: [{ id: "message-1", text: "Meet me by the station." }] },
+      checkErrors: [],
+      source: "llm",
+      updatedAt: 2,
+    });
     return jobId;
   });
 
@@ -144,6 +212,15 @@ test("a lobby keeps the selected passed case", async () => {
       : [];
     const cameraRecords = cameras[0]
       ? await ctx.db.query("cctvRecords").withIndex("by_cameraId_and_startTime", (q) => q.eq("cameraId", cameras[0]._id)).collect()
+      : [];
+    const devices = session?.caseId
+      ? await ctx.db.query("devices").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const calls = session?.caseId
+      ? await ctx.db.query("callLogs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const messages = session?.caseId
+      ? await ctx.db.query("messages").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
       : [];
     const storedCase = session?.caseId ? await ctx.db.get(session.caseId) : null;
     const storedCity = storedCase?.cityId ? await ctx.db.get(storedCase.cityId) : null;
@@ -179,6 +256,9 @@ test("a lobby keeps the selected passed case", async () => {
       items,
       cameras,
       cameraRecords,
+      devices,
+      calls,
+      messages,
       storedCase,
       storedCity,
       caseCity,
@@ -207,6 +287,11 @@ test("a lobby keeps the selected passed case", async () => {
   expect(frozen.cameras).toHaveLength(1);
   expect(frozen.cameraRecords).toHaveLength(2);
   expect(frozen.cameraRecords[0].npcIds).toContain(frozen.culprit?._id);
+  expect(frozen.devices).toHaveLength(2);
+  expect(frozen.calls).toHaveLength(2);
+  expect(frozen.calls.map((call) => call.durationSeconds)).toEqual([120, 120]);
+  expect(frozen.messages).toHaveLength(2);
+  expect(frozen.messages.map((message) => message.body)).toEqual(["Meet me by the station.", "Meet me by the station."]);
   expect(frozen.storedCase?.cityId).toBe(frozen.storedCity?._id);
   expect(frozen.caseCity?._id).toBe(frozen.storedCity?._id);
   expect(frozen.storedCity).toMatchObject({ version: city.version, seed: `fixture:v${city.version}` });

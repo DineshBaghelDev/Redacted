@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-09-27 — Freeze digital records before play
+
+- Phones and their call/message history belong to immutable case truth, not mutable session state.
+- The same communication is stored on both participating phones because each device is an independent investigation route.
+- Client access waits for discovery-aware device queries; raw normalized records stay server-only.
+
 ## 2026-09-27 — CCTV runtime reads only frozen case rows
 
 Camera identity and record windows are resolved during case publication. Public queries retain fixture camera IDs for stable UI selection but never return stored NPC links, source events, or other hidden truth.
