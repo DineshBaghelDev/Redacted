@@ -452,6 +452,7 @@ There is no social-post table in V1.
 ```ts
 {
   caseId: Id<"cases">,
+  evidenceId: string,
   type:
     | "person"
     | "property"

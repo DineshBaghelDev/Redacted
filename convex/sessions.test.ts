@@ -59,7 +59,7 @@ test("a lobby keeps the selected passed case", async () => {
           { id: "call-1", from: crimeCore.culpritId, to: crimeCore.victimId, time: 90, type: "call", durationMinutes: 2, gist: "", proves: [] },
           { id: "message-1", from: crimeCore.victimId, to: crimeCore.culpritId, time: 95, type: "message", gist: "Meet me there.", proves: [] },
         ],
-        purchases: [],
+        purchases: [{ id: "purchase-1", who: crimeCore.culpritId, placeId: "station", time: 80, item: "Train ticket", payment: "card" }],
         items: [{
           id: "ledger",
           name: "Private ledger",
@@ -134,6 +134,27 @@ test("a lobby keeps the selected passed case", async () => {
               data: { ownerId, from: crimeCore.victimId, to: crimeCore.culpritId, proves: [] },
             },
           ]),
+          {
+            id: `record/${crimeCore.culpritId}/address`,
+            type: "record",
+            title: "Address record",
+            summary: "Lives at Keel Street.",
+            access: { tool: "records" },
+            aboutIds: [crimeCore.culpritId],
+            sourceIds: [],
+            data: { personId: crimeCore.culpritId, kind: "address", proves: [] },
+          },
+          {
+            id: "card/purchase-1",
+            type: "card",
+            title: "Card payment",
+            summary: "Paid for a train ticket.",
+            access: { tool: "records" },
+            time: 80,
+            aboutIds: [crimeCore.culpritId],
+            sourceIds: ["purchase-1"],
+            data: { who: crimeCore.culpritId, placeId: "station" },
+          },
           {
             id: "item/ledger",
             type: "item",
@@ -222,6 +243,9 @@ test("a lobby keeps the selected passed case", async () => {
     const messages = session?.caseId
       ? await ctx.db.query("messages").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
       : [];
+    const records = session?.caseId
+      ? await ctx.db.query("publicRecords").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
     const storedCase = session?.caseId ? await ctx.db.get(session.caseId) : null;
     const storedCity = storedCase?.cityId ? await ctx.db.get(storedCase.cityId) : null;
     const caseCity = session?.caseId
@@ -259,6 +283,7 @@ test("a lobby keeps the selected passed case", async () => {
       devices,
       calls,
       messages,
+      records,
       storedCase,
       storedCity,
       caseCity,
@@ -292,6 +317,11 @@ test("a lobby keeps the selected passed case", async () => {
   expect(frozen.calls.map((call) => call.durationSeconds)).toEqual([120, 120]);
   expect(frozen.messages).toHaveLength(2);
   expect(frozen.messages.map((message) => message.body)).toEqual(["Meet me by the station.", "Meet me by the station."]);
+  expect(frozen.records).toHaveLength(2);
+  expect(frozen.records).toEqual(expect.arrayContaining([
+    expect.objectContaining({ evidenceId: `record/${crimeCore.culpritId}/address`, type: "person", title: "Address record" }),
+    expect.objectContaining({ evidenceId: "card/purchase-1", type: "other", title: "Card payment" }),
+  ]));
   expect(frozen.storedCase?.cityId).toBe(frozen.storedCity?._id);
   expect(frozen.caseCity?._id).toBe(frozen.storedCity?._id);
   expect(frozen.storedCity).toMatchObject({ version: city.version, seed: `fixture:v${city.version}` });

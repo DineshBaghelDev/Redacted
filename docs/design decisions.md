@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-09-27 — Public records store player-facing truth only
+
+- Runtime records retain the generated title and content plus normalized subject identity.
+- Hidden proof tags and generation source IDs are not copied into the player-facing record table.
+- Card payments share the records dataset because V1 discovers them through the same bureau tool.
+
 ## 2026-09-27 — Freeze digital records before play
 
 - Phones and their call/message history belong to immutable case truth, not mutable session state.

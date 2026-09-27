@@ -195,6 +195,25 @@ export default defineSchema({
   })
     .index("by_caseId", ["caseId"])
     .index("by_deviceId_and_timestamp", ["deviceId", "timestamp"]),
+  publicRecords: defineTable({
+    caseId: v.id("cases"),
+    evidenceId: v.string(),
+    type: v.union(
+      v.literal("person"),
+      v.literal("property"),
+      v.literal("vehicle"),
+      v.literal("business"),
+      v.literal("criminal"),
+      v.literal("employment"),
+      v.literal("other"),
+    ),
+    subjectNpcId: v.optional(v.id("npcs")),
+    subjectVehicleId: v.optional(v.id("vehicles")),
+    title: v.string(),
+    content: v.string(),
+  })
+    .index("by_caseId", ["caseId"])
+    .index("by_caseId_and_evidenceId", ["caseId", "evidenceId"]),
   npcs: defineTable({
     caseId: v.id("cases"),
     sourceId: v.string(),

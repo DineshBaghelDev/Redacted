@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Public-record evidence freeze
+
+- Address, employment/background, and card-payment evidence now publishes into immutable case-owned records.
+- Records keep normalized subject links but omit generation-only proof and source-event tags.
+- Player search remains deferred until its location gate and discovery rules are implemented.
+
 ## 2026-09-27 — Digital evidence freeze
 
 - Passed cases now copy phones, call logs, and messages into immutable runtime tables before a lobby is created.
