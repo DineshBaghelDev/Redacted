@@ -52,6 +52,16 @@ test("a lobby keeps the selected passed case", async () => {
     });
     await ctx.db.insert("generationDrafts", {
       jobId,
+      stage: "story",
+      output: {
+        items: [{ id: "ledger", kind: "document" }],
+      },
+      checkErrors: [],
+      source: "hand-written",
+      updatedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
       stage: "brief",
       output: { title: "The Selected Case", summary: "A specific mystery.", initialFacts: ["One fact."] },
       checkErrors: [],
@@ -64,6 +74,16 @@ test("a lobby keeps the selected passed case", async () => {
       output: {
         cameras: [{ id: "cam:station", name: "Union Station · concourse", faulty: false }],
         evidence: [
+          {
+            id: "item/ledger",
+            type: "item",
+            title: "Private ledger",
+            summary: "A ledger hidden in the kitchen.",
+            access: { tool: "search", roomId: "keel-14:kitchen", slot: "kitchen drawer" },
+            aboutIds: ["hidden-person-id"],
+            sourceIds: ["ledger"],
+            data: { itemId: "ledger", proves: ["motive"] },
+          },
           {
             id: "cctv/1",
             type: "cctv",
@@ -116,6 +136,9 @@ test("a lobby keeps the selected passed case", async () => {
     const npcs = session?.caseId
       ? await ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
       : [];
+    const items = session?.caseId
+      ? await ctx.db.query("caseItems").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
     const storedCase = session?.caseId ? await ctx.db.get(session.caseId) : null;
     const storedCity = storedCase?.cityId ? await ctx.db.get(storedCase.cityId) : null;
     const caseCity = session?.caseId
@@ -147,6 +170,7 @@ test("a lobby keeps the selected passed case", async () => {
       solution,
       culprit,
       npcs,
+      items,
       storedCase,
       storedCity,
       caseCity,
@@ -162,6 +186,16 @@ test("a lobby keeps the selected passed case", async () => {
   });
   expect(frozen.culprit).toMatchObject({ sourceId: crimeCore.culpritId, role: "suspect" });
   expect(frozen.npcs).toHaveLength(cast.characters.length);
+  expect(frozen.items).toHaveLength(1);
+  expect(frozen.items[0]).toMatchObject({
+    evidenceId: "item/ledger",
+    sourceId: "ledger",
+    slot: "kitchen drawer",
+    itemType: "document",
+    discoverableBySearch: true,
+    collectible: true,
+    hidden: true,
+  });
   expect(frozen.storedCase?.cityId).toBe(frozen.storedCity?._id);
   expect(frozen.caseCity?._id).toBe(frozen.storedCity?._id);
   expect(frozen.storedCity).toMatchObject({ version: city.version, seed: `fixture:v${city.version}` });

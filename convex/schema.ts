@@ -108,6 +108,23 @@ export default defineSchema({
   })
     .index("by_buildingId", ["buildingId"])
     .index("by_cityId_and_sourceId", ["cityId", "sourceId"]),
+  caseItems: defineTable({
+    caseId: v.id("cases"),
+    evidenceId: v.string(),
+    sourceId: v.optional(v.string()),
+    name: v.string(),
+    description: v.string(),
+    placeId: v.id("places"),
+    roomId: v.id("rooms"),
+    slot: v.string(),
+    discoverableBySearch: v.boolean(),
+    collectible: v.boolean(),
+    hidden: v.boolean(),
+    itemType: v.string(),
+  })
+    .index("by_caseId", ["caseId"])
+    .index("by_caseId_and_evidenceId", ["caseId", "evidenceId"])
+    .index("by_roomId", ["roomId"]),
   npcs: defineTable({
     caseId: v.id("cases"),
     sourceId: v.string(),

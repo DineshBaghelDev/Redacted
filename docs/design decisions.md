@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-09-27 — Search uses the generated evidence access rule
+
+The final `evidence` stage is authoritative for an item's searchable room and slot; the story stage supplies its physical type. Clutter is reviewable but not collectible, while authored case objects are collectible. Publishing never exposes hidden ownership or proof links.
+
 ## 2026-09-27 — V1 world is copied into each ready case
 
 The permanent V1 fixture remains the authoring source, but play reads a case-owned immutable snapshot. Fixture IDs are retained as source IDs for generated references; runtime relations use Convex document IDs. The extra stored map, camera, room-slot, and ordering fields preserve behavior that the earlier database sketch did not capture.

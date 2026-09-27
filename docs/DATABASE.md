@@ -290,10 +290,13 @@ Physical recoverable/inspectable objects only. Forensic conclusions do not belon
 ```ts
 {
   caseId: Id<"cases">,
+  evidenceId: string,
+  sourceId?: string,
   name: string,
   description: string,
   placeId: Id<"places">,
   roomId?: Id<"rooms">,
+  slot: string,
   discoverableBySearch: boolean,
   collectible: boolean,
   hidden: boolean,

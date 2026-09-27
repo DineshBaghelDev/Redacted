@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Physical evidence freeze
+
+- Searchable story objects and seeded clutter now publish into normalized case-item rows with their stored place, room, slot, type, and collection rules.
+- Item publication reads the generated access rule rather than guessing a location, fails closed on unknown rooms, and runs exactly once per case.
+- Items remain hidden and have no public query until a legitimate room search reveals them.
+
 ## 2026-09-27 — Immutable playable world snapshot
 
 - Starting a session now publishes the complete V1 city, buildings, floors, rooms, doors, home units, and travel edges into normalized case-owned Convex rows exactly once.

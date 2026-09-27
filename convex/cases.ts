@@ -5,6 +5,7 @@ import { query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { crimeCoreSchema } from "./generation/core/crimes";
 import { castSchema } from "./generation/core/schemas";
 import { getRoomMember, requireUserId } from "./lib/auth";
+import { ensureCaseItems } from "./lib/publishItems";
 import { ensureCaseWorld } from "./lib/publishWorld";
 
 type Brief = {
@@ -197,6 +198,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
 
   if (existing) {
     await ensureCaseWorld(ctx, existing._id);
+    await ensureCaseItems(ctx, existing._id, generationJobId);
     await ensureCaseSolution(ctx, existing._id, generationJobId);
     return existing._id;
   }
@@ -215,6 +217,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     createdAt: Date.now(),
   });
   await ensureCaseWorld(ctx, caseId);
+  await ensureCaseItems(ctx, caseId, generationJobId);
   await ensureCaseSolution(ctx, caseId, generationJobId);
   return caseId;
 }
