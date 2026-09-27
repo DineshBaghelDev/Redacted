@@ -138,7 +138,7 @@ export function RoomHub() {
       {screen === "previous" ? (
         <PreviousGamesScreen
           isWorking={isWorking}
-          onPlay={(generationJobId) => createOrJoin("create", generationJobId)}
+          onPlay={(game) => createOrJoin("create", game)}
         />
       ) : null}
 

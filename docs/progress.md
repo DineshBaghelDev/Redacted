@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Case-ID replay contract
+
+- Published previous-case entries now carry their frozen case ID and create new sessions through `sessions.createReplay`.
+- The replay mutation rejects partial or unpublished cases and never reads generation jobs or drafts.
+- Older passed jobs without a published case retain the compatibility path that freezes them once when first selected.
+
 ## 2026-09-27 — Active-room resume
 
 - The home menu now shows the signed-in player's unexpired rooms with case title, room code, player count, and clear lobby/investigation wording.

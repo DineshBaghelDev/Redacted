@@ -19,7 +19,7 @@ type Brief = {
   initialFacts?: unknown;
 };
 
-const PUBLICATION_VERSION = 1;
+export const PUBLICATION_VERSION = 1;
 
 const cctvRecord = v.object({
   id: v.string(),
@@ -198,6 +198,7 @@ export const listPassed = query({
   args: {},
   returns: v.array(v.object({
     generationJobId: v.id("generationJobs"),
+    caseId: v.optional(v.id("cases")),
     difficulty: v.union(v.literal("easy"), v.literal("normal"), v.literal("hard")),
     title: v.string(),
     description: v.string(),
@@ -210,6 +211,7 @@ export const listPassed = query({
       publishedJobIds.add(playableCase.generationJobId);
       cases.push({
         generationJobId: playableCase.generationJobId,
+        caseId: playableCase._id,
         difficulty: playableCase.difficulty,
         title: playableCase.title,
         description: playableCase.summary,

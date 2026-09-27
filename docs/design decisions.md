@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-09-27 — Replay identifies the frozen case directly
+
+- Published menu entries replay by `caseId`, matching the immutable case boundary.
+- `generationJobId` remains only as a compatibility/provenance handle for passed jobs not yet copied into runtime tables.
+- Replay validation requires the current publication version before any fresh session is created.
+
 ## 2026-09-27 — Active investigations are recoverable from home
 
 - URL-backed reload remains the primary resume path, while the home menu also lists the player's active rooms.

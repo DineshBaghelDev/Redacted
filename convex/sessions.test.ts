@@ -485,18 +485,32 @@ test("a lobby keeps the selected passed case", async () => {
     const briefDraft = await ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId).eq("stage", "brief")).unique();
     if (briefDraft) await ctx.db.patch(briefDraft._id, { output: { title: "Changed draft", summary: "Changed.", initialFacts: [] } });
   });
-  expect(await user.query(api.cases.listPassed, {})).toEqual([{
-    generationJobId,
-    difficulty: "easy",
-    title: "The Selected Case",
-    description: "A specific mystery.",
-  }]);
-  const replayed = await user.mutation(api.sessions.create, { nickname: "Detective", generationJobId });
+  const publishedCaseId = await t.run(async (ctx) => (await ctx.db.get(created.sessionId))?.caseId);
+  expect(publishedCaseId).toBeTruthy();
+  expect(await user.query(api.cases.listPassed, {})).toEqual([
+    expect.objectContaining({
+      generationJobId,
+      caseId: publishedCaseId,
+      difficulty: "easy",
+      title: "The Selected Case",
+      description: "A specific mystery.",
+    }),
+  ]);
+  const replayed = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId! });
   expect(replayed.sessionId).not.toBe(created.sessionId);
   expect(await t.run(async (ctx) => {
     const [first, second] = await Promise.all([ctx.db.get(created.sessionId), ctx.db.get(replayed.sessionId)]);
     return first?.caseId === second?.caseId;
   })).toBe(true);
+  const unpublishedCaseId = await t.run(async (ctx) => ctx.db.insert("cases", {
+    generationJobId: invalidJobId,
+    difficulty: "easy",
+    title: "Incomplete case",
+    summary: "Not ready.",
+    initialFacts: [],
+    createdAt: 5,
+  }));
+  await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: unpublishedCaseId })).rejects.toThrow("not ready to replay");
   expect(await user.query(api.sessions.listMine, {})).toEqual(expect.arrayContaining([
     expect.objectContaining({ roomCode: created.roomCode, caseTitle: "The Selected Case", status: "waiting" }),
     expect.objectContaining({ roomCode: replayed.roomCode, caseTitle: "The Selected Case", status: "waiting" }),

@@ -118,7 +118,7 @@ Creates in one logical flow:
 Returns room code, reconnect secret, case/session identifiers, and generation status immediately. The second player may join while generation is running. Investigation starts only after the case becomes `ready`.
 
 ```ts
-sessions.createReplay({ caseCode, nickname, deadlineMinutes? })
+sessions.createReplay({ caseId, nickname })
 sessions.join({ roomCode, nickname })
 sessions.reconnect({ roomCode, reconnectSecret })
 sessions.reset({ sessionId })

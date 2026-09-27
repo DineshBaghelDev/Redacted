@@ -1,7 +1,9 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { requireUserId } from "./lib/auth";
-import { ensureCaseForJob } from "./cases";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
+import { ensureCaseForJob, PUBLICATION_VERSION } from "./cases";
 
 const MAX_PLAYERS = 2;
 const ROOM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -15,40 +17,49 @@ function makeRoomCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
+async function createSession(ctx: MutationCtx, authUserId: string, nickname: string, caseId: Id<"cases">) {
+  const now = Date.now();
+  let roomCode = makeRoomCode();
+
+  while (await ctx.db.query("sessions").withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode)).first()) {
+    roomCode = makeRoomCode();
+  }
+
+  const sessionId = await ctx.db.insert("sessions", {
+    caseId,
+    roomCode,
+    status: "waiting",
+    createdAt: now,
+    expiresAt: now + ROOM_TTL_MS,
+  });
+  const playerId = await ctx.db.insert("sessionPlayers", {
+    sessionId,
+    authUserId,
+    nickname: nickname.trim() || "Detective",
+    isReady: false,
+    joinedAt: now,
+  });
+  return { sessionId, playerId, roomCode };
+}
+
 export const create = mutation({
   args: { nickname: v.string(), generationJobId: v.id("generationJobs") },
   returns: v.object({ sessionId: v.id("sessions"), playerId: v.id("sessionPlayers"), roomCode: v.string() }),
   handler: async (ctx, { nickname, generationJobId }) => {
     const authUserId = await requireUserId(ctx);
     const caseId = await ensureCaseForJob(ctx, generationJobId);
-    const now = Date.now();
-    let roomCode = makeRoomCode();
+    return await createSession(ctx, authUserId, nickname, caseId);
+  },
+});
 
-    while (
-      await ctx.db
-        .query("sessions")
-        .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode))
-        .first()
-    ) {
-      roomCode = makeRoomCode();
-    }
-
-    const sessionId = await ctx.db.insert("sessions", {
-      caseId,
-      roomCode,
-      status: "waiting",
-      createdAt: now,
-      expiresAt: now + ROOM_TTL_MS,
-    });
-    const playerId = await ctx.db.insert("sessionPlayers", {
-      sessionId,
-      authUserId,
-      nickname: nickname.trim() || "Detective",
-      isReady: false,
-      joinedAt: now,
-    });
-
-    return { sessionId, playerId, roomCode };
+export const createReplay = mutation({
+  args: { nickname: v.string(), caseId: v.id("cases") },
+  returns: v.object({ sessionId: v.id("sessions"), playerId: v.id("sessionPlayers"), roomCode: v.string() }),
+  handler: async (ctx, { nickname, caseId }) => {
+    const authUserId = await requireUserId(ctx);
+    const playableCase = await ctx.db.get(caseId);
+    if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not ready to replay.");
+    return await createSession(ctx, authUserId, nickname, caseId);
   },
 });
 

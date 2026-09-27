@@ -41,6 +41,7 @@ export function useRoomSession(nickname: string) {
   const pathname = usePathname();
   const router = useRouter();
   const createRoom = useMutation(api.sessions.create);
+  const createReplay = useMutation(api.sessions.createReplay);
   const joinRoom = useMutation(api.sessions.join);
   const setReady = useMutation(api.sessions.setReady);
   const startRoom = useMutation(api.sessions.start);
@@ -70,7 +71,7 @@ export function useRoomSession(nickname: string) {
     router.push(pathForScreen(nextScreen, joinedRoomCode));
   }
 
-  async function createOrJoin(action: "create" | "join", generationJobId?: Id<"generationJobs">) {
+  async function createOrJoin(action: "create" | "join", selection?: { generationJobId: Id<"generationJobs">; caseId?: Id<"cases"> }) {
     if (!isLoaded || !isSignedIn) {
       setError("Still signing in. Try again in a moment.");
       return;
@@ -80,8 +81,10 @@ export function useRoomSession(nickname: string) {
 
     try {
       const result = action === "create"
-        ? generationJobId
-          ? await createRoom({ nickname, generationJobId })
+        ? selection?.caseId
+          ? await createReplay({ nickname, caseId: selection.caseId })
+          : selection?.generationJobId
+            ? await createRoom({ nickname, generationJobId: selection.generationJobId })
           : { roomCode: "", message: "Choose a case first." }
         : await joinRoom({ roomCode, nickname });
       if (!result.roomCode) {
