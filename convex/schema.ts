@@ -186,6 +186,7 @@ export default defineSchema({
     kind: v.union(v.literal("stay"), v.literal("pass"), v.literal("offline")),
   })
     .index("by_caseId", ["caseId"])
+    .index("by_caseId_and_evidenceId", ["caseId", "evidenceId"])
     .index("by_cameraId_and_startTime", ["cameraId", "startTime"]),
   devices: defineTable({
     caseId: v.id("cases"),
@@ -329,7 +330,8 @@ export default defineSchema({
     .index("by_authUserId", ["authUserId"]),
   clueBoardNodes: defineTable({
     sessionId: v.id("sessions"),
-    type: v.literal("note"),
+    type: v.union(v.literal("note"), v.literal("cctv"), v.literal("public_record")),
+    referenceId: v.optional(v.string()),
     text: v.string(),
     x: v.number(),
     y: v.number(),

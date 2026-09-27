@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-28 — Evidence reference cards
+
+- Visible public records and CCTV rows can now be pinned directly to the shared clueboard.
+- Reference cards keep their case evidence ID, use server-derived display text, cannot be rewritten as notes, and de-duplicate across both players.
+- The clueboard remains editable only after the investigation starts; cross-case references are rejected server-side.
+
 ## 2026-09-28 — Active-game investigation guard
 
 - One shared server guard now keeps the city map, public NPC list, CCTV console, and public-record search unavailable until a room enters play.
@@ -228,7 +234,7 @@
 
 ### Clue board — remaining
 
-- Add reference cards for discovered NPCs, evidence, calls, CCTV, and other case records after those discovery surfaces are playable.
+- Add reference cards for discovered NPCs, items, calls/messages, forensics, vehicles, and places as those discovery surfaces become playable.
 
 ### Case generation — remaining
 

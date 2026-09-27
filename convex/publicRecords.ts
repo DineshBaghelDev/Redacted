@@ -3,7 +3,7 @@ import { query } from "./_generated/server";
 import { getPlayingRoomMember } from "./lib/auth";
 
 const publicRecord = v.object({
-  id: v.id("publicRecords"),
+  id: v.string(),
   type: v.union(
     v.literal("person"),
     v.literal("property"),
@@ -31,6 +31,6 @@ export const search = query({
           .withSearchIndex("search_title", (q) => q.search("title", term).eq("caseId", member.session.caseId!))
           .take(50)
       : await ctx.db.query("publicRecords").withIndex("by_caseId", (q) => q.eq("caseId", member.session.caseId!)).take(50);
-    return records.map((record) => ({ id: record._id, type: record.type, title: record.title, content: record.content }));
+    return records.map((record) => ({ id: record.evidenceId, type: record.type, title: record.title, content: record.content }));
   },
 });

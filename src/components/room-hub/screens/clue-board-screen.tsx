@@ -20,12 +20,13 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 type StringColor = "red" | "gold" | "blue" | "green";
-type NoteData = {
+type BoardData = {
+  kind: "note" | "cctv" | "public_record";
   text: string;
   onChange: (id: Id<"clueBoardNodes">, text: string) => void;
   onDelete: (id: Id<"clueBoardNodes">) => void;
 };
-type NoteNode = Node<NoteData, "note">;
+type BoardNode = Node<BoardData, "board">;
 
 const colors: Record<StringColor, { label: string; value: string }> = {
   red: { label: "Red string", value: "#b3342b" },
@@ -34,7 +35,7 @@ const colors: Record<StringColor, { label: string; value: string }> = {
   green: { label: "Green string", value: "#4f7d55" },
 };
 
-const nodeTypes = { note: NoteCard };
+const nodeTypes = { board: BoardCard };
 
 export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const savedNodes = useQuery(api.clueBoard.getNodes, { roomCode });
@@ -47,7 +48,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
   const [stringColor, setStringColor] = useState<StringColor>("red");
   const [selectedEdge, setSelectedEdge] = useState<Id<"clueBoardEdges"> | null>(null);
   const [error, setError] = useState("");
-  const [nodes, setNodes, onNodesChange] = useNodesState<NoteNode>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<BoardNode>([]);
 
   const showError = useCallback((caught: unknown) => {
     setError(caught instanceof Error ? caught.message : "Could not update the board.");
@@ -61,11 +62,11 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
 
   useEffect(() => {
     if (!savedNodes) return;
-    setNodes(savedNodes.map((note) => ({
-      id: note._id,
-      type: "note",
-      position: { x: note.x, y: note.y },
-      data: { text: note.text, onChange: saveText, onDelete: removeNote },
+    setNodes(savedNodes.map((item) => ({
+      id: item._id,
+      type: "board",
+      position: { x: item.x, y: item.y },
+      data: { kind: item.type, text: item.text, onChange: saveText, onDelete: removeNote },
     })));
   }, [removeNote, savedNodes, saveText, setNodes]);
 
@@ -141,7 +142,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
       </header>
 
       <div className="clue-board relative min-h-0 flex-1">
-        <ReactFlow<NoteNode, Edge>
+        <ReactFlow<BoardNode, Edge>
           colorMode="dark"
           connectionLineStyle={{ stroke: colors[stringColor].value, strokeWidth: 3 }}
           connectionMode={ConnectionMode.Loose}
@@ -178,7 +179,8 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
   );
 }
 
-function NoteCard({ id, data, selected }: NodeProps<NoteNode>) {
+function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
+  const label = data.kind === "cctv" ? "Camera record" : data.kind === "public_record" ? "Public record" : "Note";
   return (
     <article className={`relative w-48 rotate-[-1deg] border border-[#b4a06d] bg-[#eee2bd] p-3 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(20,10,5,0.45)] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
       <Handle
@@ -187,21 +189,26 @@ function NoteCard({ id, data, selected }: NodeProps<NoteNode>) {
         title="Drag to another pin"
         type="source"
       />
-      <textarea
-        aria-label="Note text"
-        className="nodrag nowheel min-h-24 w-full resize-none bg-transparent text-base leading-5 outline-none placeholder:text-[#725f42]"
-        defaultValue={data.text}
-        key={data.text}
-        maxLength={500}
-        onBlur={(event) => {
-          if (event.target.value.trim() && event.target.value.trim() !== data.text) data.onChange(id as Id<"clueBoardNodes">, event.target.value);
-        }}
-      />
+      <p className="mb-2 text-[9px] uppercase tracking-[0.16em] text-[#7a5636]">{label}</p>
+      {data.kind === "note" ? (
+        <textarea
+          aria-label="Note text"
+          className="nodrag nowheel min-h-24 w-full resize-none bg-transparent text-base leading-5 outline-none placeholder:text-[#725f42]"
+          defaultValue={data.text}
+          key={data.text}
+          maxLength={500}
+          onBlur={(event) => {
+            if (event.target.value.trim() && event.target.value.trim() !== data.text) data.onChange(id as Id<"clueBoardNodes">, event.target.value);
+          }}
+        />
+      ) : (
+        <p className="min-h-24 whitespace-pre-line text-sm leading-5">{data.text}</p>
+      )}
       <button
-        aria-label="Remove note"
+        aria-label="Remove board item"
         className="nodrag absolute bottom-1 right-1 p-1 text-[#775d42] hover:text-red-800 focus-visible:outline-2 focus-visible:outline-red-800"
         onClick={() => data.onDelete(id as Id<"clueBoardNodes">)}
-        title="Remove note"
+        title="Remove board item"
         type="button"
       >
         <Trash2 aria-hidden="true" size={15} />

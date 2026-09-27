@@ -1,14 +1,33 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 
 export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const [search, setSearch] = useState("");
+  const [pinning, setPinning] = useState("");
+  const [error, setError] = useState("");
   const records = useQuery(api.publicRecords.search, isLoaded && isSignedIn && roomCode ? { roomCode, search } : "skip");
+  const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn && roomCode ? { roomCode } : "skip");
+  const createReference = useMutation(api.clueBoard.createReferenceNode);
+
+  function pinRecord(referenceId: string) {
+    const count = boardNodes?.length ?? 0;
+    setPinning(referenceId);
+    setError("");
+    void createReference({
+      roomCode,
+      type: "public_record",
+      referenceId,
+      x: 80 + (count % 4) * 220,
+      y: 90 + (Math.floor(count / 4) % 4) * 180,
+    }).catch((caught: unknown) => {
+      setError(caught instanceof Error ? caught.message : "Could not pin this record.");
+    }).finally(() => setPinning(""));
+  }
 
   return (
     <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#050712]/96 text-cyan-100 backdrop-blur-sm">
@@ -43,6 +62,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+        {error ? <p className="mx-auto mb-4 max-w-5xl border border-red-300 bg-red-950/80 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
         {records === undefined ? <TerminalMessage>Searching case records...</TerminalMessage> : null}
         {records === null ? <TerminalMessage>This room cannot access these records.</TerminalMessage> : null}
         {records?.length === 0 ? <TerminalMessage>No matching records.</TerminalMessage> : null}
@@ -55,6 +75,14 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   <span className="shrink-0 border border-red-800 px-2 py-1 text-[10px] uppercase tracking-wide text-red-800">{record.type}</span>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed sm:text-base">{record.content}</p>
+                <button
+                  className="mt-4 min-h-11 border border-[#211d17]/60 px-3 text-xs uppercase hover:border-red-800 hover:text-red-800 disabled:cursor-default disabled:opacity-55"
+                  disabled={pinning === record.id || boardNodes?.some((node) => node.type === "public_record" && node.referenceId === record.id)}
+                  onClick={() => pinRecord(record.id)}
+                  type="button"
+                >
+                  {pinning === record.id ? "Pinning..." : boardNodes?.some((node) => node.type === "public_record" && node.referenceId === record.id) ? "Pinned to clueboard" : "Pin to clueboard"}
+                </button>
               </li>
             ))}
           </ul>

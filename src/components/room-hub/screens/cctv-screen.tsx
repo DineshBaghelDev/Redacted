@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 
@@ -16,6 +16,10 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
   const data = useQuery(api.cases.getCctv, isLoaded && isSignedIn ? { roomCode } : "skip");
   const [chosenCameraId, setCameraId] = useState("");
   const [chosenMinute, setMinute] = useState<number | null>(null);
+  const [pinning, setPinning] = useState("");
+  const [error, setError] = useState("");
+  const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
+  const createReference = useMutation(api.clueBoard.createReferenceNode);
 
   const cameraId = data?.cameras.some((camera) => camera.id === chosenCameraId)
     ? chosenCameraId
@@ -33,6 +37,21 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
 
   const camera = data.cameras.find((item) => item.id === cameraId)!;
   const records = camera.faulty ? [] : visibleRecords ?? [];
+
+  function pinRecord(referenceId: string) {
+    const count = boardNodes?.length ?? 0;
+    setPinning(referenceId);
+    setError("");
+    void createReference({
+      roomCode,
+      type: "cctv",
+      referenceId,
+      x: 80 + (count % 4) * 220,
+      y: 90 + (Math.floor(count / 4) % 4) * 180,
+    }).catch((caught: unknown) => {
+      setError(caught instanceof Error ? caught.message : "Could not pin this camera record.");
+    }).finally(() => setPinning(""));
+  }
 
   return (
     <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#02050a] text-cyan-50">
@@ -77,6 +96,7 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
         </aside>
 
         <main className="flex min-h-0 flex-col overflow-y-auto p-4 sm:p-6 lg:p-8">
+          {error ? <p className="mb-4 border border-red-300 bg-red-950/80 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-cyan-300/20 pb-4">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/45">Camera {String(data.cameras.indexOf(camera) + 1).padStart(2, "0")}</p>
@@ -136,6 +156,14 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
                   <li className={`border p-4 ${record.kind === "offline" ? "border-red-400/30 bg-red-950/20" : "border-cyan-300/25 bg-[#07111b] shadow-[inset_3px_0_0_rgba(103,232,249,0.65)]"}`} key={record.id}>
                     <p className="font-mono text-xs text-yellow-200">{formatTime(record.start)}–{formatTime(record.end).split(" · ")[1]}</p>
                     <p className="mt-3 text-base leading-relaxed text-cyan-50">{record.summary}</p>
+                    <button
+                      className="mt-4 min-h-11 border border-cyan-300/60 px-3 text-xs uppercase text-cyan-100 hover:border-yellow-200 hover:text-yellow-200 disabled:cursor-default disabled:opacity-50"
+                      disabled={pinning === record.id || boardNodes?.some((node) => node.type === "cctv" && node.referenceId === record.id)}
+                      onClick={() => pinRecord(record.id)}
+                      type="button"
+                    >
+                      {pinning === record.id ? "Pinning..." : boardNodes?.some((node) => node.type === "cctv" && node.referenceId === record.id) ? "Pinned to clueboard" : "Pin to clueboard"}
+                    </button>
                   </li>
                 ))}
               </ul>
