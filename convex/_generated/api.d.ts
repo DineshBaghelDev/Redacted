@@ -51,6 +51,7 @@ import type * as generation_prompts_text from "../generation/prompts/text.js";
 import type * as generation_stages from "../generation/stages.js";
 import type * as generation_workflow from "../generation/workflow.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_publishWorld from "../lib/publishWorld.js";
 import type * as npcs from "../npcs.js";
 import type * as sessions from "../sessions.js";
 import type * as world from "../world.js";
@@ -105,6 +106,7 @@ declare const fullApi: ApiFromModules<{
   "generation/stages": typeof generation_stages;
   "generation/workflow": typeof generation_workflow;
   "lib/auth": typeof lib_auth;
+  "lib/publishWorld": typeof lib_publishWorld;
   npcs: typeof npcs;
   sessions: typeof sessions;
   world: typeof world;

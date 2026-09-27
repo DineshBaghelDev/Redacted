@@ -7,12 +7,107 @@ export const jobStatus = v.union(v.literal("queued"), v.literal("running"), v.li
 export default defineSchema({
   cases: defineTable({
     generationJobId: v.id("generationJobs"),
+    cityId: v.optional(v.id("cities")),
     difficulty: v.union(v.literal("easy"), v.literal("normal"), v.literal("hard")),
     title: v.string(),
     summary: v.string(),
     initialFacts: v.array(v.string()),
     createdAt: v.number(),
   }).index("by_generationJobId", ["generationJobId"]),
+  cities: defineTable({
+    caseId: v.id("cases"),
+    name: v.string(),
+    seed: v.string(),
+    version: v.number(),
+  }).index("by_caseId", ["caseId"]),
+  places: defineTable({
+    cityId: v.id("cities"),
+    sourceId: v.string(),
+    order: v.number(),
+    name: v.string(),
+    type: v.union(
+      v.literal("residence"),
+      v.literal("office"),
+      v.literal("hospital"),
+      v.literal("police_station"),
+      v.literal("shop"),
+      v.literal("restaurant"),
+      v.literal("warehouse"),
+      v.literal("hotel"),
+      v.literal("park"),
+      v.literal("public_building"),
+      v.literal("other"),
+    ),
+    kind: v.union(v.literal("home"), v.literal("work"), v.literal("public"), v.literal("bureau"), v.literal("lab")),
+    area: v.union(v.literal("northside"), v.literal("midtown"), v.literal("eastside")),
+    description: v.string(),
+    mapX: v.number(),
+    mapY: v.number(),
+    crimeSceneAllowed: v.boolean(),
+    jobSlots: v.array(v.string()),
+    buildingId: v.optional(v.id("buildings")),
+  })
+    .index("by_cityId_and_order", ["cityId", "order"])
+    .index("by_cityId_and_sourceId", ["cityId", "sourceId"]),
+  placeConnections: defineTable({
+    cityId: v.id("cities"),
+    sourceId: v.string(),
+    order: v.number(),
+    fromPlaceId: v.id("places"),
+    toPlaceId: v.id("places"),
+    travelMinutes: v.number(),
+    bidirectional: v.boolean(),
+    hasCamera: v.boolean(),
+  }).index("by_cityId_and_order", ["cityId", "order"]),
+  buildings: defineTable({
+    placeId: v.id("places"),
+    template: v.union(
+      v.literal("house"),
+      v.literal("apartment"),
+      v.literal("office"),
+      v.literal("hotel"),
+      v.literal("commercial"),
+      v.literal("warehouse"),
+      v.literal("institution"),
+    ),
+    floorCount: v.number(),
+    layoutSeed: v.string(),
+  }).index("by_placeId", ["placeId"]),
+  floors: defineTable({
+    buildingId: v.id("buildings"),
+    floorNumber: v.number(),
+  }).index("by_buildingId_and_floorNumber", ["buildingId", "floorNumber"]),
+  rooms: defineTable({
+    buildingId: v.id("buildings"),
+    floorId: v.id("floors"),
+    sourceId: v.string(),
+    order: v.number(),
+    name: v.string(),
+    type: v.string(),
+    searchable: v.boolean(),
+    isEntrance: v.boolean(),
+    itemSlots: v.array(v.string()),
+    hasCamera: v.boolean(),
+  })
+    .index("by_buildingId_and_order", ["buildingId", "order"])
+    .index("by_buildingId_and_sourceId", ["buildingId", "sourceId"])
+    .index("by_floorId", ["floorId"]),
+  roomConnections: defineTable({
+    buildingId: v.id("buildings"),
+    order: v.number(),
+    fromRoomId: v.id("rooms"),
+    toRoomId: v.id("rooms"),
+    type: v.union(v.literal("door"), v.literal("corridor"), v.literal("stairs"), v.literal("elevator")),
+  }).index("by_buildingId_and_order", ["buildingId", "order"]),
+  homeUnits: defineTable({
+    cityId: v.id("cities"),
+    buildingId: v.id("buildings"),
+    roomId: v.id("rooms"),
+    sourceId: v.string(),
+    label: v.string(),
+  })
+    .index("by_buildingId", ["buildingId"])
+    .index("by_cityId_and_sourceId", ["cityId", "sourceId"]),
   npcs: defineTable({
     caseId: v.id("cases"),
     sourceId: v.string(),

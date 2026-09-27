@@ -113,6 +113,7 @@ Indexes:
   caseId: Id<"cases">,
   name: string,
   seed: string,
+  version: number,
 }
 ```
 
@@ -123,6 +124,8 @@ At least 10 per city.
 ```ts
 {
   cityId: Id<"cities">,
+  sourceId: string,
+  order: number,
   name: string,
   type:
     | "residence"
@@ -137,6 +140,12 @@ At least 10 per city.
     | "public_building"
     | "other",
   description: string,
+  kind: "home" | "work" | "public" | "bureau" | "lab",
+  area: "northside" | "midtown" | "eastside",
+  mapX: number,
+  mapY: number,
+  crimeSceneAllowed: boolean,
+  jobSlots: string[],
   buildingId?: Id<"buildings">,
 }
 ```
@@ -146,10 +155,13 @@ At least 10 per city.
 ```ts
 {
   cityId: Id<"cities">,
+  sourceId: string,
+  order: number,
   fromPlaceId: Id<"places">,
   toPlaceId: Id<"places">,
   travelMinutes: number,
   bidirectional: boolean,
+  hasCamera: boolean,
 }
 ```
 
@@ -185,9 +197,15 @@ At least 10 per city.
 ```ts
 {
   floorId: Id<"floors">,
+  buildingId: Id<"buildings">,
+  sourceId: string,
+  order: number,
   name: string,
   type: string,
   searchable: boolean,
+  isEntrance: boolean,
+  itemSlots: string[],
+  hasCamera: boolean,
 }
 ```
 
@@ -198,9 +216,22 @@ Corridors are normally edges, not rooms.
 ```ts
 {
   buildingId: Id<"buildings">,
+  order: number,
   fromRoomId: Id<"rooms">,
   toRoomId: Id<"rooms">,
   type: "door" | "corridor" | "stairs" | "elevator",
+}
+```
+
+### `homeUnits`
+
+```ts
+{
+  cityId: Id<"cities">,
+  buildingId: Id<"buildings">,
+  roomId: Id<"rooms">,
+  sourceId: string,
+  label: string,
 }
 ```
 

@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-09-27 — V1 world is copied into each ready case
+
+The permanent V1 fixture remains the authoring source, but play reads a case-owned immutable snapshot. Fixture IDs are retained as source IDs for generated references; runtime relations use Convex document IDs. The extra stored map, camera, room-slot, and ordering fields preserve behavior that the earlier database sketch did not capture.
+
 ## 2026-09-27 — Interview station starts with a safe case roster
 
 The interview desk may show public character details before live questioning exists. It never reads generation drafts, private NPC scripts, or the canonical solution; presence-gated questions will be added with the time engine.

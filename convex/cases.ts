@@ -5,6 +5,7 @@ import { query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { crimeCoreSchema } from "./generation/core/crimes";
 import { castSchema } from "./generation/core/schemas";
 import { getRoomMember, requireUserId } from "./lib/auth";
+import { ensureCaseWorld } from "./lib/publishWorld";
 
 type Brief = {
   title?: unknown;
@@ -195,6 +196,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
   if (!job || job.status !== "passed") throw new Error("This case is not ready to play.");
 
   if (existing) {
+    await ensureCaseWorld(ctx, existing._id);
     await ensureCaseSolution(ctx, existing._id, generationJobId);
     return existing._id;
   }
@@ -212,6 +214,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     ...brief,
     createdAt: Date.now(),
   });
+  await ensureCaseWorld(ctx, caseId);
   await ensureCaseSolution(ctx, caseId, generationJobId);
   return caseId;
 }

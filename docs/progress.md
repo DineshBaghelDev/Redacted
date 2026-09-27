@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Immutable playable world snapshot
+
+- Starting a session now publishes the complete V1 city, buildings, floors, rooms, doors, home units, and travel edges into normalized case-owned Convex rows exactly once.
+- The player city map now reads the selected case's stored snapshot instead of importing the generator fixture at request time.
+- Stable source IDs and explicit ordering preserve map labels, routes, camera flags, and deterministic path tie-breaking for replays.
+
 ## 2026-09-27 — Case-specific interview roster
 
 - The bureau interview station now shows the selected case's normalized victim, people of interest, and witnesses in a responsive case-file layout.

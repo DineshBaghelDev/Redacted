@@ -1,5 +1,4 @@
 import { v } from "convex/values";
-import { city } from "./fixtures/city";
 import { query } from "./_generated/server";
 import { getRoomMember } from "./lib/auth";
 
@@ -26,17 +25,31 @@ export const getMap = query({
     })),
   })),
   handler: async (ctx, { roomCode }) => {
-    if (!await getRoomMember(ctx, roomCode)) return null;
+    const member = await getRoomMember(ctx, roomCode);
+    if (!member?.session.caseId) return null;
+    const playableCase = await ctx.db.get(member.session.caseId);
+    if (!playableCase?.cityId) return null;
+    const [places, streets] = await Promise.all([
+      ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!)).take(32),
+      ctx.db.query("placeConnections").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!)).take(64),
+    ]);
+    const sourceIds = new Map(places.map((place) => [place._id, place.sourceId]));
     return {
-      places: city.places.map((place) => ({
-        id: place.id,
+      places: places.map((place) => ({
+        id: place.sourceId,
         name: place.name,
         kind: place.kind,
         area: place.area,
-        x: place.map.x,
-        y: place.map.y,
+        x: place.mapX,
+        y: place.mapY,
       })),
-      streets: city.streets,
+      streets: streets.map((street) => ({
+        id: street.sourceId,
+        a: sourceIds.get(street.fromPlaceId)!,
+        b: sourceIds.get(street.toPlaceId)!,
+        minutes: street.travelMinutes,
+        hasCamera: street.hasCamera,
+      })),
     };
   },
 });
