@@ -343,6 +343,7 @@ export default defineSchema({
     sessionId: v.id("sessions"),
     sourceNodeId: v.id("clueBoardNodes"),
     targetNodeId: v.id("clueBoardNodes"),
+    label: v.optional(v.string()),
     color: v.union(v.literal("red"), v.literal("gold"), v.literal("blue"), v.literal("green")),
     createdByPlayerId: v.id("sessionPlayers"),
     createdAt: v.number(),

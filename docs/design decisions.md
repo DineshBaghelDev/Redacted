@@ -12,6 +12,7 @@
 - Person, public-record, and CCTV reference cards are created from their investigation screens rather than from a generic clueboard picker.
 - The server derives reference-card wording from the frozen case record and rejects foreign IDs; players can arrange, connect, or remove a card but cannot rewrite its evidence text.
 - Re-pinning the same record returns the existing shared card instead of creating duplicates.
+- Selecting a clueboard string turns the existing color controls into edit controls and exposes one short optional label, avoiding a separate inspector panel.
 
 ## 2026-09-28 — Lobby access stops at the case brief
 

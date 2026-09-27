@@ -12,6 +12,7 @@
 - Known people, visible public records, and CCTV rows can now be pinned directly to the shared clueboard.
 - Reference cards keep their case evidence ID, use server-derived display text, cannot be rewritten as notes, and de-duplicate across both players.
 - The clueboard remains editable only after the investigation starts; cross-case references are rejected server-side.
+- Shared strings can now be labelled, recoloured after selection, and removed; labels are bounded and rendered directly on the board.
 
 ## 2026-09-28 — Active-game investigation guard
 

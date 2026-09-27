@@ -6,6 +6,7 @@ import { getRoomMember } from "./lib/auth";
 const MAX_NODES = 100;
 const MAX_EDGES = 200;
 const MAX_NOTE_LENGTH = 500;
+const MAX_LABEL_LENGTH = 80;
 const stringColor = v.union(v.literal("red"), v.literal("gold"), v.literal("blue"), v.literal("green"));
 const referenceType = v.union(v.literal("npc"), v.literal("cctv"), v.literal("public_record"));
 
@@ -54,6 +55,7 @@ export const getEdges = query({
     _id: v.id("clueBoardEdges"),
     sourceNodeId: v.id("clueBoardNodes"),
     targetNodeId: v.id("clueBoardNodes"),
+    label: v.optional(v.string()),
     color: stringColor,
   })),
   handler: async (ctx, { roomCode }) => {
@@ -62,7 +64,7 @@ export const getEdges = query({
       .query("clueBoardEdges")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
       .take(MAX_EDGES);
-    return edges.map(({ _id, sourceNodeId, targetNodeId, color }) => ({ _id, sourceNodeId, targetNodeId, color }));
+    return edges.map(({ _id, sourceNodeId, targetNodeId, label, color }) => ({ _id, sourceNodeId, targetNodeId, label, color }));
   },
 });
 
@@ -199,9 +201,10 @@ export const createEdge = mutation({
     sourceNodeId: v.id("clueBoardNodes"),
     targetNodeId: v.id("clueBoardNodes"),
     color: stringColor,
+    label: v.optional(v.string()),
   },
   returns: v.id("clueBoardEdges"),
-  handler: async (ctx, { roomCode, sourceNodeId, targetNodeId, color }) => {
+  handler: async (ctx, { roomCode, sourceNodeId, targetNodeId, color, label }) => {
     if (sourceNodeId === targetNodeId) throw new Error("Connect two different board items.");
     const { session, player } = await requireBoard(ctx, roomCode);
     const [source, target, edges] = await Promise.all([
@@ -217,7 +220,7 @@ export const createEdge = mutation({
       (edge.sourceNodeId === sourceNodeId && edge.targetNodeId === targetNodeId)
       || (edge.sourceNodeId === targetNodeId && edge.targetNodeId === sourceNodeId));
     if (duplicate) {
-      await ctx.db.patch(duplicate._id, { color });
+      await ctx.db.patch(duplicate._id, { color, ...(label === undefined ? {} : { label: edgeLabel(label) }) });
       return duplicate._id;
     }
     return await ctx.db.insert("clueBoardEdges", {
@@ -225,9 +228,37 @@ export const createEdge = mutation({
       sourceNodeId,
       targetNodeId,
       color,
+      ...(label === undefined ? {} : { label: edgeLabel(label) }),
       createdByPlayerId: player._id,
       createdAt: Date.now(),
     });
+  },
+});
+
+function edgeLabel(label: string) {
+  const value = label.trim();
+  if (value.length > MAX_LABEL_LENGTH) throw new Error(`Keep string labels under ${MAX_LABEL_LENGTH} characters.`);
+  return value || undefined;
+}
+
+export const updateEdge = mutation({
+  args: {
+    edgeId: v.id("clueBoardEdges"),
+    color: v.optional(stringColor),
+    label: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, { edgeId, color, label }) => {
+    const edge = await ctx.db.get(edgeId);
+    if (!edge) throw new Error("String not found.");
+    const session = await ctx.db.get(edge.sessionId);
+    if (!session) throw new Error("Room not found.");
+    await requireBoard(ctx, session.roomCode);
+    await ctx.db.patch(edgeId, {
+      ...(color === undefined ? {} : { color }),
+      ...(label === undefined ? {} : { label: edgeLabel(label) }),
+    });
+    return null;
   },
 });
 

@@ -105,6 +105,7 @@ test("room partners share notes, positions, and colored strings", async () => {
   await player.mutation(api.clueBoard.createEdge, {
     roomCode: "ABC123", sourceNodeId: second, targetNodeId: first, color: "blue",
   });
+  await player.mutation(api.clueBoard.updateEdge, { edgeId: edge, color: "gold", label: "same train" });
 
   expect(await player.query(api.clueBoard.getNodes, { roomCode: "ABC123" })).toEqual(expect.arrayContaining([
     expect.objectContaining({ _id: first, x: 80, y: 90 }),
@@ -114,7 +115,7 @@ test("room partners share notes, positions, and colored strings", async () => {
   ]));
   await expect(player.mutation(api.clueBoard.updateNode, { nodeId: record, text: "Changed" })).rejects.toThrow("cannot be edited");
   expect(await player.query(api.clueBoard.getEdges, { roomCode: "ABC123" })).toEqual([
-    expect.objectContaining({ _id: edge, color: "blue" }),
+    expect.objectContaining({ _id: edge, color: "gold", label: "same train" }),
   ]);
 
   await player.mutation(api.clueBoard.deleteNode, { nodeId: first });

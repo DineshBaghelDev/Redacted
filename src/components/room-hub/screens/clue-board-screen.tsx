@@ -44,6 +44,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
   const updateNode = useMutation(api.clueBoard.updateNode);
   const deleteNode = useMutation(api.clueBoard.deleteNode);
   const createEdge = useMutation(api.clueBoard.createEdge);
+  const updateEdge = useMutation(api.clueBoard.updateEdge);
   const deleteEdge = useMutation(api.clueBoard.deleteEdge);
   const [stringColor, setStringColor] = useState<StringColor>("red");
   const [selectedEdge, setSelectedEdge] = useState<Id<"clueBoardEdges"> | null>(null);
@@ -75,6 +76,11 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
     source: edge.sourceNodeId,
     target: edge.targetNodeId,
     style: { stroke: colors[edge.color].value, strokeWidth: 3 },
+    label: edge.label,
+    labelStyle: { fill: "#fff1c9", fontSize: 12 },
+    labelBgStyle: { fill: "#241812", fillOpacity: 0.92 },
+    labelBgPadding: [6, 3],
+    labelBgBorderRadius: 0,
     className: "clue-string",
   })), [savedEdges]);
 
@@ -98,6 +104,11 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
       targetNodeId: connection.target as Id<"clueBoardNodes">,
       color: stringColor,
     }).catch(showError);
+  }
+
+  function chooseColor(color: StringColor) {
+    setStringColor(color);
+    if (selectedEdge) void updateEdge({ edgeId: selectedEdge, color }).catch(showError);
   }
 
   function removeSelectedString() {
@@ -128,16 +139,28 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
               aria-pressed={stringColor === name}
               className="h-7 w-7 border-2 border-[#ead9af] shadow-[2px_2px_0_#080605] transition-transform hover:scale-110 aria-pressed:outline-2 aria-pressed:outline-offset-2 aria-pressed:outline-[#fff1c9]"
               key={name}
-              onClick={() => setStringColor(name as StringColor)}
+              onClick={() => chooseColor(name as StringColor)}
               style={{ backgroundColor: color.value }}
               type="button"
             />
           ))}
         </div>
         {selectedEdge ? (
-          <button className="clue-board-button text-[#ffd3c6]" onClick={removeSelectedString} type="button">
-            <Trash2 aria-hidden="true" size={17} /> Remove string
-          </button>
+          <div className="flex items-center gap-2">
+            <label className="sr-only" htmlFor="string-label">String label</label>
+            <input
+              className="h-9 w-36 border border-[#c99b63] bg-[#15100d] px-2 text-sm text-[#fff1c9] outline-none focus:border-[#fff1c9]"
+              defaultValue={savedEdges?.find((edge) => edge._id === selectedEdge)?.label ?? ""}
+              id="string-label"
+              key={selectedEdge}
+              maxLength={80}
+              onBlur={(event) => void updateEdge({ edgeId: selectedEdge, label: event.target.value }).catch(showError)}
+              placeholder="Label string"
+            />
+            <button className="clue-board-button text-[#ffd3c6]" onClick={removeSelectedString} type="button">
+              <Trash2 aria-hidden="true" size={17} /> Remove
+            </button>
+          </div>
         ) : null}
       </header>
 
