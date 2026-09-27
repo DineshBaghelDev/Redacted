@@ -684,7 +684,10 @@ Player claims must remain claims, not canonical facts.
     method: { star: boolean, feedback?: string },
     totalStars: 0 | 1 | 2 | 3 | 4 | 5,
   },
+  error?: string,
+  attempts: number,
   createdAt: number,
+  updatedAt: number,
 }
 ```
 

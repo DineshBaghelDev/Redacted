@@ -350,6 +350,30 @@ export default defineSchema({
     .index("by_sessionId", ["sessionId"])
     .index("by_sourceNodeId", ["sourceNodeId"])
     .index("by_targetNodeId", ["targetNodeId"]),
+  accusations: defineTable({
+    sessionId: v.id("sessions"),
+    submittedByPlayerId: v.id("sessionPlayers"),
+    culpritNpcId: v.id("npcs"),
+    motiveExplanation: v.string(),
+    weaponItemId: v.optional(v.id("caseItems")),
+    weaponDescription: v.optional(v.string()),
+    evidenceIds: v.array(v.string()),
+    evidenceExplanation: v.string(),
+    methodExplanation: v.string(),
+    status: v.union(v.literal("pending"), v.literal("judging"), v.literal("complete")),
+    result: v.optional(v.object({
+      killer: v.object({ star: v.boolean() }),
+      motive: v.object({ star: v.boolean(), feedback: v.optional(v.string()) }),
+      weapon: v.object({ star: v.boolean() }),
+      evidence: v.object({ star: v.boolean(), feedback: v.optional(v.string()) }),
+      method: v.object({ star: v.boolean(), feedback: v.optional(v.string()) }),
+      totalStars: v.union(v.literal(0), v.literal(1), v.literal(2), v.literal(3), v.literal(4), v.literal(5)),
+    })),
+    error: v.optional(v.string()),
+    attempts: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_sessionId", ["sessionId"]),
 
   // Case generation (dev tester + pipeline). Drafts hold hidden case data: never expose outside dev tools.
   generationJobs: defineTable({

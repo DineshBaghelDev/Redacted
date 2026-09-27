@@ -66,6 +66,7 @@ const STAGE_MODELS: Record<string, string[]> = {
   lies: [SOL, KIMI_K3, GEMINI_FLASH, MODELS.main],
   text: [GROQ_FAST, SOL, KIMI_FAST, GEMINI_FLASH, MODELS.main],
   brief: [GROQ_FAST, SOL, KIMI_FAST, MODELS.main],
+  caseClose: [GROQ_FAST, SOL, KIMI_FAST, GEMINI_FLASH, MODELS.main],
 };
 
 /** The models to try for a stage, in order; providers without a key in this environment are skipped. */

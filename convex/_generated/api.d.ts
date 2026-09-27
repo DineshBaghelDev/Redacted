@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as caseClose from "../caseClose.js";
 import type * as cases from "../cases.js";
 import type * as clueBoard from "../clueBoard.js";
 import type * as dev_tester from "../dev/tester.js";
@@ -70,6 +71,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  caseClose: typeof caseClose;
   cases: typeof cases;
   clueBoard: typeof clueBoard;
   "dev/tester": typeof dev_tester;

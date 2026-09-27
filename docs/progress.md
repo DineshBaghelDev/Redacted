@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-28 — Private case-close grading
+
+- A signed-in room member can submit one final five-part theory using a case NPC and evidence pinned to that session's clueboard.
+- Killer, weapon identity/name, canonical evidence-group coverage, and the five-star total are checked server-side; motive, non-item weapon, evidence reasoning, and method use a private structured judge.
+- Canonical answers and model-written text never enter the public result. Provider failure leaves a bounded retry path instead of a stuck judging state.
+
 ## 2026-09-28 — Evidence reference cards
 
 - Known people, visible public records, and CCTV rows can now be pinned directly to the shared clueboard.

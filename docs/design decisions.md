@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-09-28 — Case close reveals scores, not answers
+
+- The private judge receives canonical grading material, but clients receive only category stars and generic mismatch feedback.
+- Evidence submitted at case close must already be pinned to that session's shared clueboard; foreign or unpinned IDs are rejected.
+- The frozen `weapon` item uses deterministic identity matching. Until inventory exposes item IDs, an exact normalized weapon name is the player-facing fallback; non-item weapons remain semantically judged.
+
 ## 2026-09-28 — Pin evidence from where it is found
 
 - Person, public-record, and CCTV reference cards are created from their investigation screens rather than from a generic clueboard picker.
