@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-09-27 — Replay-only home menu
+
+- Removed the disabled new-case affordance from the home screen.
+- Playing a previous case is now the primary action, followed by joining a partner's room and settings.
+
 ## 2026-09-27 — Bureau records terminal
 
 - The Evidence station now provides a responsive searchable public-record terminal using the frozen case corpus.

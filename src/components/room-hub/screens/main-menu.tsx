@@ -48,22 +48,11 @@ export function MainMenuScreen({
             </span>
           </button>
         ))}
-        <button
-          className={`${menuOptionButton} text-yellow-200`}
-          aria-describedby="create-room-status"
-          disabled
-          type="button"
-        >
-          Create room
+        <button className={`${menuOptionButton} text-yellow-200`} onClick={onPrevious} type="button">
+          Play a previous case
         </button>
-        <p id="create-room-status" className="-mt-2 px-5 text-sm uppercase text-cyan-100/60">
-          New cases coming soon
-        </p>
         <button className={menuOptionButton} onClick={onJoin} type="button">
           Join room
-        </button>
-        <button className={menuOptionButton} onClick={onPrevious} type="button">
-          Previous cases
         </button>
         <button className={menuOptionButton} onClick={onSettings} type="button">
           Settings

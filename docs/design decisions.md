@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-09-27 — Do not advertise unavailable case creation
+
+- This build is replay-only, so the home screen presents saved cases as the primary path instead of teasing a disabled creation flow.
+
 ## 2026-09-27 — Records search is a bureau evidence surface
 
 - Public records use a focused terminal layout rather than a generic dashboard or raw table.
