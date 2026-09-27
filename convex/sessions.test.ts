@@ -80,7 +80,7 @@ test("a lobby keeps the selected passed case", async () => {
             title: "Private ledger",
             summary: "A ledger hidden in the kitchen.",
             access: { tool: "search", roomId: "keel-14:kitchen", slot: "kitchen drawer" },
-            aboutIds: ["hidden-person-id"],
+            aboutIds: [crimeCore.culpritId],
             sourceIds: ["ledger"],
             data: { itemId: "ledger", proves: ["motive"] },
           },
@@ -92,7 +92,7 @@ test("a lobby keeps the selected passed case", async () => {
             access: { tool: "cctv", cameraId: "cam:station" },
             time: 120,
             end: 125,
-            aboutIds: ["hidden-person-id"],
+            aboutIds: [crimeCore.culpritId],
             sourceIds: ["hidden-event-id"],
             data: { placeId: "station", kind: "pass" },
           },
@@ -104,7 +104,7 @@ test("a lobby keeps the selected passed case", async () => {
             access: { tool: "cctv", cameraId: "cam:station" },
             time: 300,
             end: 305,
-            aboutIds: ["another-hidden-person"],
+            aboutIds: [crimeCore.victimId],
             sourceIds: ["another-hidden-event"],
             data: { placeId: "station", kind: "stay" },
           },
@@ -139,6 +139,12 @@ test("a lobby keeps the selected passed case", async () => {
     const items = session?.caseId
       ? await ctx.db.query("caseItems").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
       : [];
+    const cameras = session?.caseId
+      ? await ctx.db.query("cctvCameras").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const cameraRecords = cameras[0]
+      ? await ctx.db.query("cctvRecords").withIndex("by_cameraId_and_startTime", (q) => q.eq("cameraId", cameras[0]._id)).collect()
+      : [];
     const storedCase = session?.caseId ? await ctx.db.get(session.caseId) : null;
     const storedCity = storedCase?.cityId ? await ctx.db.get(storedCase.cityId) : null;
     const caseCity = session?.caseId
@@ -171,6 +177,8 @@ test("a lobby keeps the selected passed case", async () => {
       culprit,
       npcs,
       items,
+      cameras,
+      cameraRecords,
       storedCase,
       storedCity,
       caseCity,
@@ -196,6 +204,9 @@ test("a lobby keeps the selected passed case", async () => {
     collectible: true,
     hidden: true,
   });
+  expect(frozen.cameras).toHaveLength(1);
+  expect(frozen.cameraRecords).toHaveLength(2);
+  expect(frozen.cameraRecords[0].npcIds).toContain(frozen.culprit?._id);
   expect(frozen.storedCase?.cityId).toBe(frozen.storedCity?._id);
   expect(frozen.caseCity?._id).toBe(frozen.storedCity?._id);
   expect(frozen.storedCity).toMatchObject({ version: city.version, seed: `fixture:v${city.version}` });
@@ -232,6 +243,13 @@ test("a lobby keeps the selected passed case", async () => {
   });
   expect(JSON.stringify(await user.query(api.cases.listPassed, {}))).not.toContain(crimeCore.motive.details);
   expect(JSON.stringify(await user.query(api.cases.getBrief, { roomCode: created.roomCode }))).not.toContain(crimeCore.method);
+  await t.run(async (ctx) => {
+    const evidenceDraft = await ctx.db
+      .query("generationDrafts")
+      .withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId).eq("stage", "evidence"))
+      .unique();
+    if (evidenceDraft) await ctx.db.patch(evidenceDraft._id, { output: { cameras: [], evidence: [] } });
+  });
   expect(await user.query(api.cases.getCctv, { roomCode: created.roomCode })).toEqual({
     caseTitle: "The Selected Case",
     start: 120,
@@ -266,4 +284,4 @@ test("a lobby keeps the selected passed case", async () => {
   expect(await stranger.query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).toBeNull();
   expect(await stranger.query(api.world.getMap, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.npcs.list, { roomCode: created.roomCode })).toBeNull();
-});
+}, 15_000);

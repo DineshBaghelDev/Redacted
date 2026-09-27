@@ -5,6 +5,7 @@ import { query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { crimeCoreSchema } from "./generation/core/crimes";
 import { castSchema } from "./generation/core/schemas";
 import { getRoomMember, requireUserId } from "./lib/auth";
+import { ensureCaseCctv } from "./lib/publishCctv";
 import { ensureCaseItems } from "./lib/publishItems";
 import { ensureCaseWorld } from "./lib/publishWorld";
 
@@ -12,16 +13,6 @@ type Brief = {
   title?: unknown;
   summary?: unknown;
   initialFacts?: unknown;
-};
-
-type CctvKind = "stay" | "pass" | "offline";
-type PublicCctvRecord = {
-  id: string;
-  cameraId: string;
-  start: number;
-  end: number;
-  summary: string;
-  kind: CctvKind;
 };
 
 const cctvRecord = v.object({
@@ -53,10 +44,6 @@ const solutionFactsSchema = z.object({
   decisiveIds: z.array(z.string()),
 });
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
 function readBrief(output: unknown) {
   const brief = output as Brief | undefined;
   if (!brief || typeof brief.title !== "string" || typeof brief.summary !== "string" || !Array.isArray(brief.initialFacts)) {
@@ -67,44 +54,6 @@ function readBrief(output: unknown) {
     summary: brief.summary,
     initialFacts: brief.initialFacts.filter((fact): fact is string => typeof fact === "string"),
   };
-}
-
-function readCctv(output: unknown) {
-  if (!isObject(output) || !Array.isArray(output.cameras) || !Array.isArray(output.evidence)) return null;
-
-  const cameras = output.cameras.flatMap((value) => {
-    if (!isObject(value) || typeof value.id !== "string" || typeof value.name !== "string" || typeof value.faulty !== "boolean") return [];
-    return [{ id: value.id, name: value.name, faulty: value.faulty }];
-  });
-  const cameraIds = new Set(cameras.map((camera) => camera.id));
-  const records: PublicCctvRecord[] = output.evidence.flatMap((value) => {
-    if (!isObject(value) || value.type !== "cctv" || typeof value.id !== "string" || typeof value.summary !== "string") return [];
-    const access = value.access;
-    const data = value.data;
-    if (
-      !isObject(access)
-      || access.tool !== "cctv"
-      || typeof access.cameraId !== "string"
-      || !cameraIds.has(access.cameraId)
-      || typeof value.time !== "number"
-      || (value.end !== undefined && typeof value.end !== "number")
-      || !isObject(data)
-      || (data.kind !== "stay" && data.kind !== "pass" && data.kind !== "offline")
-    ) return [];
-    return [{
-      id: value.id,
-      cameraId: access.cameraId,
-      start: value.time,
-      end: value.end ?? value.time,
-      summary: value.summary,
-      kind: data.kind as CctvKind,
-    }];
-  });
-  if (!cameras.length || !records.length) return null;
-
-  const start = Math.min(...records.map((record) => record.start));
-  const end = Math.max(start + 5, ...records.map((record) => record.end));
-  return { start, end, cameras, records };
 }
 
 async function getDraft(ctx: MutationCtx, jobId: Id<"generationJobs">, stage: string) {
@@ -179,12 +128,14 @@ async function loadCctv(ctx: QueryCtx, roomCode: string) {
   if (!member?.session.caseId) return null;
   const playableCase = await ctx.db.get(member.session.caseId);
   if (!playableCase) return null;
-  const draft = await ctx.db
-    .query("generationDrafts")
-    .withIndex("by_job_stage", (q) => q.eq("jobId", playableCase.generationJobId).eq("stage", "evidence"))
-    .unique();
-  const cctv = readCctv(draft?.output);
-  return cctv ? { caseTitle: playableCase.title, ...cctv } : null;
+  const cameras = await ctx.db.query("cctvCameras").withIndex("by_caseId", (q) => q.eq("caseId", playableCase._id)).take(128);
+  if (!cameras.length) return null;
+  return {
+    caseTitle: playableCase.title,
+    start: Math.min(...cameras.map((camera) => camera.startTime)),
+    end: Math.max(...cameras.map((camera) => camera.endTime)),
+    cameras,
+  };
 }
 
 export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"generationJobs">) {
@@ -200,6 +151,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     await ensureCaseWorld(ctx, existing._id);
     await ensureCaseItems(ctx, existing._id, generationJobId);
     await ensureCaseSolution(ctx, existing._id, generationJobId);
+    await ensureCaseCctv(ctx, existing._id, generationJobId);
     return existing._id;
   }
 
@@ -219,6 +171,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
   await ensureCaseWorld(ctx, caseId);
   await ensureCaseItems(ctx, caseId, generationJobId);
   await ensureCaseSolution(ctx, caseId, generationJobId);
+  await ensureCaseCctv(ctx, caseId, generationJobId);
   return caseId;
 }
 
@@ -274,7 +227,12 @@ export const getCctv = query({
   returns: v.union(v.null(), cctvData),
   handler: async (ctx, { roomCode }) => {
     const cctv = await loadCctv(ctx, roomCode);
-    return cctv ? { caseTitle: cctv.caseTitle, start: cctv.start, end: cctv.end, cameras: cctv.cameras } : null;
+    return cctv ? {
+      caseTitle: cctv.caseTitle,
+      start: cctv.start,
+      end: cctv.end,
+      cameras: cctv.cameras.map((camera) => ({ id: camera.sourceId, name: camera.name, faulty: camera.faulty })),
+    } : null;
   },
 });
 
@@ -283,9 +241,21 @@ export const getCctvWindow = query({
   returns: v.union(v.null(), v.array(cctvRecord)),
   handler: async (ctx, { roomCode, cameraId, minute }) => {
     const cctv = await loadCctv(ctx, roomCode);
-    if (!cctv || !Number.isFinite(minute) || !cctv.cameras.some((camera) => camera.id === cameraId)) return null;
-    return cctv.records.filter(
-      (record) => record.cameraId === cameraId && record.start <= minute + 20 && record.end >= minute - 20,
-    );
+    const camera = cctv?.cameras.find((item) => item.sourceId === cameraId);
+    if (!camera || !Number.isFinite(minute)) return null;
+    const records = await ctx.db
+      .query("cctvRecords")
+      .withIndex("by_cameraId_and_startTime", (q) => q.eq("cameraId", camera._id))
+      .take(512);
+    return records
+      .filter((record) => record.startTime <= minute + 20 && record.endTime >= minute - 20)
+      .map((record) => ({
+        id: record.evidenceId,
+        cameraId,
+        start: record.startTime,
+        end: record.endTime,
+        summary: record.description,
+        kind: record.kind,
+      }));
   },
 });

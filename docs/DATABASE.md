@@ -352,12 +352,16 @@ Mutable per session.
 ```ts
 {
   caseId: Id<"cases">,
+  sourceId: string,
   placeId?: Id<"places">,       // interior camera
   roomId?: Id<"rooms">,
   streetFromPlaceId?: Id<"places">, // street camera on a graph edge
   streetToPlaceId?: Id<"places">,
   name: string,
   description: string,
+  faulty: boolean,
+  startTime: number,
+  endTime: number,
 }
 ```
 
@@ -366,12 +370,14 @@ Mutable per session.
 ```ts
 {
   caseId: Id<"cases">,
+  evidenceId: string,
   cameraId: Id<"cctvCameras">,
   startTime: number,
   endTime: number,
   npcIds: Id<"npcs">[],     // server-only, for validation; never returned to clients
   vehicleIds: Id<"vehicles">[],
   description: string,      // appearance description, not names
+  kind: "stay" | "pass" | "offline",
 }
 ```
 

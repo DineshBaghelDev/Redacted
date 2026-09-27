@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Immutable CCTV records
+
+- Cameras and appearance-only records now publish into case-owned Convex tables with real place, room, street, and NPC references.
+- The player CCTV queries no longer read mutable generation drafts; they return only camera labels, time bounds, status, and sanitized record wording.
+- Hidden NPC links stay server-side and vehicle links are ready for future generated vehicle data.
+
 ## 2026-09-27 — Physical evidence freeze
 
 - Searchable story objects and seeded clutter now publish into normalized case-item rows with their stored place, room, slot, type, and collection rules.

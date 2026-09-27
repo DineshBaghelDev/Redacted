@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-09-27 — CCTV runtime reads only frozen case rows
+
+Camera identity and record windows are resolved during case publication. Public queries retain fixture camera IDs for stable UI selection but never return stored NPC links, source events, or other hidden truth.
+
 ## 2026-09-27 — Search uses the generated evidence access rule
 
 The final `evidence` stage is authoritative for an item's searchable room and slot; the story stage supplies its physical type. Clutter is reviewable but not collectible, while authored case objects are collectible. Publishing never exposes hidden ownership or proof links.

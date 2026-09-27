@@ -125,6 +125,42 @@ export default defineSchema({
     .index("by_caseId", ["caseId"])
     .index("by_caseId_and_evidenceId", ["caseId", "evidenceId"])
     .index("by_roomId", ["roomId"]),
+  vehicles: defineTable({
+    caseId: v.id("cases"),
+    registration: v.string(),
+    make: v.string(),
+    model: v.string(),
+    description: v.string(),
+    ownerNpcId: v.optional(v.id("npcs")),
+  }).index("by_caseId", ["caseId"]),
+  cctvCameras: defineTable({
+    caseId: v.id("cases"),
+    sourceId: v.string(),
+    placeId: v.optional(v.id("places")),
+    roomId: v.optional(v.id("rooms")),
+    streetFromPlaceId: v.optional(v.id("places")),
+    streetToPlaceId: v.optional(v.id("places")),
+    name: v.string(),
+    description: v.string(),
+    faulty: v.boolean(),
+    startTime: v.number(),
+    endTime: v.number(),
+  })
+    .index("by_caseId", ["caseId"])
+    .index("by_caseId_and_sourceId", ["caseId", "sourceId"]),
+  cctvRecords: defineTable({
+    caseId: v.id("cases"),
+    evidenceId: v.string(),
+    cameraId: v.id("cctvCameras"),
+    startTime: v.number(),
+    endTime: v.number(),
+    npcIds: v.array(v.id("npcs")),
+    vehicleIds: v.array(v.id("vehicles")),
+    description: v.string(),
+    kind: v.union(v.literal("stay"), v.literal("pass"), v.literal("offline")),
+  })
+    .index("by_caseId", ["caseId"])
+    .index("by_cameraId_and_startTime", ["cameraId", "startTime"]),
   npcs: defineTable({
     caseId: v.id("cases"),
     sourceId: v.string(),
