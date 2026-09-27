@@ -4,6 +4,7 @@
 
 - One shared server guard now keeps the city map, public NPC list, CCTV console, and public-record search unavailable until a room enters play.
 - The public case brief remains visible in the lobby, and regression coverage checks both waiting and playing states.
+- Map and public-person reads no longer cut large cases off at 32 places/NPCs or 64 streets.
 
 ## 2026-09-27 — Records access review fix
 

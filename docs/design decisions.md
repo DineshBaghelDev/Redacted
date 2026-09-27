@@ -3,6 +3,7 @@
 ## 2026-09-28 — Lobby access stops at the case brief
 
 - The lobby may show the public case brief, but investigation data (map, people, CCTV, and public records) is returned only after the room starts play.
+- Public case-data queries must not impose smaller content caps than the generation rules; pagination can replace complete reads when runtime practicality requires it.
 
 ## 2026-09-27 — Do not advertise unavailable case creation
 

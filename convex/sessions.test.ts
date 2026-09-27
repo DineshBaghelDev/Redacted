@@ -457,6 +457,18 @@ test("a lobby keeps the selected passed case", async () => {
     role: "suspect",
   });
   expect(JSON.stringify(publicPeople)).not.toContain("sourceId");
+  await t.run(async (ctx) => {
+    for (let index = 0; index < 33; index += 1) {
+      await ctx.db.insert("npcs", {
+        caseId: frozen.storedCase!._id,
+        sourceId: `extra-witness-${index}`,
+        role: "witness",
+        name: `Extra Witness ${index}`,
+        publicDescription: "A public witness.",
+      });
+    }
+  });
+  expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toHaveLength(cast.characters.length + 33);
   expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toEqual([
     expect.objectContaining({ type: "person", title: "Address record", content: "Lives at Keel Street." }),
   ]);
@@ -527,14 +539,48 @@ test("a lobby keeps the selected passed case", async () => {
     expect.objectContaining({ roomCode: created.roomCode, caseTitle: "The Selected Case", status: "playing" }),
     expect.objectContaining({ roomCode: replayed.roomCode, caseTitle: "The Selected Case", status: "waiting" }),
   ]));
+  await t.run(async (ctx) => {
+    const cityId = frozen.storedCity!._id;
+    const anchor = await ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", cityId)).first();
+    if (!anchor) throw new Error("Expected a published place.");
+    for (let index = 0; index < 33; index += 1) {
+      await ctx.db.insert("places", {
+        cityId,
+        sourceId: `extra-place-${index}`,
+        order: 100 + index,
+        name: `Extra Place ${index}`,
+        type: "other",
+        kind: "public",
+        area: "midtown",
+        description: "A public place.",
+        mapX: index,
+        mapY: index,
+        crimeSceneAllowed: false,
+        jobSlots: [],
+      });
+    }
+    for (let index = city.streets.length; index < 65; index += 1) {
+      await ctx.db.insert("placeConnections", {
+        cityId,
+        sourceId: `extra-street-${index}`,
+        order: 100 + index,
+        fromPlaceId: anchor._id,
+        toPlaceId: anchor._id,
+        travelMinutes: 1,
+        bidirectional: true,
+        hasCamera: false,
+      });
+    }
+  });
   const cityMap = await user.query(api.world.getMap, { roomCode: created.roomCode });
-  expect(cityMap?.places).toHaveLength(20);
+  expect(cityMap?.places).toHaveLength(city.places.length + 33);
+  expect(cityMap?.streets).toHaveLength(65);
   expect(cityMap?.places.find((place) => place.id === "police-bureau")).toMatchObject({
     name: "Police Bureau",
     kind: "bureau",
   });
   expect(cityMap?.streets.some((street) => street.a === "police-bureau" && street.b === "forensic-lab" && street.minutes === 2)).toBe(true);
-  expect(cityMap?.streets).toEqual(city.streets);
+  expect(cityMap?.streets.slice(0, city.streets.length)).toEqual(city.streets);
 
   const stranger = t.withIdentity({ subject: "player-2" });
   expect(await stranger.query(api.sessions.listMine, {})).toEqual([]);

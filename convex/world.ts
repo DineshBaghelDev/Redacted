@@ -29,10 +29,14 @@ export const getMap = query({
     if (!member?.session.caseId) return null;
     const playableCase = await ctx.db.get(member.session.caseId);
     if (!playableCase?.cityId) return null;
-    const [places, streets] = await Promise.all([
-      ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!)).take(32),
-      ctx.db.query("placeConnections").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!)).take(64),
-    ]);
+    const places = [];
+    for await (const place of ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) {
+      places.push(place);
+    }
+    const streets = [];
+    for await (const street of ctx.db.query("placeConnections").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) {
+      streets.push(street);
+    }
     const sourceIds = new Map(places.map((place) => [place._id, place.sourceId]));
     return {
       places: places.map((place) => ({

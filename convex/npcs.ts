@@ -18,10 +18,12 @@ export const list = query({
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.session.caseId) return null;
 
-    const people = await ctx.db
+    const people = [];
+    for await (const person of ctx.db
       .query("npcs")
-      .withIndex("by_caseId", (q) => q.eq("caseId", member.session.caseId!))
-      .take(32);
+      .withIndex("by_caseId", (q) => q.eq("caseId", member.session.caseId!))) {
+      people.push(person);
+    }
     return people.map((person) => ({
       id: person._id,
       name: person.name,
