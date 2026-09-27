@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-09-28 — Lobby access stops at the case brief
+
+- The lobby may show the public case brief, but investigation data (map, people, CCTV, and public records) is returned only after the room starts play.
+
 ## 2026-09-27 — Do not advertise unavailable case creation
 
 - This build is replay-only, so the home screen presents saved cases as the primary path instead of teasing a disabled creation flow.

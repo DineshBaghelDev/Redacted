@@ -32,6 +32,12 @@ export async function getRoomMember(ctx: DbCtx, roomCode: string) {
   return player ? { session, player } : null;
 }
 
+/** Returns a signed-in room member only after the investigation has started. */
+export async function getPlayingRoomMember(ctx: DbCtx, roomCode: string) {
+  const member = await getRoomMember(ctx, roomCode);
+  return member?.session.status === "playing" ? member : null;
+}
+
 /**
  * Checks whether a user is on the dev-tools allowlist (`DEV_TOOL_USER_IDS`, comma separated).
  *

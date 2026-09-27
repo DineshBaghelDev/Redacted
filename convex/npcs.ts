@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
-import { getRoomMember } from "./lib/auth";
+import { getPlayingRoomMember } from "./lib/auth";
 
 const publicNpc = v.object({
   id: v.id("npcs"),
@@ -15,7 +15,7 @@ export const list = query({
   args: { roomCode: v.string() },
   returns: v.union(v.null(), v.array(publicNpc)),
   handler: async (ctx, { roomCode }) => {
-    const member = await getRoomMember(ctx, roomCode);
+    const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.session.caseId) return null;
 
     const people = await ctx.db

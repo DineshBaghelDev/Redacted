@@ -4,7 +4,7 @@ import type { Id } from "./_generated/dataModel";
 import { query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { crimeCoreSchema } from "./generation/core/crimes";
 import { castSchema } from "./generation/core/schemas";
-import { getRoomMember, requireUserId } from "./lib/auth";
+import { getPlayingRoomMember, getRoomMember, requireUserId } from "./lib/auth";
 import { ensureCaseCctv } from "./lib/publishCctv";
 import { ensureCaseDevices } from "./lib/publishDevices";
 import { ensureCaseForensics } from "./lib/publishForensics";
@@ -131,7 +131,7 @@ async function ensureCaseSolution(ctx: MutationCtx, caseId: Id<"cases">, generat
 }
 
 async function loadCctv(ctx: QueryCtx, roomCode: string) {
-  const member = await getRoomMember(ctx, roomCode);
+  const member = await getPlayingRoomMember(ctx, roomCode);
   if (!member?.session.caseId) return null;
   const playableCase = await ctx.db.get(member.session.caseId);
   if (!playableCase) return null;

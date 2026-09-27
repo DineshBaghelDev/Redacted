@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
-import { getRoomMember } from "./lib/auth";
+import { getPlayingRoomMember } from "./lib/auth";
 
 const placeKind = v.union(v.literal("home"), v.literal("work"), v.literal("public"), v.literal("bureau"), v.literal("lab"));
 const area = v.union(v.literal("northside"), v.literal("midtown"), v.literal("eastside"));
@@ -25,7 +25,7 @@ export const getMap = query({
     })),
   })),
   handler: async (ctx, { roomCode }) => {
-    const member = await getRoomMember(ctx, roomCode);
+    const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.session.caseId) return null;
     const playableCase = await ctx.db.get(member.session.caseId);
     if (!playableCase?.cityId) return null;

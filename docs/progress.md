@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-09-28 — Active-game investigation guard
+
+- One shared server guard now keeps the city map, public NPC list, CCTV console, and public-record search unavailable until a room enters play.
+- The public case brief remains visible in the lobby, and regression coverage checks both waiting and playing states.
+
 ## 2026-09-27 — Records access review fix
 
 - CodeRabbit found that room membership alone could read public records before an investigation started.

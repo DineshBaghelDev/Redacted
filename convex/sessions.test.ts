@@ -437,13 +437,7 @@ test("a lobby keeps the selected passed case", async () => {
       { description: "Decisive evidence", requiredEvidenceIds: ["evidence/culprit"] },
     ]),
   });
-  const publicPeople = await user.query(api.npcs.list, { roomCode: created.roomCode });
-  expect(publicPeople).toHaveLength(cast.characters.length);
-  expect(publicPeople?.find((person) => person.id === frozen.culprit?._id)).toMatchObject({
-    name: frozen.culprit?.name,
-    role: "suspect",
-  });
-  expect(JSON.stringify(publicPeople)).not.toContain("sourceId");
+  expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toBeNull();
   expect(await user.query(api.sessions.get, { roomCode: created.roomCode })).toMatchObject({
     caseTitle: "The Selected Case",
   });
@@ -456,11 +450,22 @@ test("a lobby keeps the selected passed case", async () => {
   expect(JSON.stringify(await user.query(api.cases.getBrief, { roomCode: created.roomCode }))).not.toContain(crimeCore.method);
   expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toBeNull();
   await t.run(async (ctx) => ctx.db.patch(created.sessionId, { status: "playing" }));
+  const publicPeople = await user.query(api.npcs.list, { roomCode: created.roomCode });
+  expect(publicPeople).toHaveLength(cast.characters.length);
+  expect(publicPeople?.find((person) => person.id === frozen.culprit?._id)).toMatchObject({
+    name: frozen.culprit?.name,
+    role: "suspect",
+  });
+  expect(JSON.stringify(publicPeople)).not.toContain("sourceId");
   expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toEqual([
     expect.objectContaining({ type: "person", title: "Address record", content: "Lives at Keel Street." }),
   ]);
   expect(JSON.stringify(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" }))).not.toContain("subjectNpcId");
   await t.run(async (ctx) => ctx.db.patch(created.sessionId, { status: "waiting" }));
+  expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toBeNull();
+  expect(await user.query(api.cases.getCctv, { roomCode: created.roomCode })).toBeNull();
+  expect(await user.query(api.world.getMap, { roomCode: created.roomCode })).toBeNull();
+  await t.run(async (ctx) => ctx.db.patch(created.sessionId, { status: "playing" }));
   await t.run(async (ctx) => {
     const evidenceDraft = await ctx.db
       .query("generationDrafts")
@@ -519,7 +524,7 @@ test("a lobby keeps the selected passed case", async () => {
   }));
   await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: unpublishedCaseId })).rejects.toThrow("not ready to replay");
   expect(await user.query(api.sessions.listMine, {})).toEqual(expect.arrayContaining([
-    expect.objectContaining({ roomCode: created.roomCode, caseTitle: "The Selected Case", status: "waiting" }),
+    expect.objectContaining({ roomCode: created.roomCode, caseTitle: "The Selected Case", status: "playing" }),
     expect.objectContaining({ roomCode: replayed.roomCode, caseTitle: "The Selected Case", status: "waiting" }),
   ]));
   const cityMap = await user.query(api.world.getMap, { roomCode: created.roomCode });
