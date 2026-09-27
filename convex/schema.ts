@@ -124,7 +124,30 @@ export default defineSchema({
   })
     .index("by_caseId", ["caseId"])
     .index("by_caseId_and_evidenceId", ["caseId", "evidenceId"])
+    .index("by_caseId_and_sourceId", ["caseId", "sourceId"])
     .index("by_roomId", ["roomId"]),
+  forensicOutputs: defineTable({
+    caseId: v.id("cases"),
+    evidenceId: v.string(),
+    sourceItemId: v.optional(v.id("caseItems")),
+    sourceRoomId: v.optional(v.id("rooms")),
+    testType: v.union(
+      v.literal("fingerprint"),
+      v.literal("footprint"),
+      v.literal("dna"),
+      v.literal("blood"),
+      v.literal("toxicology"),
+      v.literal("fiber"),
+      v.literal("ballistics"),
+      v.literal("autopsy"),
+      v.literal("other"),
+    ),
+    result: v.string(),
+    linkedNpcIds: v.array(v.id("npcs")),
+    turnaroundMinutes: v.number(),
+  })
+    .index("by_caseId", ["caseId"])
+    .index("by_caseId_and_evidenceId", ["caseId", "evidenceId"]),
   vehicles: defineTable({
     caseId: v.id("cases"),
     registration: v.string(),

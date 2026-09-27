@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-09-27 — Freeze lab truth separately from requests
+
+- Forensic outputs are immutable case truth; requesting and revealing them will be mutable per-session state.
+- Publication stores documented turnaround durations but does not start a timer or expose unreleased results.
+- Generated plural labels such as `fingerprints` are normalized to the runtime test type `fingerprint`.
+
 ## 2026-09-27 — Public records store player-facing truth only
 
 - Runtime records retain the generated title and content plus normalized subject identity.

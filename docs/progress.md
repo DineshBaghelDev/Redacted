@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Forensic truth freeze
+
+- Generated lab truth now publishes into immutable case-owned forensic outputs with normalized item, room, and NPC links.
+- Test names are normalized to the documented runtime vocabulary and use the locked V1 turnaround constants.
+- No forensic request, result release, or game-clock behavior was added while parallel time semantics remain unresolved.
+
 ## 2026-09-27 — Public-record evidence freeze
 
 - Address, employment/background, and card-payment evidence now publishes into immutable case-owned records.

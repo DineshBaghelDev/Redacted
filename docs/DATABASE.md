@@ -313,6 +313,7 @@ Pre-generated truth.
 ```ts
 {
   caseId: Id<"cases">,
+  evidenceId: string,
   sourceItemId?: Id<"caseItems">,
   sourceRoomId?: Id<"rooms">,
   testType:

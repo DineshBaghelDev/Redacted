@@ -156,6 +156,16 @@ test("a lobby keeps the selected passed case", async () => {
             data: { who: crimeCore.culpritId, placeId: "station" },
           },
           {
+            id: "forensic/scene/prints",
+            type: "forensic",
+            title: "Fingerprints",
+            summary: "Fingerprints match the suspect.",
+            access: { tool: "lab", subjectId: "room:keel-14:kitchen" },
+            aboutIds: [crimeCore.culpritId],
+            sourceIds: ["hidden-event-id"],
+            data: { test: "fingerprints", subjectId: "room:keel-14:kitchen", printsOf: [crimeCore.culpritId] },
+          },
+          {
             id: "item/ledger",
             type: "item",
             title: "Private ledger",
@@ -246,6 +256,9 @@ test("a lobby keeps the selected passed case", async () => {
     const records = session?.caseId
       ? await ctx.db.query("publicRecords").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
       : [];
+    const forensics = session?.caseId
+      ? await ctx.db.query("forensicOutputs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
     const storedCase = session?.caseId ? await ctx.db.get(session.caseId) : null;
     const storedCity = storedCase?.cityId ? await ctx.db.get(storedCase.cityId) : null;
     const caseCity = session?.caseId
@@ -284,6 +297,7 @@ test("a lobby keeps the selected passed case", async () => {
       calls,
       messages,
       records,
+      forensics,
       storedCase,
       storedCity,
       caseCity,
@@ -322,6 +336,15 @@ test("a lobby keeps the selected passed case", async () => {
     expect.objectContaining({ evidenceId: `record/${crimeCore.culpritId}/address`, type: "person", title: "Address record" }),
     expect.objectContaining({ evidenceId: "card/purchase-1", type: "other", title: "Card payment" }),
   ]));
+  expect(frozen.forensics).toEqual([
+    expect.objectContaining({
+      evidenceId: "forensic/scene/prints",
+      sourceRoomId: expect.any(String),
+      testType: "fingerprint",
+      linkedNpcIds: [frozen.culprit?._id],
+      turnaroundMinutes: 60,
+    }),
+  ]);
   expect(frozen.storedCase?.cityId).toBe(frozen.storedCity?._id);
   expect(frozen.caseCity?._id).toBe(frozen.storedCity?._id);
   expect(frozen.storedCity).toMatchObject({ version: city.version, seed: `fixture:v${city.version}` });
