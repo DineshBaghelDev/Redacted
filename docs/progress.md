@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-09-27 — Publication review fixes
+
+- Case publication no longer truncates cities, rooms, casts, items, or evidence-link resolution at arbitrary row counts.
+- A passed generation job with no decisive evidence now fails atomically instead of creating an incomplete playable case.
+
 ## 2026-09-27 — Forensic truth freeze
 
 - Generated lab truth now publishes into immutable case-owned forensic outputs with normalized item, room, and NPC links.

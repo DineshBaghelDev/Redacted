@@ -18,7 +18,8 @@ export async function ensureCaseRecords(ctx: MutationCtx, caseId: Id<"cases">, g
   if (await ctx.db.query("publicRecords").withIndex("by_caseId", (q) => q.eq("caseId", caseId)).first()) return;
   const draft = await ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId).eq("stage", "evidence")).unique();
   if (!isObject(draft?.output) || !Array.isArray(draft.output.evidence)) throw new Error("This case has no valid public records.");
-  const people = await ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", caseId)).take(32);
+  const people = [];
+  for await (const person of ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) people.push(person);
   const npcIds = new Map(people.map((person) => [person.sourceId, person._id]));
 
   for (const value of draft.output.evidence) {

@@ -24,7 +24,8 @@ export async function ensureCaseDevices(ctx: MutationCtx, caseId: Id<"cases">, g
   const textResult = textsSchema.safeParse(textsDraft?.output);
   const rewritten = new Map(textResult.success ? textResult.data.texts.map((value) => [value.id, value.text]) : []);
   const comms = new Map(story.data.comms.map((value) => [value.id, value]));
-  const people = await ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", caseId)).take(32);
+  const people = [];
+  for await (const person of ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) people.push(person);
   const npcIds = new Map(people.map((person) => [person.sourceId, person._id]));
   const npcNames = new Map(people.map((person) => [person.sourceId, person.name]));
   const deviceIds = new Map<string, Id<"devices">>();

@@ -226,6 +226,29 @@ test("a lobby keeps the selected passed case", async () => {
 
   const created = await user.mutation(api.sessions.create, { nickname: "Detective", generationJobId });
   await user.mutation(api.sessions.create, { nickname: "Detective", generationJobId });
+  const invalidJobId = await t.run(async (ctx) => {
+    const jobId = await ctx.db.insert("generationJobs", {
+      seed: 8,
+      difficulty: "easy",
+      createdBy: "tester",
+      createdAt: 3,
+      status: "passed",
+      finishedAt: 4,
+    });
+    for await (const draft of ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId))) {
+      await ctx.db.insert("generationDrafts", {
+        jobId,
+        stage: draft.stage,
+        output: draft.stage === "facts" ? { facts: [], decisiveIds: [] } : draft.output,
+        checkErrors: [],
+        source: draft.source,
+        updatedAt: 4,
+      });
+    }
+    return jobId;
+  });
+  await expect(user.mutation(api.sessions.create, { nickname: "Detective", generationJobId: invalidJobId })).rejects.toThrow("no decisive evidence");
+  expect(await t.run(async (ctx) => ctx.db.query("cases").withIndex("by_generationJobId", (q) => q.eq("generationJobId", invalidJobId)).unique())).toBeNull();
   const frozen = await t.run(async (ctx) => {
     const session = await ctx.db.get(created.sessionId);
     const solution = session?.caseId

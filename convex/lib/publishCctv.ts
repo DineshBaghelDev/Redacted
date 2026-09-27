@@ -19,17 +19,21 @@ export async function ensureCaseCctv(ctx: MutationCtx, caseId: Id<"cases">, gene
     throw new Error("This case has no valid camera records.");
   }
 
-  const places = await ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!)).take(32);
+  const places = [];
+  for await (const place of ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) places.push(place);
   const placeIds = new Map(places.map((place) => [place.sourceId, place._id]));
   const roomIds = new Map<string, Id<"rooms">>();
   for (const place of places) {
     if (!place.buildingId) continue;
-    const rooms = await ctx.db.query("rooms").withIndex("by_buildingId_and_order", (q) => q.eq("buildingId", place.buildingId!)).take(64);
+    const rooms = [];
+    for await (const room of ctx.db.query("rooms").withIndex("by_buildingId_and_order", (q) => q.eq("buildingId", place.buildingId!))) rooms.push(room);
     for (const room of rooms) roomIds.set(room.sourceId, room._id);
   }
-  const streets = await ctx.db.query("placeConnections").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!)).take(64);
+  const streets = [];
+  for await (const street of ctx.db.query("placeConnections").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) streets.push(street);
   const streetIds = new Map(streets.map((street) => [street.sourceId, street]));
-  const people = await ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", caseId)).take(32);
+  const people = [];
+  for await (const person of ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) people.push(person);
   const npcIds = new Map(people.map((person) => [person.sourceId, person._id]));
 
   const recordsByCamera = new Map<string, Array<Record<string, unknown>>>();

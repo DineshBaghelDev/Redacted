@@ -84,6 +84,7 @@ async function ensureCaseSolution(ctx: MutationCtx, caseId: Id<"cases">, generat
   if (!crime.success || !cast.success || !facts.success) {
     throw new Error("This case has no valid private solution.");
   }
+  if (facts.data.decisiveIds.length === 0) throw new Error("This case has no decisive evidence.");
 
   const npcIds = new Map<string, Id<"npcs">>();
   for (const character of cast.data.characters) {

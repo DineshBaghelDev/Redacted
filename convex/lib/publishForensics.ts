@@ -31,15 +31,19 @@ export async function ensureCaseForensics(ctx: MutationCtx, caseId: Id<"cases">,
   if (!isObject(draft?.output) || !Array.isArray(draft.output.evidence)) throw new Error("This case has no valid forensic records.");
   const playableCase = await ctx.db.get(caseId);
   if (!playableCase?.cityId) throw new Error("This case has no playable world.");
-  const people = await ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", caseId)).take(32);
+  const people = [];
+  for await (const person of ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) people.push(person);
   const npcIds = new Map(people.map((person) => [person.sourceId, person._id]));
-  const items = await ctx.db.query("caseItems").withIndex("by_caseId", (q) => q.eq("caseId", caseId)).take(256);
+  const items = [];
+  for await (const item of ctx.db.query("caseItems").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) items.push(item);
   const itemIds = new Map(items.filter((item) => item.sourceId).map((item) => [item.sourceId!, item._id]));
   const roomIds = new Map<string, Id<"rooms">>();
-  const places = await ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!)).take(32);
+  const places = [];
+  for await (const place of ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) places.push(place);
   for (const place of places) {
     if (!place.buildingId) continue;
-    const rooms = await ctx.db.query("rooms").withIndex("by_buildingId_and_order", (q) => q.eq("buildingId", place.buildingId!)).take(64);
+    const rooms = [];
+    for await (const room of ctx.db.query("rooms").withIndex("by_buildingId_and_order", (q) => q.eq("buildingId", place.buildingId!))) rooms.push(room);
     for (const room of rooms) roomIds.set(room.sourceId, room._id);
   }
 

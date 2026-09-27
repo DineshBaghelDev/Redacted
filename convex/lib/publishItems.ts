@@ -69,17 +69,13 @@ export async function ensureCaseItems(ctx: MutationCtx, caseId: Id<"cases">, gen
   const items = readItems(evidenceDraft?.output, storyDraft?.output);
   if (!items) throw new Error("This case has no valid physical evidence.");
 
-  const places = await ctx.db
-    .query("places")
-    .withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))
-    .take(32);
+  const places = [];
+  for await (const place of ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) places.push(place);
   const rooms = new Map<string, { roomId: Id<"rooms">; placeId: Id<"places"> }>();
   for (const place of places) {
     if (!place.buildingId) continue;
-    const storedRooms = await ctx.db
-      .query("rooms")
-      .withIndex("by_buildingId_and_order", (q) => q.eq("buildingId", place.buildingId!))
-      .take(64);
+    const storedRooms = [];
+    for await (const room of ctx.db.query("rooms").withIndex("by_buildingId_and_order", (q) => q.eq("buildingId", place.buildingId!))) storedRooms.push(room);
     for (const room of storedRooms) rooms.set(room.sourceId, { roomId: room._id, placeId: place._id });
   }
 
