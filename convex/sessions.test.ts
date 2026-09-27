@@ -207,7 +207,7 @@ test("a lobby keeps the selected passed case", async () => {
     });
     await ctx.db.insert("generationDrafts", {
       jobId,
-      stage: "texts",
+      stage: "text",
       output: { texts: [{ id: "message-1", text: "Meet me by the station." }] },
       checkErrors: [],
       source: "llm",

@@ -16,7 +16,7 @@ export async function ensureCaseDevices(ctx: MutationCtx, caseId: Id<"cases">, g
   const [evidenceDraft, storyDraft, textsDraft] = await Promise.all([
     getDraft(ctx, generationJobId, "evidence"),
     getDraft(ctx, generationJobId, "story"),
-    getDraft(ctx, generationJobId, "texts"),
+    getDraft(ctx, generationJobId, "text"),
   ]);
   if (!isObject(evidenceDraft?.output) || !Array.isArray(evidenceDraft.output.evidence)) throw new Error("This case has no valid device records.");
   const story = storySchema.safeParse(storyDraft?.output);
