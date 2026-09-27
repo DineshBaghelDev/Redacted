@@ -5,6 +5,7 @@
 - The private judge receives canonical grading material, but clients receive only category stars and generic mismatch feedback.
 - Evidence submitted at case close must already be pinned to that session's shared clueboard; foreign or unpinned IDs are rejected.
 - The frozen `weapon` item uses deterministic identity matching. Until inventory exposes item IDs, an exact normalized weapon name is the player-facing fallback; non-item weapons remain semantically judged.
+- Case close uses a review step before the irreversible submission, then shows the same pending or completed result to both players.
 
 ## 2026-09-28 — Pin evidence from where it is found
 

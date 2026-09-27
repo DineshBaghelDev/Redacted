@@ -5,6 +5,7 @@
 - A signed-in room member can submit one final five-part theory using a case NPC and evidence pinned to that session's clueboard.
 - Killer, weapon identity/name, canonical evidence-group coverage, and the five-star total are checked server-side; motive, non-item weapon, evidence reasoning, and method use a private structured judge.
 - Canonical answers and model-written text never enter the public result. Provider failure leaves a bounded retry path instead of a stuck judging state.
+- The Case File station now carries the complete responsive flow: public brief, five findings, evidence selection, irreversible confirmation, shared judging state, retry, and the five-category result.
 
 ## 2026-09-28 — Evidence reference cards
 

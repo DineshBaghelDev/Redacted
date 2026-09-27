@@ -3,6 +3,16 @@
 @import "shadcn/tailwind.css";
 @import "@clerk/ui/themes/shadcn.css";
 
+@layer components {
+  .case-close-label {
+    @apply text-xs uppercase tracking-[0.16em] text-red-800;
+  }
+
+  .case-close-input {
+    @apply mt-2 min-h-12 w-full border-2 border-[#6d5138] bg-[#f7edcf] px-3 py-2 text-base text-[#2b2118] outline-none focus:border-red-900;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
