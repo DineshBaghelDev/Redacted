@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-09-27 — Active investigations are recoverable from home
+
+- URL-backed reload remains the primary resume path, while the home menu also lists the player's active rooms.
+- Waiting rooms return to the lobby; started rooms open the bureau without replaying the case brief.
+- Resume cards stay compact and above secondary menu actions on both mobile and desktop.
+
 ## 2026-09-27 — Published cases, not generation jobs, own replay truth
 
 - Generation jobs are provenance and diagnostics; after complete publication they are no longer a replay dependency.

@@ -230,3 +230,36 @@ export const get = query({
     };
   },
 });
+
+export const listMine = query({
+  args: {},
+  returns: v.array(v.object({
+    roomCode: v.string(),
+    status: v.union(v.literal("waiting"), v.literal("playing")),
+    caseTitle: v.string(),
+    playerCount: v.number(),
+  })),
+  handler: async (ctx) => {
+    const authUserId = await requireUserId(ctx);
+    const memberships = await ctx.db
+      .query("sessionPlayers")
+      .withIndex("by_authUserId", (q) => q.eq("authUserId", authUserId))
+      .order("desc")
+      .take(12);
+    const rooms = [];
+    for (const membership of memberships) {
+      const session = await ctx.db.get(membership.sessionId);
+      if (!session || session.expiresAt < Date.now() || !session.caseId) continue;
+      const playableCase = await ctx.db.get(session.caseId);
+      if (!playableCase) continue;
+      const players = await ctx.db.query("sessionPlayers").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).take(2);
+      rooms.push({
+        roomCode: session.roomCode,
+        status: session.status,
+        caseTitle: playableCase.title,
+        playerCount: players.length,
+      });
+    }
+    return rooms;
+  },
+});

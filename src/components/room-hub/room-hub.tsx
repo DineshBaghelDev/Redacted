@@ -39,6 +39,7 @@ export function RoomHub() {
     setRoomCode,
     joinedRoomCode,
     room,
+    activeRooms,
     showRoom,
     error,
     setError,
@@ -53,6 +54,7 @@ export function RoomHub() {
     copyRoomCode,
     closeJoin,
     leaveRoom,
+    continueRoom,
   } = useRoomSession(nickname);
 
   if (!isMounted) {
@@ -97,6 +99,7 @@ export function RoomHub() {
   return (
     <div className="flex w-full flex-col gap-8 lg:flex-row lg:items-start">
       <MainMenuScreen
+        activeRooms={screen === "menu" ? activeRooms : undefined}
         error={screen === "menu" ? error : ""}
         isLoaded={isLoaded}
         isSignedIn={isSignedIn}
@@ -105,6 +108,7 @@ export function RoomHub() {
           setRoomCode("");
           setScreen("join");
         }}
+        onContinue={continueRoom}
         onPrevious={() => setScreen("previous")}
         onSettings={() => setScreen("settings")}
       />

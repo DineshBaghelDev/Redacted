@@ -60,6 +60,10 @@ export function useRoomSession(nickname: string) {
     api.sessions.get,
     joinedRoomCode && isLoaded && isSignedIn ? { roomCode: joinedRoomCode } : "skip",
   );
+  const activeRooms = useQuery(
+    api.sessions.listMine,
+    isLoaded && isSignedIn ? {} : "skip",
+  );
 
   function navigateTo(nextScreen: Screen) {
     setScreen(nextScreen);
@@ -175,6 +179,19 @@ export function useRoomSession(nickname: string) {
     navigateTo("brief");
   }
 
+  function continueRoom(roomCode: string, status: "waiting" | "playing") {
+    setJoinedRoomCode(roomCode);
+    setRoomCode(roomCode);
+    setShowRoom(status === "waiting");
+    if (status === "waiting") {
+      setScreen("menu");
+      router.push(`/lobby/${roomCode}`);
+    } else {
+      setScreen("bureau");
+      router.push(`/lobby/${roomCode}/bureau`);
+    }
+  }
+
   return {
     screen,
     setScreen: navigateTo,
@@ -182,6 +199,7 @@ export function useRoomSession(nickname: string) {
     setRoomCode,
     joinedRoomCode,
     room,
+    activeRooms,
     showRoom,
     error,
     setError,
@@ -197,5 +215,6 @@ export function useRoomSession(nickname: string) {
     closeJoin,
     leaveRoom,
     openBrief,
+    continueRoom,
   };
 }

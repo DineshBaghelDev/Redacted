@@ -19,10 +19,13 @@ generation.getStatus({ caseId })
 
 ```ts
 sessions.get({ sessionId })
+sessions.listMine()
 sessions.getPlayers({ sessionId })
 sessions.getState({ sessionId })
 sessions.getTime({ sessionId })
 ```
+
+`sessions.listMine` returns only the signed-in player's unexpired rooms so the home screen can resume a lobby or active investigation.
 
 ### World/navigation
 

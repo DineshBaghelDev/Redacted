@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-09-27 — Active-room resume
+
+- The home menu now shows the signed-in player's unexpired rooms with case title, room code, player count, and clear lobby/investigation wording.
+- Continuing a waiting room reopens its lobby; continuing a started room goes directly to the bureau.
+- The query is Clerk-identity scoped and does not reveal other players' rooms.
+
 ## 2026-09-27 — Frozen-case replay authority
 
 - A case receives a publication version only after all current immutable runtime tables are written successfully.

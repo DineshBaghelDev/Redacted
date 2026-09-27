@@ -497,6 +497,10 @@ test("a lobby keeps the selected passed case", async () => {
     const [first, second] = await Promise.all([ctx.db.get(created.sessionId), ctx.db.get(replayed.sessionId)]);
     return first?.caseId === second?.caseId;
   })).toBe(true);
+  expect(await user.query(api.sessions.listMine, {})).toEqual(expect.arrayContaining([
+    expect.objectContaining({ roomCode: created.roomCode, caseTitle: "The Selected Case", status: "waiting" }),
+    expect.objectContaining({ roomCode: replayed.roomCode, caseTitle: "The Selected Case", status: "waiting" }),
+  ]));
   const cityMap = await user.query(api.world.getMap, { roomCode: created.roomCode });
   expect(cityMap?.places).toHaveLength(20);
   expect(cityMap?.places.find((place) => place.id === "police-bureau")).toMatchObject({
@@ -507,6 +511,7 @@ test("a lobby keeps the selected passed case", async () => {
   expect(cityMap?.streets).toEqual(city.streets);
 
   const stranger = t.withIdentity({ subject: "player-2" });
+  expect(await stranger.query(api.sessions.listMine, {})).toEqual([]);
   expect(await stranger.query(api.sessions.get, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.cases.getBrief, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.cases.getCctv, { roomCode: created.roomCode })).toBeNull();
