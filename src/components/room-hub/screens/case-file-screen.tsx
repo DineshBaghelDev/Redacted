@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
+const MAX_EVIDENCE = 12;
 const fields = [
   ["killer", "Killer"],
   ["motive", "Motive"],
@@ -46,7 +47,17 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
     && methodExplanation.trim().length >= 10;
 
   function toggleEvidence(id: string) {
-    setEvidenceIds((selected) => selected.includes(id) ? selected.filter((item) => item !== id) : [...selected, id]);
+    if (evidenceIds.includes(id)) {
+      setEvidenceIds(evidenceIds.filter((item) => item !== id));
+      setError("");
+      return;
+    }
+    if (evidenceIds.length >= MAX_EVIDENCE) {
+      setError(`Choose no more than ${MAX_EVIDENCE} pieces of evidence.`);
+      return;
+    }
+    setEvidenceIds([...evidenceIds, id]);
+    setError("");
   }
 
   function review(event: FormEvent<HTMLFormElement>) {
@@ -167,7 +178,21 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               <label className="block"><span className="case-close-label">1 · Who did it?</span><select className="case-close-input" onChange={(event) => setCulpritNpcId(event.target.value)} required value={culpritNpcId}><option value="">Choose a person</option>{people?.filter((person) => person.role !== "victim").map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
               <label className="block"><span className="case-close-label">2 · Why did they do it?</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setMotiveExplanation(event.target.value)} required value={motiveExplanation} /></label>
               <label className="block"><span className="case-close-label">3 · What was the weapon?</span><input className="case-close-input" maxLength={200} onChange={(event) => setWeaponDescription(event.target.value)} required type="text" value={weaponDescription} /></label>
-              <fieldset><legend className="case-close-label">4 · Which pinned evidence proves it?</legend><div className="mt-2 grid gap-2 sm:grid-cols-2">{evidence.map((item) => <label className="flex min-h-12 cursor-pointer items-start gap-3 border border-[#6d5138]/50 p-3 text-sm" key={`${item.type}:${item.referenceId}`}><input checked={evidenceIds.includes(item.referenceId)} className="mt-1 size-4 accent-red-900" onChange={() => toggleEvidence(item.referenceId)} type="checkbox" /><span><strong className="block uppercase text-red-800">{item.type === "cctv" ? "Camera record" : "Public record"}</strong>{item.text.split("\n")[0]}</span></label>)}</div></fieldset>
+              <fieldset>
+                <legend className="case-close-label">4 · Which pinned evidence proves it?</legend>
+                <p className="mt-1 text-xs text-[#6d5138]">Choose up to {MAX_EVIDENCE}. Selected: {evidenceIds.length}.</p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {evidence.map((item) => {
+                    const selected = evidenceIds.includes(item.referenceId);
+                    return (
+                      <label className={`flex min-h-12 items-start gap-3 border border-[#6d5138]/50 p-3 text-sm ${!selected && evidenceIds.length >= MAX_EVIDENCE ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`} key={`${item.type}:${item.referenceId}`}>
+                        <input checked={selected} className="mt-1 size-4 accent-red-900" disabled={!selected && evidenceIds.length >= MAX_EVIDENCE} onChange={() => toggleEvidence(item.referenceId)} type="checkbox" />
+                        <span><strong className="block uppercase text-red-800">{item.type === "cctv" ? "Camera record" : "Public record"}</strong>{item.text.split("\n")[0]}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
               <label className="block"><span className="case-close-label">Explain how the evidence proves your theory</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setEvidenceExplanation(event.target.value)} required value={evidenceExplanation} /></label>
               <label className="block"><span className="case-close-label">5 · How was it done?</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setMethodExplanation(event.target.value)} required value={methodExplanation} /></label>
               <div className="flex flex-col-reverse gap-3 border-t border-[#6d5138]/40 pt-5 sm:flex-row sm:justify-end"><button className="min-h-11 border-2 border-[#573821] px-5 uppercase" onClick={() => setClosing(false)} type="button">Cancel</button><button className="min-h-11 border-2 border-red-900 bg-red-950 px-5 uppercase text-red-50 disabled:opacity-50" disabled={!canReview} type="submit">Review final theory</button></div>

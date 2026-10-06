@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-07 — Case-close evidence limit
+
+- The final-report form now shows the server's 12-record limit before submission.
+- Once 12 records are selected, extra choices are disabled while selected records remain removable.
+
 ## 2026-10-07 — Shared lobby start transition
 
 - When either detective starts a ready room, both clients now follow the shared `playing` status into the case brief.
