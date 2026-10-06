@@ -82,15 +82,14 @@ Snapshot is for fast reads. Event log is for debugging/reconstruction, not the p
 
 All time values are integer in-game minutes.
 
-### `advanceGameTime(sessionId, minutes, reason, actorPlayerId?)`
+### Continuous action-driven clock
 
-Transactionally:
-
-1. assert `minutes >= 0`,
-2. increment session `gameTime`,
-3. resolve pending forensic requests whose `readyAtGameTime <= gameTime`,
-4. append time/action event,
-5. preserve state even if the deadline has now been crossed.
+- Store an integer game-time anchor and an optional wall-clock timestamp for when the active interval began.
+- While one or more timed actions are active, derive current game time from the anchor, elapsed wall time, and the server-owned speed multiplier.
+- New actions start at that derived game time and may overlap actions already in progress.
+- When the last active action completes, persist the derived game time and clear the wall-clock anchor so discussion and review do not consume the deadline.
+- Treat actions and forensic requests as complete when derived game time reaches their recorded completion time; materialize completion during the next authorized server interaction rather than writing per-minute ticks.
+- Preserve state after the deadline is crossed; deadline UX decides which new investigation actions remain available.
 
 The deadline prevents further ordinary investigation actions according to final UX rules, but existing data is not deleted.
 

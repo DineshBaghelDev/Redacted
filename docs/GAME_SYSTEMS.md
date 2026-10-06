@@ -289,7 +289,9 @@ No Liveblocks in V1.
 
 The case has a shared deadline and deterministic action durations.
 
-**Concurrency semantics are still unresolved:** because partners are explicitly meant to split work, we must decide whether simultaneous actions overlap in simulated time or simply add to one shared clock. Do not silently lock additive global time during implementation. The fixed costs below are valid regardless of the eventual concurrency rule.
+V1 uses a continuous action-driven clock. Time advances only while at least one timed action is active, and concurrent player actions overlap on the same shared timeline. When the final active action ends, the clock pauses automatically. The server derives elapsed game time from timestamp anchors instead of writing a database update every minute. This preserves free discussion and evidence review while rewarding partners who split investigative work.
+
+The real-time-to-game-time scale is a server-owned tuning value. Changing it affects only how long players wait in real time, never the deterministic in-game cost of an action.
 
 V1 fixed costs:
 

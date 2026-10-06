@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-07 — Continuous multiplayer clock decision
+
+- Chose an action-driven shared clock: concurrent detective actions overlap, the clock pauses when no timed action is active, and server timestamp anchors avoid turn prompts and per-minute writes.
+- Kept the real-time speed multiplier adjustable for playtesting while preserving the documented in-game minute costs.
+
 ## 2026-10-07 — Stale room recovery
 
 - Expired, unknown, or inaccessible room URLs now return to the home screen instead of showing an empty game or permanent loading lobby.

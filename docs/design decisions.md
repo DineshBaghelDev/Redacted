@@ -1,5 +1,12 @@
 # Design Decisions
 
+## 2026-10-07 — Investigation time is continuous and action-driven
+
+- Timed actions run on one shared accelerated clock and may overlap between detectives; collaboration must save time rather than double its cost.
+- The clock runs only while at least one timed action is active, so discussion, reading, and reconnecting do not silently consume the deadline.
+- Server timestamp anchors derive elapsed game time without per-minute database writes or background ticking.
+- The real-time speed multiplier remains server-owned and adjustable for playtesting without changing canonical action costs.
+
 ## 2026-10-07 — Confirm irreversible room exit
 
 - Leaving a started investigation remains a permanent membership removal in V1.
