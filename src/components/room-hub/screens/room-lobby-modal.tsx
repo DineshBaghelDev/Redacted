@@ -39,6 +39,7 @@ export function RoomLobbyModal({
   workingAction,
 }: RoomLobbyModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const openingCase = room?.status === "playing";
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -84,16 +85,16 @@ export function RoomLobbyModal({
           ))}
         </ul>
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button className={`${menuButton} text-yellow-200`} disabled={!room || workingAction !== null} onClick={onToggleReady} type="button">
+          <button className={`${menuButton} text-yellow-200`} disabled={!room || openingCase || workingAction !== null} onClick={onToggleReady} type="button">
             {workingAction === "ready" ? "Saving..." : room?.meReady ? "Unready" : "Ready"}
           </button>
           <button
             className={`${menuButton} h-auto min-h-12 whitespace-normal py-2 leading-tight`}
-            disabled={!room?.allReady || workingAction !== null}
+            disabled={!room?.allReady || openingCase || workingAction !== null}
             onClick={onStart}
             type="button"
           >
-            {workingAction === "start" ? "Starting..." : "Start"}
+            {workingAction === "start" ? "Starting..." : openingCase ? "Opening case..." : "Start"}
           </button>
           <button
             className={`${menuButton} border-red-400 bg-red-950/80 text-red-200 hover:border-red-200 hover:text-red-100 sm:col-span-2`}
@@ -106,7 +107,9 @@ export function RoomLobbyModal({
         </div>
         {room ? (
           <p className="mt-4 text-center text-sm uppercase text-cyan-100">
-            {room.allReady
+            {openingCase
+              ? "Investigation started. Opening the case file..."
+              : room.allReady
               ? "All detectives are ready"
               : `${room.playerCount}/2 detectives connected. Waiting for ready.`}
           </p>

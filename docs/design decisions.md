@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-07 — Shared status drives room transitions
+
+- Starting an investigation is a shared session transition, so every connected lobby observes `playing` and opens the case brief.
+- The starter does not receive a separate client-only navigation path; both detectives follow the same reactive state.
+
 ## 2026-10-07 — Map places are board-ready facts
 
 - A place shown on the active case map may be pinned without a discovery action because the city map already exposes it to every room member.

@@ -1,7 +1,7 @@
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { Screen } from "./constants";
@@ -65,8 +65,15 @@ export function useRoomSession(nickname: string) {
     api.sessions.listMine,
     isLoaded && isSignedIn ? {} : "skip",
   );
+  const roomStarted = showRoom && room?.status === "playing";
+
+  useEffect(() => {
+    if (!roomStarted || !joinedRoomCode) return;
+    router.replace(`/lobby/${joinedRoomCode}/brief`);
+  }, [joinedRoomCode, roomStarted, router]);
 
   function navigateTo(nextScreen: Screen) {
+    if (nextScreen === "brief" || nextScreen === "bureau") setShowRoom(false);
     setScreen(nextScreen);
     router.push(pathForScreen(nextScreen, joinedRoomCode));
   }
@@ -131,7 +138,6 @@ export function useRoomSession(nickname: string) {
     setError("");
     try {
       await startRoom({ roomCode: joinedRoomCode });
-      openBrief();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not start the investigation.");
     } finally {
@@ -177,11 +183,6 @@ export function useRoomSession(nickname: string) {
     }
   }
 
-  function openBrief() {
-    setShowRoom(false);
-    navigateTo("brief");
-  }
-
   function continueRoom(roomCode: string, status: "waiting" | "playing") {
     setJoinedRoomCode(roomCode);
     setRoomCode(roomCode);
@@ -196,14 +197,14 @@ export function useRoomSession(nickname: string) {
   }
 
   return {
-    screen,
+    screen: roomStarted ? "brief" : screen,
     setScreen: navigateTo,
     roomCode,
     setRoomCode,
     joinedRoomCode,
     room,
     activeRooms,
-    showRoom,
+    showRoom: showRoom && !roomStarted,
     error,
     setError,
     copiedCode,
@@ -217,7 +218,6 @@ export function useRoomSession(nickname: string) {
     copyRoomCode,
     closeJoin,
     leaveRoom,
-    openBrief,
     continueRoom,
   };
 }

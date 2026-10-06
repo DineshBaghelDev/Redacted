@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-07 — Shared lobby start transition
+
+- When either detective starts a ready room, both clients now follow the shared `playing` status into the case brief.
+- The partner no longer remains trapped in a stale lobby after the starter navigates away.
+- Lobby controls enter a truthful opening state while the shared route transition completes.
+
 ## 2026-10-07 — Shared map-place references
 
 - Every map-visible place can now be pinned directly to the shared clueboard without implying travel or discovery.
