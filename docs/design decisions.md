@@ -15,6 +15,7 @@
 - Starting an investigation is a shared session transition, so every connected lobby observes `playing` and opens the case brief.
 - The starter does not receive a separate client-only navigation path; both detectives follow the same reactive state.
 - A waiting session remains authoritative over direct brief or bureau URLs; those routes return to the ready lobby until play starts.
+- A room URL with no authorized live membership returns to the home screen with a plain unavailable-room message.
 
 ## 2026-10-07 — Map places are board-ready facts
 

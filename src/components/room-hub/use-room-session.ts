@@ -65,15 +65,19 @@ export function useRoomSession(nickname: string) {
     api.sessions.listMine,
     isLoaded && isSignedIn ? {} : "skip",
   );
-  const waitingGameRoute = (screen === "brief" || screen === "bureau") && room?.status === "waiting";
-  const lobbyVisible = showRoom || isLobbyPath(pathname) || waitingGameRoute;
+  const gameRoute = screen === "brief" || screen === "bureau";
+  const lobbyRoute = isLobbyPath(pathname);
+  const missingRoom = !!joinedRoomCode && room === null && (gameRoute || lobbyRoute);
+  const waitingGameRoute = gameRoute && room?.status === "waiting";
+  const lobbyVisible = !missingRoom && (showRoom || lobbyRoute || waitingGameRoute);
   const roomStarted = lobbyVisible && room?.status === "playing";
 
   useEffect(() => {
     if (!joinedRoomCode) return;
-    if (waitingGameRoute) router.replace(`/lobby/${joinedRoomCode}`);
+    if (missingRoom) router.replace("/");
+    else if (waitingGameRoute) router.replace(`/lobby/${joinedRoomCode}`);
     else if (roomStarted) router.replace(`/lobby/${joinedRoomCode}/brief`);
-  }, [joinedRoomCode, roomStarted, router, waitingGameRoute]);
+  }, [joinedRoomCode, missingRoom, roomStarted, router, waitingGameRoute]);
 
   function navigateTo(nextScreen: Screen) {
     if (nextScreen === "brief" || nextScreen === "bureau") setShowRoom(false);
@@ -200,7 +204,7 @@ export function useRoomSession(nickname: string) {
   }
 
   return {
-    screen: waitingGameRoute ? "menu" : roomStarted ? "brief" : screen,
+    screen: missingRoom || waitingGameRoute ? "menu" : roomStarted ? "brief" : screen,
     setScreen: navigateTo,
     roomCode,
     setRoomCode,
@@ -208,7 +212,7 @@ export function useRoomSession(nickname: string) {
     room,
     activeRooms,
     showRoom: lobbyVisible && !roomStarted,
-    error,
+    error: missingRoom ? "That room is no longer available." : error,
     setError,
     copiedCode,
     isWorking,

@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-07 — Stale room recovery
+
+- Expired, unknown, or inaccessible room URLs now return to the home screen instead of showing an empty game or permanent loading lobby.
+- The home screen explains that the room is no longer available while preserving normal room creation and join flows.
+
 ## 2026-10-07 — Waiting-room route guard
 
 - Direct brief or bureau URLs now return waiting sessions to their ready lobby instead of visually bypassing it.
