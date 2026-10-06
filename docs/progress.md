@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-07 — Complete CCTV windows
+
+- Camera timeline queries now apply the selected time boundary in the database index and inspect every earlier overlapping row.
+- Later activity no longer disappears when a camera has more than 512 stored records.
+
 ## 2026-10-07 — Truthful station guidance
 
 - The bureau now calls the roster surface `People` until live interviews exist, while preserving its room-scoped route.

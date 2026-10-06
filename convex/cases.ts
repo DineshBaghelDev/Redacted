@@ -275,13 +275,13 @@ export const getCctvWindow = query({
     const cctv = await loadCctv(ctx, roomCode);
     const camera = cctv?.cameras.find((item) => item.sourceId === cameraId);
     if (!camera || !Number.isFinite(minute)) return null;
-    const records = await ctx.db
+    const records = [];
+    for await (const record of ctx.db
       .query("cctvRecords")
-      .withIndex("by_cameraId_and_startTime", (q) => q.eq("cameraId", camera._id))
-      .take(512);
-    return records
-      .filter((record) => record.startTime <= minute + 20 && record.endTime >= minute - 20)
-      .map((record) => ({
+      .withIndex("by_cameraId_and_startTime", (q) => q.eq("cameraId", camera._id).lte("startTime", minute + 20))) {
+      if (record.endTime >= minute - 20) records.push(record);
+    }
+    return records.map((record) => ({
         id: record.evidenceId,
         cameraId,
         start: record.startTime,

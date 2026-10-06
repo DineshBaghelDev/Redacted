@@ -504,6 +504,42 @@ test("a lobby keeps the selected passed case", async () => {
       kind: "pass",
   }]);
   await t.run(async (ctx) => {
+    const session = await ctx.db.get(created.sessionId);
+    const camera = session?.caseId
+      ? await ctx.db.query("cctvCameras").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).first()
+      : null;
+    if (!session?.caseId || !camera) throw new Error("Expected a published camera.");
+    for (let index = 0; index < 513; index += 1) {
+      await ctx.db.insert("cctvRecords", {
+        caseId: session.caseId,
+        evidenceId: `old-record-${index}`,
+        cameraId: camera._id,
+        startTime: 100,
+        endTime: 100,
+        npcIds: [],
+        vehicleIds: [],
+        description: "Old activity.",
+        kind: "pass",
+      });
+    }
+    await ctx.db.insert("cctvRecords", {
+      caseId: session.caseId,
+      evidenceId: "late-record",
+      cameraId: camera._id,
+      startTime: 300,
+      endTime: 305,
+      npcIds: [],
+      vehicleIds: [],
+      description: "Late activity remains visible after many earlier rows.",
+      kind: "stay",
+    });
+  });
+  expect(await user.query(api.cases.getCctvWindow, {
+    roomCode: created.roomCode,
+    cameraId: "cam:station",
+    minute: 300,
+  })).toEqual(expect.arrayContaining([expect.objectContaining({ id: "late-record", start: 300, end: 305 })]));
+  await t.run(async (ctx) => {
     const job = await ctx.db.get(generationJobId);
     if (job) await ctx.db.patch(job._id, { status: "failed" });
     const briefDraft = await ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId).eq("stage", "brief")).unique();
