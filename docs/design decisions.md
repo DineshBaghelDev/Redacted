@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-07 — Confirm irreversible room exit
+
+- Leaving a started investigation remains a permanent membership removal in V1.
+- The UI must explain that consequence and default keyboard focus to staying in the room before it performs the destructive action.
+
 ## 2026-10-07 — Station names describe playable actions
 
 - Bureau labels describe what a player can do now; unfinished interrogation, inventory, and lab mechanics are not advertised as active controls.

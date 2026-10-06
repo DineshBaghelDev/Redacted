@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-07 — Safe investigation exit
+
+- Leaving a started room now requires confirmation because the membership removal is irreversible.
+- The bureau explains that the player cannot rejoin, with a keyboard-focused `Stay` action as the safe default.
+
 ## 2026-10-07 — Complete CCTV windows
 
 - Camera timeline queries now apply the selected time boundary in the database index and inspect every earlier overlapping row.

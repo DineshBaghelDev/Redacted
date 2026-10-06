@@ -1,6 +1,7 @@
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 
 const ClueBoardScreen = dynamic(() =>
   import("./clue-board-screen").then((module) => module.ClueBoardScreen),
@@ -60,6 +61,7 @@ const stationOrder: Station[] = ["interrogate", "cctv", "clueboard", "evidence",
 export function BureauScreen({ error, onLeave }: { error: string; onLeave: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const pathParts = pathname.split("/");
   const roomCode = pathParts[2] ?? "";
   const station = (pathParts[3] === "bureau" ? pathParts[4] : pathParts[3]) as Station | undefined;
@@ -76,13 +78,24 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
     <section className="relative h-screen w-full overflow-hidden border border-cyan-300/70 bg-[#050712] shadow-[0_0_30px_rgba(34,211,238,0.22)]">
       {!activeStation ? (
         <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
-          <button
-            className="border border-red-400 bg-red-950/90 px-4 py-2 text-sm uppercase text-red-100 shadow-[0_0_16px_rgba(248,113,113,0.25)] hover:border-red-200"
-            onClick={onLeave}
-            type="button"
-          >
-            Leave game
-          </button>
+          {confirmLeave ? (
+            <div aria-labelledby="leave-game-title" className="w-64 border border-red-300 bg-[#13070a]/95 p-3 text-red-50 shadow-[0_0_20px_rgba(248,113,113,0.3)]" role="alertdialog">
+              <p className="text-sm uppercase" id="leave-game-title">Leave this investigation?</p>
+              <p className="mt-2 text-xs leading-relaxed text-red-100/75">You cannot rejoin after leaving a started room.</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button autoFocus className="min-h-10 border border-cyan-300/60 text-xs uppercase text-cyan-100 hover:border-cyan-100" onClick={() => setConfirmLeave(false)} type="button">Stay</button>
+                <button className="min-h-10 border border-red-400 bg-red-950 text-xs uppercase hover:border-red-200" onClick={onLeave} type="button">Leave</button>
+              </div>
+            </div>
+          ) : (
+            <button
+              className="border border-red-400 bg-red-950/90 px-4 py-2 text-sm uppercase text-red-100 shadow-[0_0_16px_rgba(248,113,113,0.25)] hover:border-red-200"
+              onClick={() => setConfirmLeave(true)}
+              type="button"
+            >
+              Leave game
+            </button>
+          )}
           {error ? <p className="max-w-xs bg-[#050712]/90 px-3 py-2 text-sm text-red-200">{error}</p> : null}
         </div>
       ) : null}
