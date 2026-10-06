@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-07 — Waiting-room route guard
+
+- Direct brief or bureau URLs now return waiting sessions to their ready lobby instead of visually bypassing it.
+- Once either player starts, the lobby route still advances both detectives to the shared case brief.
+
 ## 2026-10-07 — Safe investigation exit
 
 - Leaving a started room now requires confirmation because the membership removal is irreversible.

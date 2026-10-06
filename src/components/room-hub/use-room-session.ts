@@ -65,12 +65,15 @@ export function useRoomSession(nickname: string) {
     api.sessions.listMine,
     isLoaded && isSignedIn ? {} : "skip",
   );
-  const roomStarted = showRoom && room?.status === "playing";
+  const waitingGameRoute = (screen === "brief" || screen === "bureau") && room?.status === "waiting";
+  const lobbyVisible = showRoom || isLobbyPath(pathname) || waitingGameRoute;
+  const roomStarted = lobbyVisible && room?.status === "playing";
 
   useEffect(() => {
-    if (!roomStarted || !joinedRoomCode) return;
-    router.replace(`/lobby/${joinedRoomCode}/brief`);
-  }, [joinedRoomCode, roomStarted, router]);
+    if (!joinedRoomCode) return;
+    if (waitingGameRoute) router.replace(`/lobby/${joinedRoomCode}`);
+    else if (roomStarted) router.replace(`/lobby/${joinedRoomCode}/brief`);
+  }, [joinedRoomCode, roomStarted, router, waitingGameRoute]);
 
   function navigateTo(nextScreen: Screen) {
     if (nextScreen === "brief" || nextScreen === "bureau") setShowRoom(false);
@@ -197,14 +200,14 @@ export function useRoomSession(nickname: string) {
   }
 
   return {
-    screen: roomStarted ? "brief" : screen,
+    screen: waitingGameRoute ? "menu" : roomStarted ? "brief" : screen,
     setScreen: navigateTo,
     roomCode,
     setRoomCode,
     joinedRoomCode,
     room,
     activeRooms,
-    showRoom: showRoom && !roomStarted,
+    showRoom: lobbyVisible && !roomStarted,
     error,
     setError,
     copiedCode,
