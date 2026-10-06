@@ -99,9 +99,6 @@ export const join = mutation({
       isReady: false,
       joinedAt: Date.now(),
     });
-    if (players.length + 1 === MAX_PLAYERS) {
-      await ctx.db.patch(session._id, { status: "playing" });
-    }
 
     return { ok: true, sessionId: session._id, playerId, roomCode: session.roomCode };
   },

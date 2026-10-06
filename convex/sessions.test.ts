@@ -526,6 +526,14 @@ test("a lobby keeps the selected passed case", async () => {
     const [first, second] = await Promise.all([ctx.db.get(created.sessionId), ctx.db.get(replayed.sessionId)]);
     return first?.caseId === second?.caseId;
   })).toBe(true);
+  const partner = t.withIdentity({ subject: "player-2" });
+  expect(await partner.mutation(api.sessions.join, { roomCode: replayed.roomCode, nickname: "Partner" })).toMatchObject({ ok: true });
+  expect(await user.query(api.sessions.get, { roomCode: replayed.roomCode })).toMatchObject({ status: "waiting", playerCount: 2 });
+  expect(await partner.query(api.npcs.list, { roomCode: replayed.roomCode })).toBeNull();
+  await user.mutation(api.sessions.setReady, { roomCode: replayed.roomCode, isReady: true });
+  await partner.mutation(api.sessions.setReady, { roomCode: replayed.roomCode, isReady: true });
+  await user.mutation(api.sessions.start, { roomCode: replayed.roomCode });
+  expect(await user.query(api.sessions.get, { roomCode: replayed.roomCode })).toMatchObject({ status: "playing" });
   const unpublishedCaseId = await t.run(async (ctx) => ctx.db.insert("cases", {
     generationJobId: invalidJobId,
     difficulty: "easy",
@@ -537,7 +545,7 @@ test("a lobby keeps the selected passed case", async () => {
   await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: unpublishedCaseId })).rejects.toThrow("not ready to replay");
   expect(await user.query(api.sessions.listMine, {})).toEqual(expect.arrayContaining([
     expect.objectContaining({ roomCode: created.roomCode, caseTitle: "The Selected Case", status: "playing" }),
-    expect.objectContaining({ roomCode: replayed.roomCode, caseTitle: "The Selected Case", status: "waiting" }),
+    expect.objectContaining({ roomCode: replayed.roomCode, caseTitle: "The Selected Case", status: "playing" }),
   ]));
   await t.run(async (ctx) => {
     const cityId = frozen.storedCity!._id;
@@ -582,7 +590,7 @@ test("a lobby keeps the selected passed case", async () => {
   expect(cityMap?.streets.some((street) => street.a === "police-bureau" && street.b === "forensic-lab" && street.minutes === 2)).toBe(true);
   expect(cityMap?.streets.slice(0, city.streets.length)).toEqual(city.streets);
 
-  const stranger = t.withIdentity({ subject: "player-2" });
+  const stranger = t.withIdentity({ subject: "player-3" });
   expect(await stranger.query(api.sessions.listMine, {})).toEqual([]);
   expect(await stranger.query(api.sessions.get, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.cases.getBrief, { roomCode: created.roomCode })).toBeNull();

@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-06 — Joining never starts the case
+
+- Reaching the two-player limit does not imply consent to begin; joining and readiness remain separate actions.
+- `Start investigation` is the only transition from lobby to play and remains unavailable until every connected player is ready.
+
 ## 2026-09-28 — Case close reveals scores, not answers
 
 - The private judge receives canonical grading material, but clients receive only category stars and generic mismatch feedback.

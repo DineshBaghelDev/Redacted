@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-06 — Ready-gated investigation start
+
+- A second player joining a replay room no longer starts the investigation automatically.
+- The room stays in the lobby with investigation data hidden until every connected player marks ready and a player explicitly starts.
+- Regression coverage follows the two-player join, ready, and start flow end to end.
+
 ## 2026-09-28 — Private case-close grading
 
 - A signed-in room member can submit one final five-part theory using a case NPC and evidence pinned to that session's clueboard.
