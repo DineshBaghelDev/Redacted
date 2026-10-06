@@ -42,8 +42,8 @@ const stations: Record<Station, { label: string; description: string }> = {
     description: "Lay out the facts you have found and connect your own deductions.",
   },
   evidence: {
-    label: "Evidence",
-    description: "Review collected items, lab results, messages, and public records.",
+    label: "Public records",
+    description: "Search addresses, employment records, background checks, and card payments.",
   },
   map: {
     label: "City map",
@@ -99,7 +99,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         <Hotspot label="Interrogate" className="left-[4%] top-[26%] h-[40%] w-[18%]" onClick={() => openStation("interrogate")} />
         <Hotspot label="CCTV" className="left-[24%] top-[27%] h-[39%] w-[17%]" onClick={() => openStation("cctv")} />
         <Hotspot label="Clueboard" className="left-[41%] top-[27%] h-[29%] w-[21%]" onClick={() => openStation("clueboard")} />
-        <Hotspot label="Evidence" className="left-[62%] top-[26%] h-[40%] w-[19%]" onClick={() => openStation("evidence")} />
+        <Hotspot label="Public records" className="left-[62%] top-[26%] h-[40%] w-[19%]" onClick={() => openStation("evidence")} />
         <Hotspot label="Map" className="left-[82%] top-[17%] h-[43%] w-[18%]" onClick={() => openStation("map")} />
         <Hotspot label="Case" className="left-[18%] top-[59%] h-[39%] w-[64%]" onClick={() => openStation("case")} />
 
