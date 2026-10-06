@@ -30,8 +30,8 @@ type Station = "interrogate" | "cctv" | "clueboard" | "evidence" | "map" | "case
 
 const stations: Record<Station, { label: string; description: string }> = {
   interrogate: {
-    label: "Interrogate",
-    description: "Call a person to the bureau or review an interview.",
+    label: "People",
+    description: "Review the people connected to this case and pin them to the clueboard.",
   },
   cctv: {
     label: "CCTV",
@@ -51,7 +51,7 @@ const stations: Record<Station, { label: string; description: string }> = {
   },
   case: {
     label: "Case file",
-    description: "Review the selected case briefing and the facts established so far.",
+    description: "Review the briefing and submit the final report when your theory is ready.",
   },
 };
 
@@ -96,7 +96,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#050712]/35 via-transparent to-[#050712]/45" />
 
-        <Hotspot label="Interrogate" className="left-[4%] top-[26%] h-[40%] w-[18%]" onClick={() => openStation("interrogate")} />
+        <Hotspot label="People" className="left-[4%] top-[26%] h-[40%] w-[18%]" onClick={() => openStation("interrogate")} />
         <Hotspot label="CCTV" className="left-[24%] top-[27%] h-[39%] w-[17%]" onClick={() => openStation("cctv")} />
         <Hotspot label="Clueboard" className="left-[41%] top-[27%] h-[29%] w-[21%]" onClick={() => openStation("clueboard")} />
         <Hotspot label="Public records" className="left-[62%] top-[26%] h-[40%] w-[19%]" onClick={() => openStation("evidence")} />

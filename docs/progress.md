@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-07 — Truthful station guidance
+
+- The bureau now calls the roster surface `People` until live interviews exist, while preserving its room-scoped route.
+- The Case File description now matches its actual briefing and final-report flow.
+- CCTV no longer claims the timeline contains activity marks that are not rendered.
+
 ## 2026-10-07 — Case-close evidence limit
 
 - The final-report form now shows the server's 12-record limit before submission.

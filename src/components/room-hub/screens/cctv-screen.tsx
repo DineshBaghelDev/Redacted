@@ -132,7 +132,7 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
               <span className="absolute bottom-0 left-0 font-mono text-[10px] text-cyan-100/40">{formatTime(data.start)}</span>
               <span className="absolute bottom-0 right-0 font-mono text-[10px] text-cyan-100/40">{formatTime(data.end)}</span>
             </div>
-            <p className="mt-3 text-xs text-cyan-100/45">Showing records within 20 minutes of the selected time. Marks on the line show recorded activity.</p>
+            <p className="mt-3 text-xs text-cyan-100/45">Showing records within 20 minutes of the selected time.</p>
           </div>
 
           <div className="mt-5">

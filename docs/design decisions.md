@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-07 — Station names describe playable actions
+
+- Bureau labels describe what a player can do now; unfinished interrogation, inventory, and lab mechanics are not advertised as active controls.
+- Internal route names may remain stable while player-facing labels become more accurate.
+
 ## 2026-10-07 — Shared status drives room transitions
 
 - Starting an investigation is a shared session transition, so every connected lobby observes `playing` and opens the case brief.
