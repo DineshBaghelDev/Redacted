@@ -90,7 +90,7 @@
 
 - Published previous-case entries now carry their frozen case ID and create new sessions through `sessions.createReplay`.
 - The replay mutation rejects partial or unpublished cases and never reads generation jobs or drafts.
-- Older passed jobs without a published case retain the compatibility path that freezes them once when first selected.
+- Unpublished generation drafts are hidden from players and cannot create sessions; only fully frozen cases are replayable.
 
 ## 2026-09-27 — Active-room resume
 

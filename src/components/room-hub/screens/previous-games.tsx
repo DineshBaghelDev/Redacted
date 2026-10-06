@@ -7,7 +7,7 @@ import { api } from "../../../../convex/_generated/api";
 
 type PreviousGamesScreenProps = {
   isWorking: boolean;
-  onPlay: (game: { generationJobId: Id<"generationJobs">; caseId?: Id<"cases"> }) => void;
+  onPlay: (game: { generationJobId: Id<"generationJobs">; caseId: Id<"cases"> }) => void;
 };
 
 export function PreviousGamesScreen({ isWorking, onPlay }: PreviousGamesScreenProps) {

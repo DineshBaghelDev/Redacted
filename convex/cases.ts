@@ -198,7 +198,7 @@ export const listPassed = query({
   args: {},
   returns: v.array(v.object({
     generationJobId: v.id("generationJobs"),
-    caseId: v.optional(v.id("cases")),
+    caseId: v.id("cases"),
     difficulty: v.union(v.literal("easy"), v.literal("normal"), v.literal("hard")),
     title: v.string(),
     description: v.string(),
@@ -206,34 +206,13 @@ export const listPassed = query({
   handler: async (ctx) => {
     await requireUserId(ctx);
     const cases = [];
-    const publishedJobIds = new Set<string>();
     for await (const playableCase of ctx.db.query("cases").withIndex("by_publicationVersion", (q) => q.eq("publicationVersion", PUBLICATION_VERSION))) {
-      publishedJobIds.add(playableCase.generationJobId);
       cases.push({
         generationJobId: playableCase.generationJobId,
         caseId: playableCase._id,
         difficulty: playableCase.difficulty,
         title: playableCase.title,
         description: playableCase.summary,
-      });
-    }
-    const jobs = await ctx.db
-      .query("generationJobs")
-      .withIndex("by_status", (q) => q.eq("status", "passed"))
-      .order("desc")
-      .collect();
-    for (const job of jobs) {
-      if (publishedJobIds.has(job._id)) continue;
-      const draft = await ctx.db
-        .query("generationDrafts")
-        .withIndex("by_job_stage", (q) => q.eq("jobId", job._id).eq("stage", "brief"))
-        .unique();
-      const brief = readBrief(draft?.output);
-      if (brief) cases.push({
-        generationJobId: job._id,
-        difficulty: job.difficulty,
-        title: brief.title,
-        description: brief.summary,
       });
     }
     return cases.sort((a, b) => b.generationJobId.localeCompare(a.generationJobId));

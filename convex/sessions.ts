@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { requireUserId } from "./lib/auth";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
-import { ensureCaseForJob, PUBLICATION_VERSION } from "./cases";
+import { PUBLICATION_VERSION } from "./cases";
 
 const MAX_PLAYERS = 2;
 const ROOM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -41,16 +41,6 @@ async function createSession(ctx: MutationCtx, authUserId: string, nickname: str
   });
   return { sessionId, playerId, roomCode };
 }
-
-export const create = mutation({
-  args: { nickname: v.string(), generationJobId: v.id("generationJobs") },
-  returns: v.object({ sessionId: v.id("sessions"), playerId: v.id("sessionPlayers"), roomCode: v.string() }),
-  handler: async (ctx, { nickname, generationJobId }) => {
-    const authUserId = await requireUserId(ctx);
-    const caseId = await ensureCaseForJob(ctx, generationJobId);
-    return await createSession(ctx, authUserId, nickname, caseId);
-  },
-});
 
 export const createReplay = mutation({
   args: { nickname: v.string(), caseId: v.id("cases") },
