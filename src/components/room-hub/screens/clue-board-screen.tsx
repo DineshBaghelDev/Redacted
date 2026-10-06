@@ -13,7 +13,7 @@ import {
   type NodeProps,
   useNodesState,
 } from "@xyflow/react";
-import { Link2, Plus, Trash2, X } from "lucide-react";
+import { Link2, Maximize2, Plus, Trash2, X } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
@@ -21,10 +21,11 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 
 type StringColor = "red" | "gold" | "blue" | "green";
 type BoardData = {
-  kind: "note" | "npc" | "cctv" | "public_record";
+  kind: "note" | "npc" | "cctv" | "place" | "public_record";
   text: string;
   onChange: (id: Id<"clueBoardNodes">, text: string) => void;
   onDelete: (id: Id<"clueBoardNodes">) => void;
+  onOpen: (id: Id<"clueBoardNodes">) => void;
 };
 type BoardNode = Node<BoardData, "board">;
 
@@ -48,6 +49,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
   const deleteEdge = useMutation(api.clueBoard.deleteEdge);
   const [stringColor, setStringColor] = useState<StringColor>("red");
   const [selectedEdge, setSelectedEdge] = useState<Id<"clueBoardEdges"> | null>(null);
+  const [inspectingNode, setInspectingNode] = useState<Id<"clueBoardNodes"> | null>(null);
   const [error, setError] = useState("");
   const [nodes, setNodes, onNodesChange] = useNodesState<BoardNode>([]);
 
@@ -60,6 +62,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
   const removeNote = useCallback((id: Id<"clueBoardNodes">) => {
     void deleteNode({ nodeId: id }).catch(showError);
   }, [deleteNode, showError]);
+  const openNode = useCallback((id: Id<"clueBoardNodes">) => setInspectingNode(id), []);
 
   useEffect(() => {
     if (!savedNodes) return;
@@ -67,9 +70,9 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
       id: item._id,
       type: "board",
       position: { x: item.x, y: item.y },
-      data: { kind: item.type, text: item.text, onChange: saveText, onDelete: removeNote },
+      data: { kind: item.type, text: item.text, onChange: saveText, onDelete: removeNote, onOpen: openNode },
     })));
-  }, [removeNote, savedNodes, saveText, setNodes]);
+  }, [openNode, removeNote, savedNodes, saveText, setNodes]);
 
   const edges = useMemo<Edge[]>(() => (savedEdges ?? []).map((edge) => ({
     id: edge._id,
@@ -83,6 +86,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
     labelBgBorderRadius: 0,
     className: "clue-string",
   })), [savedEdges]);
+  const inspected = savedNodes?.find((node) => node._id === inspectingNode);
 
   function addNote() {
     const count = savedNodes?.length ?? 0;
@@ -197,13 +201,39 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
             {error}
           </p>
         ) : null}
+        {inspected ? (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#080605]/75 p-4">
+            <section aria-labelledby="board-detail-title" aria-modal="true" className="max-h-[80vh] w-full max-w-lg overflow-y-auto border-2 border-[#b4a06d] bg-[#eee2bd] p-5 text-[#292014] shadow-[8px_10px_0_rgba(0,0,0,0.55)]" role="dialog">
+              <div className="flex items-start justify-between gap-4 border-b border-[#7a5636]/35 pb-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#7a5636]">{boardLabel(inspected.type)}</p>
+                  <h2 className="mt-1 text-xl uppercase" id="board-detail-title">Board item</h2>
+                </div>
+                <button
+                  aria-label="Close board item"
+                  autoFocus
+                  className="p-2 hover:text-red-800"
+                  onClick={() => setInspectingNode(null)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") setInspectingNode(null);
+                    if (event.key === "Tab") event.preventDefault();
+                  }}
+                  type="button"
+                >
+                  <X aria-hidden="true" size={20} />
+                </button>
+              </div>
+              <p className="mt-4 whitespace-pre-wrap text-base leading-6">{inspected.text}</p>
+            </section>
+          </div>
+        ) : null}
       </div>
     </section>
   );
 }
 
 function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
-  const label = data.kind === "npc" ? "Person" : data.kind === "cctv" ? "Camera record" : data.kind === "public_record" ? "Public record" : "Note";
+  const label = boardLabel(data.kind);
   return (
     <article className={`relative w-48 rotate-[-1deg] border border-[#b4a06d] bg-[#eee2bd] p-3 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(20,10,5,0.45)] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
       <Handle
@@ -228,6 +258,15 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
         <p className="min-h-24 whitespace-pre-line text-sm leading-5">{data.text}</p>
       )}
       <button
+        aria-label="Inspect board item"
+        className="nodrag absolute bottom-1 left-1 p-1 text-[#775d42] hover:text-[#292014] focus-visible:outline-2 focus-visible:outline-[#292014]"
+        onClick={() => data.onOpen(id as Id<"clueBoardNodes">)}
+        title="Inspect board item"
+        type="button"
+      >
+        <Maximize2 aria-hidden="true" size={15} />
+      </button>
+      <button
         aria-label="Remove board item"
         className="nodrag absolute bottom-1 right-1 p-1 text-[#775d42] hover:text-red-800 focus-visible:outline-2 focus-visible:outline-red-800"
         onClick={() => data.onDelete(id as Id<"clueBoardNodes">)}
@@ -238,4 +277,8 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
       </button>
     </article>
   );
+}
+
+function boardLabel(kind: BoardData["kind"]) {
+  return kind === "npc" ? "Person" : kind === "cctv" ? "Camera record" : kind === "place" ? "Place" : kind === "public_record" ? "Public record" : "Note";
 }

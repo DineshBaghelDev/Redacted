@@ -8,7 +8,9 @@ const MAX_EDGES = 200;
 const MAX_NOTE_LENGTH = 500;
 const MAX_LABEL_LENGTH = 80;
 const stringColor = v.union(v.literal("red"), v.literal("gold"), v.literal("blue"), v.literal("green"));
-const referenceType = v.union(v.literal("npc"), v.literal("cctv"), v.literal("public_record"));
+const referenceType = v.union(v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"));
+const placeKinds = { home: "Residence", work: "Workplace", public: "Public place", bureau: "Bureau", lab: "Forensic lab" } as const;
+const placeAreas = { northside: "Northside", midtown: "Midtown", eastside: "Eastside" } as const;
 
 async function requireBoard(ctx: QueryCtx | MutationCtx, roomCode: string) {
   const member = await getRoomMember(ctx, roomCode);
@@ -33,7 +35,7 @@ export const getNodes = query({
   args: { roomCode: v.string() },
   returns: v.array(v.object({
     _id: v.id("clueBoardNodes"),
-    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("public_record")),
+    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record")),
     referenceId: v.optional(v.string()),
     text: v.string(),
     x: v.number(),
@@ -118,6 +120,16 @@ export const createReferenceNode = mutation({
       const person = npcId ? await ctx.db.get(npcId) : null;
       if (!person || person.caseId !== session.caseId) throw new Error("That person is not part of this case.");
       text = `${person.name}\n${person.role}${person.occupation ? ` · ${person.occupation}` : ""}`;
+    } else if (type === "place") {
+      const playableCase = await ctx.db.get(session.caseId);
+      const place = playableCase?.cityId
+        ? await ctx.db
+            .query("places")
+            .withIndex("by_cityId_and_sourceId", (q) => q.eq("cityId", playableCase.cityId!).eq("sourceId", referenceId))
+            .unique()
+        : null;
+      if (!place) throw new Error("That place is not part of this case.");
+      text = `${place.name}\n${placeAreas[place.area]} · ${placeKinds[place.kind]}`;
     } else if (type === "public_record") {
       const record = await ctx.db
         .query("publicRecords")

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 
@@ -16,7 +16,11 @@ const kindLabels = {
 export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const city = useQuery(api.world.getMap, isLoaded && isSignedIn ? { roomCode } : "skip");
+  const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
+  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const [selectedId, setSelectedId] = useState("police-bureau");
+  const [pinning, setPinning] = useState("");
+  const [error, setError] = useState("");
 
   if (city === undefined) return <MapMessage message="Opening city map..." onBack={onBack} />;
   if (!city) return <MapMessage message="The city map is unavailable for this room." onBack={onBack} />;
@@ -29,6 +33,22 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
       place: city.places.find((place) => place.id === (street.a === selected.id ? street.b : street.a))!,
     }));
   const activeStreetIds = new Set(connected.map((street) => street.id));
+  const isPinned = boardNodes?.some((node) => node.type === "place" && node.referenceId === selected.id);
+
+  function pinPlace() {
+    const count = boardNodes?.length ?? 0;
+    setPinning(selected.id);
+    setError("");
+    void createReference({
+      roomCode,
+      type: "place",
+      referenceId: selected.id,
+      x: 80 + (count % 4) * 220,
+      y: 90 + (Math.floor(count / 4) % 4) * 180,
+    }).catch((caught: unknown) => {
+      setError(caught instanceof Error ? caught.message : "Could not pin this place.");
+    }).finally(() => setPinning(""));
+  }
 
   return (
     <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#080b12] text-cyan-50">
@@ -108,6 +128,15 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
           <p className="text-[10px] uppercase tracking-[0.2em] text-yellow-200/70">{selected.area}</p>
           <h3 className="mt-1 text-2xl uppercase leading-none">{selected.name}</h3>
           <p className="mt-2 text-sm uppercase text-cyan-100/45">{kindLabels[selected.kind]}</p>
+          <button
+            className="mt-4 min-h-11 w-full border border-cyan-300/60 px-3 text-sm uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:cursor-default disabled:opacity-55"
+            disabled={pinning === selected.id || isPinned}
+            onClick={pinPlace}
+            type="button"
+          >
+            {pinning === selected.id ? "Pinning..." : isPinned ? "Pinned to clueboard" : "Pin place to clueboard"}
+          </button>
+          {error ? <p className="mt-3 border border-red-300/60 bg-red-950/70 p-2 text-sm text-red-100" role="alert">{error}</p> : null}
 
           <h4 className="mt-5 border-t border-cyan-300/20 pt-4 text-xs uppercase tracking-[0.18em] text-cyan-100/55">Direct routes</h4>
           <ul className="mt-2 space-y-2">

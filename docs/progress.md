@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-07 — Shared map-place references
+
+- Every map-visible place can now be pinned directly to the shared clueboard without implying travel or discovery.
+- The server validates the place against the replayed case's city, derives player-safe card text, and de-duplicates the reference for both players.
+- Every clueboard card now has an accessible full-detail view on mobile and desktop.
+
 ## 2026-10-06 — Ready-gated investigation start
 
 - A second player joining a replay room no longer starts the investigation automatically.
@@ -248,7 +254,7 @@
 
 ### Clue board — remaining
 
-- Add reference cards for discovered items, calls/messages, forensics, vehicles, and places as those discovery surfaces become playable.
+- Add reference cards for discovered items, calls/messages, forensics, and vehicles as those discovery surfaces become playable.
 
 ### Case generation — remaining
 

@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-10-07 — Map places are board-ready facts
+
+- A place shown on the active case map may be pinned without a discovery action because the city map already exposes it to every room member.
+- Place references are validated against the session's frozen case city and contain only the public map name, area, and place kind.
+- Opening a board card shows its complete saved text in a focused dialog; it does not fetch hidden case data.
+
 ## 2026-10-06 — Joining never starts the case
 
 - Reaching the two-player limit does not imply consent to begin; joining and readiness remain separate actions.
