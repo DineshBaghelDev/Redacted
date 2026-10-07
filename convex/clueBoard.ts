@@ -8,7 +8,7 @@ const MAX_EDGES = 200;
 const MAX_NOTE_LENGTH = 500;
 const MAX_LABEL_LENGTH = 80;
 const stringColor = v.union(v.literal("red"), v.literal("gold"), v.literal("blue"), v.literal("green"));
-const referenceType = v.union(v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"));
+const referenceType = v.union(v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"));
 const placeKinds = { home: "Residence", work: "Workplace", public: "Public place", bureau: "Bureau", lab: "Forensic lab" } as const;
 const placeAreas = { northside: "Northside", midtown: "Midtown", eastside: "Eastside" } as const;
 
@@ -35,7 +35,7 @@ export const getNodes = query({
   args: { roomCode: v.string() },
   returns: v.array(v.object({
     _id: v.id("clueBoardNodes"),
-    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item")),
+    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic")),
     referenceId: v.optional(v.string()),
     text: v.string(),
     x: v.number(),
@@ -119,7 +119,13 @@ export const createReferenceNode = mutation({
     }
 
     let text: string;
-    if (type === "item") {
+    if (type === "forensic") {
+      const outputId = ctx.db.normalizeId("forensicOutputs", referenceId);
+      const output = outputId ? await ctx.db.get(outputId) : null;
+      const request = outputId ? await ctx.db.query("forensicRequests").withIndex("by_sessionId_and_forensicOutputId", (q) => q.eq("sessionId", session._id).eq("forensicOutputId", outputId)).unique() : null;
+      if (!output || output.caseId !== session.caseId || request?.viewedAt === undefined) throw new Error("View this lab result before pinning it.");
+      text = `${output.testType} report\n${output.result}`;
+    } else if (type === "item") {
       const itemId = ctx.db.normalizeId("caseItems", referenceId);
       const item = itemId ? await ctx.db.get(itemId) : null;
       const discovered = itemId ? await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", itemId)).unique() : null;

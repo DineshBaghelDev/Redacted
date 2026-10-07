@@ -37,7 +37,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
 
   const evidence = (boardNodes ?? []).filter(
     (node): node is typeof node & { referenceId: string } =>
-      (node.type === "cctv" || node.type === "public_record") && !!node.referenceId,
+      (node.type === "cctv" || node.type === "public_record" || node.type === "item" || node.type === "forensic") && !!node.referenceId,
   );
   const canReview = !!culpritNpcId
     && motiveExplanation.trim().length >= 10
@@ -152,7 +152,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   <button className="mt-7 min-h-12 w-full border-2 border-red-900 bg-red-950 px-5 uppercase text-red-50 hover:bg-red-900 disabled:opacity-50 sm:w-auto" disabled={!people?.length || evidence.length === 0} onClick={() => setClosing(true)} type="button">
                     Close this case
                   </button>
-                  {!evidence.length ? <p className="mt-3 text-sm text-red-900">Pin at least one camera or public record to the clueboard before closing the case.</p> : null}
+                  {!evidence.length ? <p className="mt-3 text-sm text-red-900">Pin at least one piece of evidence to the clueboard before closing the case.</p> : null}
                 </>
               )}
             </section>
@@ -163,7 +163,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               <p className="mt-4 text-sm leading-relaxed text-[#5b4635]">This closes the case for both detectives. Your report cannot be replaced after submission.</p>
               <dl className="mt-5 grid gap-3 border-y border-[#6d5138]/40 py-5 text-sm sm:grid-cols-2">
                 <div><dt className="uppercase text-red-800">Accused</dt><dd className="mt-1">{people?.find((person) => person.id === culpritNpcId)?.name}</dd></div>
-                <div><dt className="uppercase text-red-800">Evidence</dt><dd className="mt-1">{evidenceIds.length} pinned {evidenceIds.length === 1 ? "record" : "records"}</dd></div>
+                <div><dt className="uppercase text-red-800">Evidence</dt><dd className="mt-1">{evidenceIds.length} pinned {evidenceIds.length === 1 ? "piece" : "pieces"}</dd></div>
                 <div><dt className="uppercase text-red-800">Weapon</dt><dd className="mt-1">{weaponDescription}</dd></div>
                 <div><dt className="uppercase text-red-800">Report</dt><dd className="mt-1">Motive, evidence, and method included</dd></div>
               </dl>

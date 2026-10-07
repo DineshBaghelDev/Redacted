@@ -21,7 +21,7 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 
 type StringColor = "red" | "gold" | "blue" | "green";
 type BoardData = {
-  kind: "note" | "npc" | "cctv" | "place" | "public_record" | "item";
+  kind: "note" | "npc" | "cctv" | "place" | "public_record" | "item" | "forensic";
   text: string;
   onChange: (id: Id<"clueBoardNodes">, text: string) => void;
   onDelete: (id: Id<"clueBoardNodes">) => void;
@@ -280,5 +280,5 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
 }
 
 function boardLabel(kind: BoardData["kind"]) {
-  return kind === "npc" ? "Person" : kind === "cctv" ? "Camera record" : kind === "place" ? "Place" : kind === "public_record" ? "Public record" : kind === "item" ? "Found object" : "Note";
+  return kind === "npc" ? "Person" : kind === "cctv" ? "Camera record" : kind === "place" ? "Place" : kind === "public_record" ? "Public record" : kind === "item" ? "Found object" : kind === "forensic" ? "Lab report" : "Note";
 }

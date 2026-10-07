@@ -46,6 +46,7 @@ test("lab tests need collected evidence and reveal stored results only after sha
   expect((await two.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.outputId)?.status).toBe("pending");
   expect((await two.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.outputId)?.result).toBeUndefined();
   await expect(two.mutation(api.forensics.markViewed, { roomCode, forensicOutputId: ids.outputId })).rejects.toThrow("not ready");
+  await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "forensic", referenceId: ids.outputId, x: 0, y: 0 })).rejects.toThrow("View this lab result");
   vi.advanceTimersByTime(5_000);
   await one.mutation(api.investigation.finishAction, { roomCode });
   expect((await one.query(api.world.getMap, { roomCode }))?.clock.clockStartedAt).not.toBeNull();
@@ -56,4 +57,6 @@ test("lab tests need collected evidence and reveal stored results only after sha
   expect((await two.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.outputId)?.result).toBeUndefined();
   await two.mutation(api.forensics.markViewed, { roomCode, forensicOutputId: ids.outputId });
   expect((await one.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.outputId)).toMatchObject({ status: "viewed", result: "One set of prints." });
+  await one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "forensic", referenceId: ids.outputId, x: 0, y: 0 });
+  expect((await two.query(api.clueBoard.getNodes, { roomCode }))[0].text).toBe("fingerprint report\nOne set of prints.");
 }, 15_000);

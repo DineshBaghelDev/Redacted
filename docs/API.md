@@ -218,6 +218,7 @@ clueBoard.deleteEdge({ edgeId })
 ```
 
 Board editing consumes zero game time.
+Item references require shared discovery; forensic references require the lab result to have been viewed. Case-close submissions accept pinned item and forensic IDs and resolve them to frozen evidence IDs on the server.
 
 ### Case close
 

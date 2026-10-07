@@ -380,7 +380,7 @@ export default defineSchema({
     .index("by_sessionId_and_forensicOutputId", ["sessionId", "forensicOutputId"]),
   clueBoardNodes: defineTable({
     sessionId: v.id("sessions"),
-    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item")),
+    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic")),
     referenceId: v.optional(v.string()),
     text: v.string(),
     x: v.number(),

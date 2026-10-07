@@ -74,11 +74,27 @@ export const submit = mutation({
       .query("clueBoardNodes")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id))
       .take(100);
-    const boardEvidence = new Set(boardNodes
-      .filter((node) => node.type === "cctv" || node.type === "public_record")
-      .map((node) => node.referenceId));
+    const boardEvidence = new Map(boardNodes
+      .filter((node) => (node.type === "cctv" || node.type === "public_record" || node.type === "item" || node.type === "forensic") && node.referenceId)
+      .map((node) => [node.referenceId!, node.type] as const));
     if (evidenceIds.some((id) => !boardEvidence.has(id))) {
       throw new Error("Choose only evidence pinned to this clueboard.");
+    }
+    const canonicalEvidenceIds: string[] = [];
+    for (const id of evidenceIds) {
+      const type = boardEvidence.get(id);
+      if (type === "item") {
+        const itemId = ctx.db.normalizeId("caseItems", id);
+        const item = itemId ? await ctx.db.get(itemId) : null;
+        if (!item || item.caseId !== member.session.caseId) throw new Error("That item is not part of this case.");
+        canonicalEvidenceIds.push(item.evidenceId);
+      } else if (type === "forensic") {
+        const outputId = ctx.db.normalizeId("forensicOutputs", id);
+        const output = outputId ? await ctx.db.get(outputId) : null;
+        const request = outputId ? await ctx.db.query("forensicRequests").withIndex("by_sessionId_and_forensicOutputId", (q) => q.eq("sessionId", member.session._id).eq("forensicOutputId", outputId)).unique() : null;
+        if (!output || output.caseId !== member.session.caseId || request?.viewedAt === undefined) throw new Error("View the lab result before using it as evidence.");
+        canonicalEvidenceIds.push(output.evidenceId);
+      } else canonicalEvidenceIds.push(id);
     }
 
     const weaponItemId = args.weaponItemId;
@@ -95,7 +111,7 @@ export const submit = mutation({
       motiveExplanation: explanation(args.motiveExplanation, "Motive"),
       ...(weaponItemId ? { weaponItemId } : {}),
       ...(weaponDescription ? { weaponDescription } : {}),
-      evidenceIds,
+      evidenceIds: [...new Set(canonicalEvidenceIds)],
       evidenceExplanation: explanation(args.evidenceExplanation, "Evidence explanation"),
       methodExplanation: explanation(args.methodExplanation, "Method"),
       status: "pending",

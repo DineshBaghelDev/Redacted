@@ -5,6 +5,7 @@
 - Added shared lab requests for tests backed by collected objects, searched rooms, or the autopsy. Submission occupies the detective for 5 game minutes; the frozen turnaround keeps the shared clock running and overlaps other work.
 - The lab lists eligible test names and pending times without exposing result text. Either partner can open a ready result at the lab, after which it is shared. No evidence is generated during play.
 - A room-level clock settlement timer handles completed travel, room actions, and pending lab work even when the player leaves a specific station screen.
+- Viewed lab reports and discovered objects can be pinned to the clueboard and selected as proof in the final report. The server converts those pins to canonical evidence IDs before grading, without exposing unviewed reports.
 
 ## 2026-10-07 — Room investigation and shared inventory
 

@@ -42,10 +42,11 @@ test("case close grades privately from session-owned evidence", async () => {
       floorId,
       sourceId: "station:room", order: 1, name: "Room", type: "office", searchable: true, isEntrance: true, itemSlots: ["desk"], hasCamera: false,
     });
-    await ctx.db.insert("caseItems", {
+    const itemId = await ctx.db.insert("caseItems", {
       caseId, evidenceId: "item/weapon", sourceId: "weapon", name: "Cast-iron doorstop", description: "Heavy doorstop",
       placeId, roomId, slot: "desk", discoverableBySearch: true, collectible: true, hidden: true, itemType: "weapon",
     });
+    const outputId = await ctx.db.insert("forensicOutputs", { caseId, evidenceId: "lab/weapon", sourceItemId: itemId, testType: "fingerprint", result: "Prints on the doorstop.", linkedNpcIds: [], turnaroundMinutes: 60 });
     await ctx.db.insert("caseSolutions", {
       caseId, culpritNpcId, motive: "To conceal stolen company money.", weaponDescription: "Cast-iron doorstop",
       method: "Struck the victim with the doorstop.", canonicalExplanation: "Private answer.",
@@ -53,15 +54,19 @@ test("case close grades privately from session-owned evidence", async () => {
       evidenceGroups: [{ description: "Decisive evidence", requiredEvidenceIds: ["record/address"] }],
     });
     const sessionId = await ctx.db.insert("sessions", { caseId, roomCode: "ABC123", status: "playing", createdAt: 1, expiresAt: Date.now() + 60_000 });
+    await ctx.db.insert("sessionItems", { sessionId, itemId, discoveredAt: 1, collectedAt: 2 });
+    await ctx.db.insert("forensicRequests", { sessionId, forensicOutputId: outputId, requestedAtGameTime: 0, readyAtGameTime: 65, viewedAt: 3 });
     const playerId = await ctx.db.insert("sessionPlayers", { sessionId, authUserId: "player-1", nickname: "Detective", joinedAt: 1 });
     await ctx.db.insert("clueBoardNodes", {
       sessionId, type: "public_record", referenceId: "record/address", text: "Address record", x: 0, y: 0,
       createdByPlayerId: playerId, createdAt: 1, updatedAt: 1,
     });
-    return { culpritNpcId };
+    return { culpritNpcId, itemId, outputId, sessionId };
   });
 
   const player = t.withIdentity({ subject: "player-1" });
+  await player.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "item", referenceId: setup.itemId, x: 0, y: 0 });
+  await player.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "forensic", referenceId: setup.outputId, x: 0, y: 0 });
   await expect(player.mutation(api.caseClose.submit, {
     roomCode: "ABC123", culpritNpcId: setup.culpritNpcId, motiveExplanation: "A detailed motive that fits the theory.", weaponDescription: "Doorstop",
     evidenceIds: ["not-on-board"], evidenceExplanation: "An unowned record supports this theory.", methodExplanation: "A detailed method that fits the theory.",
@@ -71,10 +76,12 @@ test("case close grades privately from session-owned evidence", async () => {
     culpritNpcId: setup.culpritNpcId,
     motiveExplanation: "Mara wanted to conceal the stolen company money.",
     weaponDescription: "Cast-iron doorstop",
-    evidenceIds: ["record/address"],
+    evidenceIds: ["record/address", setup.itemId, setup.outputId],
     evidenceExplanation: "The address record ties Mara to the relevant place.",
     methodExplanation: "Mara struck the victim with the cast-iron doorstop.",
   });
+  const submitted = await t.run(async (ctx) => await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", setup.sessionId)).unique());
+  expect(submitted?.evidenceIds).toEqual(["record/address", "item/weapon", "lab/weapon"]);
   vi.useFakeTimers();
   await t.finishAllScheduledFunctions(vi.runAllTimers);
   vi.useRealTimers();

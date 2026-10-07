@@ -15,8 +15,10 @@ function formatTime(minutes: number) {
 export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const lab = useQuery(api.forensics.getLab, isLoaded && isSignedIn ? { roomCode } : "skip");
+  const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
   const requestTest = useMutation(api.forensics.request);
   const markViewed = useMutation(api.forensics.markViewed);
+  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const finishAction = useMutation(api.investigation.finishAction);
   const [working, setWorking] = useState("");
   const [now, setNow] = useState(0);
@@ -91,6 +93,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
             <ul className="mt-5 grid gap-3 md:grid-cols-2">
               {lab.tests.map((test) => {
                 const remaining = test.readyAtGameTime === undefined ? 0 : Math.max(0, test.readyAtGameTime - gameTime);
+                const pinned = boardNodes?.some((node) => node.type === "forensic" && node.referenceId === test.id) ?? false;
                 return (
                   <li className="border border-cyan-300/25 bg-[#0b1822] p-4 sm:p-5" key={test.id}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -127,6 +130,17 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
                         onClick={() => run(test.id, markViewed({ roomCode, forensicOutputId: test.id }))}
                         type="button"
                       >{working === test.id ? "Opening result..." : "View result"}</button>
+                    ) : null}
+                    {test.status === "viewed" ? (
+                      <button
+                        className="mt-4 min-h-11 border border-cyan-300/60 px-4 text-xs uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:opacity-45"
+                        disabled={Boolean(working) || pinned}
+                        onClick={() => {
+                          const count = boardNodes?.length ?? 0;
+                          run(test.id, createReference({ roomCode, type: "forensic", referenceId: test.id, x: 80 + (count % 4) * 220, y: 90 + (Math.floor(count / 4) % 4) * 180 }));
+                        }}
+                        type="button"
+                      >{pinned ? "Pinned to clueboard" : "Pin to clueboard"}</button>
                     ) : null}
                   </li>
                 );
