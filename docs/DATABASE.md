@@ -533,6 +533,7 @@ One active journey per player. Rows store the destination place, starting and co
 ### `roomActions`, `searchedRooms`, and `sessionItems`
 
 `roomActions` stores a player's timed move, search, or inspection. A player can have only one active travel or room action. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, and collection timestamps. Item description is returned to clients only after inspection; undiscovered items are not returned.
+Clueboard item references store only the item's ID and a discovery-safe label; creating them requires a matching `sessionItems` row.
 
 ### `sessionState`
 

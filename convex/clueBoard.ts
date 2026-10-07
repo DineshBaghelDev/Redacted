@@ -8,7 +8,7 @@ const MAX_EDGES = 200;
 const MAX_NOTE_LENGTH = 500;
 const MAX_LABEL_LENGTH = 80;
 const stringColor = v.union(v.literal("red"), v.literal("gold"), v.literal("blue"), v.literal("green"));
-const referenceType = v.union(v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"));
+const referenceType = v.union(v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"));
 const placeKinds = { home: "Residence", work: "Workplace", public: "Public place", bureau: "Bureau", lab: "Forensic lab" } as const;
 const placeAreas = { northside: "Northside", midtown: "Midtown", eastside: "Eastside" } as const;
 
@@ -35,7 +35,7 @@ export const getNodes = query({
   args: { roomCode: v.string() },
   returns: v.array(v.object({
     _id: v.id("clueBoardNodes"),
-    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record")),
+    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item")),
     referenceId: v.optional(v.string()),
     text: v.string(),
     x: v.number(),
@@ -115,7 +115,13 @@ export const createReferenceNode = mutation({
     if (nodes.length >= MAX_NODES) throw new Error("This board is full.");
 
     let text: string;
-    if (type === "npc") {
+    if (type === "item") {
+      const itemId = ctx.db.normalizeId("caseItems", referenceId);
+      const item = itemId ? await ctx.db.get(itemId) : null;
+      const discovered = itemId ? await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", itemId)).unique() : null;
+      if (!item || item.caseId !== session.caseId || !discovered) throw new Error("Find this item before pinning it.");
+      text = `${item.name}\nFound object`;
+    } else if (type === "npc") {
       const npcId = ctx.db.normalizeId("npcs", referenceId);
       const person = npcId ? await ctx.db.get(npcId) : null;
       if (!person || person.caseId !== session.caseId) throw new Error("That person is not part of this case.");

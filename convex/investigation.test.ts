@@ -36,6 +36,7 @@ test("partners search, inspect, and collect shared items without revealing hidde
   await one.mutation(api.sessions.start, { roomCode });
   expect((await one.query(api.world.getMap, { roomCode }))?.places[0].hasInterior).toBe(true);
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.currentRoomId).toBe(ids.entrance);
+  await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "item", referenceId: ids.itemId, x: 0, y: 0 })).rejects.toThrow("Find this item");
   await expect(one.mutation(api.investigation.collectItem, { roomCode, itemId: ids.itemId })).rejects.toThrow("not available");
   expect(await one.mutation(api.investigation.moveToRoom, { roomCode, roomId: ids.office })).toEqual({ completeGameTime: 1 });
   await expect(one.mutation(api.investigation.searchRoom, { roomCode })).rejects.toThrow("Finish your current action");
@@ -48,6 +49,8 @@ test("partners search, inspect, and collect shared items without revealing hidde
   await one.mutation(api.investigation.finishAction, { roomCode });
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.items[0]).toMatchObject({ name: "Note", collected: false });
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.items[0]?.description).toBeUndefined();
+  await one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "item", referenceId: ids.itemId, x: 0, y: 0 });
+  expect((await two.query(api.clueBoard.getNodes, { roomCode }))[0].text).toBe("Note\nFound object");
   await expect(one.mutation(api.investigation.searchRoom, { roomCode })).rejects.toThrow("already been searched");
   await one.mutation(api.investigation.collectItem, { roomCode, itemId: ids.itemId });
   expect((await two.query(api.investigation.getPlace, { roomCode }))?.items[0]).toMatchObject({ name: "Note", collected: true });

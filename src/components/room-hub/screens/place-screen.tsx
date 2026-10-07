@@ -9,11 +9,13 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const place = useQuery(api.investigation.getPlace, isLoaded && isSignedIn ? { roomCode } : "skip");
+  const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
   const moveToRoom = useMutation(api.investigation.moveToRoom);
   const searchRoom = useMutation(api.investigation.searchRoom);
   const inspectItem = useMutation(api.investigation.inspectItem);
   const collectItem = useMutation(api.investigation.collectItem);
   const finishAction = useMutation(api.investigation.finishAction);
+  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const [working, setWorking] = useState(false);
   const [now, setNow] = useState(0);
   const [error, setError] = useState("");
@@ -43,6 +45,11 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
     void action.catch((caught: unknown) => {
       setError(caught instanceof Error ? caught.message : "That action could not be completed.");
     }).finally(() => setWorking(false));
+  }
+
+  function pinItem(itemId: Id<"caseItems">) {
+    const count = boardNodes?.length ?? 0;
+    run(createReference({ roomCode, type: "item", referenceId: itemId, x: 80 + (count % 4) * 220, y: 90 + (Math.floor(count / 4) % 4) * 180 }));
   }
 
   if (place === undefined) return <PlaceMessage message="Opening this place..." onBack={onBack} />;
@@ -112,12 +119,12 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
 
             <h4 className="mt-8 border-t border-cyan-300/25 pt-5 text-xs uppercase tracking-[0.2em] text-cyan-100/55">Found here</h4>
             {here.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">{here.map((item) => (
-              <ItemCard key={item.id} item={item} busy={working || Boolean(place.action)} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} />
+              <ItemCard key={item.id} item={item} busy={working || Boolean(place.action)} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onPin={() => pinItem(item.id)} />
             ))}</div> : <p className="mt-3 text-sm text-cyan-100/55">{currentRoom?.searched ? "Nothing found here." : "Search this room to see what is here."}</p>}
 
             <h4 className="mt-8 border-t border-cyan-300/25 pt-5 text-xs uppercase tracking-[0.2em] text-cyan-100/55">Shared inventory · {inventory.length}</h4>
             {inventory.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">{inventory.map((item) => (
-              <ItemCard key={item.id} item={item} busy={working || Boolean(place.action)} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} />
+              <ItemCard key={item.id} item={item} busy={working || Boolean(place.action)} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onPin={() => pinItem(item.id)} />
             ))}</div> : <p className="mt-3 text-sm text-cyan-100/55">Items you collect will appear here for both investigators.</p>}
             {error ? <p className="mt-5 border border-red-300/60 bg-red-950/70 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
           </div>
@@ -127,11 +134,13 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   );
 }
 
-function ItemCard({ item, busy, onInspect, onCollect }: {
+function ItemCard({ item, busy, pinned, onInspect, onCollect, onPin }: {
   item: { id: Id<"caseItems">; name: string; description?: string; collectible: boolean; collected: boolean; inspected: boolean };
   busy: boolean;
+  pinned: boolean;
   onInspect: () => void;
   onCollect?: () => void;
+  onPin: () => void;
 }) {
   return (
     <article className="border border-cyan-300/25 bg-[#0b1822] p-4">
@@ -140,6 +149,7 @@ function ItemCard({ item, busy, onInspect, onCollect }: {
       <div className="mt-4 flex flex-wrap gap-2">
         {!item.inspected ? <button className="min-h-10 border border-cyan-300/60 px-3 text-xs uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:opacity-45" disabled={busy} onClick={onInspect} type="button">Inspect · 2 min</button> : null}
         {onCollect && item.collectible && !item.collected ? <button className="min-h-10 border border-yellow-200/70 bg-yellow-200/10 px-3 text-xs uppercase text-yellow-100 hover:bg-yellow-200/20 disabled:opacity-45" disabled={busy} onClick={onCollect} type="button">Collect</button> : null}
+        <button className="min-h-10 border border-cyan-300/60 px-3 text-xs uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:opacity-45" disabled={busy || pinned} onClick={onPin} type="button">{pinned ? "Pinned to clueboard" : "Pin to clueboard"}</button>
         {item.collected ? <span className="self-center text-xs uppercase text-yellow-200/75">In shared inventory</span> : null}
       </div>
     </article>
