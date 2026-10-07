@@ -18,6 +18,19 @@ export async function ensureCaseCctv(ctx: MutationCtx, caseId: Id<"cases">, gene
   if (!isObject(draft?.output) || !Array.isArray(draft.output.cameras) || !Array.isArray(draft.output.evidence)) {
     throw new Error("This case has no valid camera records.");
   }
+  const timelineDraft = await ctx.db.query("generationDrafts")
+    .withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId).eq("stage", "timeline"))
+    .unique();
+  const timeline = timelineDraft?.output;
+  const windowTimes = draft.output.evidence.flatMap((record) => isObject(record) && record.type === "cctv" && typeof record.time === "number"
+    ? [record.time, typeof record.end === "number" ? record.end : record.time]
+    : []);
+  if (isObject(timeline) && typeof timeline.windowStart === "number" && typeof timeline.windowEnd === "number") {
+    windowTimes.push(timeline.windowStart, timeline.windowEnd);
+  }
+  if (!windowTimes.length || windowTimes.some((time) => !Number.isFinite(time))) throw new Error("This case has no valid camera window.");
+  const windowStart = Math.min(...windowTimes);
+  const windowEnd = Math.max(...windowTimes);
 
   const places = [];
   for await (const place of ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) places.push(place);
@@ -49,8 +62,6 @@ export async function ensureCaseCctv(ctx: MutationCtx, caseId: Id<"cases">, gene
       throw new Error("This case has an invalid camera.");
     }
     const records = recordsByCamera.get(value.id) ?? [];
-    const times = records.flatMap((record) => typeof record.time === "number" ? [record.time, typeof record.end === "number" ? record.end : record.time] : []);
-    if (!times.length) throw new Error(`Camera ${value.id} has no case window.`);
     const street = typeof value.streetId === "string" ? streetIds.get(value.streetId) : undefined;
     const cameraId = await ctx.db.insert("cctvCameras", {
       caseId,
@@ -62,8 +73,8 @@ export async function ensureCaseCctv(ctx: MutationCtx, caseId: Id<"cases">, gene
       name: value.name,
       description: value.name,
       faulty: value.faulty,
-      startTime: Math.min(...times),
-      endTime: Math.max(...times),
+      startTime: windowStart,
+      endTime: windowEnd,
     });
 
     for (const record of records) {

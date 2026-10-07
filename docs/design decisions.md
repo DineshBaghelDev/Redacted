@@ -8,6 +8,7 @@
 - The real-time speed multiplier remains server-owned and adjustable for playtesting without changing canonical action costs.
 - The first implementation applies this model to city travel. One real second currently represents one game minute; this constant is tuned after playtesting.
 - Travel changes each detective's location only on arrival. Bureau terminal access follows that location and is unavailable during a journey.
+- A camera without observations is still part of the case. Its timeline covers the full case window and honestly returns no rows for quiet periods.
 
 ## 2026-10-07 — Confirm irreversible room exit
 

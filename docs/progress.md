@@ -6,6 +6,7 @@
 - Kept the real-time speed multiplier adjustable for playtesting while preserving the documented in-game minute costs.
 - Added the first timed action: detectives can choose any reachable city destination, travel concurrently along the shortest route, and arrive independently. The shared clock pauses after the last journey; stale journeys settle on return.
 - The map shows each detective's location and journey progress. Bureau CCTV and public-record reads now require that detective to be physically at the bureau and not travelling; away detectives see a route back to the map.
+- Publishing the checked hand-written case exposed cameras with no observations. The publisher now keeps those cameras across the case window instead of rejecting the case.
 
 ## 2026-10-07 — Stale room recovery
 
