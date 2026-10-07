@@ -161,11 +161,12 @@ Final-report weapon item IDs must come from the shared collected inventory; text
 ### CCTV
 
 ```ts
-cctv.inspectWindow({ sessionId, cameraId, startTime, endTime })
+cases.getCctv({ roomCode })
+cases.getCctvWindow({ roomCode, cameraId, minute })
+cases.startCctvReview({ roomCode, cameraId, minute })
 ```
 
-This advances game time and returns/stores access to matching pre-generated records.
-CCTV review requires access to the relevant security/CCTV access point. Returned records are textual/data only and never visual media.
+Starting a review occupies the detective for 5 game minutes. The window query returns `available` or `pending` with no records until the shared action completes, then returns the stored records as `ready`. The selected minute covers 20 minutes on each side; a completed window can be reopened freely by either partner. CCTV review requires bureau-terminal access, and only reviewed records can be pinned. Records are textual/data only and never visual media.
 
 ### Devices and records
 

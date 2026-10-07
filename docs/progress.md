@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-08 — Timed CCTV review
+
+- Reviewing a camera time window now occupies a detective for 5 shared game minutes. Results remain server-hidden until completion, and a completed window is available to both partners without another charge.
+- The bureau terminal shows available, in-progress, and reviewed states. Direct clueboard pinning cannot bypass a completed review by guessing a CCTV record ID.
+
 ## 2026-10-07 — Forensic lab requests and results
 
 - Added shared lab requests for tests backed by collected objects, searched rooms, or the autopsy. Submission occupies the detective for 5 game minutes; the frozen turnaround keeps the shared clock running and overlaps other work.

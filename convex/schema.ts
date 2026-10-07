@@ -345,7 +345,7 @@ export default defineSchema({
   roomActions: defineTable({
     sessionId: v.id("sessions"),
     playerId: v.id("sessionPlayers"),
-    kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic")),
+    kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic"), v.literal("cctv")),
     roomId: v.id("rooms"),
     itemId: v.optional(v.id("caseItems")),
     startGameTime: v.number(),
@@ -378,6 +378,12 @@ export default defineSchema({
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_sessionId_and_forensicOutputId", ["sessionId", "forensicOutputId"]),
+  cctvReviews: defineTable({
+    sessionId: v.id("sessions"),
+    cameraId: v.id("cctvCameras"),
+    minute: v.number(),
+    completeGameTime: v.number(),
+  }).index("by_sessionId_and_cameraId_and_minute", ["sessionId", "cameraId", "minute"]),
   clueBoardNodes: defineTable({
     sessionId: v.id("sessions"),
     type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic")),

@@ -493,20 +493,35 @@ test("a lobby keeps the selected passed case", async () => {
     caseTitle: "The Selected Case",
     start: 120,
     end: 305,
-    cameras: [{ id: "cam:station", name: "Union Station · concourse", faulty: false }],
+    cameras: [{ id: "cam:station", name: "Union Station · concourse", faulty: false, start: 120, end: 305 }],
   });
   expect(await user.query(api.cases.getCctvWindow, {
     roomCode: created.roomCode,
     cameraId: "cam:station",
     minute: 120,
-  })).toEqual([{
+  })).toEqual({ status: "available", records: [] });
+  await user.mutation(api.cases.startCctvReview, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 });
+  expect(await user.query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).toMatchObject({ status: "pending", records: [] });
+  await t.run(async (ctx) => ctx.db.patch(created.sessionId, { clockStartedAt: Date.now() - 6_000 }));
+  await user.mutation(api.investigation.finishAction, { roomCode: created.roomCode });
+  expect(await t.run(async (ctx) => {
+    const session = await ctx.db.get(created.sessionId);
+    return { gameTime: session?.gameTime, clockStartedAt: session?.clockStartedAt };
+  })).toEqual({ gameTime: 5, clockStartedAt: undefined });
+  expect(await user.query(api.cases.getCctvWindow, {
+    roomCode: created.roomCode,
+    cameraId: "cam:station",
+    minute: 120,
+  })).toEqual({ status: "ready", records: [{
       id: "cctv/1",
       cameraId: "cam:station",
       start: 120,
       end: 125,
       summary: "Tall person in a dark coat: crosses the concourse.",
       kind: "pass",
-  }]);
+  }] });
+  await t.run(async (ctx) => ctx.db.insert("sessionPlayers", { sessionId: created.sessionId, authUserId: "player-2", nickname: "Partner", joinedAt: Date.now() }));
+  expect((await t.withIdentity({ subject: "player-2" }).query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 }))?.status).toBe("ready");
   await t.run(async (ctx) => {
     const session = await ctx.db.get(created.sessionId);
     const camera = session?.caseId
@@ -538,11 +553,14 @@ test("a lobby keeps the selected passed case", async () => {
       kind: "stay",
     });
   });
-  expect(await user.query(api.cases.getCctvWindow, {
+  await user.mutation(api.cases.startCctvReview, { roomCode: created.roomCode, cameraId: "cam:station", minute: 300 });
+  await t.run(async (ctx) => ctx.db.patch(created.sessionId, { clockStartedAt: Date.now() - 6_000 }));
+  await user.mutation(api.investigation.finishAction, { roomCode: created.roomCode });
+  expect((await user.query(api.cases.getCctvWindow, {
     roomCode: created.roomCode,
     cameraId: "cam:station",
     minute: 300,
-  })).toEqual(expect.arrayContaining([expect.objectContaining({ id: "late-record", start: 300, end: 305 })]));
+  }))?.records).toEqual(expect.arrayContaining([expect.objectContaining({ id: "late-record", start: 300, end: 305 })]));
   await t.run(async (ctx) => {
     const job = await ctx.db.get(generationJobId);
     if (job) await ctx.db.patch(job._id, { status: "failed" });
@@ -636,6 +654,7 @@ test("a lobby keeps the selected passed case", async () => {
   expect(await stranger.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toBeNull();
   expect(await stranger.query(api.cases.getCctv, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).toBeNull();
+  await expect(stranger.mutation(api.cases.startCctvReview, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).rejects.toThrow("Start the investigation first");
   expect(await stranger.query(api.world.getMap, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.npcs.list, { roomCode: created.roomCode })).toBeNull();
 }, 15_000);

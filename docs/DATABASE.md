@@ -396,6 +396,19 @@ Readiness is derived from the shared game clock; `viewedAt` records the explicit
 }
 ```
 
+### `cctvReviews`
+
+```ts
+{
+  sessionId: Id<"sessions">,
+  cameraId: Id<"cctvCameras">,
+  minute: number,
+  completeGameTime: number,
+}
+```
+
+One row per selected camera window in a shared session. The frozen records remain in `cctvRecords`; queries expose them only after the review's game-time completion.
+
 ## Vehicles
 
 ### `vehicles`
@@ -534,7 +547,7 @@ One active journey per player. Rows store the destination place, starting and co
 
 ### `roomActions`, `searchedRooms`, and `sessionItems`
 
-`roomActions` stores a player's timed move, search, or inspection. A player can have only one active travel or room action. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, and collection timestamps. Item description is returned to clients only after inspection; undiscovered items are not returned.
+`roomActions` stores a player's timed move, search, inspection, lab submission, or CCTV review. A player can have only one active travel or room action. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, and collection timestamps. Item description is returned to clients only after inspection; undiscovered items are not returned.
 Clueboard item references store only the item's ID and a discovery-safe label; creating them requires a matching `sessionItems` row.
 
 ### `sessionState`

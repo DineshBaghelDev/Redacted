@@ -1,10 +1,10 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import type { Id } from "./_generated/dataModel";
-import { query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { crimeCoreSchema } from "./generation/core/crimes";
 import { castSchema } from "./generation/core/schemas";
-import { getBureauRoomMember, getRoomMember, requireUserId } from "./lib/auth";
+import { getBureauRoomMember, getPlayingRoomMember, getRoomMember, requireUserId } from "./lib/auth";
 import { ensureCaseCctv } from "./lib/publishCctv";
 import { ensureCaseDevices } from "./lib/publishDevices";
 import { ensureCaseForensics } from "./lib/publishForensics";
@@ -12,6 +12,7 @@ import { ensureCaseNarrative } from "./lib/publishNarrative";
 import { ensureCaseItems } from "./lib/publishItems";
 import { ensureCaseRecords } from "./lib/publishRecords";
 import { ensureCaseWorld } from "./lib/publishWorld";
+import { entranceRoomId, settleActions } from "./world";
 
 type Brief = {
   title?: unknown;
@@ -38,6 +39,8 @@ const cctvData = v.object({
     id: v.string(),
     name: v.string(),
     faulty: v.boolean(),
+    start: v.number(),
+    end: v.number(),
   })),
 });
 
@@ -131,13 +134,14 @@ async function ensureCaseSolution(ctx: MutationCtx, caseId: Id<"cases">, generat
 }
 
 async function loadCctv(ctx: QueryCtx, roomCode: string) {
-  const member = await getBureauRoomMember(ctx, roomCode);
+  const member = await getBureauRoomMember(ctx, roomCode, "cctv");
   if (!member?.session.caseId) return null;
   const playableCase = await ctx.db.get(member.session.caseId);
   if (!playableCase) return null;
   const cameras = await ctx.db.query("cctvCameras").withIndex("by_caseId", (q) => q.eq("caseId", playableCase._id)).take(128);
   if (!cameras.length) return null;
   return {
+    member,
     caseTitle: playableCase.title,
     start: Math.min(...cameras.map((camera) => camera.startTime)),
     end: Math.max(...cameras.map((camera) => camera.endTime)),
@@ -242,31 +246,79 @@ export const getCctv = query({
       caseTitle: cctv.caseTitle,
       start: cctv.start,
       end: cctv.end,
-      cameras: cctv.cameras.map((camera) => ({ id: camera.sourceId, name: camera.name, faulty: camera.faulty })),
+      cameras: cctv.cameras.map((camera) => ({ id: camera.sourceId, name: camera.name, faulty: camera.faulty, start: camera.startTime, end: camera.endTime })),
     } : null;
   },
 });
 
 export const getCctvWindow = query({
   args: { roomCode: v.string(), cameraId: v.string(), minute: v.number() },
-  returns: v.union(v.null(), v.array(cctvRecord)),
+  returns: v.union(v.null(), v.object({
+    status: v.union(v.literal("available"), v.literal("pending"), v.literal("ready")),
+    completeGameTime: v.optional(v.number()),
+    records: v.array(cctvRecord),
+  })),
   handler: async (ctx, { roomCode, cameraId, minute }) => {
     const cctv = await loadCctv(ctx, roomCode);
     const camera = cctv?.cameras.find((item) => item.sourceId === cameraId);
-    if (!camera || !Number.isFinite(minute)) return null;
+    if (!camera || !Number.isInteger(minute) || minute < camera.startTime || minute > camera.endTime) return null;
+    const review = await ctx.db.query("cctvReviews")
+      .withIndex("by_sessionId_and_cameraId_and_minute", (q) => q.eq("sessionId", cctv!.member.session._id).eq("cameraId", camera._id).eq("minute", minute))
+      .unique();
+    if (!review) return { status: "available" as const, records: [] };
+    if (review.completeGameTime > (cctv!.member.session.gameTime ?? 0)) {
+      return { status: "pending" as const, completeGameTime: review.completeGameTime, records: [] };
+    }
     const records = [];
     for await (const record of ctx.db
       .query("cctvRecords")
       .withIndex("by_cameraId_and_startTime", (q) => q.eq("cameraId", camera._id).lte("startTime", minute + 20))) {
       if (record.endTime >= minute - 20) records.push(record);
     }
-    return records.map((record) => ({
+    return { status: "ready" as const, records: records.map((record) => ({
         id: record.evidenceId,
         cameraId,
         start: record.startTime,
         end: record.endTime,
         summary: record.description,
         kind: record.kind,
-      }));
+      })) };
+  },
+});
+
+export const startCctvReview = mutation({
+  args: { roomCode: v.string(), cameraId: v.string(), minute: v.number() },
+  returns: v.object({ completeGameTime: v.number() }),
+  handler: async (ctx, { roomCode, cameraId, minute }) => {
+    const playing = await getPlayingRoomMember(ctx, roomCode);
+    if (!playing?.session.caseId) throw new Error("Start the investigation first.");
+    const now = Date.now();
+    const settled = await settleActions(ctx, playing.session, now);
+    const member = await getBureauRoomMember(ctx, roomCode);
+    if (!member) throw new Error("Visit the bureau camera terminal first.");
+    const camera = await ctx.db.query("cctvCameras")
+      .withIndex("by_caseId_and_sourceId", (q) => q.eq("caseId", member.session.caseId!).eq("sourceId", cameraId))
+      .unique();
+    if (!camera || !Number.isInteger(minute) || minute < camera.startTime || minute > camera.endTime) throw new Error("Choose a valid camera time.");
+    const existing = await ctx.db.query("cctvReviews")
+      .withIndex("by_sessionId_and_cameraId_and_minute", (q) => q.eq("sessionId", member.session._id).eq("cameraId", camera._id).eq("minute", minute))
+      .unique();
+    if (existing) throw new Error("This window is already being reviewed or has been reviewed.");
+    let bureauId = member.player.currentPlaceId;
+    if (!bureauId) {
+      const playableCase = await ctx.db.get(member.session.caseId!);
+      if (playableCase?.cityId) {
+        for await (const place of ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) {
+          if (place.kind === "bureau") { bureauId = place._id; break; }
+        }
+      }
+    }
+    const roomId = member.player.currentRoomId ?? (bureauId ? await entranceRoomId(ctx, bureauId) : undefined);
+    if (!roomId) throw new Error("The bureau terminal is unavailable.");
+    if (settled.activeCount === 0) await ctx.db.patch(member.session._id, { gameTime: settled.gameTime, clockStartedAt: now });
+    const completeGameTime = settled.gameTime + 5;
+    await ctx.db.insert("cctvReviews", { sessionId: member.session._id, cameraId: camera._id, minute, completeGameTime });
+    await ctx.db.insert("roomActions", { sessionId: member.session._id, playerId: member.player._id, kind: "cctv", roomId, startGameTime: settled.gameTime, completeGameTime, createdAt: now });
+    return { completeGameTime };
   },
 });

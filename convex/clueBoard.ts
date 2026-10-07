@@ -161,6 +161,12 @@ export const createReferenceNode = mutation({
       if (!record) throw new Error("That camera record is not part of this case.");
       const camera = await ctx.db.get(record.cameraId);
       if (!camera || camera.caseId !== session.caseId) throw new Error("That camera record is unavailable.");
+      let reviewed = false;
+      for await (const window of ctx.db.query("cctvReviews")
+        .withIndex("by_sessionId_and_cameraId_and_minute", (q) => q.eq("sessionId", session._id).eq("cameraId", camera._id).gte("minute", record.startTime - 20).lte("minute", record.endTime + 20))) {
+        if (window.completeGameTime <= (session.gameTime ?? 0)) { reviewed = true; break; }
+      }
+      if (!reviewed) throw new Error("Review this camera record before pinning it.");
       text = `${camera.name}\n${record.description}`;
     }
 

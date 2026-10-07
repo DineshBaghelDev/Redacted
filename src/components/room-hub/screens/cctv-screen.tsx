@@ -17,17 +17,20 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
   const [chosenCameraId, setCameraId] = useState("");
   const [chosenMinute, setMinute] = useState<number | null>(null);
   const [pinning, setPinning] = useState("");
+  const [reviewing, setReviewing] = useState(false);
   const [error, setError] = useState("");
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
   const createReference = useMutation(api.clueBoard.createReferenceNode);
+  const startReview = useMutation(api.cases.startCctvReview);
 
   const cameraId = data?.cameras.some((camera) => camera.id === chosenCameraId)
     ? chosenCameraId
     : data?.cameras[0]?.id ?? "";
-  const minute = data && chosenMinute !== null && chosenMinute >= data.start && chosenMinute <= data.end
+  const chosenCamera = data?.cameras.find((item) => item.id === cameraId);
+  const minute = chosenCamera && chosenMinute !== null && chosenMinute >= chosenCamera.start && chosenMinute <= chosenCamera.end
     ? chosenMinute
-    : data ? Math.round((data.start + data.end) / 10) * 5 : 0;
-  const visibleRecords = useQuery(
+    : chosenCamera ? Math.min(chosenCamera.end, Math.max(chosenCamera.start, Math.round((chosenCamera.start + chosenCamera.end) / 10) * 5)) : 0;
+  const visibleWindow = useQuery(
     api.cases.getCctvWindow,
     data && cameraId ? { roomCode, cameraId, minute } : "skip",
   );
@@ -36,7 +39,15 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
   if (!data) return <CctvMessage message="Camera records are not available for this case." onBack={onBack} />;
 
   const camera = data.cameras.find((item) => item.id === cameraId)!;
-  const records = camera.faulty ? [] : visibleRecords ?? [];
+  const records = visibleWindow?.status === "ready" ? visibleWindow.records : [];
+
+  function reviewWindow() {
+    setReviewing(true);
+    setError("");
+    void startReview({ roomCode, cameraId, minute }).catch((caught: unknown) => {
+      setError(caught instanceof Error ? caught.message : "Could not review this camera window.");
+    }).finally(() => setReviewing(false));
+  }
 
   function pinRecord(referenceId: string) {
     const count = boardNodes?.length ?? 0;
@@ -110,7 +121,7 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
           <div className="mt-6 border border-cyan-300/20 bg-[#050b12] p-4 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <label className="text-xs uppercase tracking-[0.2em] text-cyan-100/55" htmlFor="cctv-time">
-                Drag to scan the timeline
+                Choose a time to review
               </label>
               <output className="font-mono text-lg text-yellow-200" htmlFor="cctv-time" aria-live="polite">
                 {formatTime(minute)}
@@ -122,23 +133,29 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
                 aria-valuetext={formatTime(minute)}
                 className="relative z-10 h-2 w-full cursor-ew-resize appearance-none bg-cyan-950 accent-yellow-300"
                 id="cctv-time"
-                max={data.end}
-                min={data.start}
+                max={camera.end}
+                min={camera.start}
                 onChange={(event) => setMinute(Number(event.target.value))}
-                step={5}
+                step={1}
                 type="range"
                 value={minute}
               />
-              <span className="absolute bottom-0 left-0 font-mono text-[10px] text-cyan-100/40">{formatTime(data.start)}</span>
-              <span className="absolute bottom-0 right-0 font-mono text-[10px] text-cyan-100/40">{formatTime(data.end)}</span>
+              <span className="absolute bottom-0 left-0 font-mono text-[10px] text-cyan-100/40">{formatTime(camera.start)}</span>
+              <span className="absolute bottom-0 right-0 font-mono text-[10px] text-cyan-100/40">{formatTime(camera.end)}</span>
             </div>
-            <p className="mt-3 text-xs text-cyan-100/45">Showing records within 20 minutes of the selected time.</p>
+            <p className="mt-3 text-xs text-cyan-100/45">Each review covers 20 minutes before and after the selected time.</p>
+            {!camera.faulty && visibleWindow?.status === "available" ? (
+              <button className="mt-4 min-h-11 border border-yellow-200 px-4 text-sm uppercase text-yellow-200 hover:bg-yellow-200 hover:text-[#02050a] disabled:opacity-50" disabled={reviewing} onClick={reviewWindow} type="button">
+                {reviewing ? "Starting review..." : "Review window · 5 min"}
+              </button>
+            ) : null}
+            {visibleWindow?.status === "pending" ? <p className="mt-4 text-sm uppercase text-yellow-200" role="status">Review in progress. Records will appear when it finishes.</p> : null}
           </div>
 
           <div className="mt-5">
             <div className="flex items-center justify-between gap-3">
               <h4 className="text-sm uppercase tracking-[0.18em] text-cyan-100/65">Recorded activity</h4>
-              <span className="font-mono text-xs text-cyan-100/40">{visibleRecords === undefined ? "Checking..." : `${records.length} ${records.length === 1 ? "record" : "records"}`}</span>
+              <span className="font-mono text-xs text-cyan-100/40">{visibleWindow?.status === "ready" ? `${records.length} ${records.length === 1 ? "record" : "records"}` : "Not reviewed"}</span>
             </div>
 
             {camera.faulty ? (
@@ -146,9 +163,13 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
                 <p className="uppercase">No signal</p>
                 <p className="mt-2 text-sm text-red-100/60">This camera was not recording during the case window.</p>
               </div>
-            ) : visibleRecords === undefined ? (
+            ) : visibleWindow === undefined ? (
               <div className="mt-3 border border-cyan-300/20 p-6 text-center text-sm uppercase text-cyan-100/45">
                 Checking this time window...
+              </div>
+            ) : visibleWindow?.status === "available" || visibleWindow?.status === "pending" ? (
+              <div className="mt-3 border border-cyan-300/20 p-6 text-center text-sm uppercase text-cyan-100/45">
+                {visibleWindow.status === "pending" ? "Review in progress." : "Review this time window to see its records."}
               </div>
             ) : records.length ? (
               <ul className="mt-3 grid gap-3 lg:grid-cols-2">

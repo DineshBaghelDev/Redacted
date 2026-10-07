@@ -197,11 +197,12 @@ If progressive/multiple searches per room are later desired, add deterministic s
 
 ## CCTV
 
-### `inspectCctvWindow(sessionId, cameraId, start, end)`
+### `cases.startCctvReview(roomCode, cameraId, minute)` / `cases.getCctvWindow(roomCode, cameraId, minute)`
 
-- validate camera access and time range,
-- charge fixed action time,
-- return matching pre-generated CCTV records,
+- validate bureau access, camera, and selected time,
+- start a fixed 5-minute action for the selected 40-minute window,
+- withhold matching pre-generated CCTV records until the action completes,
+- share completed reviews with both players,
 - never fabricate missing footage.
 
 CCTV output is textual/data only and never visual media.

@@ -101,6 +101,14 @@ test("room partners share notes, positions, and colored strings", async () => {
   const record = await player.mutation(api.clueBoard.createReferenceNode, {
     roomCode: "ABC123", type: "public_record", referenceId: "record/address", x: 20, y: 220,
   });
+  await expect(player.mutation(api.clueBoard.createReferenceNode, {
+    roomCode: "ABC123", type: "cctv", referenceId: "cctv/station/1", x: 240, y: 220,
+  })).rejects.toThrow("Review this camera record");
+  await t.run(async (ctx) => {
+    const session = await ctx.db.query("sessions").withIndex("by_roomCode", (q) => q.eq("roomCode", "ABC123")).unique();
+    const camera = await ctx.db.query("cctvCameras").withIndex("by_caseId", (q) => q.eq("caseId", session!.caseId!)).unique();
+    await ctx.db.insert("cctvReviews", { sessionId: session!._id, cameraId: camera!._id, minute: 120, completeGameTime: 0 });
+  });
   const cctv = await player.mutation(api.clueBoard.createReferenceNode, {
     roomCode: "ABC123", type: "cctv", referenceId: "cctv/station/1", x: 240, y: 220,
   });

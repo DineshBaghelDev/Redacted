@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-10-08 — Camera records require a deliberate review
+
+- Choosing a camera and time does not reveal records. A 5-minute review covers 20 minutes either side of that time and is shared after completion.
+- Reopening the exact reviewed window is free. CCTV reference cards still require bureau access and now require the record to fall inside a completed review.
+- The terminal keeps its textual timeline; CCTV has no footage, stills, or thumbnails.
+
 ## 2026-10-07 — Lab turnaround on the shared clock
 
 - A submitted lab test takes 5 minutes of the detective's time, then its frozen turnaround continues on the shared clock. Ready time includes both costs. Concurrent detective actions overlap instead of adding minutes.

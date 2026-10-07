@@ -39,11 +39,12 @@ export async function getPlayingRoomMember(ctx: DbCtx, roomCode: string) {
 }
 
 /** Bureau terminals are available only to a detective physically at the bureau. */
-export async function getBureauRoomMember(ctx: DbCtx, roomCode: string) {
+export async function getBureauRoomMember(ctx: DbCtx, roomCode: string, allowedActionKind?: "cctv") {
   const member = await getPlayingRoomMember(ctx, roomCode);
   if (!member) return null;
   if (await ctx.db.query("travelActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique()) return null;
-  if (await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique()) return null;
+  const action = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique();
+  if (action && action.kind !== allowedActionKind) return null;
   if (!member.player.currentPlaceId) return member; // Pre-clock rooms began at the bureau.
   const place = await ctx.db.get(member.player.currentPlaceId);
   return place?.kind === "bureau" ? member : null;
