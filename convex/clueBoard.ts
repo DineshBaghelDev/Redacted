@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import { getRoomMember } from "./lib/auth";
+import { getBureauRoomMember, getRoomMember } from "./lib/auth";
 
 const MAX_NODES = 100;
 const MAX_EDGES = 200;
@@ -113,6 +113,10 @@ export const createReferenceNode = mutation({
     const existing = nodes.find((node) => node.type === type && node.referenceId === referenceId);
     if (existing) return existing._id;
     if (nodes.length >= MAX_NODES) throw new Error("This board is full.");
+
+    if ((type === "public_record" || type === "cctv") && !(await getBureauRoomMember(ctx, roomCode))) {
+      throw new Error("Use the bureau terminal to pin this record.");
+    }
 
     let text: string;
     if (type === "item") {

@@ -6,6 +6,7 @@
 - Search reveals only frozen case items in that room. Discovered items, inspected descriptions, searched rooms, and collected inventory are shared. Hidden items remain unavailable until a legitimate search.
 - Added a responsive Explore screen with room navigation, action progress, local finds, and shared inventory, reachable from the city map or the away-from-bureau notice.
 - Discovered objects can now be pinned to the shared clueboard. Pinning is refused until the team finds the object and never reveals its description early.
+- Closed a clueboard location bypass: public-record and CCTV cards can only be created while the detective has bureau-terminal access.
 - Published the checked hand-written case in the development deployment and verified a two-player replay/travel backend flow. Browser playthrough remains to be checked.
 
 ## 2026-10-07 — Continuous multiplayer clock decision

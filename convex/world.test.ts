@@ -48,6 +48,7 @@ test("partners travel in parallel and the shared clock pauses after the last jou
   expect(await one.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "hospital" })).toEqual({ completeGameTime: 8 });
   expect(await one.query(api.publicRecords.search, { roomCode: "ABC123", search: "" })).toBeNull();
   expect(await one.query(api.cases.getCctv, { roomCode: "ABC123" })).toBeNull();
+  await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "public_record", referenceId: "record/test", x: 0, y: 0 })).rejects.toThrow("Use the bureau terminal");
   expect(await two.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "station" })).toEqual({ completeGameTime: 5 });
   await expect(one.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "station" })).rejects.toThrow("Finish your current action");
   vi.advanceTimersByTime(5_000);
