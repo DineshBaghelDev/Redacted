@@ -65,7 +65,8 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   const actionLabel = place.action?.kind === "move" ? `Moving to ${actionRoom?.name ?? "room"}`
     : place.action?.kind === "search" ? `Searching ${actionRoom?.name ?? "room"}`
       : place.action?.kind === "forensic" ? "Submitting lab test"
-        : place.action?.kind === "cctv" ? "Reviewing camera records" : "Inspecting item";
+        : place.action?.kind === "cctv" ? "Reviewing camera records"
+          : place.action?.kind === "records" ? "Searching public records" : "Inspecting item";
 
   return (
     <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#080b12] text-cyan-50">

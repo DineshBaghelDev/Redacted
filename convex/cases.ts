@@ -12,7 +12,7 @@ import { ensureCaseNarrative } from "./lib/publishNarrative";
 import { ensureCaseItems } from "./lib/publishItems";
 import { ensureCaseRecords } from "./lib/publishRecords";
 import { ensureCaseWorld } from "./lib/publishWorld";
-import { entranceRoomId, settleActions } from "./world";
+import { bureauRoomId, settleActions } from "./world";
 
 type Brief = {
   title?: unknown;
@@ -304,16 +304,7 @@ export const startCctvReview = mutation({
       .withIndex("by_sessionId_and_cameraId_and_minute", (q) => q.eq("sessionId", member.session._id).eq("cameraId", camera._id).eq("minute", minute))
       .unique();
     if (existing) throw new Error("This window is already being reviewed or has been reviewed.");
-    let bureauId = member.player.currentPlaceId;
-    if (!bureauId) {
-      const playableCase = await ctx.db.get(member.session.caseId!);
-      if (playableCase?.cityId) {
-        for await (const place of ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) {
-          if (place.kind === "bureau") { bureauId = place._id; break; }
-        }
-      }
-    }
-    const roomId = member.player.currentRoomId ?? (bureauId ? await entranceRoomId(ctx, bureauId) : undefined);
+    const roomId = await bureauRoomId(ctx, member.session.caseId!, member.player);
     if (!roomId) throw new Error("The bureau terminal is unavailable.");
     if (settled.activeCount === 0) await ctx.db.patch(member.session._id, { gameTime: settled.gameTime, clockStartedAt: now });
     const completeGameTime = settled.gameTime + 5;

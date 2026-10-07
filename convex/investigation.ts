@@ -24,7 +24,7 @@ export const getPlace = query({
     placeName: v.string(),
     currentRoomId: v.union(v.null(), v.id("rooms")),
     rooms: v.array(v.object({ id: v.id("rooms"), name: v.string(), floor: v.number(), searchable: v.boolean(), searched: v.boolean(), adjacent: v.boolean() })),
-    action: v.union(v.null(), v.object({ kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic"), v.literal("cctv")), roomId: v.id("rooms"), startGameTime: v.number(), completeGameTime: v.number() })),
+    action: v.union(v.null(), v.object({ kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic"), v.literal("cctv"), v.literal("records")), roomId: v.id("rooms"), startGameTime: v.number(), completeGameTime: v.number() })),
     items: v.array(v.object({ id: v.id("caseItems"), name: v.string(), description: v.optional(v.string()), roomId: v.id("rooms"), collectible: v.boolean(), collected: v.boolean(), inspected: v.boolean() })),
     clock: v.object({ gameTime: v.number(), clockStartedAt: v.union(v.null(), v.number()), minuteMs: v.number() }),
   })),

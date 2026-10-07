@@ -46,6 +46,17 @@ export async function entranceRoomId(ctx: MutationCtx, placeId: Id<"places">) {
     : undefined;
 }
 
+export async function bureauRoomId(ctx: MutationCtx, caseId: Id<"cases">, player: Pick<Doc<"sessionPlayers">, "currentPlaceId" | "currentRoomId">) {
+  if (player.currentRoomId) return player.currentRoomId;
+  if (player.currentPlaceId) return await entranceRoomId(ctx, player.currentPlaceId);
+  const playableCase = await ctx.db.get(caseId);
+  if (!playableCase?.cityId) return undefined;
+  for await (const place of ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) {
+    if (place.kind === "bureau") return await entranceRoomId(ctx, place._id);
+  }
+  return undefined;
+}
+
 export async function settleActions(ctx: MutationCtx, session: Doc<"sessions">, now: number) {
   const travel = await ctx.db.query("travelActions").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).collect();
   const room = await ctx.db.query("roomActions").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).collect();

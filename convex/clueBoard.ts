@@ -152,6 +152,10 @@ export const createReferenceNode = mutation({
         .withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", session.caseId!).eq("evidenceId", referenceId))
         .unique();
       if (!record) throw new Error("That record is not part of this case.");
+      const access = await ctx.db.query("sessionPublicRecords")
+        .withIndex("by_sessionId_and_recordId", (q) => q.eq("sessionId", session._id).eq("recordId", record._id))
+        .unique();
+      if (!access || access.completeGameTime > (session.gameTime ?? 0)) throw new Error("Find this record before pinning it.");
       text = `${record.title}\n${record.content}`;
     } else {
       const record = await ctx.db

@@ -172,8 +172,11 @@ Starting a review occupies the detective for 5 game minutes. The window query re
 
 ```ts
 devices.inspect({ sessionId, deviceId })
-publicRecords.performSearch({ sessionId, query })
+publicRecords.search({ roomCode, search })
+publicRecords.performSearch({ roomCode, search })
 ```
+
+The public-record query returns `available` or `pending` with no records until the room's 10-minute search completes. It then returns `ready` with at most 50 stored matches and the room's ten most recent search terms. Reopening the same normalized term is free. Both search and result viewing require bureau-terminal access; only obtained records may be pinned.
 
 These advance game time according to the fixed rules table.
 Device inspection requires physical access to the discovered device. Public-record search requires access to the bureau/public-record terminal.

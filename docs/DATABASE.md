@@ -496,6 +496,10 @@ There is no social-post table in V1.
 }
 ```
 
+### `publicRecordSearches` and `sessionPublicRecords`
+
+`publicRecordSearches` stores a normalized search term and its ten-minute `completeGameTime` per shared session. `sessionPublicRecords` stores each returned record ID with the earliest game time it becomes available. Both tables are session-scoped; the frozen file text remains only in `publicRecords`.
+
 ## Sessions and multiplayer
 
 ### `sessions`
@@ -547,7 +551,7 @@ One active journey per player. Rows store the destination place, starting and co
 
 ### `roomActions`, `searchedRooms`, and `sessionItems`
 
-`roomActions` stores a player's timed move, search, inspection, lab submission, or CCTV review. A player can have only one active travel or room action. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, and collection timestamps. Item description is returned to clients only after inspection; undiscovered items are not returned.
+`roomActions` stores a player's timed move, search, inspection, lab submission, CCTV review, or public-record search. A player can have only one active travel or room action. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, and collection timestamps. Item description is returned to clients only after inspection; undiscovered items are not returned.
 Clueboard item references store only the item's ID and a discovery-safe label; creating them requires a matching `sessionItems` row.
 
 ### `sessionState`

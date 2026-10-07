@@ -217,10 +217,11 @@ CCTV output is textual/data only and never visual media.
 
 ## Public records
 
-### `searchPublicRecords(sessionId, query)`
+### `publicRecords.performSearch(roomCode, search)` / `publicRecords.search(roomCode, search)`
 
-- charge fixed cost,
-- perform deterministic lexical/fuzzy search over this case's `publicRecords`,
+- charge 10 minutes for each new normalized term and share its completed results,
+- perform deterministic title search over this case's `publicRecords`,
+- keep result text hidden until the search action completes,
 - no LLM required for retrieval.
 
 ## Forensics

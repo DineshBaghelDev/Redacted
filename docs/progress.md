@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-08 — Timed public-record searches
+
+- Searching the bureau's public records now costs 10 shared game minutes. Typed text alone reveals nothing; completed searches and their results are shared with the partner.
+- Only files returned by a completed search may be pinned to the clueboard. Direct record-ID guesses no longer bypass the search.
+
 ## 2026-10-08 — Timed CCTV review
 
 - Reviewing a camera time window now occupies a detective for 5 shared game minutes. Results remain server-hidden until completion, and a completed window is available to both partners without another charge.

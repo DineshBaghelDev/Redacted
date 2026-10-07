@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-10-08 — Records search is a deliberate action
+
+- The records terminal waits for an explicit Search action rather than charging as text is typed. Each distinct normalized query costs 10 game minutes; reopening an already completed query is free.
+- A bounded list of the room's recent queries helps partners find shared results. An empty query is a deliberate general browse, not a free default reveal.
+- Search results remain hidden until the action completes, and only records actually returned by completed searches can become clueboard cards.
+
 ## 2026-10-08 — Camera records require a deliberate review
 
 - Choosing a camera and time does not reveal records. A 5-minute review covers 20 minutes either side of that time and is shared after completion.

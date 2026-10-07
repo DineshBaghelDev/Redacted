@@ -98,6 +98,14 @@ test("room partners share notes, positions, and colored strings", async () => {
   const second = await player.mutation(api.clueBoard.createNoteNode, {
     roomCode: "ABC123", text: "Train arrived at nine", x: 240, y: 30,
   });
+  await expect(player.mutation(api.clueBoard.createReferenceNode, {
+    roomCode: "ABC123", type: "public_record", referenceId: "record/address", x: 20, y: 220,
+  })).rejects.toThrow("Find this record");
+  await t.run(async (ctx) => {
+    const session = await ctx.db.query("sessions").withIndex("by_roomCode", (q) => q.eq("roomCode", "ABC123")).unique();
+    const record = await ctx.db.query("publicRecords").withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", session!.caseId!).eq("evidenceId", "record/address")).unique();
+    await ctx.db.insert("sessionPublicRecords", { sessionId: session!._id, recordId: record!._id, completeGameTime: 0 });
+  });
   const record = await player.mutation(api.clueBoard.createReferenceNode, {
     roomCode: "ABC123", type: "public_record", referenceId: "record/address", x: 20, y: 220,
   });
