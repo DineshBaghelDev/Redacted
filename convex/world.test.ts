@@ -42,6 +42,7 @@ test("partners travel in parallel and the shared clock pauses after the last jou
   const one = t.withIdentity({ subject: "one" });
   const two = t.withIdentity({ subject: "two" });
   await one.mutation(api.sessions.start, { roomCode: "ABC123" });
+  await expect(one.mutation(api.sessions.start, { roomCode: "ABC123" })).rejects.toThrow("Investigation already started");
   expect((await one.query(api.world.getMap, { roomCode: "ABC123" }))?.currentPlaceId).toBe("bureau");
   expect(await one.query(api.publicRecords.search, { roomCode: "ABC123", search: "" })).toHaveLength(1);
   expect((await one.query(api.cases.getCctv, { roomCode: "ABC123" }))?.cameras).toHaveLength(1);

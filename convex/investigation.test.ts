@@ -39,11 +39,13 @@ test("partners search, inspect, and collect shared items without revealing hidde
   await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "item", referenceId: ids.itemId, x: 0, y: 0 })).rejects.toThrow("Find this item");
   await expect(one.mutation(api.investigation.collectItem, { roomCode, itemId: ids.itemId })).rejects.toThrow("not available");
   expect(await one.mutation(api.investigation.moveToRoom, { roomCode, roomId: ids.office })).toEqual({ completeGameTime: 1 });
+  expect(await two.mutation(api.investigation.moveToRoom, { roomCode, roomId: ids.office })).toEqual({ completeGameTime: 1 });
   await expect(one.mutation(api.investigation.searchRoom, { roomCode })).rejects.toThrow("Finish your current action");
   vi.advanceTimersByTime(1_000);
   await one.mutation(api.investigation.finishAction, { roomCode });
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.currentRoomId).toBe(ids.office);
   expect(await one.mutation(api.investigation.searchRoom, { roomCode })).toEqual({ completeGameTime: 16 });
+  await expect(two.mutation(api.investigation.searchRoom, { roomCode })).rejects.toThrow("partner is already searching");
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.items).toHaveLength(0);
   vi.advanceTimersByTime(15_000);
   await one.mutation(api.investigation.finishAction, { roomCode });

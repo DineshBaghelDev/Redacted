@@ -101,6 +101,8 @@ export const searchRoom = mutation({
     const place = await ctx.db.get(player.currentPlaceId!);
     if (!room?.searchable || !place?.buildingId || room.buildingId !== place.buildingId) throw new Error("This room cannot be searched.");
     if (await ctx.db.query("searchedRooms").withIndex("by_sessionId_and_roomId", (q) => q.eq("sessionId", member.session._id).eq("roomId", room._id)).unique()) throw new Error("This room has already been searched.");
+    const activeSearches = await ctx.db.query("roomActions").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id)).collect();
+    if (activeSearches.some((action) => action.kind === "search" && action.roomId === room._id)) throw new Error("Your partner is already searching this room.");
     return await startRoomAction(ctx, member.session, player._id, "search", room._id, 15, now, settled.gameTime, settled.activeCount);
   },
 });

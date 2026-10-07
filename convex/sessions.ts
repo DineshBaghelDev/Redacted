@@ -136,6 +136,8 @@ export const start = mutation({
       throw new Error("Room not found.");
     }
 
+    if (session.status !== "waiting") throw new Error("Investigation already started.");
+
     const players = await ctx.db
       .query("sessionPlayers")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))

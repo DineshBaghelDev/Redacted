@@ -7,6 +7,7 @@
 - Added a responsive Explore screen with room navigation, action progress, local finds, and shared inventory, reachable from the city map or the away-from-bureau notice.
 - Discovered objects can now be pinned to the shared clueboard. Pinning is refused until the team finds the object and never reveals its description early.
 - Closed a clueboard location bypass: public-record and CCTV cards can only be created while the detective has bureau-terminal access.
+- CodeRabbit review closed two gameplay races: a started session can no longer be started again to reset the clock, and partners cannot waste time by searching the same room simultaneously.
 - Published the checked hand-written case in the development deployment and verified a two-player replay/travel backend flow. Browser playthrough remains to be checked.
 
 ## 2026-10-07 — Continuous multiplayer clock decision
