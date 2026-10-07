@@ -16,17 +16,16 @@ This repository's technical decisions are split across the files below. Agents s
 
 | File | Read when working on |
 |---|---|
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | System boundaries, deployment, runtime topology, data ownership |
-| [DATABASE.md](./DATABASE.md) | Convex tables, fields, indexes, relations, immutable vs mutable data |
-| [API.md](./API.md) | Public Convex queries/mutations/actions and their contracts |
-| [FUNCTIONS.md](./FUNCTIONS.md) | Internal functions, workflows, state transitions, queueing, time advancement |
-| [GAME_SYSTEMS.md](./GAME_SYSTEMS.md) | City, travel, interiors, search, CCTV, devices, forensics, interrogation, clue board, case close |
-| [GENERATION.md](./GENERATION.md) | Case-generation stages, schemas, repair policy, immutable generation rules |
-| [VALIDATION_EVALS.md](./VALIDATION_EVALS.md) | Deterministic validation, LLM evals, multiplayer tests, acceptance gates |
-| [SECURITY.md](./SECURITY.md) | Hidden solution boundaries, Clerk authentication, authorization, abuse/rate-limit rules |
-| [TOOLING.md](./TOOLING.md) | Libraries/services chosen and explicitly rejected |
-[DECISIONS.md](./DECISIONS.md) | Locked decisions, rejected alternatives, unresolved items |
-|  |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System boundaries, deployment, runtime topology, data ownership |
+| [DATABASE.md](./docs/DATABASE.md) | Convex tables, fields, indexes, relations, immutable vs mutable data |
+| [API.md](./docs/API.md) | Public Convex queries/mutations/actions and their contracts |
+| [FUNCTIONS.md](./docs/FUNCTIONS.md) | Internal functions, workflows, state transitions, queueing, time advancement |
+| [GAME_SYSTEMS.md](./docs/GAME_SYSTEMS.md) | City, travel, interiors, search, CCTV, devices, forensics, interrogation, clue board, case close |
+| [GENERATION.md](./docs/GENERATION.md) | Case-generation stages, schemas, repair policy, immutable generation rules |
+| [VALIDATION_EVALS.md](./docs/VALIDATION_EVALS.md) | Deterministic validation, LLM evals, multiplayer tests, acceptance gates |
+| [SECURITY.md](./docs/SECURITY.md) | Hidden solution boundaries, Clerk authentication, authorization, abuse/rate-limit rules |
+| [TOOLING.md](./docs/TOOLING.md) | Libraries/services chosen and explicitly rejected |
+| [DECISIONS.md](./docs/DECISIONS.md) | Locked decisions, rejected alternatives, unresolved items |
 | [progress.md](./docs/progress.md) | Current implementation progress and latest shipped UI/backend changes |
 | [design decisions.md](./docs/design decisions.md) | Product and UI decisions made during implementation |
 

@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-08 — Shared-clock settlement correction
+
+- When one action or lab request completes while another continues, settlement now saves the current shared-time anchor. Later result availability and the next completion timer no longer read an outdated baseline.
+- Added a regression covering staggered lab results and pause after the last result; corrected the locked decision record and source-of-truth links.
+
 ## 2026-10-08 — Timed public-record searches
 
 - Searching the bureau's public records now costs 10 shared game minutes. Typed text alone reveals nothing; completed searches and their results are shared with the partner.

@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-08 — Partial completions keep the shared clock moving
+
+- Finishing one timed task while another remains active re-anchors the same continuous clock; it does not end or restart the investigation's time. This keeps completed results and the next timer aligned for both players.
+
 ## 2026-10-08 — Records search is a deliberate action
 
 - The records terminal waits for an explicit Search action rather than charging as text is typed. Each distinct normalized query costs 10 game minutes; reopening an already completed query is free.

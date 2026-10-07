@@ -92,6 +92,9 @@ export async function settleActions(ctx: MutationCtx, session: Doc<"sessions">, 
     await ctx.db.patch(session._id, { gameTime: pausedTime, clockStartedAt: undefined });
     return { gameTime: pausedTime, activeCount: 0 };
   }
+  if (remaining > 0 && session.clockStartedAt !== undefined && (dueTravel.length || dueRoom.length || dueRequests.length)) {
+    await ctx.db.patch(session._id, { gameTime, clockStartedAt: session.clockStartedAt + (gameTime - (session.gameTime ?? 0)) * GAME_MINUTE_MS });
+  }
   return { gameTime, activeCount: remaining };
 }
 

@@ -4,6 +4,7 @@ import { convexTest } from "convex-test";
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
+import { settleActions } from "./world";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -73,3 +74,32 @@ test("partners travel in parallel and the shared clock pauses after the last jou
   await two.mutation(api.sessions.leave, { roomCode: "ABC123" });
   expect((await one.query(api.world.getMap, { roomCode: "ABC123" }))?.clock).toMatchObject({ gameTime: 19, clockStartedAt: null });
 }, 15_000);
+
+test("a completed lab request advances the clock baseline while another remains pending", async () => {
+  const t = convexTest(schema, modules);
+  const sessionId = await t.run(async (ctx) => {
+    const generationJobId = await ctx.db.insert("generationJobs", { seed: 1, difficulty: "easy", createdBy: "tester", createdAt: 1 });
+    const caseId = await ctx.db.insert("cases", { generationJobId, difficulty: "easy", title: "Lab test", summary: "A case.", initialFacts: [], publicationVersion: 1, createdAt: 1 });
+    const cityId = await ctx.db.insert("cities", { caseId, name: "City", seed: "1", version: 1 });
+    await ctx.db.patch(caseId, { cityId });
+    await ctx.db.insert("places", { cityId, sourceId: "bureau", order: 0, name: "Bureau", type: "public_building", kind: "bureau", area: "midtown", description: "Bureau", mapX: 0, mapY: 0, crimeSceneAllowed: true, jobSlots: [] });
+    const sessionId = await ctx.db.insert("sessions", { caseId, roomCode: "LAB123", status: "playing", gameTime: 0, clockStartedAt: 1_000, createdAt: 1, expiresAt: Date.now() + 60_000 });
+    await ctx.db.insert("sessionPlayers", { sessionId, authUserId: "one", nickname: "one", joinedAt: 1 });
+    for (const readyAtGameTime of [65, 125]) {
+      const forensicOutputId = await ctx.db.insert("forensicOutputs", { caseId, evidenceId: `lab/${readyAtGameTime}`, testType: "autopsy", result: "A finding.", linkedNpcIds: [], turnaroundMinutes: readyAtGameTime });
+      await ctx.db.insert("forensicRequests", { sessionId, forensicOutputId, requestedAtGameTime: 0, readyAtGameTime });
+    }
+    return sessionId;
+  });
+
+  await t.run(async (ctx) => {
+    const session = await ctx.db.get(sessionId);
+    expect(await settleActions(ctx, session!, 66_500)).toEqual({ gameTime: 65, activeCount: 1 });
+  });
+  expect((await t.withIdentity({ subject: "one" }).query(api.world.getMap, { roomCode: "LAB123" }))?.nextCompletionGameTime).toBe(125);
+  await t.run(async (ctx) => {
+    const session = await ctx.db.get(sessionId);
+    expect(await settleActions(ctx, session!, 126_000)).toEqual({ gameTime: 125, activeCount: 0 });
+  });
+  expect((await t.withIdentity({ subject: "one" }).query(api.world.getMap, { roomCode: "LAB123" }))?.clock).toMatchObject({ gameTime: 125, clockStartedAt: null });
+});

@@ -9,10 +9,8 @@ This file records decisions from the technical design discussion so agents do no
 - Both players share state, inventory, NPC conversation history, NPC memory, clue board, and discoveries.
 - Server-authoritative state.
 - Realtime updates required.
-- No user accounts required.
-- Anonymous backend identity + nickname.
-- Room code joins session.
-- Separate reconnect secret reclaims a specific player slot.
+- Clerk-authenticated players use a chosen nickname in rooms.
+- A room code joins a session; the signed-in user identity reclaims that user's player slot.
 - Both players may execute session-level actions; destructive actions should get UI confirmation.
 - Sessions survive abandonment for **7 days**.
 
@@ -121,7 +119,7 @@ This file records decisions from the technical design discussion so agents do no
 - Add game-time/deadline system.
 - Integer in-game minutes.
 - Deterministic action costs.
-- Exact overlap/addition semantics for two simultaneous players are intentionally unresolved and must be reviewed before the time engine is finalized.
+- Timed actions use one continuous shared clock: concurrent actions overlap, and the clock pauses when none remain active.
 - Travel uses city-edge travel cost.
 - Reports/forensics may become available after elapsed game time.
 - Default deadline = code-estimated optimal investigation time + one in-game day (1440 minutes).
