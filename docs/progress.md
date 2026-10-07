@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-08 — Playable laptop files
+
+- Searchable laptops now publish their frozen files into playable case rows. An investigator must find the physical laptop, then spend 5 shared game minutes to read it; contents remain hidden until completion and are shared with the partner.
+- Read files can be pinned to the clueboard and cited in the final report. Direct file-ID guesses, non-members, and duplicate partner reads cannot bypass discovery.
+- Added an idempotent internal backfill for already-published cases whose first publisher omitted laptop files. Phone access and call/message UI remain unfinished.
+
 ## 2026-10-08 — Shared-clock settlement correction
 
 - When one action or lab request completes while another continues, settlement now saves the current shared-time anchor. Later result availability and the next completion timer no longer read an outdated baseline.

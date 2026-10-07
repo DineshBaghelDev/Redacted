@@ -1,4 +1,4 @@
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { storySchema, textsSchema } from "../generation/core/schemas";
 
@@ -11,8 +11,6 @@ async function getDraft(ctx: MutationCtx, jobId: Id<"generationJobs">, stage: st
 }
 
 export async function ensureCaseDevices(ctx: MutationCtx, caseId: Id<"cases">, generationJobId: Id<"generationJobs">) {
-  if (await ctx.db.query("devices").withIndex("by_caseId", (q) => q.eq("caseId", caseId)).first()) return;
-
   const [evidenceDraft, storyDraft, textsDraft] = await Promise.all([
     getDraft(ctx, generationJobId, "evidence"),
     getDraft(ctx, generationJobId, "story"),
@@ -24,13 +22,15 @@ export async function ensureCaseDevices(ctx: MutationCtx, caseId: Id<"cases">, g
   const textResult = textsSchema.safeParse(textsDraft?.output);
   const rewritten = new Map(textResult.success ? textResult.data.texts.map((value) => [value.id, value.text]) : []);
   const comms = new Map(story.data.comms.map((value) => [value.id, value]));
-  const people = [];
+  const people: Doc<"npcs">[] = [];
   for await (const person of ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) people.push(person);
   const npcIds = new Map(people.map((person) => [person.sourceId, person._id]));
   const npcNames = new Map(people.map((person) => [person.sourceId, person.name]));
   const deviceIds = new Map<string, Id<"devices">>();
+  const hasPhones = people.length > 0 && Boolean(await ctx.db.query("devices")
+    .withIndex("by_caseId_and_sourceId", (q) => q.eq("caseId", caseId).eq("sourceId", `phone:${people[0].sourceId}`)).unique());
 
-  for (const value of evidenceDraft.output.evidence) {
+  if (!hasPhones) for (const value of evidenceDraft.output.evidence) {
     if (!isObject(value) || value.type !== "device") continue;
     const data = value.data;
     if (typeof value.title !== "string" || typeof value.summary !== "string" || !isObject(data) || typeof data.deviceId !== "string" || typeof data.ownerId !== "string") throw new Error("This case has an invalid device.");
@@ -46,7 +46,7 @@ export async function ensureCaseDevices(ctx: MutationCtx, caseId: Id<"cases">, g
     }));
   }
 
-  for (const value of evidenceDraft.output.evidence) {
+  if (!hasPhones) for (const value of evidenceDraft.output.evidence) {
     if (!isObject(value) || (value.type !== "call" && value.type !== "message")) continue;
     const access = value.access;
     const data = value.data;
@@ -79,6 +79,23 @@ export async function ensureCaseDevices(ctx: MutationCtx, caseId: Id<"cases">, g
         direction,
         body: rewritten.get(value.id) ?? rewritten.get(sourceId) ?? value.summary,
       });
+    }
+  }
+
+  for (const item of story.data.items.filter((value) => value.kind === "device")) {
+    const sourceItem = await ctx.db.query("caseItems").withIndex("by_caseId_and_sourceId", (q) => q.eq("caseId", caseId).eq("sourceId", item.id)).unique();
+    if (!sourceItem) throw new Error(`Device ${item.id} has no physical item.`);
+    const existing = await ctx.db.query("devices").withIndex("by_caseId_and_sourceId", (q) => q.eq("caseId", caseId).eq("sourceId", item.id)).unique();
+    if (existing) continue;
+    const deviceId = await ctx.db.insert("devices", {
+      caseId, sourceId: item.id, type: "laptop", sourceItemId: sourceItem._id,
+      ownerNpcId: item.ownerId ? npcIds.get(item.ownerId) : undefined,
+      name: item.name, description: item.description,
+    });
+    for (const value of evidenceDraft.output.evidence) {
+      if (!isObject(value) || value.type !== "file" || !isObject(value.access) || value.access.tool !== "device" || value.access.itemId !== item.id) continue;
+      if (typeof value.id !== "string" || typeof value.title !== "string" || typeof value.summary !== "string") throw new Error(`Device ${item.id} has an invalid file.`);
+      await ctx.db.insert("deviceFiles", { caseId, deviceId, evidenceId: value.id, title: value.title, body: rewritten.get(value.id) ?? value.summary });
     }
   }
 }

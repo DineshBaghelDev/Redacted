@@ -72,9 +72,10 @@ export async function settleActions(ctx: MutationCtx, session: Doc<"sessions">, 
   }
   for (const action of dueRoom) {
     if (action.kind === "move") await ctx.db.patch(action.playerId, { currentRoomId: action.roomId });
-    else if (action.kind === "inspect" && action.itemId) {
+    else if ((action.kind === "inspect" || action.kind === "device") && action.itemId) {
       const known = await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", action.itemId!)).unique();
-      if (known && known.inspectedAt === undefined) await ctx.db.patch(known._id, { inspectedAt: now });
+      if (known && action.kind === "inspect" && known.inspectedAt === undefined) await ctx.db.patch(known._id, { inspectedAt: now });
+      if (known && action.kind === "device" && known.readAt === undefined) await ctx.db.patch(known._id, { readAt: now });
     } else if (action.kind === "search" && !(await ctx.db.query("searchedRooms").withIndex("by_sessionId_and_roomId", (q) => q.eq("sessionId", session._id).eq("roomId", action.roomId)).unique())) {
       await ctx.db.insert("searchedRooms", { sessionId: session._id, roomId: action.roomId, searchedAt: now });
       for await (const item of ctx.db.query("caseItems").withIndex("by_roomId", (q) => q.eq("roomId", action.roomId))) {

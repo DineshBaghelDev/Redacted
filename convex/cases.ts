@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import type { Id } from "./_generated/dataModel";
-import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { internalMutation, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { crimeCoreSchema } from "./generation/core/crimes";
 import { castSchema } from "./generation/core/schemas";
 import { getBureauRoomMember, getPlayingRoomMember, getRoomMember, requireUserId } from "./lib/auth";
@@ -197,6 +197,27 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
   await ctx.db.patch(caseId, { publicationVersion: PUBLICATION_VERSION });
   return caseId;
 }
+
+/** Repairs device rows omitted by the first publisher without changing a case's generated truth. */
+export const backfillPublishedDevices = internalMutation({
+  args: { caseId: v.id("cases") },
+  returns: v.object({ laptops: v.number(), files: v.number() }),
+  handler: async (ctx, { caseId }) => {
+    const playableCase = await ctx.db.get(caseId);
+    if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not published.");
+    await ensureCaseDevices(ctx, caseId, playableCase.generationJobId);
+    let laptops = 0;
+    let files = 0;
+    for await (const device of ctx.db.query("devices").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) {
+      if (device.type !== "laptop") continue;
+      laptops++;
+      for await (const file of ctx.db.query("deviceFiles").withIndex("by_deviceId", (q) => q.eq("deviceId", device._id))) {
+        if (file.caseId === caseId) files++;
+      }
+    }
+    return { laptops, files };
+  },
+});
 
 export const listPassed = query({
   args: {},

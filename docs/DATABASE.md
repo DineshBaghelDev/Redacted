@@ -434,8 +434,23 @@ One row per selected camera window in a shared session. The frozen records remai
   sourceId: string,
   type: "phone" | "laptop",
   ownerNpcId?: Id<"npcs">,
+  sourceItemId?: Id<"caseItems">, // physical laptop item
   name: string,
   description: string,
+}
+```
+
+### `deviceFiles`
+
+Frozen laptop files, linked to a device. Only a session that has completed a physical-device read may receive title and body through gameplay queries.
+
+```ts
+{
+  caseId: Id<"cases">,
+  deviceId: Id<"devices">,
+  evidenceId: string,
+  title: string,
+  body: string,
 }
 ```
 
@@ -551,7 +566,7 @@ One active journey per player. Rows store the destination place, starting and co
 
 ### `roomActions`, `searchedRooms`, and `sessionItems`
 
-`roomActions` stores a player's timed move, search, inspection, lab submission, CCTV review, or public-record search. A player can have only one active travel or room action. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, and collection timestamps. Item description is returned to clients only after inspection; undiscovered items are not returned.
+`roomActions` stores a player's timed move, search, inspection, device read, lab submission, CCTV review, or public-record search. A player can have only one active travel or room action. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, collection, and device-read timestamps. Item description is returned to clients only after inspection; device files only after reading; undiscovered items are not returned.
 Clueboard item references store only the item's ID and a discovery-safe label; creating them requires a matching `sessionItems` row.
 
 ### `sessionState`

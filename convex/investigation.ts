@@ -11,7 +11,7 @@ async function activeAction(ctx: MutationCtx, playerId: Id<"sessionPlayers">) {
   );
 }
 
-async function startRoomAction(ctx: MutationCtx, session: Doc<"sessions">, playerId: Id<"sessionPlayers">, kind: "move" | "search" | "inspect", roomId: Id<"rooms">, minutes: number, now: number, gameTime: number, activeCount: number, itemId?: Id<"caseItems">) {
+async function startRoomAction(ctx: MutationCtx, session: Doc<"sessions">, playerId: Id<"sessionPlayers">, kind: "move" | "search" | "inspect" | "device", roomId: Id<"rooms">, minutes: number, now: number, gameTime: number, activeCount: number, itemId?: Id<"caseItems">) {
   if (activeCount === 0) await ctx.db.patch(session._id, { gameTime, clockStartedAt: now });
   const completeGameTime = gameTime + minutes;
   await ctx.db.insert("roomActions", { sessionId: session._id, playerId, kind, roomId, itemId, startGameTime: gameTime, completeGameTime, createdAt: now });
@@ -24,8 +24,8 @@ export const getPlace = query({
     placeName: v.string(),
     currentRoomId: v.union(v.null(), v.id("rooms")),
     rooms: v.array(v.object({ id: v.id("rooms"), name: v.string(), floor: v.number(), searchable: v.boolean(), searched: v.boolean(), adjacent: v.boolean() })),
-    action: v.union(v.null(), v.object({ kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic"), v.literal("cctv"), v.literal("records")), roomId: v.id("rooms"), startGameTime: v.number(), completeGameTime: v.number() })),
-    items: v.array(v.object({ id: v.id("caseItems"), name: v.string(), description: v.optional(v.string()), roomId: v.id("rooms"), collectible: v.boolean(), collected: v.boolean(), inspected: v.boolean() })),
+    action: v.union(v.null(), v.object({ kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic"), v.literal("cctv"), v.literal("records"), v.literal("device")), roomId: v.id("rooms"), startGameTime: v.number(), completeGameTime: v.number() })),
+    items: v.array(v.object({ id: v.id("caseItems"), name: v.string(), description: v.optional(v.string()), roomId: v.id("rooms"), collectible: v.boolean(), collected: v.boolean(), inspected: v.boolean(), device: v.optional(v.object({ read: v.boolean(), files: v.array(v.object({ id: v.string(), title: v.string(), body: v.string() })) })) })),
     clock: v.object({ gameTime: v.number(), clockStartedAt: v.union(v.null(), v.number()), minuteMs: v.number() }),
   })),
   handler: async (ctx, { roomCode }) => {
@@ -48,7 +48,12 @@ export const getPlace = query({
     for await (const known of ctx.db.query("sessionItems").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id))) {
       const item = await ctx.db.get(known.itemId);
       if (item && item.caseId === member.session.caseId && (item.roomId === currentRoomId || known.collectedAt !== undefined)) {
-        knownItems.push({ id: item._id, name: item.name, description: known.inspectedAt === undefined ? undefined : item.description, roomId: item.roomId, collectible: item.collectible, collected: known.collectedAt !== undefined, inspected: known.inspectedAt !== undefined });
+        const device = item.sourceId && item.itemType === "device"
+          ? await ctx.db.query("devices").withIndex("by_caseId_and_sourceId", (q) => q.eq("caseId", item.caseId).eq("sourceId", item.sourceId!)).unique() : null;
+        const files = device?.type === "laptop" && known.readAt !== undefined
+          ? await ctx.db.query("deviceFiles").withIndex("by_deviceId", (q) => q.eq("deviceId", device._id)).take(100) : [];
+        knownItems.push({ id: item._id, name: item.name, description: known.inspectedAt === undefined ? undefined : item.description, roomId: item.roomId, collectible: item.collectible, collected: known.collectedAt !== undefined, inspected: known.inspectedAt !== undefined,
+          device: device?.type === "laptop" ? { read: known.readAt !== undefined, files: files.map((file) => ({ id: file.evidenceId, title: file.title, body: file.body })) } : undefined });
       }
     }
     const action = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique();
@@ -149,6 +154,30 @@ export const inspectItem = mutation({
     if (!item || item.caseId !== member.session.caseId || !known || (item.roomId !== player.currentRoomId && known.collectedAt === undefined)) throw new Error("That item is not available to inspect here.");
     if (known.inspectedAt !== undefined) throw new Error("You have already inspected this item.");
     return await startRoomAction(ctx, member.session, player._id, "inspect", item.roomId, 2, now, settled.gameTime, settled.activeCount, itemId);
+  },
+});
+
+export const readDevice = mutation({
+  args: { roomCode: v.string(), itemId: v.id("caseItems") },
+  returns: v.object({ completeGameTime: v.number() }),
+  handler: async (ctx, { roomCode, itemId }) => {
+    const member = await getPlayingRoomMember(ctx, roomCode);
+    if (!member?.session.caseId) throw new Error("Start the investigation first.");
+    const now = Date.now();
+    const settled = await settleActions(ctx, member.session, now);
+    const player = await ctx.db.get(member.player._id);
+    if (!player || await activeAction(ctx, player._id)) throw new Error("Finish your current action first.");
+    const item = await ctx.db.get(itemId);
+    const known = await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", member.session._id).eq("itemId", itemId)).unique();
+    if (!item || item.caseId !== member.session.caseId || !known || (item.roomId !== player.currentRoomId && known.collectedAt === undefined)) throw new Error("Find that device first.");
+    if (known.readAt !== undefined) throw new Error("This device has already been read.");
+    const actions = await ctx.db.query("roomActions").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id)).take(2);
+    if (actions.some((action) => action.kind === "device" && action.itemId === itemId)) throw new Error("Your partner is already reading this device.");
+    const device = item.sourceId ? await ctx.db.query("devices").withIndex("by_caseId_and_sourceId", (q) => q.eq("caseId", item.caseId).eq("sourceId", item.sourceId!)).unique() : null;
+    if (device?.type !== "laptop" || device.sourceItemId !== itemId) throw new Error("That item has no readable files.");
+    const roomId = player.currentRoomId;
+    if (!roomId) throw new Error("Enter a room to read the device.");
+    return await startRoomAction(ctx, member.session, player._id, "device", roomId, 5, now, settled.gameTime, settled.activeCount, itemId);
   },
 });
 

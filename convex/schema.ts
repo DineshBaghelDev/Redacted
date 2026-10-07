@@ -193,11 +193,21 @@ export default defineSchema({
     sourceId: v.string(),
     type: v.union(v.literal("phone"), v.literal("laptop")),
     ownerNpcId: v.optional(v.id("npcs")),
+    sourceItemId: v.optional(v.id("caseItems")),
     name: v.string(),
     description: v.string(),
   })
     .index("by_caseId", ["caseId"])
     .index("by_caseId_and_sourceId", ["caseId", "sourceId"]),
+  deviceFiles: defineTable({
+    caseId: v.id("cases"),
+    deviceId: v.id("devices"),
+    evidenceId: v.string(),
+    title: v.string(),
+    body: v.string(),
+  })
+    .index("by_deviceId", ["deviceId"])
+    .index("by_caseId_and_evidenceId", ["caseId", "evidenceId"]),
   callLogs: defineTable({
     caseId: v.id("cases"),
     evidenceId: v.string(),
@@ -346,7 +356,7 @@ export default defineSchema({
   roomActions: defineTable({
     sessionId: v.id("sessions"),
     playerId: v.id("sessionPlayers"),
-    kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic"), v.literal("cctv"), v.literal("records")),
+    kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic"), v.literal("cctv"), v.literal("records"), v.literal("device")),
     roomId: v.id("rooms"),
     itemId: v.optional(v.id("caseItems")),
     startGameTime: v.number(),
@@ -361,6 +371,7 @@ export default defineSchema({
     discoveredAt: v.number(),
     inspectedAt: v.optional(v.number()),
     collectedAt: v.optional(v.number()),
+    readAt: v.optional(v.number()),
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_sessionId_and_itemId", ["sessionId", "itemId"]),
@@ -400,7 +411,7 @@ export default defineSchema({
   }).index("by_sessionId_and_recordId", ["sessionId", "recordId"]),
   clueBoardNodes: defineTable({
     sessionId: v.id("sessions"),
-    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic")),
+    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file")),
     referenceId: v.optional(v.string()),
     text: v.string(),
     x: v.number(),

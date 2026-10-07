@@ -2,7 +2,7 @@
 
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { ensureCaseForJob } from "./cases";
 import { cast, crimeCore } from "./fixtures/caseEasy";
 import { city } from "./fixtures/city";
@@ -80,6 +80,10 @@ test("a lobby keeps the selected passed case", async () => {
           finalSlot: "kitchen drawer",
           proves: ["motive"],
           contents: [],
+        }, {
+          id: "laptop", name: "Work laptop", kind: "device", description: "Still logged in.",
+          startRoomId: "keel-14:kitchen", finalRoomId: "keel-14:kitchen", finalSlot: "kitchen drawer",
+          proves: [], contents: [{ title: "Accounts", text: "Original file text.", proves: ["motive"] }],
         }],
       },
       checkErrors: [],
@@ -186,6 +190,16 @@ test("a lobby keeps the selected passed case", async () => {
             data: { itemId: "ledger", proves: ["motive"] },
           },
           {
+            id: "item/laptop", type: "item", title: "Work laptop", summary: "Still logged in.",
+            access: { tool: "search", roomId: "keel-14:kitchen", slot: "kitchen drawer" },
+            aboutIds: [], sourceIds: ["laptop"], data: { itemId: "laptop", proves: [] },
+          },
+          {
+            id: "file/laptop/0", type: "file", title: "Work laptop · Accounts", summary: "Original file text.",
+            access: { tool: "device", itemId: "laptop" }, aboutIds: [], sourceIds: ["laptop"],
+            data: { itemId: "laptop", proves: ["motive"] },
+          },
+          {
             id: "cctv/1",
             type: "cctv",
             title: "Hidden title",
@@ -218,7 +232,7 @@ test("a lobby keeps the selected passed case", async () => {
     await ctx.db.insert("generationDrafts", {
       jobId,
       stage: "text",
-      output: { texts: [{ id: "message-1", text: "Meet me by the station." }] },
+      output: { texts: [{ id: "message-1", text: "Meet me by the station." }, { id: "file/laptop/0", text: "Rewritten file text." }] },
       checkErrors: [],
       source: "llm",
       updatedAt: 2,
@@ -308,6 +322,8 @@ test("a lobby keeps the selected passed case", async () => {
     const devices = session?.caseId
       ? await ctx.db.query("devices").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
       : [];
+    const deviceFiles = devices.find((device) => device.type === "laptop")
+      ? await ctx.db.query("deviceFiles").withIndex("by_deviceId", (q) => q.eq("deviceId", devices.find((device) => device.type === "laptop")!._id)).collect() : [];
     const calls = session?.caseId
       ? await ctx.db.query("callLogs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
       : [];
@@ -361,6 +377,7 @@ test("a lobby keeps the selected passed case", async () => {
       cameras,
       cameraRecords,
       devices,
+      deviceFiles,
       calls,
       messages,
       records,
@@ -382,7 +399,7 @@ test("a lobby keeps the selected passed case", async () => {
   });
   expect(frozen.culprit).toMatchObject({ sourceId: crimeCore.culpritId, role: "suspect" });
   expect(frozen.npcs).toHaveLength(cast.characters.length);
-  expect(frozen.items).toHaveLength(1);
+  expect(frozen.items).toHaveLength(2);
   expect(frozen.items[0]).toMatchObject({
     evidenceId: "item/ledger",
     sourceId: "ledger",
@@ -395,7 +412,15 @@ test("a lobby keeps the selected passed case", async () => {
   expect(frozen.cameras).toHaveLength(1);
   expect(frozen.cameraRecords).toHaveLength(2);
   expect(frozen.cameraRecords[0].npcIds).toContain(frozen.culprit?._id);
-  expect(frozen.devices).toHaveLength(2);
+  expect(frozen.devices).toHaveLength(3);
+  expect(frozen.devices.find((device) => device.type === "laptop")?.sourceItemId).toBe(frozen.items[1]._id);
+  expect(frozen.deviceFiles).toEqual([expect.objectContaining({ evidenceId: "file/laptop/0", title: "Work laptop · Accounts", body: "Rewritten file text." })]);
+  await t.run(async (ctx) => {
+    await ctx.db.delete(frozen.deviceFiles[0]._id);
+    await ctx.db.delete(frozen.devices.find((device) => device.type === "laptop")!._id);
+  });
+  expect(await t.mutation(internal.cases.backfillPublishedDevices, { caseId: publishedCaseId })).toEqual({ laptops: 1, files: 1 });
+  expect(await t.mutation(internal.cases.backfillPublishedDevices, { caseId: publishedCaseId })).toEqual({ laptops: 1, files: 1 });
   expect(frozen.calls).toHaveLength(2);
   expect(frozen.calls.map((call) => call.durationSeconds)).toEqual([120, 120]);
   expect(frozen.messages).toHaveLength(2);

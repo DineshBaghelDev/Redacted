@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-08 — Read physical devices before revealing files
+
+- Laptop files are immutable generated evidence linked to the searchable physical laptop. Finding the item does not reveal its files; one 5-minute read unlocks them for the shared session.
+- Either detective can pin a read file and use it as final-report proof. A second read of the same laptop is unnecessary. Phone access remains separate because its NPC handover route is not settled.
+
 ## 2026-10-08 — Partial completions keep the shared clock moving
 
 - Finishing one timed task while another remains active re-anchors the same continuous clock; it does not end or restart the investigation's time. This keeps completed results and the next timer aligned for both players.

@@ -157,6 +157,8 @@ Device data:
 - call logs,
 - messages.
 
+Found laptops can also hold generated files. Reading a physical laptop takes 5 shared game minutes; its stored files become available to both detectives afterward and may be pinned as evidence.
+
 No social-post system in V1.
 
 ### Call logs
