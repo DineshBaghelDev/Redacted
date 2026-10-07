@@ -313,6 +313,8 @@ export default defineSchema({
     caseId: v.optional(v.id("cases")),
     roomCode: v.string(),
     status: v.union(v.literal("waiting"), v.literal("playing")),
+    gameTime: v.optional(v.number()),
+    clockStartedAt: v.optional(v.number()),
     createdAt: v.number(),
     expiresAt: v.number(),
   })
@@ -323,11 +325,22 @@ export default defineSchema({
     authUserId: v.string(),
     nickname: v.string(),
     isReady: v.optional(v.boolean()),
+    currentPlaceId: v.optional(v.id("places")),
     joinedAt: v.number(),
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_sessionId_authUserId", ["sessionId", "authUserId"])
     .index("by_authUserId", ["authUserId"]),
+  travelActions: defineTable({
+    sessionId: v.id("sessions"),
+    playerId: v.id("sessionPlayers"),
+    destinationPlaceId: v.id("places"),
+    startGameTime: v.number(),
+    completeGameTime: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_playerId", ["playerId"]),
   clueBoardNodes: defineTable({
     sessionId: v.id("sessions"),
     type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record")),

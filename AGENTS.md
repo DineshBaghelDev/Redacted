@@ -57,11 +57,9 @@ This repository's technical decisions are split across the files below. Agents s
 - Do not implement generated interiors with an LLM. Use deterministic templates plus generated parameters.
 - Do not start implementation with generation. Build and test the game using a hardcoded fixture case first.
 
-## Current unresolved items
+## Parallel time semantics
 
-Do not invent answers to these during implementation:
-
-- **Parallel time semantics:** two partners can work simultaneously, but we have not explicitly decided whether concurrent time-consuming actions add to one global clock or overlap in simulated time. This must be resolved before finalizing the time engine.
+The user chose a continuous action-driven shared clock on 2026-10-07. Concurrent actions overlap in simulated time, and the clock pauses when no timed action is active. See `docs/GAME_SYSTEMS.md` and `docs/design decisions.md`.
 
 ## Locked gameplay decisions
 

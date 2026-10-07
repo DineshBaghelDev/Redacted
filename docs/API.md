@@ -136,11 +136,13 @@ presence.heartbeat({ sessionId })
 ### Travel/navigation
 
 ```ts
-world.travelToPlace({ sessionId, toPlaceId })
+world.getMap({ roomCode })
+world.startTravel({ roomCode, destinationId })
+world.finishTravel({ roomCode })
 world.moveToRoom({ sessionId, roomId })
 ```
 
-Mutation computes a deterministic shortest path through the city graph, verifies reachability, and charges the summed path travel time. Players are not forced to click every intermediate graph node.
+`startTravel` computes a deterministic shortest path through the frozen city graph, verifies reachability, and starts a timed journey. Parallel journeys share the same game clock. `finishTravel` settles completed journeys and pauses the clock after the last one; it is safe to call after reconnecting. Players are not forced to click every intermediate graph node. Room movement remains planned.
 
 ### Search and inventory
 

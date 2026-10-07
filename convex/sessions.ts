@@ -4,6 +4,7 @@ import { requireUserId } from "./lib/auth";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { PUBLICATION_VERSION } from "./cases";
+import { settleTravel } from "./world";
 
 const MAX_PLAYERS = 2;
 const ROOM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -148,7 +149,12 @@ export const start = mutation({
       throw new Error("Everyone must be ready first.");
     }
 
-    await ctx.db.patch(session._id, { status: "playing" });
+    const playableCase = session.caseId ? await ctx.db.get(session.caseId) : null;
+    const bureau = playableCase?.cityId
+      ? await ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!)).filter((q) => q.eq(q.field("kind"), "bureau")).first()
+      : null;
+    await Promise.all(players.map(async (player) => await ctx.db.patch(player._id, { currentPlaceId: bureau?._id })));
+    await ctx.db.patch(session._id, { status: "playing", gameTime: 0, clockStartedAt: undefined });
     return { roomCode: session.roomCode };
   },
 });
@@ -177,6 +183,12 @@ export const leave = mutation({
       throw new Error("Join the room first.");
     }
 
+    const settled = await settleTravel(ctx, session, Date.now());
+    const journey = await ctx.db.query("travelActions").withIndex("by_playerId", (q) => q.eq("playerId", player._id)).unique();
+    if (journey) {
+      await ctx.db.delete(journey._id);
+      if (settled.activeCount === 1) await ctx.db.patch(session._id, { gameTime: settled.gameTime, clockStartedAt: undefined });
+    }
     await ctx.db.delete(player._id);
   },
 });

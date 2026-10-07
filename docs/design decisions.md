@@ -6,6 +6,8 @@
 - The clock runs only while at least one timed action is active, so discussion, reading, and reconnecting do not silently consume the deadline.
 - Server timestamp anchors derive elapsed game time without per-minute database writes or background ticking.
 - The real-time speed multiplier remains server-owned and adjustable for playtesting without changing canonical action costs.
+- The first implementation applies this model to city travel. One real second currently represents one game minute; this constant is tuned after playtesting.
+- Travel changes each detective's location only on arrival. Bureau terminal access follows that location and is unavailable during a journey.
 
 ## 2026-10-07 — Confirm irreversible room exit
 

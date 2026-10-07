@@ -2,7 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 
 const kindLabels = {
@@ -18,9 +18,32 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
   const city = useQuery(api.world.getMap, isLoaded && isSignedIn ? { roomCode } : "skip");
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
   const createReference = useMutation(api.clueBoard.createReferenceNode);
+  const startTravel = useMutation(api.world.startTravel);
+  const finishTravel = useMutation(api.world.finishTravel);
   const [selectedId, setSelectedId] = useState("police-bureau");
   const [pinning, setPinning] = useState("");
+  const [traveling, setTraveling] = useState(false);
+  const [now, setNow] = useState(0);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!city?.activeTravel || city.clock.clockStartedAt === null) return;
+    let finishing = false;
+    const update = () => {
+      const timestamp = Date.now();
+      setNow(timestamp);
+      const gameTime = city.clock.gameTime + Math.max(0, Math.floor((timestamp - city.clock.clockStartedAt!) / city.clock.minuteMs));
+      if (gameTime < city.activeTravel!.completeGameTime || finishing) return;
+      finishing = true;
+      void finishTravel({ roomCode }).catch((caught: unknown) => {
+        finishing = false;
+        setError(caught instanceof Error ? caught.message : "Could not finish this journey.");
+      });
+    };
+    update();
+    const interval = window.setInterval(update, 250);
+    return () => window.clearInterval(interval);
+  }, [city?.activeTravel, city?.clock, finishTravel, roomCode]);
 
   if (city === undefined) return <MapMessage message="Opening city map..." onBack={onBack} />;
   if (!city) return <MapMessage message="The city map is unavailable for this room." onBack={onBack} />;
@@ -34,6 +57,10 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
     }));
   const activeStreetIds = new Set(connected.map((street) => street.id));
   const isPinned = boardNodes?.some((node) => node.type === "place" && node.referenceId === selected.id);
+  const gameTime = city.clock.gameTime + (city.clock.clockStartedAt === null || now === 0
+    ? 0
+    : Math.max(0, Math.floor((now - city.clock.clockStartedAt) / city.clock.minuteMs)));
+  const travelRemaining = city.activeTravel ? Math.max(0, city.activeTravel.completeGameTime - gameTime) : 0;
 
   function pinPlace() {
     const count = boardNodes?.length ?? 0;
@@ -48,6 +75,14 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
     }).catch((caught: unknown) => {
       setError(caught instanceof Error ? caught.message : "Could not pin this place.");
     }).finally(() => setPinning(""));
+  }
+
+  function travelToSelected() {
+    setTraveling(true);
+    setError("");
+    void startTravel({ roomCode, destinationId: selected.id }).catch((caught: unknown) => {
+      setError(caught instanceof Error ? caught.message : "Could not start this journey.");
+    }).finally(() => setTraveling(false));
   }
 
   return (
@@ -125,9 +160,40 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
         </div>
 
         <aside className="min-h-0 overflow-y-auto border-t border-cyan-300/25 bg-[#07111b] p-4 lg:border-l lg:border-t-0 lg:p-5">
+          <div className="mb-4 border border-cyan-300/25 bg-[#0a1722] p-3 text-xs uppercase tracking-wide">
+            <p className="text-cyan-100/55">Your location</p>
+            <p className="mt-1 text-base text-yellow-100">{city.places.find((place) => place.id === city.currentPlaceId)?.name ?? "Bureau"}</p>
+            {city.activeTravel ? (
+              <div className="mt-2 text-cyan-100">
+                <p>Travelling to {city.activeTravel.destinationName} · {travelRemaining} game min</p>
+                <progress
+                  aria-label={`Journey to ${city.activeTravel.destinationName}`}
+                  className="mt-2 h-2 w-full accent-yellow-200"
+                  max={city.activeTravel.completeGameTime - city.activeTravel.startGameTime}
+                  value={Math.max(0, gameTime - city.activeTravel.startGameTime)}
+                />
+              </div>
+            ) : null}
+          </div>
           <p className="text-[10px] uppercase tracking-[0.2em] text-yellow-200/70">{selected.area}</p>
           <h3 className="mt-1 text-2xl uppercase leading-none">{selected.name}</h3>
           <p className="mt-2 text-sm uppercase text-cyan-100/45">{kindLabels[selected.kind]}</p>
+          <button
+            className="mt-4 min-h-11 w-full border border-yellow-200/70 bg-yellow-200/10 px-3 text-sm uppercase text-yellow-100 hover:bg-yellow-200/20 disabled:cursor-default disabled:opacity-45"
+            disabled={traveling || Boolean(city.activeTravel) || city.currentPlaceId === selected.id || selected.travelMinutes === undefined}
+            onClick={travelToSelected}
+            type="button"
+          >
+            {traveling
+              ? "Starting journey..."
+              : city.activeTravel
+                ? "Journey in progress"
+                : city.currentPlaceId === selected.id
+                  ? "You are here"
+                  : selected.travelMinutes === undefined
+                    ? "No route available"
+                    : `Travel · ${selected.travelMinutes} min`}
+          </button>
           <button
             className="mt-4 min-h-11 w-full border border-cyan-300/60 px-3 text-sm uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:cursor-default disabled:opacity-55"
             disabled={pinning === selected.id || isPinned}

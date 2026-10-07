@@ -167,9 +167,9 @@ Corridors are represented as connection edges unless they are searchable locatio
 - compute deterministic shortest path from current place to destination,
 - reject if unreachable,
 - sum `travelMinutes` across the path,
-- update player current place,
-- clear/update room position appropriately,
-- advance game time by summed path cost.
+- start a journey ending at the derived shared game time plus that cost,
+- update player current place only when that journey completes,
+- pause the shared clock at the final journey's completion time when no timed journey remains.
 
 Both players may be at different places simultaneously.
 

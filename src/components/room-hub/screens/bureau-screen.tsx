@@ -1,7 +1,10 @@
+import { useAuth } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { api } from "../../../../convex/_generated/api";
 
 const ClueBoardScreen = dynamic(() =>
   import("./clue-board-screen").then((module) => module.ClueBoardScreen),
@@ -59,13 +62,19 @@ const stations: Record<Station, { label: string; description: string }> = {
 const stationOrder: Station[] = ["interrogate", "cctv", "clueboard", "evidence", "map", "case"];
 
 export function BureauScreen({ error, onLeave }: { error: string; onLeave: () => void }) {
+  const { isLoaded, isSignedIn } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const [confirmLeave, setConfirmLeave] = useState(false);
   const pathParts = pathname.split("/");
   const roomCode = pathParts[2] ?? "";
+  const city = useQuery(api.world.getMap, roomCode && isLoaded && isSignedIn ? { roomCode } : "skip");
   const station = (pathParts[3] === "bureau" ? pathParts[4] : pathParts[3]) as Station | undefined;
   const activeStation = station ? stations[station] : null;
+  const bureau = city?.places.find((place) => place.kind === "bureau");
+  const away = Boolean(city && (city.activeTravel || city.currentPlaceId !== bureau?.id));
+  const showAwayNotice = away && station !== "map" && station !== "clueboard" && station !== "case" && station !== "interrogate";
+  const currentPlace = city?.places.find((place) => place.id === city.currentPlaceId);
 
   function openStation(nextStation: Station) {
     const path = nextStation === "map" || nextStation === "case"
@@ -156,6 +165,20 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
 
       {station === "case" ? (
         <CaseFileScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
+      ) : null}
+      {showAwayNotice ? (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#050712]/95 p-4 text-cyan-50">
+          <div className="w-full max-w-lg border border-cyan-300/50 bg-[#07111b] p-6 text-center shadow-[0_0_30px_rgba(34,211,238,0.18)]">
+            <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/55">Current location</p>
+            <h2 className="mt-2 text-2xl uppercase text-yellow-100">{city?.activeTravel ? `On the way to ${city.activeTravel.destinationName}` : currentPlace?.name ?? "Away from bureau"}</h2>
+            <p className="mt-3 text-sm text-cyan-100/70">Bureau terminals are available when you return. You can still review your case and clueboard.</p>
+            <div className="mt-5 grid gap-2 sm:grid-cols-3">
+              <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("map")} type="button">City map</button>
+              <button className="min-h-11 border border-cyan-300/50 px-3 text-sm uppercase" onClick={() => openStation("clueboard")} type="button">Clueboard</button>
+              <button className="min-h-11 border border-cyan-300/50 px-3 text-sm uppercase" onClick={() => openStation("case")} type="button">Case file</button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </section>
   );

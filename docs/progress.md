@@ -4,6 +4,8 @@
 
 - Chose an action-driven shared clock: concurrent detective actions overlap, the clock pauses when no timed action is active, and server timestamp anchors avoid turn prompts and per-minute writes.
 - Kept the real-time speed multiplier adjustable for playtesting while preserving the documented in-game minute costs.
+- Added the first timed action: detectives can choose any reachable city destination, travel concurrently along the shortest route, and arrive independently. The shared clock pauses after the last journey; stale journeys settle on return.
+- The map shows each detective's location and journey progress. Bureau CCTV and public-record reads now require that detective to be physically at the bureau and not travelling; away detectives see a route back to the map.
 
 ## 2026-10-07 — Stale room recovery
 

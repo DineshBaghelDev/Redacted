@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
-import { getPlayingRoomMember } from "./lib/auth";
+import { getBureauRoomMember } from "./lib/auth";
 
 const publicRecord = v.object({
   id: v.string(),
@@ -21,7 +21,7 @@ export const search = query({
   args: { roomCode: v.string(), search: v.string() },
   returns: v.union(v.null(), v.array(publicRecord)),
   handler: async (ctx, { roomCode, search }) => {
-    const member = await getPlayingRoomMember(ctx, roomCode);
+    const member = await getBureauRoomMember(ctx, roomCode);
     if (!member?.session.caseId) return null;
     const term = search.trim();
     if (term.length > 80) throw new Error("Search must be 80 characters or fewer.");
