@@ -51,6 +51,7 @@ import type * as generation_prompts_story from "../generation/prompts/story.js";
 import type * as generation_prompts_text from "../generation/prompts/text.js";
 import type * as generation_stages from "../generation/stages.js";
 import type * as generation_workflow from "../generation/workflow.js";
+import type * as investigation from "../investigation.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_publishCctv from "../lib/publishCctv.js";
 import type * as lib_publishDevices from "../lib/publishDevices.js";
@@ -114,6 +115,7 @@ declare const fullApi: ApiFromModules<{
   "generation/prompts/text": typeof generation_prompts_text;
   "generation/stages": typeof generation_stages;
   "generation/workflow": typeof generation_workflow;
+  investigation: typeof investigation;
   "lib/auth": typeof lib_auth;
   "lib/publishCctv": typeof lib_publishCctv;
   "lib/publishDevices": typeof lib_publishDevices;

@@ -173,16 +173,16 @@ Corridors are represented as connection edges unless they are searchable locatio
 
 Both players may be at different places simultaneously.
 
-### `moveToRoom(sessionId, playerId, destinationRoomId)`
+### `moveToRoom(roomCode, destinationRoomId)`
 
 - same building/floor graph validation,
 - use 1 minute for normal room edge,
 - 2 minutes when transition crosses floors,
-- update current room.
+- update current room on completion; allow another player to act concurrently.
 
 ## Search
 
-### `searchRoom(sessionId, playerId, roomId)`
+### `searchRoom(roomCode)`
 
 - require player physically present in room,
 - require searchable room,
@@ -190,6 +190,8 @@ Both players may be at different places simultaneously.
 - reveal all case items configured to be revealed by that search operation according to the fixture/generated case data,
 - never generate new evidence,
 - add only collectible items to inventory when explicitly collected.
+
+`inspectItem(roomCode, itemId)` requires a discovered item in the current room or shared inventory and reveals its stored description after 2 game minutes. `collectItem(roomCode, itemId)` requires a discovered, collectible item in the player's current room and adds it to shared inventory without inventing evidence.
 
 If progressive/multiple searches per room are later desired, add deterministic search tiers rather than LLM generation.
 

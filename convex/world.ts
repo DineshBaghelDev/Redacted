@@ -39,21 +39,46 @@ function travelDistances(originId: Id<"places">, streets: Doc<"placeConnections"
   return distances;
 }
 
-export async function settleTravel(ctx: MutationCtx, session: Doc<"sessions">, now: number) {
-  const actions = await ctx.db.query("travelActions").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).collect();
+export async function entranceRoomId(ctx: MutationCtx, placeId: Id<"places">) {
+  const place = await ctx.db.get(placeId);
+  return place?.buildingId
+    ? (await ctx.db.query("rooms").withIndex("by_buildingId_and_order", (q) => q.eq("buildingId", place.buildingId!)).collect()).find((room) => room.isEntrance)?._id
+    : undefined;
+}
+
+export async function settleActions(ctx: MutationCtx, session: Doc<"sessions">, now: number) {
+  const travel = await ctx.db.query("travelActions").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).collect();
+  const room = await ctx.db.query("roomActions").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).collect();
   const gameTime = currentGameTime(session, now);
-  const due = actions.filter((action) => action.completeGameTime <= gameTime);
-  for (const action of due) {
-    await ctx.db.patch(action.playerId, { currentPlaceId: action.destinationPlaceId });
+  const dueTravel = travel.filter((action) => action.completeGameTime <= gameTime);
+  const dueRoom = room.filter((action) => action.completeGameTime <= gameTime);
+  for (const action of dueTravel) {
+    await ctx.db.patch(action.playerId, { currentPlaceId: action.destinationPlaceId, currentRoomId: await entranceRoomId(ctx, action.destinationPlaceId) });
     await ctx.db.delete(action._id);
   }
-  const remaining = actions.filter((action) => action.completeGameTime > gameTime);
-  if (remaining.length === 0 && session.clockStartedAt !== undefined) {
-    const pausedTime = Math.max(session.gameTime ?? 0, ...due.map((action) => action.completeGameTime));
+  for (const action of dueRoom) {
+    if (action.kind === "move") await ctx.db.patch(action.playerId, { currentRoomId: action.roomId });
+    else if (action.kind === "inspect" && action.itemId) {
+      const known = await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", action.itemId!)).unique();
+      if (known && known.inspectedAt === undefined) await ctx.db.patch(known._id, { inspectedAt: now });
+    } else if (action.kind === "search" && !(await ctx.db.query("searchedRooms").withIndex("by_sessionId_and_roomId", (q) => q.eq("sessionId", session._id).eq("roomId", action.roomId)).unique())) {
+      await ctx.db.insert("searchedRooms", { sessionId: session._id, roomId: action.roomId, searchedAt: now });
+      for await (const item of ctx.db.query("caseItems").withIndex("by_roomId", (q) => q.eq("roomId", action.roomId))) {
+        if (item.caseId !== session.caseId || !item.discoverableBySearch) continue;
+        if (!(await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", item._id)).unique())) {
+          await ctx.db.insert("sessionItems", { sessionId: session._id, itemId: item._id, discoveredAt: now });
+        }
+      }
+    }
+    await ctx.db.delete(action._id);
+  }
+  const remaining = travel.length + room.length - dueTravel.length - dueRoom.length;
+  if (remaining === 0 && session.clockStartedAt !== undefined) {
+    const pausedTime = Math.max(session.gameTime ?? 0, ...dueTravel.map((action) => action.completeGameTime), ...dueRoom.map((action) => action.completeGameTime));
     await ctx.db.patch(session._id, { gameTime: pausedTime, clockStartedAt: undefined });
     return { gameTime: pausedTime, activeCount: 0 };
   }
-  return { gameTime, activeCount: remaining.length };
+  return { gameTime, activeCount: remaining };
 }
 
 export const getMap = query({
@@ -66,6 +91,7 @@ export const getMap = query({
       area,
       x: v.number(),
       y: v.number(),
+      hasInterior: v.boolean(),
       travelMinutes: v.optional(v.number()),
     })),
     streets: v.array(v.object({
@@ -82,6 +108,7 @@ export const getMap = query({
       startGameTime: v.number(),
       completeGameTime: v.number(),
     })),
+    busy: v.boolean(),
     clock: v.object({
       gameTime: v.number(),
       clockStartedAt: v.union(v.null(), v.number()),
@@ -106,6 +133,7 @@ export const getMap = query({
     const currentPlaceId = member.player.currentPlaceId ?? bureau?._id;
     const distances = currentPlaceId ? travelDistances(currentPlaceId, streets) : new Map<string, number>();
     const activeTravel = await ctx.db.query("travelActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique();
+    const activeRoom = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique();
     const destination = activeTravel ? places.find((place) => place._id === activeTravel.destinationPlaceId) : null;
     return {
       places: places.map((place) => ({
@@ -115,6 +143,7 @@ export const getMap = query({
         area: place.area,
         x: place.mapX,
         y: place.mapY,
+        hasInterior: Boolean(place.buildingId),
         travelMinutes: distances.get(place._id),
       })),
       streets: streets.map((street) => ({
@@ -131,6 +160,7 @@ export const getMap = query({
         startGameTime: activeTravel.startGameTime,
         completeGameTime: activeTravel.completeGameTime,
       } : null,
+      busy: Boolean(activeTravel || activeRoom),
       clock: {
         gameTime: member.session.gameTime ?? 0,
         clockStartedAt: member.session.clockStartedAt ?? null,
@@ -147,11 +177,12 @@ export const startTravel = mutation({
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.session.caseId) throw new Error("Start the investigation first.");
     const now = Date.now();
-    const settled = await settleTravel(ctx, member.session, now);
+    const settled = await settleActions(ctx, member.session, now);
     const player = await ctx.db.get(member.player._id);
     if (!player) throw new Error("Join the room first.");
-    if (await ctx.db.query("travelActions").withIndex("by_playerId", (q) => q.eq("playerId", player._id)).unique()) {
-      throw new Error("Finish your current journey first.");
+    if (await ctx.db.query("travelActions").withIndex("by_playerId", (q) => q.eq("playerId", player._id)).unique()
+      || await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", player._id)).unique()) {
+      throw new Error("Finish your current action first.");
     }
     const playableCase = await ctx.db.get(member.session.caseId);
     if (!playableCase?.cityId) throw new Error("The city map is unavailable for this room.");
@@ -187,7 +218,7 @@ export const finishTravel = mutation({
   handler: async (ctx, { roomCode }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member) throw new Error("Start the investigation first.");
-    const settled = await settleTravel(ctx, member.session, Date.now());
+    const settled = await settleActions(ctx, member.session, Date.now());
     const active = await ctx.db.query("travelActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique();
     return { gameTime: settled.gameTime, traveling: Boolean(active) };
   },

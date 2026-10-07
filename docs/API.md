@@ -139,20 +139,22 @@ presence.heartbeat({ sessionId })
 world.getMap({ roomCode })
 world.startTravel({ roomCode, destinationId })
 world.finishTravel({ roomCode })
-world.moveToRoom({ sessionId, roomId })
+investigation.getPlace({ roomCode })
+investigation.moveToRoom({ roomCode, roomId })
+investigation.finishAction({ roomCode })
 ```
 
-`startTravel` computes a deterministic shortest path through the frozen city graph, verifies reachability, and starts a timed journey. Parallel journeys share the same game clock. `finishTravel` settles completed journeys and pauses the clock after the last one; it is safe to call after reconnecting. Players are not forced to click every intermediate graph node. Room movement remains planned.
+`startTravel` computes a deterministic shortest path through the frozen city graph, verifies reachability, and starts a timed journey. Parallel journeys and room actions share the same game clock. `finishTravel` and `finishAction` settle completed actions and pause the clock after the last one; they are safe to call after reconnecting. Players are not forced to click every intermediate city graph node. Room movement follows frozen room connections.
 
 ### Search and inventory
 
 ```ts
-search.searchRoom({ sessionId, roomId })
-items.inspect({ sessionId, itemId })
-items.collect({ sessionId, itemId })
+investigation.searchRoom({ roomCode })
+investigation.inspectItem({ roomCode, itemId })
+investigation.collectItem({ roomCode, itemId })
 ```
 
-Search only reveals pre-existing case items.
+Search takes 15 game minutes and only reveals pre-existing case items in the player's current room. Inspection takes 2 game minutes and reveals the item's stored description. Collection requires physical access to a discovered collectible item; collected items are shared with both players. The player decides whether an item matters to the case.
 
 ### CCTV
 

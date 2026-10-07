@@ -524,11 +524,15 @@ Abandoned sessions expire after 7 days.
 
 Enforce maximum 2 players in mutation logic.
 
-Current runtime keeps `gameTime` and `currentPlaceId` optional for pre-clock sessions. A started session places both players at its bureau. `clockStartedAt` is set only while a timed journey is active; the server currently uses 1 real second per game minute as a playtest tuning value.
+Current runtime keeps `gameTime`, `currentPlaceId`, and `currentRoomId` optional for pre-clock sessions. A started session places both players at the bureau entrance room. `clockStartedAt` is set while any timed travel or room action is active; the server currently uses 1 real second per game minute as a playtest tuning value.
 
 ### `travelActions`
 
-One active journey per player. Rows store the destination place, starting and completion game minutes, and creation timestamp. The `by_sessionId` and `by_playerId` indexes support shared clock settlement and each player's current journey. Completed rows are removed when the next authorized travel interaction settles them.
+One active journey per player. Rows store the destination place, starting and completion game minutes, and creation timestamp. The `by_sessionId` and `by_playerId` indexes support shared clock settlement and each player's current journey. Completed rows are removed when the next authorized timed interaction settles them.
+
+### `roomActions`, `searchedRooms`, and `sessionItems`
+
+`roomActions` stores a player's timed move, search, or inspection. A player can have only one active travel or room action. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, and collection timestamps. Item description is returned to clients only after inspection; undiscovered items are not returned.
 
 ### `sessionState`
 

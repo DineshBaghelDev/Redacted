@@ -326,6 +326,7 @@ export default defineSchema({
     nickname: v.string(),
     isReady: v.optional(v.boolean()),
     currentPlaceId: v.optional(v.id("places")),
+    currentRoomId: v.optional(v.id("rooms")),
     joinedAt: v.number(),
   })
     .index("by_sessionId", ["sessionId"])
@@ -341,6 +342,33 @@ export default defineSchema({
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_playerId", ["playerId"]),
+  roomActions: defineTable({
+    sessionId: v.id("sessions"),
+    playerId: v.id("sessionPlayers"),
+    kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect")),
+    roomId: v.id("rooms"),
+    itemId: v.optional(v.id("caseItems")),
+    startGameTime: v.number(),
+    completeGameTime: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_playerId", ["playerId"]),
+  sessionItems: defineTable({
+    sessionId: v.id("sessions"),
+    itemId: v.id("caseItems"),
+    discoveredAt: v.number(),
+    inspectedAt: v.optional(v.number()),
+    collectedAt: v.optional(v.number()),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_sessionId_and_itemId", ["sessionId", "itemId"]),
+  searchedRooms: defineTable({
+    sessionId: v.id("sessions"),
+    roomId: v.id("rooms"),
+    searchedAt: v.number(),
+  })
+    .index("by_sessionId_and_roomId", ["sessionId", "roomId"]),
   clueBoardNodes: defineTable({
     sessionId: v.id("sessions"),
     type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record")),

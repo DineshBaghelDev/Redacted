@@ -18,6 +18,10 @@ const MapScreen = dynamic(() =>
   import("./map-screen").then((module) => module.MapScreen),
 );
 
+const PlaceScreen = dynamic(() =>
+  import("./place-screen").then((module) => module.PlaceScreen),
+);
+
 const InterrogationScreen = dynamic(() =>
   import("./interrogation-screen").then((module) => module.InterrogationScreen),
 );
@@ -30,7 +34,7 @@ const CaseFileScreen = dynamic(() =>
   import("./case-file-screen").then((module) => module.CaseFileScreen),
 );
 
-type Station = "interrogate" | "cctv" | "clueboard" | "evidence" | "map" | "case";
+type Station = "interrogate" | "cctv" | "clueboard" | "evidence" | "map" | "place" | "case";
 
 const stations: Record<Station, { label: string; description: string }> = {
   interrogate: {
@@ -53,6 +57,7 @@ const stations: Record<Station, { label: string; description: string }> = {
     label: "City map",
     description: "Plan where to go next and review the places connected to this case.",
   },
+  place: { label: "Explore", description: "Move through rooms and examine what you find." },
   case: {
     label: "Case file",
     description: "Review the briefing and submit the final report when your theory is ready.",
@@ -73,11 +78,11 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   const activeStation = station ? stations[station] : null;
   const bureau = city?.places.find((place) => place.kind === "bureau");
   const away = Boolean(city && (city.activeTravel || city.currentPlaceId !== bureau?.id));
-  const showAwayNotice = away && station !== "map" && station !== "clueboard" && station !== "case" && station !== "interrogate";
+  const showAwayNotice = away && station !== "map" && station !== "place" && station !== "clueboard" && station !== "case" && station !== "interrogate";
   const currentPlace = city?.places.find((place) => place.id === city.currentPlaceId);
 
   function openStation(nextStation: Station) {
-    const path = nextStation === "map" || nextStation === "case"
+    const path = nextStation === "map" || nextStation === "place" || nextStation === "case"
       ? `/lobby/${roomCode}/${nextStation}`
       : `/lobby/${roomCode}/bureau/${nextStation}`;
     router.push(path);
@@ -155,6 +160,10 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         <MapScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
       ) : null}
 
+      {station === "place" ? (
+        <PlaceScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/map`)} />
+      ) : null}
+
       {station === "interrogate" ? (
         <InterrogationScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
       ) : null}
@@ -172,8 +181,9 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
             <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/55">Current location</p>
             <h2 className="mt-2 text-2xl uppercase text-yellow-100">{city?.activeTravel ? `On the way to ${city.activeTravel.destinationName}` : currentPlace?.name ?? "Away from bureau"}</h2>
             <p className="mt-3 text-sm text-cyan-100/70">Bureau terminals are available when you return. You can still review your case and clueboard.</p>
-            <div className="mt-5 grid gap-2 sm:grid-cols-3">
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
               <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("map")} type="button">City map</button>
+              {!city?.activeTravel && currentPlace?.hasInterior ? <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("place")} type="button">Explore this place</button> : null}
               <button className="min-h-11 border border-cyan-300/50 px-3 text-sm uppercase" onClick={() => openStation("clueboard")} type="button">Clueboard</button>
               <button className="min-h-11 border border-cyan-300/50 px-3 text-sm uppercase" onClick={() => openStation("case")} type="button">Case file</button>
             </div>

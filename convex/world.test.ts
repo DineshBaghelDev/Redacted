@@ -49,7 +49,7 @@ test("partners travel in parallel and the shared clock pauses after the last jou
   expect(await one.query(api.publicRecords.search, { roomCode: "ABC123", search: "" })).toBeNull();
   expect(await one.query(api.cases.getCctv, { roomCode: "ABC123" })).toBeNull();
   expect(await two.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "station" })).toEqual({ completeGameTime: 5 });
-  await expect(one.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "station" })).rejects.toThrow("Finish your current journey");
+  await expect(one.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "station" })).rejects.toThrow("Finish your current action");
   vi.advanceTimersByTime(5_000);
   expect(await two.mutation(api.world.finishTravel, { roomCode: "ABC123" })).toEqual({ gameTime: 5, traveling: false });
   expect((await two.query(api.world.getMap, { roomCode: "ABC123" }))?.currentPlaceId).toBe("station");

@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-10-07 — Physical investigation stays player-driven
+
+- Explore shows the current building's connected rooms; moving across a room edge costs 1 game minute, or 2 across floors. A room can be searched once per shared session for 15 game minutes.
+- Finding an object does not declare it a clue. Its stored description appears only after a 2-minute inspection, and collectible objects enter shared inventory only after a player chooses Collect.
+- The same shared clock runs travel, movement, search, and inspection. Free reading and collecting do not advance it.
+
 ## 2026-10-07 — Investigation time is continuous and action-driven
 
 - Timed actions run on one shared accelerated clock and may overlap between detectives; collaboration must save time rather than double its cost.

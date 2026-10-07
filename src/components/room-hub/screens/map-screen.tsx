@@ -2,6 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 
@@ -14,6 +15,7 @@ const kindLabels = {
 } as const;
 
 export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
+  const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
   const city = useQuery(api.world.getMap, isLoaded && isSignedIn ? { roomCode } : "skip");
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
@@ -180,7 +182,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
           <p className="mt-2 text-sm uppercase text-cyan-100/45">{kindLabels[selected.kind]}</p>
           <button
             className="mt-4 min-h-11 w-full border border-yellow-200/70 bg-yellow-200/10 px-3 text-sm uppercase text-yellow-100 hover:bg-yellow-200/20 disabled:cursor-default disabled:opacity-45"
-            disabled={traveling || Boolean(city.activeTravel) || city.currentPlaceId === selected.id || selected.travelMinutes === undefined}
+            disabled={traveling || city.busy || city.currentPlaceId === selected.id || selected.travelMinutes === undefined}
             onClick={travelToSelected}
             type="button"
           >
@@ -194,6 +196,11 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
                     ? "No route available"
                     : `Travel · ${selected.travelMinutes} min`}
           </button>
+          {city.places.find((place) => place.id === city.currentPlaceId)?.hasInterior && !city.activeTravel ? (
+            <button className="mt-2 min-h-11 w-full border border-cyan-300/60 bg-cyan-300/10 px-3 text-sm uppercase text-cyan-50 hover:border-yellow-200 hover:text-yellow-200" onClick={() => router.push(`/lobby/${roomCode}/place`)} type="button">
+              Explore your location
+            </button>
+          ) : null}
           <button
             className="mt-4 min-h-11 w-full border border-cyan-300/60 px-3 text-sm uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:cursor-default disabled:opacity-55"
             disabled={pinning === selected.id || isPinned}
