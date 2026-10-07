@@ -151,10 +151,12 @@ investigation.finishAction({ roomCode })
 investigation.searchRoom({ roomCode })
 investigation.inspectItem({ roomCode, itemId })
 investigation.collectItem({ roomCode, itemId })
+investigation.getInventory({ roomCode })
 ```
 
 Search takes 15 game minutes and only reveals pre-existing case items in the player's current room. Inspection takes 2 game minutes and reveals the item's stored description. Collection requires physical access to a discovered collectible item; collected items are shared with both players. The player decides whether an item matters to the case.
 Discovered objects may be pinned through `clueBoard.createReferenceNode({ roomCode, type: "item", referenceId: itemId, x, y })`; undiscovered IDs are refused.
+Final-report weapon item IDs must come from the shared collected inventory; text remains available for weapons that are not physical case items.
 
 ### CCTV
 

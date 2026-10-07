@@ -6,6 +6,7 @@
 - The lab lists eligible test names and pending times without exposing result text. Either partner can open a ready result at the lab, after which it is shared. No evidence is generated during play.
 - A room-level clock settlement timer handles completed travel, room actions, and pending lab work even when the player leaves a specific station screen.
 - Viewed lab reports and discovered objects can be pinned to the clueboard and selected as proof in the final report. The server converts those pins to canonical evidence IDs before grading, without exposing unviewed reports.
+- The final report now offers collected inventory as an explicit weapon choice. Server validation rejects guessed or uncollected item IDs while retaining a text description for non-item weapons.
 
 ## 2026-10-07 — Room investigation and shared inventory
 

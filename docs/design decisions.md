@@ -5,6 +5,7 @@
 - A submitted lab test takes 5 minutes of the detective's time, then its frozen turnaround continues on the shared clock. Ready time includes both costs. Concurrent detective actions overlap instead of adding minutes.
 - Tests appear only once their physical source is legitimately available: collected object, searched room, or the source-less autopsy. The result is a deliberate, shared reveal at the lab, not an automatic clue or conclusion.
 - A lab report becomes pin-able only after it has been viewed. Final-report evidence choices accept pinned objects and reports alongside records, while the server resolves each to its frozen case evidence ID for grading.
+- Choosing a collected weapon uses its item identity for exact case-close grading; the free-text weapon field remains for cases whose weapon is not a collected object.
 
 ## 2026-10-07 — Physical investigation stays player-driven
 

@@ -21,6 +21,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
   const brief = useQuery(api.cases.getBrief, ready ? { roomCode } : "skip");
   const people = useQuery(api.npcs.list, ready ? { roomCode } : "skip");
   const boardNodes = useQuery(api.clueBoard.getNodes, ready ? { roomCode } : "skip");
+  const inventory = useQuery(api.investigation.getInventory, ready ? { roomCode } : "skip");
   const closeState = useQuery(api.caseClose.getResult, ready ? { roomCode } : "skip");
   const submitCase = useMutation(api.caseClose.submit);
   const retryJudge = useMutation(api.caseClose.retry);
@@ -31,6 +32,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
   const [culpritNpcId, setCulpritNpcId] = useState("");
   const [motiveExplanation, setMotiveExplanation] = useState("");
   const [weaponDescription, setWeaponDescription] = useState("");
+  const [weaponItemId, setWeaponItemId] = useState("");
   const [evidenceIds, setEvidenceIds] = useState<string[]>([]);
   const [evidenceExplanation, setEvidenceExplanation] = useState("");
   const [methodExplanation, setMethodExplanation] = useState("");
@@ -72,6 +74,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
       roomCode,
       culpritNpcId: culpritNpcId as Id<"npcs">,
       motiveExplanation,
+      ...(weaponItemId ? { weaponItemId: weaponItemId as Id<"caseItems"> } : {}),
       weaponDescription,
       evidenceIds,
       evidenceExplanation,
@@ -177,7 +180,11 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               <div className="border-b-2 border-[#6d5138] pb-4"><p className="text-xs uppercase tracking-[0.2em] text-red-800">Five findings · five stars</p><h3 className="mt-2 text-3xl uppercase">Your final theory</h3></div>
               <label className="block"><span className="case-close-label">1 · Who did it?</span><select className="case-close-input" onChange={(event) => setCulpritNpcId(event.target.value)} required value={culpritNpcId}><option value="">Choose a person</option>{people?.filter((person) => person.role !== "victim").map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
               <label className="block"><span className="case-close-label">2 · Why did they do it?</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setMotiveExplanation(event.target.value)} required value={motiveExplanation} /></label>
-              <label className="block"><span className="case-close-label">3 · What was the weapon?</span><input className="case-close-input" maxLength={200} onChange={(event) => setWeaponDescription(event.target.value)} required type="text" value={weaponDescription} /></label>
+              <div>
+                <p className="case-close-label">3 · What was the weapon?</p>
+                {inventory?.length ? <label className="mt-2 block text-sm"><span>Choose a collected item, if you have it</span><select className="case-close-input" onChange={(event) => { const id = event.target.value; setWeaponItemId(id); if (id) setWeaponDescription(inventory.find((item) => item.id === id)?.name ?? ""); }} value={weaponItemId}><option value="">Describe another weapon</option>{inventory.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : null}
+                <label className="mt-2 block text-sm"><span>Describe the weapon</span><input className="case-close-input" maxLength={200} onChange={(event) => { setWeaponDescription(event.target.value); setWeaponItemId(""); }} required type="text" value={weaponDescription} /></label>
+              </div>
               <fieldset>
                 <legend className="case-close-label">4 · Which pinned evidence proves it?</legend>
                 <p className="mt-1 text-xs text-[#6d5138]">Choose up to {MAX_EVIDENCE}. Selected: {evidenceIds.length}.</p>
@@ -187,7 +194,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                     return (
                       <label className={`flex min-h-12 items-start gap-3 border border-[#6d5138]/50 p-3 text-sm ${!selected && evidenceIds.length >= MAX_EVIDENCE ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`} key={`${item.type}:${item.referenceId}`}>
                         <input checked={selected} className="mt-1 size-4 accent-red-900" disabled={!selected && evidenceIds.length >= MAX_EVIDENCE} onChange={() => toggleEvidence(item.referenceId)} type="checkbox" />
-                        <span><strong className="block uppercase text-red-800">{item.type === "cctv" ? "Camera record" : "Public record"}</strong>{item.text.split("\n")[0]}</span>
+                        <span><strong className="block uppercase text-red-800">{item.type === "cctv" ? "Camera record" : item.type === "public_record" ? "Public record" : item.type === "forensic" ? "Lab report" : "Found object"}</strong>{item.text.split("\n")[0]}</span>
                       </label>
                     );
                   })}

@@ -46,6 +46,10 @@ test("case close grades privately from session-owned evidence", async () => {
       caseId, evidenceId: "item/weapon", sourceId: "weapon", name: "Cast-iron doorstop", description: "Heavy doorstop",
       placeId, roomId, slot: "desk", discoverableBySearch: true, collectible: true, hidden: true, itemType: "weapon",
     });
+    const uncollectedItemId = await ctx.db.insert("caseItems", {
+      caseId, evidenceId: "item/hidden", name: "Hidden knife", description: "Not found", placeId, roomId, slot: "desk",
+      discoverableBySearch: true, collectible: true, hidden: true, itemType: "weapon",
+    });
     const outputId = await ctx.db.insert("forensicOutputs", { caseId, evidenceId: "lab/weapon", sourceItemId: itemId, testType: "fingerprint", result: "Prints on the doorstop.", linkedNpcIds: [], turnaroundMinutes: 60 });
     await ctx.db.insert("caseSolutions", {
       caseId, culpritNpcId, motive: "To conceal stolen company money.", weaponDescription: "Cast-iron doorstop",
@@ -61,7 +65,7 @@ test("case close grades privately from session-owned evidence", async () => {
       sessionId, type: "public_record", referenceId: "record/address", text: "Address record", x: 0, y: 0,
       createdByPlayerId: playerId, createdAt: 1, updatedAt: 1,
     });
-    return { culpritNpcId, itemId, outputId, sessionId };
+    return { culpritNpcId, itemId, uncollectedItemId, outputId, sessionId };
   });
 
   const player = t.withIdentity({ subject: "player-1" });
@@ -71,11 +75,16 @@ test("case close grades privately from session-owned evidence", async () => {
     roomCode: "ABC123", culpritNpcId: setup.culpritNpcId, motiveExplanation: "A detailed motive that fits the theory.", weaponDescription: "Doorstop",
     evidenceIds: ["not-on-board"], evidenceExplanation: "An unowned record supports this theory.", methodExplanation: "A detailed method that fits the theory.",
   })).rejects.toThrow("pinned to this clueboard");
+  await expect(player.mutation(api.caseClose.submit, {
+    roomCode: "ABC123", culpritNpcId: setup.culpritNpcId, motiveExplanation: "A detailed motive that fits the theory.", weaponItemId: setup.uncollectedItemId, weaponDescription: "Hidden knife",
+    evidenceIds: ["record/address"], evidenceExplanation: "The address record supports the theory.", methodExplanation: "A detailed method that fits the theory.",
+  })).rejects.toThrow("shared inventory");
   await player.mutation(api.caseClose.submit, {
     roomCode: "ABC123",
     culpritNpcId: setup.culpritNpcId,
     motiveExplanation: "Mara wanted to conceal the stolen company money.",
     weaponDescription: "Cast-iron doorstop",
+    weaponItemId: setup.itemId,
     evidenceIds: ["record/address", setup.itemId, setup.outputId],
     evidenceExplanation: "The address record ties Mara to the relevant place.",
     methodExplanation: "Mara struck the victim with the cast-iron doorstop.",

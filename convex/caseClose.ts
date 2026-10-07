@@ -100,7 +100,8 @@ export const submit = mutation({
     const weaponItemId = args.weaponItemId;
     if (weaponItemId) {
       const item = await ctx.db.get(weaponItemId);
-      if (!item || item.caseId !== member.session.caseId) throw new Error("Choose a weapon from this case.");
+      const known = await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", member.session._id).eq("itemId", weaponItemId)).unique();
+      if (!item || item.caseId !== member.session.caseId || known?.collectedAt === undefined) throw new Error("Choose a weapon from shared inventory.");
     }
     const weaponDescription = shortText(args.weaponDescription, "Weapon");
     const now = Date.now();

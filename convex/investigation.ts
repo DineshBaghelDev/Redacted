@@ -64,6 +64,22 @@ export const getPlace = query({
   },
 });
 
+export const getInventory = query({
+  args: { roomCode: v.string() },
+  returns: v.array(v.object({ id: v.id("caseItems"), name: v.string() })),
+  handler: async (ctx, { roomCode }) => {
+    const member = await getPlayingRoomMember(ctx, roomCode);
+    if (!member?.session.caseId) return [];
+    const items = [];
+    for await (const known of ctx.db.query("sessionItems").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id))) {
+      if (known.collectedAt === undefined) continue;
+      const item = await ctx.db.get(known.itemId);
+      if (item?.caseId === member.session.caseId) items.push({ id: item._id, name: item.name });
+    }
+    return items;
+  },
+});
+
 export const moveToRoom = mutation({
   args: { roomCode: v.string(), roomId: v.id("rooms") },
   returns: v.object({ completeGameTime: v.number() }),

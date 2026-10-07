@@ -55,6 +55,7 @@ test("partners search, inspect, and collect shared items without revealing hidde
   expect((await two.query(api.clueBoard.getNodes, { roomCode }))[0].text).toBe("Note\nFound object");
   await expect(one.mutation(api.investigation.searchRoom, { roomCode })).rejects.toThrow("already been searched");
   await one.mutation(api.investigation.collectItem, { roomCode, itemId: ids.itemId });
+  expect(await two.query(api.investigation.getInventory, { roomCode })).toEqual([{ id: ids.itemId, name: "Note" }]);
   expect((await two.query(api.investigation.getPlace, { roomCode }))?.items[0]).toMatchObject({ name: "Note", collected: true });
   expect(await two.mutation(api.investigation.inspectItem, { roomCode, itemId: ids.itemId })).toEqual({ completeGameTime: 18 });
   vi.advanceTimersByTime(2_000);
