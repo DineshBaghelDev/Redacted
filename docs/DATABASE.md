@@ -354,9 +354,11 @@ Mutable per session.
   forensicOutputId: Id<"forensicOutputs">,
   requestedAtGameTime: number,
   readyAtGameTime: number,
-  status: "pending" | "ready" | "viewed",
+  viewedAt?: number,
 }
 ```
+
+Readiness is derived from the shared game clock; `viewedAt` records the explicit first opening of a ready result. The canonical result and linked people stay in `forensicOutputs` and are never copied into the request row.
 
 ## CCTV
 

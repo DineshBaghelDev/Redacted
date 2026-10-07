@@ -63,7 +63,8 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   const remaining = place.action ? Math.max(0, place.action.completeGameTime - gameTime) : 0;
   const actionRoom = place.rooms.find((room) => room.id === place.action?.roomId);
   const actionLabel = place.action?.kind === "move" ? `Moving to ${actionRoom?.name ?? "room"}`
-    : place.action?.kind === "search" ? `Searching ${actionRoom?.name ?? "room"}` : "Inspecting item";
+    : place.action?.kind === "search" ? `Searching ${actionRoom?.name ?? "room"}`
+      : place.action?.kind === "forensic" ? "Submitting lab test" : "Inspecting item";
 
   return (
     <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#080b12] text-cyan-50">

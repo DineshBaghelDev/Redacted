@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-07 — Lab turnaround on the shared clock
+
+- A submitted lab test takes 5 minutes of the detective's time, then its frozen turnaround continues on the shared clock. Ready time includes both costs. Concurrent detective actions overlap instead of adding minutes.
+- Tests appear only once their physical source is legitimately available: collected object, searched room, or the source-less autopsy. The result is a deliberate, shared reveal at the lab, not an automatic clue or conclusion.
+
 ## 2026-10-07 — Physical investigation stays player-driven
 
 - Explore shows the current building's connected rooms; moving across a room edge costs 1 game minute, or 2 across floors. A room can be searched once per shared session for 15 game minutes.

@@ -13,7 +13,7 @@ function screenForPath(pathname: string): Screen {
   if (pathname === "/previous") return "previous";
   if (pathname === "/settings") return "settings";
   if (pathname === "/game" || pathname.startsWith("/game/")) return "bureau";
-  if (/^\/lobby\/[^/]+\/(?:bureau(?:\/.*)?|map|place|case)$/.test(pathname)) return "bureau";
+  if (/^\/lobby\/[^/]+\/(?:bureau(?:\/.*)?|map|place|lab|case)$/.test(pathname)) return "bureau";
   if (/^\/lobby\/[^/]+\/brief$/.test(pathname)) return "brief";
   return "menu";
 }

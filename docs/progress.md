@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-07 — Forensic lab requests and results
+
+- Added shared lab requests for tests backed by collected objects, searched rooms, or the autopsy. Submission occupies the detective for 5 game minutes; the frozen turnaround keeps the shared clock running and overlaps other work.
+- The lab lists eligible test names and pending times without exposing result text. Either partner can open a ready result at the lab, after which it is shared. No evidence is generated during play.
+- A room-level clock settlement timer handles completed travel, room actions, and pending lab work even when the player leaves a specific station screen.
+
 ## 2026-10-07 — Room investigation and shared inventory
 
 - Added connected room movement, 15-minute room searches, 2-minute item inspection, and explicit collection on the continuous shared clock. Two players can act concurrently; the clock pauses after the last action.

@@ -14,6 +14,7 @@ import type * as clueBoard from "../clueBoard.js";
 import type * as dev_tester from "../dev/tester.js";
 import type * as fixtures_caseEasy from "../fixtures/caseEasy.js";
 import type * as fixtures_city from "../fixtures/city.js";
+import type * as forensics from "../forensics.js";
 import type * as generation_aiStage from "../generation/aiStage.js";
 import type * as generation_core_brief from "../generation/core/brief.js";
 import type * as generation_core_buildings from "../generation/core/buildings.js";
@@ -78,6 +79,7 @@ declare const fullApi: ApiFromModules<{
   "dev/tester": typeof dev_tester;
   "fixtures/caseEasy": typeof fixtures_caseEasy;
   "fixtures/city": typeof fixtures_city;
+  forensics: typeof forensics;
   "generation/aiStage": typeof generation_aiStage;
   "generation/core/brief": typeof generation_core_brief;
   "generation/core/buildings": typeof generation_core_buildings;

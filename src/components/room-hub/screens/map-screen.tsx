@@ -201,6 +201,11 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
               Explore your location
             </button>
           ) : null}
+          {city.places.find((place) => place.id === city.currentPlaceId)?.kind === "lab" && !city.activeTravel ? (
+            <button className="mt-2 min-h-11 w-full border border-yellow-200/70 bg-yellow-200/10 px-3 text-sm uppercase text-yellow-100 hover:bg-yellow-200/20" onClick={() => router.push(`/lobby/${roomCode}/lab`)} type="button">
+              Use forensic lab
+            </button>
+          ) : null}
           <button
             className="mt-4 min-h-11 w-full border border-cyan-300/60 px-3 text-sm uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:cursor-default disabled:opacity-55"
             disabled={pinning === selected.id || isPinned}

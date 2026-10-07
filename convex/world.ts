@@ -7,7 +7,7 @@ const placeKind = v.union(v.literal("home"), v.literal("work"), v.literal("publi
 const area = v.union(v.literal("northside"), v.literal("midtown"), v.literal("eastside"));
 export const GAME_MINUTE_MS = 1_000;
 
-function currentGameTime(session: Pick<Doc<"sessions">, "gameTime" | "clockStartedAt">, now = Date.now()) {
+export function currentGameTime(session: Pick<Doc<"sessions">, "gameTime" | "clockStartedAt">, now = Date.now()) {
   const baseline = session.gameTime ?? 0;
   return session.clockStartedAt === undefined
     ? baseline
@@ -49,9 +49,12 @@ export async function entranceRoomId(ctx: MutationCtx, placeId: Id<"places">) {
 export async function settleActions(ctx: MutationCtx, session: Doc<"sessions">, now: number) {
   const travel = await ctx.db.query("travelActions").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).collect();
   const room = await ctx.db.query("roomActions").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).collect();
+  const requests = await ctx.db.query("forensicRequests").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).collect();
   const gameTime = currentGameTime(session, now);
   const dueTravel = travel.filter((action) => action.completeGameTime <= gameTime);
   const dueRoom = room.filter((action) => action.completeGameTime <= gameTime);
+  const pendingRequests = requests.filter((request) => request.readyAtGameTime > (session.gameTime ?? 0));
+  const dueRequests = pendingRequests.filter((request) => request.readyAtGameTime <= gameTime);
   for (const action of dueTravel) {
     await ctx.db.patch(action.playerId, { currentPlaceId: action.destinationPlaceId, currentRoomId: await entranceRoomId(ctx, action.destinationPlaceId) });
     await ctx.db.delete(action._id);
@@ -72,9 +75,9 @@ export async function settleActions(ctx: MutationCtx, session: Doc<"sessions">, 
     }
     await ctx.db.delete(action._id);
   }
-  const remaining = travel.length + room.length - dueTravel.length - dueRoom.length;
+  const remaining = travel.length + room.length + pendingRequests.length - dueTravel.length - dueRoom.length - dueRequests.length;
   if (remaining === 0 && session.clockStartedAt !== undefined) {
-    const pausedTime = Math.max(session.gameTime ?? 0, ...dueTravel.map((action) => action.completeGameTime), ...dueRoom.map((action) => action.completeGameTime));
+    const pausedTime = Math.max(session.gameTime ?? 0, ...dueTravel.map((action) => action.completeGameTime), ...dueRoom.map((action) => action.completeGameTime), ...dueRequests.map((request) => request.readyAtGameTime));
     await ctx.db.patch(session._id, { gameTime: pausedTime, clockStartedAt: undefined });
     return { gameTime: pausedTime, activeCount: 0 };
   }
@@ -109,6 +112,7 @@ export const getMap = query({
       completeGameTime: v.number(),
     })),
     busy: v.boolean(),
+    nextCompletionGameTime: v.union(v.null(), v.number()),
     clock: v.object({
       gameTime: v.number(),
       clockStartedAt: v.union(v.null(), v.number()),
@@ -134,6 +138,12 @@ export const getMap = query({
     const distances = currentPlaceId ? travelDistances(currentPlaceId, streets) : new Map<string, number>();
     const activeTravel = await ctx.db.query("travelActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique();
     const activeRoom = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique();
+    const [allTravel, allRoom, requests] = await Promise.all([
+      ctx.db.query("travelActions").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id)).collect(),
+      ctx.db.query("roomActions").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id)).collect(),
+      ctx.db.query("forensicRequests").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id)).collect(),
+    ]);
+    const completions = [...allTravel.map((action) => action.completeGameTime), ...allRoom.map((action) => action.completeGameTime), ...requests.filter((request) => request.readyAtGameTime > (member.session.gameTime ?? 0)).map((request) => request.readyAtGameTime)];
     const destination = activeTravel ? places.find((place) => place._id === activeTravel.destinationPlaceId) : null;
     return {
       places: places.map((place) => ({
@@ -161,6 +171,7 @@ export const getMap = query({
         completeGameTime: activeTravel.completeGameTime,
       } : null,
       busy: Boolean(activeTravel || activeRoom),
+      nextCompletionGameTime: completions.length ? Math.min(...completions) : null,
       clock: {
         gameTime: member.session.gameTime ?? 0,
         clockStartedAt: member.session.clockStartedAt ?? null,

@@ -1,9 +1,9 @@
 import { useAuth } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 
 const ClueBoardScreen = dynamic(() =>
@@ -22,6 +22,10 @@ const PlaceScreen = dynamic(() =>
   import("./place-screen").then((module) => module.PlaceScreen),
 );
 
+const ForensicLabScreen = dynamic(() =>
+  import("./forensic-lab-screen").then((module) => module.ForensicLabScreen),
+);
+
 const InterrogationScreen = dynamic(() =>
   import("./interrogation-screen").then((module) => module.InterrogationScreen),
 );
@@ -34,7 +38,7 @@ const CaseFileScreen = dynamic(() =>
   import("./case-file-screen").then((module) => module.CaseFileScreen),
 );
 
-type Station = "interrogate" | "cctv" | "clueboard" | "evidence" | "map" | "place" | "case";
+type Station = "interrogate" | "cctv" | "clueboard" | "evidence" | "map" | "place" | "lab" | "case";
 
 const stations: Record<Station, { label: string; description: string }> = {
   interrogate: {
@@ -58,6 +62,7 @@ const stations: Record<Station, { label: string; description: string }> = {
     description: "Plan where to go next and review the places connected to this case.",
   },
   place: { label: "Explore", description: "Move through rooms and examine what you find." },
+  lab: { label: "Forensic lab", description: "Request tests for evidence your team has found." },
   case: {
     label: "Case file",
     description: "Review the briefing and submit the final report when your theory is ready.",
@@ -71,18 +76,35 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   const pathname = usePathname();
   const router = useRouter();
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [clockError, setClockError] = useState(false);
   const pathParts = pathname.split("/");
   const roomCode = pathParts[2] ?? "";
   const city = useQuery(api.world.getMap, roomCode && isLoaded && isSignedIn ? { roomCode } : "skip");
+  const settleClock = useMutation(api.world.finishTravel);
   const station = (pathParts[3] === "bureau" ? pathParts[4] : pathParts[3]) as Station | undefined;
   const activeStation = station ? stations[station] : null;
   const bureau = city?.places.find((place) => place.kind === "bureau");
   const away = Boolean(city && (city.activeTravel || city.currentPlaceId !== bureau?.id));
-  const showAwayNotice = away && station !== "map" && station !== "place" && station !== "clueboard" && station !== "case" && station !== "interrogate";
+  const showAwayNotice = away && station !== "map" && station !== "place" && station !== "lab" && station !== "clueboard" && station !== "case" && station !== "interrogate";
   const currentPlace = city?.places.find((place) => place.id === city.currentPlaceId);
 
+  useEffect(() => {
+    if (!city || city.clock.clockStartedAt === null || city.nextCompletionGameTime === null) return;
+    const remainingMs = (city.nextCompletionGameTime - city.clock.gameTime) * city.clock.minuteMs - (Date.now() - city.clock.clockStartedAt);
+    let cancelled = false;
+    let timeout: number;
+    const settle = () => { void settleClock({ roomCode }).then(() => setClockError(false)).catch(() => {
+      if (!cancelled) {
+        setClockError(true);
+        timeout = window.setTimeout(settle, 3000);
+      }
+    }); };
+    timeout = window.setTimeout(settle, Math.max(0, remainingMs));
+    return () => { cancelled = true; window.clearTimeout(timeout); };
+  }, [city, roomCode, settleClock]);
+
   function openStation(nextStation: Station) {
-    const path = nextStation === "map" || nextStation === "place" || nextStation === "case"
+    const path = nextStation === "map" || nextStation === "place" || nextStation === "lab" || nextStation === "case"
       ? `/lobby/${roomCode}/${nextStation}`
       : `/lobby/${roomCode}/bureau/${nextStation}`;
     router.push(path);
@@ -90,6 +112,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
 
   return (
     <section className="relative h-screen w-full overflow-hidden border border-cyan-300/70 bg-[#050712] shadow-[0_0_30px_rgba(34,211,238,0.22)]">
+      {clockError ? <p className="absolute inset-x-3 top-3 z-50 mx-auto w-fit border border-red-300/60 bg-red-950/95 px-3 py-2 text-sm text-red-100" role="status">Clock sync delayed. Retrying...</p> : null}
       {!activeStation ? (
         <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
           {confirmLeave ? (
@@ -164,6 +187,10 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         <PlaceScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/map`)} />
       ) : null}
 
+      {station === "lab" ? (
+        <ForensicLabScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/map`)} />
+      ) : null}
+
       {station === "interrogate" ? (
         <InterrogationScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
       ) : null}
@@ -184,6 +211,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
               <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("map")} type="button">City map</button>
               {!city?.activeTravel && currentPlace?.hasInterior ? <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("place")} type="button">Explore this place</button> : null}
+              {!city?.activeTravel && currentPlace?.kind === "lab" ? <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("lab")} type="button">Forensic lab</button> : null}
               <button className="min-h-11 border border-cyan-300/50 px-3 text-sm uppercase" onClick={() => openStation("clueboard")} type="button">Clueboard</button>
               <button className="min-h-11 border border-cyan-300/50 px-3 text-sm uppercase" onClick={() => openStation("case")} type="button">Case file</button>
             </div>

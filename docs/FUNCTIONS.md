@@ -229,7 +229,9 @@ CCTV output is textual/data only and never visual media.
 - verify the relevant source item/location has been legitimately discovered/available,
 - reject duplicate equivalent active request,
 - charge submission time,
-- set `readyAtGameTime = currentGameTime + turnaroundMinutes`.
+- set `readyAtGameTime = currentGameTime + 5 submission minutes + turnaroundMinutes`.
+
+An outstanding request keeps the shared clock running through its turnaround, overlapping other detectives' work. Once ready, the clock pauses if no other timed action remains. Reading a ready result is a separate free action at the lab.
 
 No actual calculation is done during the wait. The pre-generated output is hidden until ready.
 

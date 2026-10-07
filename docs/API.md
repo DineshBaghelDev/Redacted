@@ -55,8 +55,7 @@ messages.list({ sessionId, deviceId })
 
 publicRecords.search({ roomCode, search })
 
-forensics.listRequests({ sessionId })
-forensics.getRequest({ sessionId, requestId })
+forensics.getLab({ roomCode })
 ```
 
 Public-record search must search only the pre-generated public-record corpus for the case.
@@ -179,12 +178,11 @@ Device inspection requires physical access to the discovered device. Public-reco
 ### Forensics
 
 ```ts
-forensics.request({ sessionId, forensicOutputId })
-forensics.markViewed({ sessionId, requestId })
+forensics.request({ roomCode, forensicOutputId })
+forensics.markViewed({ roomCode, forensicOutputId })
 ```
 
-`request` records `readyAtGameTime`; it does not call an LLM.
-Forensic requests require visiting the forensic lab.
+`request` records `readyAtGameTime` after 5 minutes of submission plus the frozen turnaround; it does not call an LLM. `getLab` lists only tests backed by collected items, searched rooms, or the case autopsy. Results are omitted until ready and explicitly viewed. Requests and result viewing require visiting the forensic lab.
 
 ### NPC messages
 
