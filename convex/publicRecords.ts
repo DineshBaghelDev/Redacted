@@ -52,8 +52,14 @@ export const search = query({
     const savedTerms = saved.map((row) => row.term);
     if (!request) return { status: "available" as const, records: [], savedTerms };
     if (request.completeGameTime > (member.session.gameTime ?? 0)) return { status: "pending" as const, records: [], savedTerms };
-    const records = await matchingRecords(ctx, member.session.caseId, term);
-    return { status: "ready" as const, savedTerms, records: records.map((record) => ({ id: record.evidenceId, type: record.type, title: record.title, content: record.content })) };
+    const records = request.recordIds
+      ? (await Promise.all(request.recordIds.map((id) => ctx.db.get(id)))).flatMap((record) => record ? [record] : [])
+      : await matchingRecords(ctx, member.session.caseId, term);
+    const visible = request.recordIds ? records : (await Promise.all(records.map(async (record) => {
+      const access = await ctx.db.query("sessionPublicRecords").withIndex("by_sessionId_and_recordId", (q) => q.eq("sessionId", member.session._id).eq("recordId", record._id)).unique();
+      return access?.completeGameTime !== undefined && access.completeGameTime <= (member.session.gameTime ?? 0) ? record : null;
+    }))).flatMap((record) => record ? [record] : []);
+    return { status: "ready" as const, savedTerms, records: visible.map((record) => ({ id: record.evidenceId, type: record.type, title: record.title, content: record.content })) };
   },
 });
 
@@ -75,7 +81,7 @@ export const performSearch = mutation({
     const records = await matchingRecords(ctx, member.session.caseId, term);
     if (settled.activeCount === 0) await ctx.db.patch(member.session._id, { gameTime: settled.gameTime, clockStartedAt: now });
     const completeGameTime = settled.gameTime + 10;
-    await ctx.db.insert("publicRecordSearches", { sessionId: member.session._id, term, completeGameTime });
+    await ctx.db.insert("publicRecordSearches", { sessionId: member.session._id, term, completeGameTime, recordIds: records.map((record) => record._id) });
     for (const record of records) {
       const access = await ctx.db.query("sessionPublicRecords").withIndex("by_sessionId_and_recordId", (q) => q.eq("sessionId", member.session._id).eq("recordId", record._id)).unique();
       if (!access) await ctx.db.insert("sessionPublicRecords", { sessionId: member.session._id, recordId: record._id, completeGameTime });

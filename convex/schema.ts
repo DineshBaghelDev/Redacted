@@ -389,6 +389,7 @@ export default defineSchema({
     sessionId: v.id("sessions"),
     term: v.string(),
     completeGameTime: v.number(),
+    recordIds: v.optional(v.array(v.id("publicRecords"))),
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_sessionId_and_term", ["sessionId", "term"]),

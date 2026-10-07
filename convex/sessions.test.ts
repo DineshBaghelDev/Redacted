@@ -475,6 +475,10 @@ test("a lobby keeps the selected passed case", async () => {
   expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toHaveLength(cast.characters.length + 33);
   expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" })).toEqual({ status: "available", records: [], savedTerms: [] });
   await user.mutation(api.publicRecords.performSearch, { roomCode: created.roomCode, search: "Keel" });
+  await t.run(async (ctx) => {
+    const session = await ctx.db.get(created.sessionId);
+    await ctx.db.insert("publicRecords", { caseId: session!.caseId!, evidenceId: "record/late", type: "other", title: "Keel update", content: "Added after this search started." });
+  });
   expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" })).toEqual({ status: "pending", records: [], savedTerms: ["keel"] });
   await t.run(async (ctx) => ctx.db.patch(created.sessionId, { clockStartedAt: Date.now() - 11_000 }));
   await user.mutation(api.investigation.finishAction, { roomCode: created.roomCode });

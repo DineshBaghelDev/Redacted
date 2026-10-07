@@ -6,6 +6,7 @@
 - A bounded list of the room's recent queries helps partners find shared results. An empty query is a deliberate general browse, not a free default reveal.
 - Search results remain hidden until the action completes, and only records actually returned by completed searches can become clueboard cards.
 - Search covers file titles and contents; title-only matching made ordinary address queries look falsely empty.
+- The matched file IDs are fixed when a search begins; the terminal and clueboard therefore agree on which files that completed search actually found.
 
 ## 2026-10-08 — Camera records require a deliberate review
 

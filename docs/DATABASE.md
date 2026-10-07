@@ -498,7 +498,7 @@ There is no social-post table in V1.
 
 ### `publicRecordSearches` and `sessionPublicRecords`
 
-`publicRecordSearches` stores a normalized search term and its ten-minute `completeGameTime` per shared session. `sessionPublicRecords` stores each returned record ID with the earliest game time it becomes available. Both tables are session-scoped; the frozen file text remains only in `publicRecords`.
+`publicRecordSearches` stores a normalized search term, its ten-minute `completeGameTime`, and up to 50 matched record IDs per shared session. `sessionPublicRecords` stores each returned record ID with the earliest game time it becomes available. Both tables are session-scoped; the frozen file text remains only in `publicRecords`.
 
 ## Sessions and multiplayer
 
