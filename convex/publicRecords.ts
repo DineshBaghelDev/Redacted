@@ -26,9 +26,12 @@ function searchTerm(search: string) {
 }
 
 async function matchingRecords(ctx: QueryCtx | MutationCtx, caseId: Id<"cases">, term: string) {
-  return term
-    ? await ctx.db.query("publicRecords").withSearchIndex("search_title", (q) => q.search("title", term).eq("caseId", caseId)).take(50)
-    : await ctx.db.query("publicRecords").withIndex("by_caseId", (q) => q.eq("caseId", caseId)).take(50);
+  if (!term) return await ctx.db.query("publicRecords").withIndex("by_caseId", (q) => q.eq("caseId", caseId)).take(50);
+  const [titles, contents] = await Promise.all([
+    ctx.db.query("publicRecords").withSearchIndex("search_title", (q) => q.search("title", term).eq("caseId", caseId)).take(50),
+    ctx.db.query("publicRecords").withSearchIndex("search_content", (q) => q.search("content", term).eq("caseId", caseId)).take(50),
+  ]);
+  return [...new Map([...titles, ...contents].map((record) => [record._id, record])).values()].slice(0, 50);
 }
 
 export const search = query({

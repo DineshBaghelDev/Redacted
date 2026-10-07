@@ -70,7 +70,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
       </header>
 
       <form className="shrink-0 border-b border-cyan-300/25 bg-[#020817] p-4 sm:px-6" onSubmit={submitSearch}>
-        <label className="block text-xs uppercase tracking-[0.18em] text-cyan-100/60" htmlFor="record-search">Search record titles</label>
+        <label className="block text-xs uppercase tracking-[0.18em] text-cyan-100/60" htmlFor="record-search">Search records</label>
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
           <input
             autoComplete="off"

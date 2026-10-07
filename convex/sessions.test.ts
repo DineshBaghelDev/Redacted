@@ -473,15 +473,15 @@ test("a lobby keeps the selected passed case", async () => {
     }
   });
   expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toHaveLength(cast.characters.length + 33);
-  expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toEqual({ status: "available", records: [], savedTerms: [] });
-  await user.mutation(api.publicRecords.performSearch, { roomCode: created.roomCode, search: "Address" });
-  expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toEqual({ status: "pending", records: [], savedTerms: ["address"] });
+  expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" })).toEqual({ status: "available", records: [], savedTerms: [] });
+  await user.mutation(api.publicRecords.performSearch, { roomCode: created.roomCode, search: "Keel" });
+  expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" })).toEqual({ status: "pending", records: [], savedTerms: ["keel"] });
   await t.run(async (ctx) => ctx.db.patch(created.sessionId, { clockStartedAt: Date.now() - 11_000 }));
   await user.mutation(api.investigation.finishAction, { roomCode: created.roomCode });
-  expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toEqual({ status: "ready", savedTerms: ["address"], records: [
+  expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" })).toEqual({ status: "ready", savedTerms: ["keel"], records: [
     expect.objectContaining({ type: "person", title: "Address record", content: "Lives at Keel Street." }),
   ] });
-  expect(JSON.stringify(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" }))).not.toContain("subjectNpcId");
+  expect(JSON.stringify(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" }))).not.toContain("subjectNpcId");
   await t.run(async (ctx) => ctx.db.patch(created.sessionId, { status: "waiting" }));
   expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toBeNull();
   expect(await user.query(api.cases.getCctv, { roomCode: created.roomCode })).toBeNull();
@@ -527,7 +527,7 @@ test("a lobby keeps the selected passed case", async () => {
   }] });
   await t.run(async (ctx) => ctx.db.insert("sessionPlayers", { sessionId: created.sessionId, authUserId: "player-2", nickname: "Partner", joinedAt: Date.now() }));
   expect((await t.withIdentity({ subject: "player-2" }).query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 }))?.status).toBe("ready");
-  expect((await t.withIdentity({ subject: "player-2" }).query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" }))?.records).toHaveLength(1);
+  expect((await t.withIdentity({ subject: "player-2" }).query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" }))?.records).toHaveLength(1);
   await t.run(async (ctx) => {
     const session = await ctx.db.get(created.sessionId);
     const camera = session?.caseId

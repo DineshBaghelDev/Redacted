@@ -241,7 +241,8 @@ export default defineSchema({
   })
     .index("by_caseId", ["caseId"])
     .index("by_caseId_and_evidenceId", ["caseId", "evidenceId"])
-    .searchIndex("search_title", { searchField: "title", filterFields: ["caseId"] }),
+    .searchIndex("search_title", { searchField: "title", filterFields: ["caseId"] })
+    .searchIndex("search_content", { searchField: "content", filterFields: ["caseId"] }),
   npcs: defineTable({
     caseId: v.id("cases"),
     sourceId: v.string(),

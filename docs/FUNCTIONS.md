@@ -220,7 +220,7 @@ CCTV output is textual/data only and never visual media.
 ### `publicRecords.performSearch(roomCode, search)` / `publicRecords.search(roomCode, search)`
 
 - charge 10 minutes for each new normalized term and share its completed results,
-- perform deterministic title search over this case's `publicRecords`,
+- perform deterministic title-and-content search over this case's `publicRecords`,
 - keep result text hidden until the search action completes,
 - no LLM required for retrieval.
 

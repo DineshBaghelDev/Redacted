@@ -4,6 +4,7 @@
 
 - Searching the bureau's public records now costs 10 shared game minutes. Typed text alone reveals nothing; completed searches and their results are shared with the partner.
 - Only files returned by a completed search may be pinned to the clueboard. Direct record-ID guesses no longer bypass the search.
+- Search now matches the file contents as well as titles, so an address such as Keel Street can be found even when the title only names a person.
 
 ## 2026-10-08 — Timed CCTV review
 
