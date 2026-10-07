@@ -53,9 +53,9 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
     run(createReference({ roomCode, type: "item", referenceId: itemId, x: 80 + (count % 4) * 220, y: 90 + (Math.floor(count / 4) % 4) * 180 }));
   }
 
-  function pinFile(evidenceId: string) {
+  function pinRecord(type: "device_file" | "call" | "message", referenceId: string) {
     const count = boardNodes?.length ?? 0;
-    run(createReference({ roomCode, type: "device_file", referenceId: evidenceId, x: 80 + (count % 4) * 220, y: 90 + (Math.floor(count / 4) % 4) * 180 }));
+    run(createReference({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + (Math.floor(count / 4) % 4) * 180 }));
   }
 
   if (place === undefined) return <PlaceMessage message="Opening this place..." onBack={onBack} />;
@@ -129,12 +129,12 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
 
             <h4 className="mt-8 border-t border-cyan-300/25 pt-5 text-xs uppercase tracking-[0.2em] text-cyan-100/55">Found here</h4>
             {here.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">{here.map((item) => (
-              <ItemCard key={item.id} item={item} busy={working || Boolean(place.action)} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} pinnedFiles={boardNodes?.filter((node) => node.type === "device_file").map((node) => node.referenceId) ?? []} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onRead={() => run(readDevice({ roomCode, itemId: item.id }))} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onPin={() => pinItem(item.id)} onPinFile={pinFile} />
+              <ItemCard key={item.id} item={item} busy={working || Boolean(place.action)} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} pinnedRecords={boardNodes?.filter((node) => node.referenceId).map((node) => `${node.type}:${node.referenceId}`) ?? []} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onRead={() => run(readDevice({ roomCode, itemId: item.id }))} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onPin={() => pinItem(item.id)} onPinRecord={pinRecord} />
             ))}</div> : <p className="mt-3 text-sm text-cyan-100/55">{currentRoom?.searched ? "Nothing found here." : "Search this room to see what is here."}</p>}
 
             <h4 className="mt-8 border-t border-cyan-300/25 pt-5 text-xs uppercase tracking-[0.2em] text-cyan-100/55">Shared inventory · {inventory.length}</h4>
             {inventory.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">{inventory.map((item) => (
-              <ItemCard key={item.id} item={item} busy={working || Boolean(place.action)} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} pinnedFiles={boardNodes?.filter((node) => node.type === "device_file").map((node) => node.referenceId) ?? []} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onRead={() => run(readDevice({ roomCode, itemId: item.id }))} onPin={() => pinItem(item.id)} onPinFile={pinFile} />
+              <ItemCard key={item.id} item={item} busy={working || Boolean(place.action)} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} pinnedRecords={boardNodes?.filter((node) => node.referenceId).map((node) => `${node.type}:${node.referenceId}`) ?? []} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onRead={() => run(readDevice({ roomCode, itemId: item.id }))} onPin={() => pinItem(item.id)} onPinRecord={pinRecord} />
             ))}</div> : <p className="mt-3 text-sm text-cyan-100/55">Items you collect will appear here for both investigators.</p>}
             {error ? <p className="mt-5 border border-red-300/60 bg-red-950/70 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
           </div>
@@ -144,16 +144,16 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   );
 }
 
-function ItemCard({ item, busy, pinned, pinnedFiles, onInspect, onRead, onCollect, onPin, onPinFile }: {
-  item: { id: Id<"caseItems">; name: string; description?: string; collectible: boolean; collected: boolean; inspected: boolean; device?: { read: boolean; files: { id: string; title: string; body: string }[] } };
+function ItemCard({ item, busy, pinned, pinnedRecords, onInspect, onRead, onCollect, onPin, onPinRecord }: {
+  item: { id: Id<"caseItems">; name: string; description?: string; collectible: boolean; collected: boolean; inspected: boolean; device?: { type: "phone" | "laptop"; read: boolean; files: { id: string; title: string; body: string }[]; calls: { id: Id<"callLogs">; time: number; direction: "incoming" | "outgoing"; durationSeconds: number; otherParty: string }[]; messages: { id: Id<"messages">; time: number; direction: "incoming" | "outgoing"; body: string; otherParty: string }[] } };
   busy: boolean;
   pinned: boolean;
-  pinnedFiles: (string | undefined)[];
+  pinnedRecords: string[];
   onInspect: () => void;
   onRead: () => void;
   onCollect?: () => void;
   onPin: () => void;
-  onPinFile: (evidenceId: string) => void;
+  onPinRecord: (type: "device_file" | "call" | "message", referenceId: string) => void;
 }) {
   return (
     <article className="border border-cyan-300/25 bg-[#0b1822] p-4">
@@ -161,16 +161,25 @@ function ItemCard({ item, busy, pinned, pinnedFiles, onInspect, onRead, onCollec
       <p className="mt-2 text-sm leading-relaxed text-cyan-100/65">{item.description ?? "Inspect to learn more."}</p>
       <div className="mt-4 flex flex-wrap gap-2">
         {!item.inspected ? <button className="min-h-10 border border-cyan-300/60 px-3 text-xs uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:opacity-45" disabled={busy} onClick={onInspect} type="button">Inspect · 2 min</button> : null}
-        {item.device && !item.device.read ? <button className="min-h-10 border border-yellow-200/70 bg-yellow-200/10 px-3 text-xs uppercase text-yellow-100 hover:bg-yellow-200/20 disabled:opacity-45" disabled={busy} onClick={onRead} type="button">Read files · 5 min</button> : null}
+        {item.device && !item.device.read ? <button className="min-h-10 border border-yellow-200/70 bg-yellow-200/10 px-3 text-xs uppercase text-yellow-100 hover:bg-yellow-200/20 disabled:opacity-45" disabled={busy} onClick={onRead} type="button">Read {item.device.type === "phone" ? "phone" : "files"} · 5 min</button> : null}
         {onCollect && item.collectible && !item.collected ? <button className="min-h-10 border border-yellow-200/70 bg-yellow-200/10 px-3 text-xs uppercase text-yellow-100 hover:bg-yellow-200/20 disabled:opacity-45" disabled={busy} onClick={onCollect} type="button">Collect</button> : null}
         <button className="min-h-10 border border-cyan-300/60 px-3 text-xs uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:opacity-45" disabled={busy || pinned} onClick={onPin} type="button">{pinned ? "Pinned to clueboard" : "Pin to clueboard"}</button>
         {item.collected ? <span className="self-center text-xs uppercase text-yellow-200/75">In shared inventory</span> : null}
       </div>
       {item.device?.read ? <div className="mt-4 space-y-3 border-t border-cyan-300/20 pt-4">
-        {item.device.files.length ? item.device.files.map((file) => <div key={file.id} className="border-l-2 border-yellow-200/60 pl-3"><p className="text-xs uppercase tracking-wide text-yellow-100">{file.title}</p><p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-cyan-50/80">{file.body}</p><button className="mt-2 min-h-10 border border-cyan-300/60 px-3 text-xs uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:opacity-45" disabled={busy || pinnedFiles.includes(file.id)} onClick={() => onPinFile(file.id)} type="button">{pinnedFiles.includes(file.id) ? "Pinned to clueboard" : "Pin file to clueboard"}</button></div>) : <p className="text-sm text-cyan-100/55">No files on this device.</p>}
+        {item.device.files.map((file) => <div key={file.id} className="border-l-2 border-yellow-200/60 pl-3"><p className="text-xs uppercase tracking-wide text-yellow-100">{file.title}</p><p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-cyan-50/80">{file.body}</p><button className="mt-2 min-h-10 border border-cyan-300/60 px-3 text-xs uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:opacity-45" disabled={busy || pinnedRecords.includes(`device_file:${file.id}`)} onClick={() => onPinRecord("device_file", file.id)} type="button">{pinnedRecords.includes(`device_file:${file.id}`) ? "Pinned to clueboard" : "Pin file to clueboard"}</button></div>)}
+        {item.device.calls.map((call) => <div key={call.id} className="border-l-2 border-yellow-200/60 pl-3"><p className="text-xs uppercase tracking-wide text-yellow-100">{call.direction === "incoming" ? "Call from" : "Call to"} {call.otherParty}</p><p className="mt-1 text-sm text-cyan-50/80">{formatGameTime(call.time)} · {Math.ceil(call.durationSeconds / 60)} min</p><button className="mt-2 min-h-10 border border-cyan-300/60 px-3 text-xs uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:opacity-45" disabled={busy || pinnedRecords.includes(`call:${call.id}`)} onClick={() => onPinRecord("call", call.id)} type="button">{pinnedRecords.includes(`call:${call.id}`) ? "Pinned to clueboard" : "Pin call to clueboard"}</button></div>)}
+        {item.device.messages.map((message) => <div key={message.id} className="border-l-2 border-yellow-200/60 pl-3"><p className="text-xs uppercase tracking-wide text-yellow-100">{message.direction === "incoming" ? "Message from" : "Message to"} {message.otherParty} · {formatGameTime(message.time)}</p><p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-cyan-50/80">{message.body}</p><button className="mt-2 min-h-10 border border-cyan-300/60 px-3 text-xs uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:opacity-45" disabled={busy || pinnedRecords.includes(`message:${message.id}`)} onClick={() => onPinRecord("message", message.id)} type="button">{pinnedRecords.includes(`message:${message.id}`) ? "Pinned to clueboard" : "Pin message to clueboard"}</button></div>)}
+        {!item.device.files.length && !item.device.calls.length && !item.device.messages.length ? <p className="text-sm text-cyan-100/55">No records on this device.</p> : null}
       </div> : null}
     </article>
   );
+}
+
+function formatGameTime(minutes: number) {
+  const day = Math.floor(minutes / 1440) + 1;
+  const withinDay = ((minutes % 1440) + 1440) % 1440;
+  return `Day ${day} · ${String(Math.floor(withinDay / 60)).padStart(2, "0")}:${String(withinDay % 60).padStart(2, "0")}`;
 }
 
 function PlaceMessage({ message, onBack }: { message: string; onBack: () => void }) {

@@ -1,10 +1,16 @@
 # Progress
 
+## 2026-10-08 — Searchable victim phone and shared records
+
+- Reconfirmed continuous, action-driven play with no turns. The clock remains paused when neither detective has a timed action.
+- Generated victim phones with a scene-search location now publish as hidden physical items. If the scene room otherwise has no searchable slots, publication enables the room search so the phone is reachable. The existing internal backfill repairs already-published cases without regenerating evidence.
+- A 5-minute read reveals the phone's frozen calls and messages to both detectives. Either can pin an individual record and cite it in the final report; guessed IDs cannot bypass the read. NPC-held phones still need a separate handover route.
+
 ## 2026-10-08 — Playable laptop files
 
 - Searchable laptops now publish their frozen files into playable case rows. An investigator must find the physical laptop, then spend 5 shared game minutes to read it; contents remain hidden until completion and are shared with the partner.
 - Read files can be pinned to the clueboard and cited in the final report. Direct file-ID guesses, non-members, and duplicate partner reads cannot bypass discovery.
-- Added an idempotent internal backfill for already-published cases whose first publisher omitted laptop files. Phone access and call/message UI remain unfinished.
+- Added an idempotent internal backfill for already-published cases whose first publisher omitted laptop files. Victim-phone records are now playable; NPC-held phone access remains unfinished.
 
 ## 2026-10-08 — Shared-clock settlement correction
 
@@ -341,7 +347,7 @@
 
 ### Clue board — remaining
 
-- Add reference cards for discovered items, calls/messages, forensics, and vehicles as those discovery surfaces become playable.
+- Add reference cards for vehicles when that discovery surface becomes playable. Discovered items, calls/messages, and forensics are already pinnable.
 
 ### Case generation — remaining
 

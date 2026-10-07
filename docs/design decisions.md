@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-08 — Victim phone follows the scene search
+
+- A victim phone whose generated access says scene search is a hidden, collectible item in that room, even when the room template has no ordinary item slot. It is not granted automatically.
+- Reading the found phone costs 5 shared game minutes and unlocks only its pre-generated calls and messages. Both detectives share the result and may choose which records to pin or cite. NPC-held phones stay inaccessible until a deliberate handover interaction exists.
+
 ## 2026-10-08 — Read physical devices before revealing files
 
 - Laptop files are immutable generated evidence linked to the searchable physical laptop. Finding the item does not reveal its files; one 5-minute read unlocks them for the shared session.
@@ -40,6 +45,7 @@
 
 ## 2026-10-07 — Investigation time is continuous and action-driven
 
+- Reconfirmed on 2026-10-08: gameplay is not turn-based. Either detective can start an independent timed action while the other acts or talks; the shared clock pauses only when neither has an active timed action.
 - Timed actions run on one shared accelerated clock and may overlap between detectives; collaboration must save time rather than double its cost.
 - The clock runs only while at least one timed action is active, so discussion, reading, and reconnecting do not silently consume the deadline.
 - Server timestamp anchors derive elapsed game time without per-minute database writes or background ticking.

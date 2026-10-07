@@ -8,7 +8,7 @@ const MAX_EDGES = 200;
 const MAX_NOTE_LENGTH = 500;
 const MAX_LABEL_LENGTH = 80;
 const stringColor = v.union(v.literal("red"), v.literal("gold"), v.literal("blue"), v.literal("green"));
-const referenceType = v.union(v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file"));
+const referenceType = v.union(v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file"), v.literal("call"), v.literal("message"));
 const placeKinds = { home: "Residence", work: "Workplace", public: "Public place", bureau: "Bureau", lab: "Forensic lab" } as const;
 const placeAreas = { northside: "Northside", midtown: "Midtown", eastside: "Eastside" } as const;
 
@@ -35,7 +35,7 @@ export const getNodes = query({
   args: { roomCode: v.string() },
   returns: v.array(v.object({
     _id: v.id("clueBoardNodes"),
-    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file")),
+    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file"), v.literal("call"), v.literal("message")),
     referenceId: v.optional(v.string()),
     text: v.string(),
     x: v.number(),
@@ -131,6 +131,15 @@ export const createReferenceNode = mutation({
       const known = device?.sourceItemId ? await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", device.sourceItemId!)).unique() : null;
       if (!file || !device || device.caseId !== session.caseId || known?.readAt === undefined) throw new Error("Read this device before pinning its file.");
       text = `${file.title}\n${file.body}`;
+    } else if (type === "call" || type === "message") {
+      const recordId = type === "call" ? ctx.db.normalizeId("callLogs", referenceId) : ctx.db.normalizeId("messages", referenceId);
+      const record = recordId ? await ctx.db.get(recordId) : null;
+      const device = record ? await ctx.db.get(record.deviceId) : null;
+      const known = device?.sourceItemId ? await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", device.sourceItemId!)).unique() : null;
+      if (!record || record.caseId !== session.caseId || !device || device.caseId !== session.caseId || known?.readAt === undefined) throw new Error("Read this phone before pinning its records.");
+      text = "durationSeconds" in record
+        ? `Call ${record.direction === "incoming" ? "from" : "to"} ${record.otherPartyLabel ?? "Unknown"}\n${record.durationSeconds}s`
+        : `Message ${record.direction === "incoming" ? "from" : "to"} ${record.otherPartyLabel ?? "Unknown"}\n${record.body}`;
     } else if (type === "item") {
       const itemId = ctx.db.normalizeId("caseItems", referenceId);
       const item = itemId ? await ctx.db.get(itemId) : null;

@@ -399,7 +399,7 @@ test("a lobby keeps the selected passed case", async () => {
   });
   expect(frozen.culprit).toMatchObject({ sourceId: crimeCore.culpritId, role: "suspect" });
   expect(frozen.npcs).toHaveLength(cast.characters.length);
-  expect(frozen.items).toHaveLength(2);
+  expect(frozen.items).toHaveLength(3);
   expect(frozen.items[0]).toMatchObject({
     evidenceId: "item/ledger",
     sourceId: "ledger",
@@ -414,13 +414,18 @@ test("a lobby keeps the selected passed case", async () => {
   expect(frozen.cameraRecords[0].npcIds).toContain(frozen.culprit?._id);
   expect(frozen.devices).toHaveLength(3);
   expect(frozen.devices.find((device) => device.type === "laptop")?.sourceItemId).toBe(frozen.items[1]._id);
+  expect(frozen.devices.find((device) => device.sourceId === `phone:${crimeCore.victimId}`)?.sourceItemId).toBe(frozen.items[2]._id);
   expect(frozen.deviceFiles).toEqual([expect.objectContaining({ evidenceId: "file/laptop/0", title: "Work laptop · Accounts", body: "Rewritten file text." })]);
   await t.run(async (ctx) => {
     await ctx.db.delete(frozen.deviceFiles[0]._id);
     await ctx.db.delete(frozen.devices.find((device) => device.type === "laptop")!._id);
+    await ctx.db.delete(frozen.items[2]._id);
+    await ctx.db.patch(frozen.devices.find((device) => device.sourceId === `phone:${crimeCore.victimId}`)!._id, { sourceItemId: undefined });
+    await ctx.db.patch(frozen.items[2].roomId, { searchable: false });
   });
-  expect(await t.mutation(internal.cases.backfillPublishedDevices, { caseId: publishedCaseId })).toEqual({ laptops: 1, files: 1 });
-  expect(await t.mutation(internal.cases.backfillPublishedDevices, { caseId: publishedCaseId })).toEqual({ laptops: 1, files: 1 });
+  expect(await t.mutation(internal.cases.backfillPublishedDevices, { caseId: publishedCaseId })).toEqual({ laptops: 1, files: 1, physicalPhones: 1 });
+  expect(await t.mutation(internal.cases.backfillPublishedDevices, { caseId: publishedCaseId })).toEqual({ laptops: 1, files: 1, physicalPhones: 1 });
+  expect(await t.run(async (ctx) => (await ctx.db.get(frozen.items[2].roomId))?.searchable)).toBe(true);
   expect(frozen.calls).toHaveLength(2);
   expect(frozen.calls.map((call) => call.durationSeconds)).toEqual([120, 120]);
   expect(frozen.messages).toHaveLength(2);

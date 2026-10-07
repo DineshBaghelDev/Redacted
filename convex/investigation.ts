@@ -25,7 +25,12 @@ export const getPlace = query({
     currentRoomId: v.union(v.null(), v.id("rooms")),
     rooms: v.array(v.object({ id: v.id("rooms"), name: v.string(), floor: v.number(), searchable: v.boolean(), searched: v.boolean(), adjacent: v.boolean() })),
     action: v.union(v.null(), v.object({ kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic"), v.literal("cctv"), v.literal("records"), v.literal("device")), roomId: v.id("rooms"), startGameTime: v.number(), completeGameTime: v.number() })),
-    items: v.array(v.object({ id: v.id("caseItems"), name: v.string(), description: v.optional(v.string()), roomId: v.id("rooms"), collectible: v.boolean(), collected: v.boolean(), inspected: v.boolean(), device: v.optional(v.object({ read: v.boolean(), files: v.array(v.object({ id: v.string(), title: v.string(), body: v.string() })) })) })),
+    items: v.array(v.object({ id: v.id("caseItems"), name: v.string(), description: v.optional(v.string()), roomId: v.id("rooms"), collectible: v.boolean(), collected: v.boolean(), inspected: v.boolean(), device: v.optional(v.object({
+      type: v.union(v.literal("phone"), v.literal("laptop")), read: v.boolean(),
+      files: v.array(v.object({ id: v.string(), title: v.string(), body: v.string() })),
+      calls: v.array(v.object({ id: v.id("callLogs"), time: v.number(), direction: v.union(v.literal("incoming"), v.literal("outgoing")), durationSeconds: v.number(), otherParty: v.string() })),
+      messages: v.array(v.object({ id: v.id("messages"), time: v.number(), direction: v.union(v.literal("incoming"), v.literal("outgoing")), body: v.string(), otherParty: v.string() })),
+    })) })),
     clock: v.object({ gameTime: v.number(), clockStartedAt: v.union(v.null(), v.number()), minuteMs: v.number() }),
   })),
   handler: async (ctx, { roomCode }) => {
@@ -50,10 +55,18 @@ export const getPlace = query({
       if (item && item.caseId === member.session.caseId && (item.roomId === currentRoomId || known.collectedAt !== undefined)) {
         const device = item.sourceId && item.itemType === "device"
           ? await ctx.db.query("devices").withIndex("by_caseId_and_sourceId", (q) => q.eq("caseId", item.caseId).eq("sourceId", item.sourceId!)).unique() : null;
-        const files = device?.type === "laptop" && known.readAt !== undefined
+        const accessible = device?.sourceItemId === item._id;
+        const files = accessible && device?.type === "laptop" && known.readAt !== undefined
           ? await ctx.db.query("deviceFiles").withIndex("by_deviceId", (q) => q.eq("deviceId", device._id)).take(100) : [];
+        const calls = accessible && device?.type === "phone" && known.readAt !== undefined
+          ? await ctx.db.query("callLogs").withIndex("by_deviceId_and_timestamp", (q) => q.eq("deviceId", device._id)).take(100) : [];
+        const messages = accessible && device?.type === "phone" && known.readAt !== undefined
+          ? await ctx.db.query("messages").withIndex("by_deviceId_and_timestamp", (q) => q.eq("deviceId", device._id)).take(100) : [];
         knownItems.push({ id: item._id, name: item.name, description: known.inspectedAt === undefined ? undefined : item.description, roomId: item.roomId, collectible: item.collectible, collected: known.collectedAt !== undefined, inspected: known.inspectedAt !== undefined,
-          device: device?.type === "laptop" ? { read: known.readAt !== undefined, files: files.map((file) => ({ id: file.evidenceId, title: file.title, body: file.body })) } : undefined });
+          device: accessible && device ? { type: device.type, read: known.readAt !== undefined,
+            files: files.map((file) => ({ id: file.evidenceId, title: file.title, body: file.body })),
+            calls: calls.map((call) => ({ id: call._id, time: call.timestamp, direction: call.direction, durationSeconds: call.durationSeconds, otherParty: call.otherPartyLabel ?? "Unknown" })),
+            messages: messages.map((message) => ({ id: message._id, time: message.timestamp, direction: message.direction, body: message.body, otherParty: message.otherPartyLabel ?? "Unknown" })) } : undefined });
       }
     }
     const action = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique();
@@ -174,7 +187,7 @@ export const readDevice = mutation({
     const actions = await ctx.db.query("roomActions").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id)).take(2);
     if (actions.some((action) => action.kind === "device" && action.itemId === itemId)) throw new Error("Your partner is already reading this device.");
     const device = item.sourceId ? await ctx.db.query("devices").withIndex("by_caseId_and_sourceId", (q) => q.eq("caseId", item.caseId).eq("sourceId", item.sourceId!)).unique() : null;
-    if (device?.type !== "laptop" || device.sourceItemId !== itemId) throw new Error("That item has no readable files.");
+    if (!device || device.sourceItemId !== itemId) throw new Error("That item has no readable records.");
     const roomId = player.currentRoomId;
     if (!roomId) throw new Error("Enter a room to read the device.");
     return await startRoomAction(ctx, member.session, player._id, "device", roomId, 5, now, settled.gameTime, settled.activeCount, itemId);

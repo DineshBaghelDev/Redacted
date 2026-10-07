@@ -201,21 +201,23 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
 /** Repairs device rows omitted by the first publisher without changing a case's generated truth. */
 export const backfillPublishedDevices = internalMutation({
   args: { caseId: v.id("cases") },
-  returns: v.object({ laptops: v.number(), files: v.number() }),
+  returns: v.object({ laptops: v.number(), files: v.number(), physicalPhones: v.number() }),
   handler: async (ctx, { caseId }) => {
     const playableCase = await ctx.db.get(caseId);
     if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not published.");
     await ensureCaseDevices(ctx, caseId, playableCase.generationJobId);
     let laptops = 0;
     let files = 0;
+    let physicalPhones = 0;
     for await (const device of ctx.db.query("devices").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) {
+      if (device.type === "phone" && device.sourceItemId) physicalPhones++;
       if (device.type !== "laptop") continue;
       laptops++;
       for await (const file of ctx.db.query("deviceFiles").withIndex("by_deviceId", (q) => q.eq("deviceId", device._id))) {
         if (file.caseId === caseId) files++;
       }
     }
-    return { laptops, files };
+    return { laptops, files, physicalPhones };
   },
 });
 

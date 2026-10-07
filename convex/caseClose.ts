@@ -75,7 +75,7 @@ export const submit = mutation({
       .withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id))
       .take(100);
     const boardEvidence = new Map(boardNodes
-      .filter((node) => (node.type === "cctv" || node.type === "public_record" || node.type === "item" || node.type === "forensic" || node.type === "device_file") && node.referenceId)
+      .filter((node) => (node.type === "cctv" || node.type === "public_record" || node.type === "item" || node.type === "forensic" || node.type === "device_file" || node.type === "call" || node.type === "message") && node.referenceId)
       .map((node) => [node.referenceId!, node.type] as const));
     if (evidenceIds.some((id) => !boardEvidence.has(id))) {
       throw new Error("Choose only evidence pinned to this clueboard.");
@@ -100,6 +100,13 @@ export const submit = mutation({
         const known = device?.sourceItemId ? await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", member.session._id).eq("itemId", device.sourceItemId!)).unique() : null;
         if (!file || !device || device.caseId !== member.session.caseId || known?.readAt === undefined) throw new Error("Read the device before using its file as evidence.");
         canonicalEvidenceIds.push(file.evidenceId);
+      } else if (type === "call" || type === "message") {
+        const recordId = type === "call" ? ctx.db.normalizeId("callLogs", id) : ctx.db.normalizeId("messages", id);
+        const record = recordId ? await ctx.db.get(recordId) : null;
+        const device = record ? await ctx.db.get(record.deviceId) : null;
+        const known = device?.sourceItemId ? await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", member.session._id).eq("itemId", device.sourceItemId!)).unique() : null;
+        if (!record || record.caseId !== member.session.caseId || !device || device.caseId !== member.session.caseId || known?.readAt === undefined) throw new Error("Read the phone before using its records as evidence.");
+        canonicalEvidenceIds.push(record.evidenceId);
       } else canonicalEvidenceIds.push(id);
     }
 

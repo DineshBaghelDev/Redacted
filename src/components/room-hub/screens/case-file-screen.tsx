@@ -39,7 +39,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
 
   const evidence = (boardNodes ?? []).filter(
     (node): node is typeof node & { referenceId: string } =>
-      (node.type === "cctv" || node.type === "public_record" || node.type === "item" || node.type === "forensic" || node.type === "device_file") && !!node.referenceId,
+      (node.type === "cctv" || node.type === "public_record" || node.type === "item" || node.type === "forensic" || node.type === "device_file" || node.type === "call" || node.type === "message") && !!node.referenceId,
   );
   const canReview = !!culpritNpcId
     && motiveExplanation.trim().length >= 10
@@ -194,7 +194,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                     return (
                       <label className={`flex min-h-12 items-start gap-3 border border-[#6d5138]/50 p-3 text-sm ${!selected && evidenceIds.length >= MAX_EVIDENCE ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`} key={`${item.type}:${item.referenceId}`}>
                         <input checked={selected} className="mt-1 size-4 accent-red-900" disabled={!selected && evidenceIds.length >= MAX_EVIDENCE} onChange={() => toggleEvidence(item.referenceId)} type="checkbox" />
-                        <span><strong className="block uppercase text-red-800">{item.type === "cctv" ? "Camera record" : item.type === "public_record" ? "Public record" : item.type === "forensic" ? "Lab report" : item.type === "device_file" ? "Device file" : "Found object"}</strong>{item.text.split("\n")[0]}</span>
+                        <span><strong className="block uppercase text-red-800">{item.type === "cctv" ? "Camera record" : item.type === "public_record" ? "Public record" : item.type === "forensic" ? "Lab report" : item.type === "device_file" ? "Device file" : item.type === "call" ? "Call" : item.type === "message" ? "Message" : "Found object"}</strong>{item.text.split("\n")[0]}</span>
                       </label>
                     );
                   })}

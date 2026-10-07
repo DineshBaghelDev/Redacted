@@ -157,7 +157,7 @@ Device data:
 - call logs,
 - messages.
 
-Found laptops can also hold generated files. Reading a physical laptop takes 5 shared game minutes; its stored files become available to both detectives afterward and may be pinned as evidence.
+Found laptops can also hold generated files. Reading a physical laptop takes 5 shared game minutes; its stored files become available to both detectives afterward and may be pinned as evidence. A victim phone found by searching the scene takes the same 5-minute read; its stored calls and messages then become shared, pinnable evidence. Other phones require a separate acquisition path.
 
 No social-post system in V1.
 
