@@ -104,13 +104,11 @@ export function useRoomSession(nickname: string) {
       }
       setRoomCode(result.roomCode);
       router.push(`/lobby/${result.roomCode}`);
-    } catch (caught) {
+    } catch {
       setError(
         action === "join"
           ? "No room found with that code. Check it and try again."
-          : caught instanceof Error
-            ? caught.message
-            : "Something went wrong.",
+          : "Could not open this case. Try again later or choose another case.",
       );
     } finally {
       setWorkingAction(null);

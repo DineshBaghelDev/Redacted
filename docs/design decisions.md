@@ -2,7 +2,7 @@
 
 ## 2026-10-09 — Replay picker errors
 
-- Room-creation failures are shown beside the case choices, where the detective can retry; the menu does not carry a stale picker error after leaving.
+- Room-creation failures are shown in plain language beside the case choices, where the detective can retry; the menu does not carry a stale picker error after leaving.
 
 ## 2026-10-09 — Previous-case picker return
 
