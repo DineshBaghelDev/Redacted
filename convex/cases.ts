@@ -53,6 +53,7 @@ const solutionFactsSchema = z.object({
   })),
   decisiveIds: z.array(z.string()),
 });
+const estimateSchema = z.object({ estimatedOptimalMinutes: z.number().int().positive() });
 
 function readBrief(output: unknown) {
   const brief = output as Brief | undefined;
@@ -71,6 +72,15 @@ async function getDraft(ctx: MutationCtx, jobId: Id<"generationJobs">, stage: st
     .query("generationDrafts")
     .withIndex("by_job_stage", (q) => q.eq("jobId", jobId).eq("stage", stage))
     .unique();
+}
+
+async function ensureCaseEstimate(ctx: MutationCtx, caseId: Id<"cases">, generationJobId: Id<"generationJobs">) {
+  const playableCase = await ctx.db.get(caseId);
+  if (playableCase?.estimatedOptimalMinutes !== undefined) return;
+  const draft = await getDraft(ctx, generationJobId, "estimate");
+  const estimate = estimateSchema.safeParse(draft?.output);
+  if (!estimate.success) throw new Error("This case has no valid time estimate.");
+  await ctx.db.patch(caseId, { estimatedOptimalMinutes: estimate.data.estimatedOptimalMinutes });
 }
 
 async function ensureCaseSolution(ctx: MutationCtx, caseId: Id<"cases">, generationJobId: Id<"generationJobs">) {
@@ -160,6 +170,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     .unique();
 
   if (existing?.publicationVersion === PUBLICATION_VERSION) {
+    await ensureCaseEstimate(ctx, existing._id, generationJobId);
     await ensureCaseStatements(ctx, existing._id, generationJobId);
     return existing._id;
   }
@@ -177,6 +188,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     await ensureCaseForensics(ctx, existing._id, generationJobId);
     await ensureCaseNarrative(ctx, existing._id, generationJobId);
     await ensureCaseStatements(ctx, existing._id, generationJobId);
+    await ensureCaseEstimate(ctx, existing._id, generationJobId);
     await ctx.db.patch(existing._id, { publicationVersion: PUBLICATION_VERSION });
     return existing._id;
   }
@@ -203,6 +215,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
   await ensureCaseForensics(ctx, caseId, generationJobId);
   await ensureCaseNarrative(ctx, caseId, generationJobId);
   await ensureCaseStatements(ctx, caseId, generationJobId);
+  await ensureCaseEstimate(ctx, caseId, generationJobId);
   await ctx.db.patch(caseId, { publicationVersion: PUBLICATION_VERSION });
   return caseId;
 }

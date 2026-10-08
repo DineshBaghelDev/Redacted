@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-08 — Frozen replay time estimate
+
+- Publication now copies the positive integer investigation estimate into the immutable case record. Re-publishing an older published case fills that missing field idempotently from its original generated draft; replay will not have to read drafts to set a deadline.
+- Verified the dev deployment: all 18 playable published cases now have positive frozen estimates. One older row remains unpublished and hidden because its original cast/statement data is inconsistent. Deadline selection and enforcement remain open.
+
 ## 2026-10-08 — Short-screen city map
 
 - The mobile map's route details can now be reached by scrolling when the stacked map and details exceed the available height. Desktop keeps its separate map and details scrolling.

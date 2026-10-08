@@ -12,6 +12,7 @@ export default defineSchema({
     title: v.string(),
     summary: v.string(),
     initialFacts: v.array(v.string()),
+    estimatedOptimalMinutes: v.optional(v.number()),
     publicationVersion: v.optional(v.number()),
     createdAt: v.number(),
   })

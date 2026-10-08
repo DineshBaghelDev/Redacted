@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-08 — Replay deadline source
+
+- The code-generated optimal-time estimate is copied once into the published case, including existing published cases via a private repair. Replay sessions must use that frozen value, never a generation draft.
+
 ## 2026-10-08 — Short-screen map access
 
 - On narrow, short viewports the stacked city map scrolls as one surface so route details and travel remain reachable; desktop keeps its two-panel layout.

@@ -99,6 +99,14 @@ test("a lobby keeps the selected passed case", async () => {
     });
     await ctx.db.insert("generationDrafts", {
       jobId,
+      stage: "estimate",
+      output: { estimatedOptimalMinutes: 225 },
+      checkErrors: [],
+      source: "code",
+      updatedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
       stage: "evidence",
       output: {
         cameras: [{ id: "cam:station", name: "Union Station · concourse", faulty: false }],
@@ -267,6 +275,10 @@ test("a lobby keeps the selected passed case", async () => {
   expect(await user.query(api.cases.listPassed, {})).toEqual([]);
   const publishedCaseId = await t.mutation(internal.cases.publishPassedJob, { jobId: generationJobId });
   expect(await t.mutation(internal.cases.publishPassedJob, { jobId: generationJobId })).toBe(publishedCaseId);
+  expect((await t.run(async (ctx) => ctx.db.get(publishedCaseId)))?.estimatedOptimalMinutes).toBe(225);
+  await t.run(async (ctx) => ctx.db.patch(publishedCaseId, { estimatedOptimalMinutes: undefined }));
+  expect(await t.mutation(internal.cases.publishPassedJob, { jobId: generationJobId })).toBe(publishedCaseId);
+  expect((await t.run(async (ctx) => ctx.db.get(publishedCaseId)))?.estimatedOptimalMinutes).toBe(225);
   const listed = await user.query(api.cases.listPassed, {});
   expect(listed).toMatchObject([{
     generationJobId,
