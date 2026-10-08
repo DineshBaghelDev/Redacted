@@ -288,6 +288,7 @@ test("a lobby keeps the selected passed case", async () => {
   }]);
 
   const created = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId });
+  expect(await t.run(async (ctx) => ctx.db.get(created.sessionId))).toMatchObject({ gameTime: 0, deadline: 1665, status: "waiting" });
   await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId });
   const invalidJobId = await t.run(async (ctx) => {
     const jobId = await ctx.db.insert("generationJobs", {
@@ -662,7 +663,9 @@ test("a lobby keeps the selected passed case", async () => {
   expect(await partner.query(api.npcs.list, { roomCode: replayed.roomCode })).toBeNull();
   await user.mutation(api.sessions.setReady, { roomCode: replayed.roomCode, isReady: true });
   await partner.mutation(api.sessions.setReady, { roomCode: replayed.roomCode, isReady: true });
+  await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { deadline: undefined }));
   await user.mutation(api.sessions.start, { roomCode: replayed.roomCode });
+  expect((await t.run(async (ctx) => ctx.db.get(replayed.sessionId)))?.deadline).toBe(1665);
   expect(await user.query(api.sessions.get, { roomCode: replayed.roomCode })).toMatchObject({ status: "playing" });
   const unpublishedCaseId = await t.run(async (ctx) => ctx.db.insert("cases", {
     generationJobId: invalidJobId,

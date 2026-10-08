@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-08 — Default replay deadline
+
+- A replay's default deadline is fixed from the case's published optimal-time estimate plus one in-game day, with minute zero as the session origin. Waiting does not advance the clock.
+
 ## 2026-10-08 — Replay deadline source
 
 - The code-generated optimal-time estimate is copied once into the published case, including existing published cases via a private repair. Replay sessions must use that frozen value, never a generation draft.

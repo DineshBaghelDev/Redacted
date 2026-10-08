@@ -9,6 +9,13 @@ import { entranceRoomId, settleActions } from "./world";
 const MAX_PLAYERS = 2;
 const ROOM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+function defaultDeadline(estimate: number | undefined) {
+  if (estimate === undefined || !Number.isSafeInteger(estimate) || estimate <= 0 || !Number.isSafeInteger(estimate + 1440)) {
+    throw new Error("This case has no valid time estimate.");
+  }
+  return estimate + 1440;
+}
+
 /**
  * Generates a six-character uppercase alphanumeric room code.
  *
@@ -18,7 +25,7 @@ function makeRoomCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
-async function createSession(ctx: MutationCtx, authUserId: string, nickname: string, caseId: Id<"cases">) {
+async function createSession(ctx: MutationCtx, authUserId: string, nickname: string, caseId: Id<"cases">, deadline: number) {
   const now = Date.now();
   let roomCode = makeRoomCode();
 
@@ -30,6 +37,8 @@ async function createSession(ctx: MutationCtx, authUserId: string, nickname: str
     caseId,
     roomCode,
     status: "waiting",
+    gameTime: 0,
+    deadline,
     createdAt: now,
     expiresAt: now + ROOM_TTL_MS,
   });
@@ -50,7 +59,7 @@ export const createReplay = mutation({
     const authUserId = await requireUserId(ctx);
     const playableCase = await ctx.db.get(caseId);
     if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not ready to replay.");
-    return await createSession(ctx, authUserId, nickname, caseId);
+    return await createSession(ctx, authUserId, nickname, caseId, defaultDeadline(playableCase.estimatedOptimalMinutes));
   },
 });
 
@@ -156,7 +165,7 @@ export const start = mutation({
       ? (await ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!)).collect()).find((place) => place.kind === "bureau")
       : null;
     await Promise.all(players.map(async (player) => await ctx.db.patch(player._id, { currentPlaceId: bureau?._id, currentRoomId: bureau ? await entranceRoomId(ctx, bureau._id) : undefined })));
-    await ctx.db.patch(session._id, { status: "playing", gameTime: 0, clockStartedAt: undefined });
+    await ctx.db.patch(session._id, { status: "playing", gameTime: 0, clockStartedAt: undefined, deadline: session.deadline ?? defaultDeadline(playableCase?.estimatedOptimalMinutes) });
     return { roomCode: session.roomCode };
   },
 });

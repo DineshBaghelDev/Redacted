@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-08 — Replay deadline state
+
+- New replay rooms now store a paused game clock at minute zero and a default deadline of the case's frozen estimate plus 1,440 minutes. Previously created waiting rooms receive the same default on start.
+- A live dev replay of a case with a 375-minute estimate stored minute 0 and a 1,815-minute deadline as expected. Override entry, deadline display, expired-action rules, and older already-playing session backfill remain open.
+
 ## 2026-10-08 — Frozen replay time estimate
 
 - Publication now copies the positive integer investigation estimate into the immutable case record. Re-publishing an older published case fills that missing field idempotently from its original generated draft; replay will not have to read drafts to set a deadline.

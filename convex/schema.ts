@@ -368,6 +368,7 @@ export default defineSchema({
     status: v.union(v.literal("waiting"), v.literal("playing")),
     gameTime: v.optional(v.number()),
     clockStartedAt: v.optional(v.number()),
+    deadline: v.optional(v.number()),
     createdAt: v.number(),
     expiresAt: v.number(),
   })
