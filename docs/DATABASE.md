@@ -566,7 +566,7 @@ One active journey per player. Rows store the destination place, starting and co
 
 ### `roomActions`, `searchedRooms`, and `sessionItems`
 
-`roomActions` stores a player's timed move, search, inspection, device read, lab submission, CCTV review, or public-record search. A player can have only one active travel or room action. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, collection, and device-read timestamps. Item description is returned to clients only after inspection; device files only after reading; undiscovered items are not returned.
+`roomActions` stores a player's timed move, search, inspection, device read, interview question, lab submission, CCTV review, or public-record search. A player can have only one active travel or room action. A device action refers to either a physical `itemId` or a handed-over `deviceId`. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, collection, and device-read timestamps. Item description is returned to clients only after inspection; device files only after reading; undiscovered items are not returned.
 Clueboard item references store only the item's ID and a discovery-safe label; creating them requires a matching `sessionItems` row.
 
 ### `sessionState`
@@ -647,6 +647,7 @@ Use if the selected conversation library does not provide exactly the queue sema
   sequence: number,
   promptMessageId: string,
   proofEvidenceId?: string,
+  requestedPhoneId?: Id<"devices">,
   status: "waiting" | "queued" | "processing" | "complete" | "failed",
   createdAt: number,
   error?: string,
@@ -667,6 +668,19 @@ The Agent component owns the transcript. The local pending row tracks the questi
 ```
 
 One row per exposed lie in a shared session conversation. Sequence markers keep earlier queued questions from seeing proof shown later. This table is server-only.
+
+### `sessionDevices`
+
+```ts
+{
+  sessionId: Id<"sessions">,
+  deviceId: Id<"devices">,
+  acquiredAt: number,
+  readAt?: number,
+}
+```
+
+NPC-phone handover and reading belong to the replay session, not the immutable case. Until `readAt` is set, calls and messages on that phone remain hidden and cannot be pinned or cited.
 
 ### `npcMemories`
 

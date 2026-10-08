@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-08 — NPC-phone handover and read
+
+- Added a deliberate bureau interview request for NPC-held phones. After the 3-minute question, both detectives share the handover; a separate 5-minute read reveals the phone's pre-generated calls and messages.
+- The interview panel now shows read records and can pin them. Clueboard pinning, interview proof, and final-report submission all check the same session read gate, so a guessed record ID cannot reveal an unread NPC phone.
+- Mocked two-player backend coverage confirms hidden-before-read, shared-after-read, partner duplicate-read rejection, and a message used to expose a lie. Real-provider and browser playthrough remain unverified.
+
 ## 2026-10-08 — Bureau interview path in progress
 
 - Pinned, already-discovered evidence can now be shown with a bureau question. The server rechecks case/session access, resolves the frozen evidence ID, and marks matching main or backup lies exposed for that shared conversation. The NPC reply sees only that NPC's lie exposure state for the queued turn; no solution or script is sent to clients.

@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { generateJson, modelsFor } from "./generation/llm";
 import { getPlayingRoomMember } from "./lib/auth";
+import { hasReadDevice } from "./lib/deviceAccess";
 
 const MAX_EXPLANATION = 2_000;
 const MAX_EVIDENCE = 12;
@@ -97,15 +98,13 @@ export const submit = mutation({
       } else if (type === "device_file") {
         const file = await ctx.db.query("deviceFiles").withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", member.session.caseId!).eq("evidenceId", id)).unique();
         const device = file ? await ctx.db.get(file.deviceId) : null;
-        const known = device?.sourceItemId ? await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", member.session._id).eq("itemId", device.sourceItemId!)).unique() : null;
-        if (!file || !device || device.caseId !== member.session.caseId || known?.readAt === undefined) throw new Error("Read the device before using its file as evidence.");
+        if (!file || !device || device.caseId !== member.session.caseId || !(await hasReadDevice(ctx, member.session._id, device))) throw new Error("Read the device before using its file as evidence.");
         canonicalEvidenceIds.push(file.evidenceId);
       } else if (type === "call" || type === "message") {
         const recordId = type === "call" ? ctx.db.normalizeId("callLogs", id) : ctx.db.normalizeId("messages", id);
         const record = recordId ? await ctx.db.get(recordId) : null;
         const device = record ? await ctx.db.get(record.deviceId) : null;
-        const known = device?.sourceItemId ? await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", member.session._id).eq("itemId", device.sourceItemId!)).unique() : null;
-        if (!record || record.caseId !== member.session.caseId || !device || device.caseId !== member.session.caseId || known?.readAt === undefined) throw new Error("Read the phone before using its records as evidence.");
+        if (!record || record.caseId !== member.session.caseId || !device || device.caseId !== member.session.caseId || !(await hasReadDevice(ctx, member.session._id, device))) throw new Error("Read the phone before using its records as evidence.");
         canonicalEvidenceIds.push(record.evidenceId);
       } else canonicalEvidenceIds.push(id);
     }

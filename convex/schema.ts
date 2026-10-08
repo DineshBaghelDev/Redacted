@@ -198,6 +198,7 @@ export default defineSchema({
     description: v.string(),
   })
     .index("by_caseId", ["caseId"])
+    .index("by_caseId_and_ownerNpcId", ["caseId", "ownerNpcId"])
     .index("by_caseId_and_sourceId", ["caseId", "sourceId"]),
   deviceFiles: defineTable({
     caseId: v.id("cases"),
@@ -337,6 +338,7 @@ export default defineSchema({
     sequence: v.number(),
     promptMessageId: v.string(),
     proofEvidenceId: v.optional(v.string()),
+    requestedPhoneId: v.optional(v.id("devices")),
     status: v.union(v.literal("waiting"), v.literal("queued"), v.literal("processing"), v.literal("complete"), v.literal("failed")),
     createdAt: v.number(),
     error: v.optional(v.string()),
@@ -386,6 +388,7 @@ export default defineSchema({
     kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic"), v.literal("cctv"), v.literal("records"), v.literal("device"), v.literal("npc")),
     roomId: v.id("rooms"),
     itemId: v.optional(v.id("caseItems")),
+    deviceId: v.optional(v.id("devices")),
     npcTurnId: v.optional(v.id("npcPendingMessages")),
     startGameTime: v.number(),
     completeGameTime: v.number(),
@@ -403,6 +406,14 @@ export default defineSchema({
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_sessionId_and_itemId", ["sessionId", "itemId"]),
+  sessionDevices: defineTable({
+    sessionId: v.id("sessions"),
+    deviceId: v.id("devices"),
+    acquiredAt: v.number(),
+    readAt: v.optional(v.number()),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_sessionId_and_deviceId", ["sessionId", "deviceId"]),
   searchedRooms: defineTable({
     sessionId: v.id("sessions"),
     roomId: v.id("rooms"),

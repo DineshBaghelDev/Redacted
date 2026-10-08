@@ -195,7 +195,8 @@ forensics.markViewed({ roomCode, forensicOutputId })
 ```ts
 npcConversations.callToBureau({ roomCode, npcId })
 npcConversations.getInterview({ roomCode, npcId })
-npcConversations.sendQuestion({ roomCode, npcId, question, proofNodeId? })
+npcConversations.sendQuestion({ roomCode, npcId, question, proofNodeId?, requestPhone? })
+npcConversations.readPhone({ roomCode, npcId })
 npcConversations.retryFailed({ roomCode, npcId })
 ```
 
@@ -210,7 +211,7 @@ The mutation:
 
 It does not generate the reply inside the mutation.
 
-Calling an NPC to the bureau is immediate in V1. Retrying a failed answer does not charge another 3 minutes. A question may show a pinned, accessible evidence card; the server checks and records matching lie exposure. Visiting NPCs elsewhere, showing unpinned found evidence, and statement proof remain to be implemented.
+Calling an NPC to the bureau is immediate in V1. Retrying a failed answer does not charge another 3 minutes. A question may show a pinned, accessible evidence card; the server checks and records matching lie exposure. Asking for an NPC-held phone is a 3-minute question; handover is shared when it finishes. `readPhone` takes 5 minutes at the bureau and only then exposes frozen calls and messages. Visiting NPCs elsewhere, showing unpinned found evidence, and statement proof remain to be implemented.
 
 ### Clue board
 

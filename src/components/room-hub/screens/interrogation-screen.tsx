@@ -106,6 +106,8 @@ function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person
   const proofCards = boardNodes?.filter((node) => node.type === "item" || node.type === "forensic" || node.type === "cctv" || node.type === "public_record" || node.type === "device_file" || node.type === "call" || node.type === "message") ?? [];
   const callToBureau = useMutation(api.npcConversations.callToBureau);
   const sendQuestion = useMutation(api.npcConversations.sendQuestion);
+  const readPhone = useMutation(api.npcConversations.readPhone);
+  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const retryFailed = useMutation(api.npcConversations.retryFailed);
   const [question, setQuestion] = useState("");
   const [proofNodeId, setProofNodeId] = useState<Id<"clueBoardNodes"> | "">("");
@@ -118,6 +120,11 @@ function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person
     void action.then(after).catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Could not complete that interview action.")).finally(() => setWorking(false));
   }
 
+  function pinRecord(type: "call" | "message", referenceId: string) {
+    const count = boardNodes?.length ?? 0;
+    run(createReference({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + (Math.floor(count / 4) % 4) * 180 }));
+  }
+
   return <div className="mx-auto max-w-3xl">
     <button className="min-h-11 border-2 border-[#573821] px-4 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">← All people</button>
     <div className="mt-4 border-2 border-[#8b7355] bg-[#e9dfc5] p-4 sm:p-6">
@@ -126,6 +133,17 @@ function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person
       <p className="mt-2 text-sm leading-relaxed text-[#4b3b2d]">{person.publicDescription}</p>
       {!interview?.bureauPresent ? <div className="mt-5 border-t border-[#8b7355] pt-4"><p className="text-sm">Bring this person to the bureau before asking questions.</p><button className="mt-3 min-h-11 border-2 border-red-900 bg-red-950 px-4 text-xs uppercase text-red-50 hover:bg-red-900 disabled:opacity-50" disabled={working || !interview?.canTalkHere} onClick={() => run(callToBureau({ roomCode, npcId: person.id }))} type="button">Call to bureau</button>{interview && !interview.canTalkHere ? <p className="mt-2 text-sm text-red-800">Return to the bureau to make the call.</p> : null}</div> : null}
       {interview?.threadId ? <ConversationMessages roomCode={roomCode} threadId={interview.threadId} /> : null}
+      {interview?.bureauPresent && interview.phone ? <div className="mt-5 border-t border-[#8b7355] pt-4">
+        <p className="text-xs uppercase tracking-widest text-red-800">{person.name}&apos;s phone</p>
+        {!interview.phone.acquired && interview.phone.requesting ? <p className="mt-2 text-sm" role="status">Phone request in progress.</p> : null}
+        {!interview.phone.acquired && !interview.phone.requesting ? <><p className="mt-2 text-sm">Ask to examine the phone. This takes 3 game minutes.</p><button className="mt-3 min-h-11 border-2 border-[#573821] px-4 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2] disabled:opacity-50" disabled={working || interview.busy || !interview.canTalkHere} onClick={() => run(sendQuestion({ roomCode, npcId: person.id, question: "May I examine your phone?", requestPhone: true }))} type="button">Ask to see phone · 3 min</button></> : null}
+        {interview.phone.acquired && !interview.phone.read ? <><p className="mt-2 text-sm">The phone has been handed over. Read its records to share them with your partner.</p><button className="mt-3 min-h-11 border-2 border-[#573821] px-4 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2] disabled:opacity-50" disabled={working || interview.busy || !interview.canTalkHere} onClick={() => run(readPhone({ roomCode, npcId: person.id }))} type="button">Read phone · 5 min</button></> : null}
+        {interview.phone.read ? <div className="mt-3 space-y-3"><p className="text-sm">Phone records are shared with both detectives.</p>
+          {interview.phone.calls.map((call) => <div className="border-l-2 border-[#8b7355] pl-3" key={call.id}><p className="text-sm">{call.direction === "incoming" ? "Call from" : "Call to"} {call.otherParty} · {formatCaseTime(call.time)} · {Math.ceil(call.durationSeconds / 60)} min</p><button className="mt-2 min-h-10 border border-[#573821] px-3 text-xs uppercase disabled:opacity-50" disabled={working || boardNodes?.some(node => node.type === "call" && node.referenceId === call.id)} onClick={() => pinRecord("call", call.id)} type="button">{boardNodes?.some(node => node.type === "call" && node.referenceId === call.id) ? "Pinned to clueboard" : "Pin call to clueboard"}</button></div>)}
+          {interview.phone.messages.map((message) => <div className="border-l-2 border-[#8b7355] pl-3" key={message.id}><p className="text-sm">{message.direction === "incoming" ? "Message from" : "Message to"} {message.otherParty} · {formatCaseTime(message.time)}</p><p className="mt-1 whitespace-pre-wrap text-sm text-[#4b3b2d]">{message.body}</p><button className="mt-2 min-h-10 border border-[#573821] px-3 text-xs uppercase disabled:opacity-50" disabled={working || boardNodes?.some(node => node.type === "message" && node.referenceId === message.id)} onClick={() => pinRecord("message", message.id)} type="button">{boardNodes?.some(node => node.type === "message" && node.referenceId === message.id) ? "Pinned to clueboard" : "Pin message to clueboard"}</button></div>)}
+          {!interview.phone.calls.length && !interview.phone.messages.length ? <p className="text-sm text-[#725f42]">No calls or messages on this phone.</p> : null}
+        </div> : null}
+      </div> : null}
       {interview?.bureauPresent ? <form className="mt-5 border-t border-[#8b7355] pt-4" onSubmit={(event) => { event.preventDefault(); const body = question.trim(); if (!body) return; run(sendQuestion({ roomCode, npcId: person.id, question: body, proofNodeId: proofNodeId || undefined }), () => { setQuestion(""); setProofNodeId(""); }); }}>
         <label className="block text-xs uppercase tracking-widest text-red-800" htmlFor="interview-question">Ask a question · 3 game min</label>
         <textarea className="mt-2 min-h-24 w-full resize-y border-2 border-[#8b7355] bg-[#f7efdc] p-3 text-base outline-none focus:border-red-900" id="interview-question" maxLength={500} onChange={(event) => setQuestion(event.target.value)} placeholder="What were you doing that night?" value={question} />
@@ -143,6 +161,11 @@ function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person
       {error ? <p className="mt-3 border border-red-900 bg-red-950 p-3 text-sm text-red-50" role="alert">{error}</p> : null}
     </div>
   </div>;
+}
+
+function formatCaseTime(minutes: number) {
+  const withinDay = ((minutes % 1440) + 1440) % 1440;
+  return `Day ${Math.floor(minutes / 1440) + 1} · ${String(Math.floor(withinDay / 60)).padStart(2, "0")}:${String(withinDay % 60).padStart(2, "0")}`;
 }
 
 function ConversationMessages({ roomCode, threadId }: { roomCode: string; threadId: string }) {

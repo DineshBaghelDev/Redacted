@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { getBureauRoomMember, getRoomMember } from "./lib/auth";
+import { hasReadDevice } from "./lib/deviceAccess";
 
 const MAX_NODES = 100;
 const MAX_EDGES = 200;
@@ -128,15 +129,13 @@ export const createReferenceNode = mutation({
     } else if (type === "device_file") {
       const file = await ctx.db.query("deviceFiles").withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", session.caseId!).eq("evidenceId", referenceId)).unique();
       const device = file ? await ctx.db.get(file.deviceId) : null;
-      const known = device?.sourceItemId ? await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", device.sourceItemId!)).unique() : null;
-      if (!file || !device || device.caseId !== session.caseId || known?.readAt === undefined) throw new Error("Read this device before pinning its file.");
+      if (!file || !device || device.caseId !== session.caseId || !(await hasReadDevice(ctx, session._id, device))) throw new Error("Read this device before pinning its file.");
       text = `${file.title}\n${file.body}`;
     } else if (type === "call" || type === "message") {
       const recordId = type === "call" ? ctx.db.normalizeId("callLogs", referenceId) : ctx.db.normalizeId("messages", referenceId);
       const record = recordId ? await ctx.db.get(recordId) : null;
       const device = record ? await ctx.db.get(record.deviceId) : null;
-      const known = device?.sourceItemId ? await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", device.sourceItemId!)).unique() : null;
-      if (!record || record.caseId !== session.caseId || !device || device.caseId !== session.caseId || known?.readAt === undefined) throw new Error("Read this phone before pinning its records.");
+      if (!record || record.caseId !== session.caseId || !device || device.caseId !== session.caseId || !(await hasReadDevice(ctx, session._id, device))) throw new Error("Read this phone before pinning its records.");
       text = "durationSeconds" in record
         ? `Call ${record.direction === "incoming" ? "from" : "to"} ${record.otherPartyLabel ?? "Unknown"}\n${record.durationSeconds}s`
         : `Message ${record.direction === "incoming" ? "from" : "to"} ${record.otherPartyLabel ?? "Unknown"}\n${record.body}`;

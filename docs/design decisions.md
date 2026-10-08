@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-08 — NPC phones are acquired in the interview
+
+- Asking to examine a person's phone is a normal 3-minute bureau question, not an automatic reward for calling them. The handover becomes shared only when the question completes.
+- Reading that handed-over phone is a separate 5-minute bureau action. Its already-generated calls and messages become visible, pinnable, and usable as proof only after the read completes. This changes replay-session access, never the stored case.
+
 ## 2026-10-08 — Proof shown during interviews
 
 - V1's first proof path uses evidence the detectives have pinned to their shared clueboard. Showing proof is part of a 3-minute question, not a separate action.

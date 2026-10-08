@@ -76,9 +76,21 @@ export async function settleActions(ctx: MutationCtx, session: Doc<"sessions">, 
     else if (action.kind === "npc" && action.npcTurnId) {
       const turn = await ctx.db.get(action.npcTurnId);
       if (turn?.status === "waiting") {
+        if (turn.requestedPhoneId) {
+          const device = await ctx.db.get(turn.requestedPhoneId);
+          const conversation = await ctx.db.get(turn.conversationId);
+          if (device && conversation && device.caseId === session.caseId && device.ownerNpcId === conversation.npcId && !device.sourceItemId) {
+            const access = await ctx.db.query("sessionDevices").withIndex("by_sessionId_and_deviceId", q => q.eq("sessionId", session._id).eq("deviceId", device._id)).unique();
+            if (!access) await ctx.db.insert("sessionDevices", { sessionId: session._id, deviceId: device._id, acquiredAt: now });
+          }
+        }
         await ctx.db.patch(turn._id, { status: "queued" });
         await ctx.scheduler.runAfter(0, internal.npcConversations.processNext, { conversationId: turn.conversationId });
       }
+    }
+    else if (action.kind === "device" && action.deviceId) {
+      const access = await ctx.db.query("sessionDevices").withIndex("by_sessionId_and_deviceId", q => q.eq("sessionId", session._id).eq("deviceId", action.deviceId!)).unique();
+      if (access && access.readAt === undefined) await ctx.db.patch(access._id, { readAt: now });
     }
     else if ((action.kind === "inspect" || action.kind === "device") && action.itemId) {
       const known = await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", action.itemId!)).unique();
