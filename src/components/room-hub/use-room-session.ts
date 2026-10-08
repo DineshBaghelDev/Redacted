@@ -46,11 +46,9 @@ export function useRoomSession(nickname: string) {
   const startRoom = useMutation(api.sessions.start);
   const leaveSession = useMutation(api.sessions.leave);
 
-  const [screen, setScreen] = useState<Screen>(() => screenForPath(pathname));
-  const initialRoomCode = roomCodeForPath(pathname);
-  const [roomCode, setRoomCode] = useState(initialRoomCode);
-  const [joinedRoomCode, setJoinedRoomCode] = useState(initialRoomCode);
-  const [showRoom, setShowRoom] = useState(() => Boolean(initialRoomCode) && isLobbyPath(pathname));
+  const screen = screenForPath(pathname);
+  const joinedRoomCode = roomCodeForPath(pathname);
+  const [roomCode, setRoomCode] = useState(joinedRoomCode);
   const [error, setError] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
   const [workingAction, setWorkingAction] = useState<WorkingAction>(null);
@@ -68,7 +66,7 @@ export function useRoomSession(nickname: string) {
   const lobbyRoute = isLobbyPath(pathname);
   const missingRoom = !!joinedRoomCode && room === null && (gameRoute || lobbyRoute);
   const waitingGameRoute = gameRoute && room?.status === "waiting";
-  const lobbyVisible = !missingRoom && (showRoom || lobbyRoute || waitingGameRoute);
+  const lobbyVisible = !missingRoom && (lobbyRoute || waitingGameRoute);
   const roomStarted = lobbyVisible && room?.status === "playing";
 
   useEffect(() => {
@@ -79,8 +77,6 @@ export function useRoomSession(nickname: string) {
   }, [joinedRoomCode, missingRoom, roomStarted, router, waitingGameRoute]);
 
   function navigateTo(nextScreen: Screen) {
-    if (nextScreen === "brief" || nextScreen === "bureau") setShowRoom(false);
-    setScreen(nextScreen);
     router.push(pathForScreen(nextScreen, joinedRoomCode));
   }
 
@@ -106,9 +102,7 @@ export function useRoomSession(nickname: string) {
         );
         return;
       }
-      setJoinedRoomCode(result.roomCode);
       setRoomCode(result.roomCode);
-      setShowRoom(true);
       router.push(`/lobby/${result.roomCode}`);
     } catch (caught) {
       setError(
@@ -176,8 +170,6 @@ export function useRoomSession(nickname: string) {
     setError("");
     try {
       await leaveSession({ roomCode: joinedRoomCode });
-      setShowRoom(false);
-      setJoinedRoomCode("");
       setRoomCode("");
       navigateTo("menu");
     } catch (caught) {
@@ -188,14 +180,10 @@ export function useRoomSession(nickname: string) {
   }
 
   function continueRoom(roomCode: string, status: "waiting" | "playing") {
-    setJoinedRoomCode(roomCode);
     setRoomCode(roomCode);
-    setShowRoom(status === "waiting");
     if (status === "waiting") {
-      setScreen("menu");
       router.push(`/lobby/${roomCode}`);
     } else {
-      setScreen("bureau");
       router.push(`/lobby/${roomCode}/bureau`);
     }
   }

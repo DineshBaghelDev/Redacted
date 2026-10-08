@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-08 — Room browser-history navigation
+
+- The replay shell now derives its visible screen and current room code from the URL on every navigation. Browser Back/Forward no longer leaves a previous screen or room-lobby overlay visible over a different route.
+- Signed-out desktop and mobile boot screens were visually checked at 1440×900 and 390×844. Signed-in history interaction remains unverified without an authenticated browser session.
+
 ## 2026-10-08 — Older passed-case replay recovery
 
 - The development deployment had 23 passed generation jobs but only one published replay case. A private, per-job idempotent repair now reuses frozen-case validation, including a strict read-time translation of the older `killerId`/`timeOfDeath` crime fields.

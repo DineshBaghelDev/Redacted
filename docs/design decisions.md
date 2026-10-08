@@ -298,6 +298,6 @@ Generated character IDs are stored as case-scoped `npcs.sourceId` values only to
 - During UI development, a new room opens the completed Union Station Death case as a fixed fixture. Case generation is intentionally bypassed until the gameplay surfaces are ready.
 - The game shell is full-screen; account profile controls are not shown during play.
 - The bureau scene owns the full viewport on the signed-in home screen; the shell does not add a second background or scrolling page.
-- Screen navigation is represented by URL paths so browser reload preserves the current screen.
+- Screen navigation is represented by URL paths; the current path is the source of truth for both reload and browser Back/Forward, rather than a separate remembered screen state.
 - Investigation screen URLs are nested under the room code so simultaneous games remain isolated.
 - The case brief is read from Convex's latest passed generation job and exposes only title, summary, and initial facts to the client.
