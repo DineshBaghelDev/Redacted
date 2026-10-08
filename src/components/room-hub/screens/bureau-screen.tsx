@@ -124,8 +124,9 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
 
   return (
     <section className="relative h-screen w-full overflow-hidden border border-cyan-300/70 bg-[#050712] shadow-[0_0_30px_rgba(34,211,238,0.22)]">
-      <div className="absolute inset-x-0 top-0 z-30 flex h-9 items-center justify-center border-b border-cyan-300/30 bg-[#050712]/95 px-3 text-xs uppercase tracking-[0.15em] text-yellow-100">
-        Case time · {gameTime === null ? "Syncing..." : formatGameMinute(gameTime)}
+      <div className="absolute inset-x-0 top-0 z-30 flex h-9 items-center justify-center gap-2 border-b border-cyan-300/30 bg-[#050712]/95 px-2 text-[10px] uppercase tracking-[0.06em] text-yellow-100 sm:gap-4 sm:text-xs sm:tracking-[0.15em]">
+        <span>Case time · {gameTime === null ? "Syncing..." : formatGameMinute(gameTime)}</span>
+        {city?.deadline != null ? <span className="text-cyan-100">Due · {formatGameMinute(city.deadline)}</span> : null}
       </div>
       {clockError ? <p className="absolute inset-x-3 top-11 z-50 mx-auto w-fit border border-red-300/60 bg-red-950/95 px-3 py-2 text-sm text-red-100" role="status">Clock sync delayed. Retrying...</p> : null}
       {!activeStation ? (

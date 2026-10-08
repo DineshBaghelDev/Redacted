@@ -161,6 +161,7 @@ export const getMap = query({
     })),
     busy: v.boolean(),
     nextCompletionGameTime: v.union(v.null(), v.number()),
+    deadline: v.union(v.null(), v.number()),
     clock: v.object({
       gameTime: v.number(),
       clockStartedAt: v.union(v.null(), v.number()),
@@ -220,6 +221,7 @@ export const getMap = query({
       } : null,
       busy: Boolean(activeTravel || activeRoom),
       nextCompletionGameTime: completions.length ? Math.min(...completions) : null,
+      deadline: member.session.deadline ?? null,
       clock: {
         gameTime: member.session.gameTime ?? 0,
         clockStartedAt: member.session.clockStartedAt ?? null,

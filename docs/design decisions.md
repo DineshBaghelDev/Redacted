@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Deadline display
+
+- Show the stored due time beside the shared case clock as a compact, read-only reference. Do not imply that the case ends or actions stop at that time until the expiry rule is decided.
+
 ## 2026-10-09 — Investigation clock placement
 
 - Show elapsed case time in a compact strip above every investigation station; keep the station surface below it instead of floating a clock over controls. Do not imply a deadline outcome until its rules are settled.

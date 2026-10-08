@@ -1,8 +1,13 @@
 # Progress
 
+## 2026-10-09 — Deadline visibility
+
+- The investigation strip now shows each replay room's stored due time beside the shared case clock, including across station screens. This is display-only; deadline override and expiry behavior still await player decisions.
+- A signed-in read-only query against an existing dev replay returned the expected due minute (1,815) alongside its paused shared clock (minute 20). All 136 tests, type-check, lint, and production build passed; signed-in visual sizing remains unverified.
+
 ## 2026-10-09 — Shared case-time display
 
-- A slim case-time strip now stays visible across the bureau and investigation stations, using the existing shared clock. It advances only while timed work is active and reserves its own space above station controls. Deadline display and expiry behavior remain separate pending decisions.
+- A slim case-time strip now stays visible across the bureau and investigation stations, using the existing shared clock. It advances only while timed work is active and reserves its own space above station controls. Expiry behavior remains separate pending a player decision.
 
 ## 2026-10-09 — Profile edit return
 
