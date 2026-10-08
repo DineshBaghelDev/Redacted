@@ -5,12 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
-
-function formatTime(minutes: number) {
-  const day = Math.floor(minutes / 1440) + 1;
-  const withinDay = minutes % 1440;
-  return `Day ${day} · ${String(Math.floor(withinDay / 60)).padStart(2, "0")}:${String(withinDay % 60).padStart(2, "0")}`;
-}
+import { formatGameMinute } from "../../../lib/game-time";
 
 export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
@@ -76,7 +71,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
               <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/45">Available examinations</p>
               <h3 className="mt-1 text-2xl uppercase sm:text-3xl">Case evidence</h3>
             </div>
-            <p className="font-mono text-sm text-yellow-200">{formatTime(gameTime)}</p>
+            <p className="font-mono text-sm text-yellow-200">{formatGameMinute(gameTime)}</p>
           </div>
 
           {lab.action ? (

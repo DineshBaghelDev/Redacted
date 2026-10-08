@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-09 — Shared case-time display
+
+- A slim case-time strip now stays visible across the bureau and investigation stations, using the existing shared clock. It advances only while timed work is active and reserves its own space above station controls. Deadline display and expiry behavior remain separate pending decisions.
+
 ## 2026-10-09 — Profile edit return
 
 - The profile panel now has Back to menu. Leaving without Save restores the stored detective name, so an unsaved edit does not silently affect the next room.

@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Investigation clock placement
+
+- Show elapsed case time in a compact strip above every investigation station; keep the station surface below it instead of floating a clock over controls. Do not imply a deadline outcome until its rules are settled.
+
 ## 2026-10-09 — Profile edit cancellation
 
 - Back to menu discards an unsaved detective-name edit; only Save changes the name used for new rooms.

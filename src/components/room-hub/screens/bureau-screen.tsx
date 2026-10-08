@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
+import { currentGameMinute, formatGameMinute } from "../../../lib/game-time";
 
 const ClueBoardScreen = dynamic(() =>
   import("./clue-board-screen").then((module) => module.ClueBoardScreen),
@@ -77,6 +78,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   const router = useRouter();
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [clockError, setClockError] = useState(false);
+  const [now, setNow] = useState(0);
   const pathParts = pathname.split("/");
   const roomCode = pathParts[2] ?? "";
   const city = useQuery(api.world.getMap, roomCode && isLoaded && isSignedIn ? { roomCode } : "skip");
@@ -87,6 +89,16 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   const away = Boolean(city && (city.activeTravel || city.currentPlaceId !== bureau?.id));
   const showAwayNotice = away && station !== "map" && station !== "place" && station !== "lab" && station !== "clueboard" && station !== "case" && station !== "interrogate";
   const currentPlace = city?.places.find((place) => place.id === city.currentPlaceId);
+  const clock = city?.clock;
+  const gameTime = clock ? currentGameMinute(clock, now) : null;
+
+  useEffect(() => {
+    if (!clock || clock.clockStartedAt === null) return;
+    const update = () => setNow(Date.now());
+    update();
+    const interval = window.setInterval(update, 1000);
+    return () => window.clearInterval(interval);
+  }, [clock]);
 
   useEffect(() => {
     if (!city || city.clock.clockStartedAt === null || city.nextCompletionGameTime === null) return;
@@ -112,9 +124,12 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
 
   return (
     <section className="relative h-screen w-full overflow-hidden border border-cyan-300/70 bg-[#050712] shadow-[0_0_30px_rgba(34,211,238,0.22)]">
-      {clockError ? <p className="absolute inset-x-3 top-3 z-50 mx-auto w-fit border border-red-300/60 bg-red-950/95 px-3 py-2 text-sm text-red-100" role="status">Clock sync delayed. Retrying...</p> : null}
+      <div className="absolute inset-x-0 top-0 z-30 flex h-9 items-center justify-center border-b border-cyan-300/30 bg-[#050712]/95 px-3 text-xs uppercase tracking-[0.15em] text-yellow-100">
+        Case time · {gameTime === null ? "Syncing..." : formatGameMinute(gameTime)}
+      </div>
+      {clockError ? <p className="absolute inset-x-3 top-11 z-50 mx-auto w-fit border border-red-300/60 bg-red-950/95 px-3 py-2 text-sm text-red-100" role="status">Clock sync delayed. Retrying...</p> : null}
       {!activeStation ? (
-        <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
+        <div className="absolute right-4 top-12 z-30 flex flex-col items-end gap-2">
           {confirmLeave ? (
             <div aria-labelledby="leave-game-title" className="w-64 border border-red-300 bg-[#13070a]/95 p-3 text-red-50 shadow-[0_0_20px_rgba(248,113,113,0.3)]" role="alertdialog">
               <p className="text-sm uppercase" id="leave-game-title">Leave this investigation?</p>
@@ -171,51 +186,32 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         </nav>
       ) : null}
 
-      {station === "clueboard" ? (
-        <ClueBoardScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
-      ) : null}
-
-      {station === "cctv" ? (
-        <CctvScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
-      ) : null}
-
-      {station === "map" ? (
-        <MapScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
-      ) : null}
-
-      {station === "place" ? (
-        <PlaceScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/map`)} />
-      ) : null}
-
-      {station === "lab" ? (
-        <ForensicLabScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/map`)} />
-      ) : null}
-
-      {station === "interrogate" ? (
-        <InterrogationScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
-      ) : null}
-
-      {station === "evidence" ? (
-        <EvidenceScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
-      ) : null}
-
-      {station === "case" ? (
-        <CaseFileScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} />
-      ) : null}
-      {showAwayNotice ? (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#050712]/95 p-4 text-cyan-50">
-          <div className="w-full max-w-lg border border-cyan-300/50 bg-[#07111b] p-6 text-center shadow-[0_0_30px_rgba(34,211,238,0.18)]">
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/55">Current location</p>
-            <h2 className="mt-2 text-2xl uppercase text-yellow-100">{city?.activeTravel ? `On the way to ${city.activeTravel.destinationName}` : currentPlace?.name ?? "Away from bureau"}</h2>
-            <p className="mt-3 text-sm text-cyan-100/70">Bureau terminals are available when you return. You can still review your case and clueboard.</p>
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("map")} type="button">City map</button>
-              {!city?.activeTravel && currentPlace?.hasInterior ? <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("place")} type="button">Explore this place</button> : null}
-              {!city?.activeTravel && currentPlace?.kind === "lab" ? <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("lab")} type="button">Forensic lab</button> : null}
-              <button className="min-h-11 border border-cyan-300/50 px-3 text-sm uppercase" onClick={() => openStation("clueboard")} type="button">Clueboard</button>
-              <button className="min-h-11 border border-cyan-300/50 px-3 text-sm uppercase" onClick={() => openStation("case")} type="button">Case file</button>
+      {activeStation || showAwayNotice ? (
+        <div className="absolute inset-x-0 bottom-0 top-9 z-20">
+          {station === "clueboard" ? <ClueBoardScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
+          {station === "cctv" ? <CctvScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
+          {station === "map" ? <MapScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
+          {station === "place" ? <PlaceScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/map`)} /> : null}
+          {station === "lab" ? <ForensicLabScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/map`)} /> : null}
+          {station === "interrogate" ? <InterrogationScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
+          {station === "evidence" ? <EvidenceScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
+          {station === "case" ? <CaseFileScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
+          {showAwayNotice ? (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#050712]/95 p-4 text-cyan-50">
+              <div className="w-full max-w-lg border border-cyan-300/50 bg-[#07111b] p-6 text-center shadow-[0_0_30px_rgba(34,211,238,0.18)]">
+                <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/55">Current location</p>
+                <h2 className="mt-2 text-2xl uppercase text-yellow-100">{city?.activeTravel ? `On the way to ${city.activeTravel.destinationName}` : currentPlace?.name ?? "Away from bureau"}</h2>
+                <p className="mt-3 text-sm text-cyan-100/70">Bureau terminals are available when you return. You can still review your case and clueboard.</p>
+                <div className="mt-5 grid gap-2 sm:grid-cols-2">
+                  <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("map")} type="button">City map</button>
+                  {!city?.activeTravel && currentPlace?.hasInterior ? <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("place")} type="button">Explore this place</button> : null}
+                  {!city?.activeTravel && currentPlace?.kind === "lab" ? <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("lab")} type="button">Forensic lab</button> : null}
+                  <button className="min-h-11 border border-cyan-300/50 px-3 text-sm uppercase" onClick={() => openStation("clueboard")} type="button">Clueboard</button>
+                  <button className="min-h-11 border border-cyan-300/50 px-3 text-sm uppercase" onClick={() => openStation("case")} type="button">Case file</button>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       ) : null}
     </section>
