@@ -339,6 +339,7 @@ export default defineSchema({
     nextToProcess: v.number(),
     activeTurnId: v.optional(v.id("npcPendingMessages")),
     bureauPresent: v.boolean(),
+    statementStatus: v.optional(v.union(v.literal("requested"), v.literal("ready"))),
   })
     .index("by_sessionId_and_npcId", ["sessionId", "npcId"])
     .index("by_threadId", ["threadId"]),
@@ -349,6 +350,7 @@ export default defineSchema({
     promptMessageId: v.string(),
     proofEvidenceId: v.optional(v.string()),
     requestedPhoneId: v.optional(v.id("devices")),
+    requestedStatements: v.optional(v.boolean()),
     status: v.union(v.literal("waiting"), v.literal("queued"), v.literal("processing"), v.literal("complete"), v.literal("failed")),
     createdAt: v.number(),
     error: v.optional(v.string()),
@@ -424,6 +426,13 @@ export default defineSchema({
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_sessionId_and_deviceId", ["sessionId", "deviceId"]),
+  sessionStatements: defineTable({
+    sessionId: v.id("sessions"),
+    statementId: v.id("witnessStatements"),
+    heardAt: v.number(),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_sessionId_and_statementId", ["sessionId", "statementId"]),
   searchedRooms: defineTable({
     sessionId: v.id("sessions"),
     roomId: v.id("rooms"),
@@ -460,7 +469,7 @@ export default defineSchema({
   }).index("by_sessionId_and_recordId", ["sessionId", "recordId"]),
   clueBoardNodes: defineTable({
     sessionId: v.id("sessions"),
-    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file"), v.literal("call"), v.literal("message")),
+    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file"), v.literal("call"), v.literal("message"), v.literal("statement")),
     referenceId: v.optional(v.string()),
     text: v.string(),
     x: v.number(),

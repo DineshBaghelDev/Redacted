@@ -1,9 +1,14 @@
 # Progress
 
+## 2026-10-08 — Shared recorded statements
+
+- A detective can ask for an NPC's frozen witness account at the bureau. The question costs 3 game minutes; when it completes, the session gains only that NPC's published statements whose events are not covered by their intentional lies. Both detectives can then read, pin, and show those statements as proof.
+- Clueboard pinning, proof presentation, and final-report citation recheck the session access row, so guessed statement IDs and forged board cards do not reveal or cite private statements. Mocked timing, two-player sharing, lie exclusion, and case-close access tests pass. Live-provider/browser verification remains open.
+
 ## 2026-10-08 — Frozen witness-statement publication
 
 - New cases now publish generated witness statements and their rewritten wording as immutable, private runtime rows. An internal idempotent backfill repairs previously published cases without regenerating story or changing replay creation.
-- Statements are not yet selectable or visible to players. Session acquisition and lie-aware access are the next step; live-provider/browser verification remains open.
+- Runtime acquisition is described above; live-provider/browser verification remains open.
 
 ## 2026-10-08 — Direct interview proof
 

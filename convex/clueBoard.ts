@@ -9,7 +9,7 @@ const MAX_EDGES = 200;
 const MAX_NOTE_LENGTH = 500;
 const MAX_LABEL_LENGTH = 80;
 const stringColor = v.union(v.literal("red"), v.literal("gold"), v.literal("blue"), v.literal("green"));
-const referenceType = v.union(v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file"), v.literal("call"), v.literal("message"));
+const referenceType = v.union(v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file"), v.literal("call"), v.literal("message"), v.literal("statement"));
 const placeKinds = { home: "Residence", work: "Workplace", public: "Public place", bureau: "Bureau", lab: "Forensic lab" } as const;
 const placeAreas = { northside: "Northside", midtown: "Midtown", eastside: "Eastside" } as const;
 
@@ -36,7 +36,7 @@ export const getNodes = query({
   args: { roomCode: v.string() },
   returns: v.array(v.object({
     _id: v.id("clueBoardNodes"),
-    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file"), v.literal("call"), v.literal("message")),
+    type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file"), v.literal("call"), v.literal("message"), v.literal("statement")),
     referenceId: v.optional(v.string()),
     text: v.string(),
     x: v.number(),
@@ -139,6 +139,11 @@ export const createReferenceNode = mutation({
       text = "durationSeconds" in record
         ? `Call ${record.direction === "incoming" ? "from" : "to"} ${record.otherPartyLabel ?? "Unknown"}\n${record.durationSeconds}s`
         : `Message ${record.direction === "incoming" ? "from" : "to"} ${record.otherPartyLabel ?? "Unknown"}\n${record.body}`;
+    } else if (type === "statement") {
+      const statement = await ctx.db.query("witnessStatements").withIndex("by_caseId_and_evidenceId", q => q.eq("caseId", session.caseId!).eq("evidenceId", referenceId)).unique();
+      const heard = statement ? await ctx.db.query("sessionStatements").withIndex("by_sessionId_and_statementId", q => q.eq("sessionId", session._id).eq("statementId", statement._id)).unique() : null;
+      if (!statement || !heard) throw new Error("Hear this statement before pinning it.");
+      text = `${statement.title}\n${statement.text}`;
     } else if (type === "item") {
       const itemId = ctx.db.normalizeId("caseItems", referenceId);
       const item = itemId ? await ctx.db.get(itemId) : null;

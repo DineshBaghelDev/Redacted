@@ -644,6 +644,7 @@ Do not log ordinary UI navigation.
   nextToProcess: number,
   activeTurnId?: Id<"npcPendingMessages">,
   bureauPresent: boolean,
+  statementStatus?: "requested" | "ready",
 }
 ```
 
@@ -663,6 +664,7 @@ Use if the selected conversation library does not provide exactly the queue sema
   promptMessageId: string,
   proofEvidenceId?: string,
   requestedPhoneId?: Id<"devices">,
+  requestedStatements?: boolean,
   status: "waiting" | "queued" | "processing" | "complete" | "failed",
   createdAt: number,
   error?: string,
@@ -697,6 +699,18 @@ One row per exposed lie in a shared session conversation. Sequence markers keep 
 
 NPC-phone handover and reading belong to the replay session, not the immutable case. Until `readAt` is set, calls and messages on that phone remain hidden and cannot be pinned or cited.
 
+### `sessionStatements`
+
+```ts
+{
+  sessionId: Id<"sessions">,
+  statementId: Id<"witnessStatements">,
+  heardAt: number,
+}
+```
+
+An explicit 3-minute bureau question grants non-lied frozen statements at completion. This shared session row gates interview text, proof, clueboard pins, and final-report citations.
+
 ### `npcMemories`
 
 ```ts
@@ -729,7 +743,8 @@ Player claims must remain claims, not canonical facts.
     | "forensic"
     | "vehicle"
     | "place"
-    | "public_record",
+    | "public_record"
+    | "statement",
   referenceId?: string,
   text?: string,
   x: number,

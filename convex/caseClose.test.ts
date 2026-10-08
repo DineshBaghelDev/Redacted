@@ -60,6 +60,7 @@ test("case close grades privately from session-owned evidence", async () => {
     const phoneId = await ctx.db.insert("devices", { caseId, sourceId: "phone:victim", type: "phone", sourceItemId: phoneItemId, name: "Victim phone", description: "A phone" });
     const callId = await ctx.db.insert("callLogs", { caseId, evidenceId: "call/victim/0", deviceId: phoneId, timestamp: 120, direction: "incoming", durationSeconds: 60, otherPartyLabel: "Mara" });
     const messageId = await ctx.db.insert("messages", { caseId, evidenceId: "message/victim/0", deviceId: phoneId, timestamp: 130, direction: "outgoing", body: "Meet me outside.", otherPartyLabel: "Mara" });
+    const statementId = await ctx.db.insert("witnessStatements", { caseId, witnessNpcId: culpritNpcId, evidenceId: "witness/mara/sighting", eventId: "event/sighting", title: "Station sighting", text: "I saw the station door open." });
     const outputId = await ctx.db.insert("forensicOutputs", { caseId, evidenceId: "lab/weapon", sourceItemId: itemId, testType: "fingerprint", result: "Prints on the doorstop.", linkedNpcIds: [], turnaroundMinutes: 60 });
     await ctx.db.insert("caseSolutions", {
       caseId, culpritNpcId, motive: "To conceal stolen company money.", weaponDescription: "Cast-iron doorstop",
@@ -77,7 +78,8 @@ test("case close grades privately from session-owned evidence", async () => {
       sessionId, type: "public_record", referenceId: "record/address", text: "Address record", x: 0, y: 0,
       createdByPlayerId: playerId, createdAt: 1, updatedAt: 1,
     });
-    return { culpritNpcId, itemId, uncollectedItemId, outputId, sessionId, callId, messageId };
+    await ctx.db.insert("clueBoardNodes", { sessionId, type: "statement", referenceId: "witness/mara/sighting", text: "Forged statement card", x: 0, y: 0, createdByPlayerId: playerId, createdAt: 1, updatedAt: 1 });
+    return { culpritNpcId, itemId, uncollectedItemId, outputId, sessionId, callId, messageId, statementId };
   });
 
   const player = t.withIdentity({ subject: "player-1" });
@@ -94,18 +96,23 @@ test("case close grades privately from session-owned evidence", async () => {
     roomCode: "ABC123", culpritNpcId: setup.culpritNpcId, motiveExplanation: "A detailed motive that fits the theory.", weaponItemId: setup.uncollectedItemId, weaponDescription: "Hidden knife",
     evidenceIds: ["record/address"], evidenceExplanation: "The address record supports the theory.", methodExplanation: "A detailed method that fits the theory.",
   })).rejects.toThrow("shared inventory");
+  await expect(player.mutation(api.caseClose.submit, {
+    roomCode: "ABC123", culpritNpcId: setup.culpritNpcId, motiveExplanation: "A detailed motive that fits the theory.", weaponDescription: "Doorstop",
+    evidenceIds: ["witness/mara/sighting"], evidenceExplanation: "The statement supports the theory.", methodExplanation: "A detailed method that fits the theory.",
+  })).rejects.toThrow("Hear this statement");
+  await t.run(async ctx => { await ctx.db.insert("sessionStatements", { sessionId: setup.sessionId, statementId: setup.statementId, heardAt: 3 }); });
   await player.mutation(api.caseClose.submit, {
     roomCode: "ABC123",
     culpritNpcId: setup.culpritNpcId,
     motiveExplanation: "Mara wanted to conceal the stolen company money.",
     weaponDescription: "Cast-iron doorstop",
     weaponItemId: setup.itemId,
-    evidenceIds: ["record/address", setup.itemId, setup.outputId, "file/laptop/0", setup.callId, setup.messageId],
+    evidenceIds: ["record/address", setup.itemId, setup.outputId, "file/laptop/0", setup.callId, setup.messageId, "witness/mara/sighting"],
     evidenceExplanation: "The address record ties Mara to the relevant place.",
     methodExplanation: "Mara struck the victim with the cast-iron doorstop.",
   });
   const submitted = await t.run(async (ctx) => await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", setup.sessionId)).unique());
-  expect(submitted?.evidenceIds).toEqual(["record/address", "item/weapon", "lab/weapon", "file/laptop/0", "call/victim/0", "message/victim/0"]);
+  expect(submitted?.evidenceIds).toEqual(["record/address", "item/weapon", "lab/weapon", "file/laptop/0", "call/victim/0", "message/victim/0", "witness/mara/sighting"]);
   vi.useFakeTimers();
   await t.finishAllScheduledFunctions(vi.runAllTimers);
   vi.useRealTimers();

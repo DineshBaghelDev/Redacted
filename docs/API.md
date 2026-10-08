@@ -195,7 +195,7 @@ forensics.markViewed({ roomCode, forensicOutputId })
 ```ts
 npcConversations.callToBureau({ roomCode, npcId })
 npcConversations.getInterview({ roomCode, npcId })
-npcConversations.sendQuestion({ roomCode, npcId, question, proofNodeId?, requestPhone? })
+npcConversations.sendQuestion({ roomCode, npcId, question, proofNodeId?, proofReference?, requestPhone?, requestStatements? })
 npcConversations.readPhone({ roomCode, npcId })
 npcConversations.retryFailed({ roomCode, npcId })
 ```
@@ -211,7 +211,7 @@ The mutation:
 
 It does not generate the reply inside the mutation.
 
-Calling an NPC to the bureau is immediate in V1; field interviews are out of scope. Retrying a failed answer does not charge another 3 minutes. `listAvailableProof` lists accessible found items, viewed lab results, reviewed CCTV records, completed public records, and read device files/calls/messages. A question may show any listed evidence directly without pinning it; `sendQuestion` also accepts existing pinned cards. The server rechecks access and records matching lie exposure. Asking for an NPC-held phone is a 3-minute question; handover is shared when it finishes. `readPhone` takes 5 minutes at the bureau and only then exposes frozen calls and messages. Statement proof remains to be implemented.
+Calling an NPC to the bureau is immediate in V1; field interviews are out of scope. Retrying a failed answer does not charge another 3 minutes. `listAvailableProof` lists accessible found items, viewed lab results, reviewed CCTV records, completed public records, read device files/calls/messages, and earned witness statements. A question may show any listed evidence directly without pinning it; `sendQuestion` also accepts existing pinned cards. The server rechecks access and records matching lie exposure. Asking for an NPC-held phone is a 3-minute question; handover is shared when it finishes. `readPhone` takes 5 minutes at the bureau and only then exposes frozen calls and messages. Asking for an NPC's recorded account is a 3-minute question; at completion, statements about events they intentionally lie about remain withheld, while other frozen statements become shared session evidence. Pins, proof, and final-report citation recheck that session access.
 
 ### Clue board
 

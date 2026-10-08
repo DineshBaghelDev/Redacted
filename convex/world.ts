@@ -84,6 +84,19 @@ export async function settleActions(ctx: MutationCtx, session: Doc<"sessions">, 
             if (!access) await ctx.db.insert("sessionDevices", { sessionId: session._id, deviceId: device._id, acquiredAt: now });
           }
         }
+        if (turn.requestedStatements) {
+          const conversation = await ctx.db.get(turn.conversationId);
+          const script = conversation ? await ctx.db.query("npcScripts").withIndex("by_npcId", q => q.eq("npcId", conversation.npcId)).unique() : null;
+          if (conversation && script && script.caseId === session.caseId) {
+            const intentionalLies = script.intentionalLies;
+            for await (const statement of ctx.db.query("witnessStatements").withIndex("by_witnessNpcId", q => q.eq("witnessNpcId", conversation.npcId))) {
+              if (statement.caseId !== session.caseId || intentionalLies.some(lie => lie.truthIds.includes(statement.eventId))) continue;
+              const heard = await ctx.db.query("sessionStatements").withIndex("by_sessionId_and_statementId", q => q.eq("sessionId", session._id).eq("statementId", statement._id)).unique();
+              if (!heard) await ctx.db.insert("sessionStatements", { sessionId: session._id, statementId: statement._id, heardAt: now });
+            }
+            await ctx.db.patch(conversation._id, { statementStatus: "ready" });
+          }
+        }
         await ctx.db.patch(turn._id, { status: "queued" });
         await ctx.scheduler.runAfter(0, internal.npcConversations.processNext, { conversationId: turn.conversationId });
       }

@@ -120,7 +120,7 @@ function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person
     void action.then(after).catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Could not complete that interview action.")).finally(() => setWorking(false));
   }
 
-  function pinRecord(type: "call" | "message", referenceId: string) {
+  function pinRecord(type: "call" | "message" | "statement", referenceId: string) {
     const count = boardNodes?.length ?? 0;
     run(createReference({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + (Math.floor(count / 4) % 4) * 180 }));
   }
@@ -133,6 +133,13 @@ function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person
       <p className="mt-2 text-sm leading-relaxed text-[#4b3b2d]">{person.publicDescription}</p>
       {!interview?.bureauPresent ? <div className="mt-5 border-t border-[#8b7355] pt-4"><p className="text-sm">Bring this person to the bureau before asking questions.</p><button className="mt-3 min-h-11 border-2 border-red-900 bg-red-950 px-4 text-xs uppercase text-red-50 hover:bg-red-900 disabled:opacity-50" disabled={working || !interview?.canTalkHere} onClick={() => run(callToBureau({ roomCode, npcId: person.id }))} type="button">Call to bureau</button>{interview && !interview.canTalkHere ? <p className="mt-2 text-sm text-red-800">Return to the bureau to make the call.</p> : null}</div> : null}
       {interview?.threadId ? <ConversationMessages roomCode={roomCode} threadId={interview.threadId} /> : null}
+      {interview?.bureauPresent ? <div className="mt-5 border-t border-[#8b7355] pt-4">
+        <p className="text-xs uppercase tracking-widest text-red-800">Recorded statement</p>
+        {interview.statementStatus === null ? <button className="mt-3 min-h-11 border-2 border-[#573821] px-4 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2] disabled:opacity-50" disabled={working || interview.busy || !interview.canTalkHere} onClick={() => run(sendQuestion({ roomCode, npcId: person.id, question: "What did you witness?", requestStatements: true }))} type="button">Ask what they witnessed · 3 min</button> : null}
+        {interview.statementStatus === "requested" ? <p className="mt-2 text-sm" role="status">Statement question in progress.</p> : null}
+        {interview.statementStatus === "ready" && !interview.statements.length ? <p className="mt-2 text-sm text-[#725f42]">No statement was recorded.</p> : null}
+        {interview.statements.map((statement) => <div className="mt-3 border-l-2 border-[#8b7355] pl-3" key={statement.id}><p className="text-sm font-semibold">{statement.title}</p><p className="mt-1 whitespace-pre-wrap text-sm text-[#4b3b2d]">{statement.text}</p><button className="mt-2 min-h-10 border border-[#573821] px-3 text-xs uppercase disabled:opacity-50" disabled={working || boardNodes?.some(node => node.type === "statement" && node.referenceId === statement.id)} onClick={() => pinRecord("statement", statement.id)} type="button">{boardNodes?.some(node => node.type === "statement" && node.referenceId === statement.id) ? "Pinned to clueboard" : "Pin statement to clueboard"}</button></div>)}
+      </div> : null}
       {interview?.bureauPresent && interview.phone ? <div className="mt-5 border-t border-[#8b7355] pt-4">
         <p className="text-xs uppercase tracking-widest text-red-800">{person.name}&apos;s phone</p>
         {!interview.phone.acquired && interview.phone.requesting ? <p className="mt-2 text-sm" role="status">Phone request in progress.</p> : null}

@@ -76,7 +76,7 @@ export const submit = mutation({
       .withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id))
       .take(100);
     const boardEvidence = new Map(boardNodes
-      .filter((node) => (node.type === "cctv" || node.type === "public_record" || node.type === "item" || node.type === "forensic" || node.type === "device_file" || node.type === "call" || node.type === "message") && node.referenceId)
+      .filter((node) => (node.type === "cctv" || node.type === "public_record" || node.type === "item" || node.type === "forensic" || node.type === "device_file" || node.type === "call" || node.type === "message" || node.type === "statement") && node.referenceId)
       .map((node) => [node.referenceId!, node.type] as const));
     if (evidenceIds.some((id) => !boardEvidence.has(id))) {
       throw new Error("Choose only evidence pinned to this clueboard.");
@@ -95,6 +95,11 @@ export const submit = mutation({
         const request = outputId ? await ctx.db.query("forensicRequests").withIndex("by_sessionId_and_forensicOutputId", (q) => q.eq("sessionId", member.session._id).eq("forensicOutputId", outputId)).unique() : null;
         if (!output || output.caseId !== member.session.caseId || request?.viewedAt === undefined) throw new Error("View the lab result before using it as evidence.");
         canonicalEvidenceIds.push(output.evidenceId);
+      } else if (type === "statement") {
+        const statement = await ctx.db.query("witnessStatements").withIndex("by_caseId_and_evidenceId", q => q.eq("caseId", member.session.caseId!).eq("evidenceId", id)).unique();
+        const heard = statement ? await ctx.db.query("sessionStatements").withIndex("by_sessionId_and_statementId", q => q.eq("sessionId", member.session._id).eq("statementId", statement._id)).unique() : null;
+        if (!statement || !heard) throw new Error("Hear this statement before using it as evidence.");
+        canonicalEvidenceIds.push(statement.evidenceId);
       } else if (type === "device_file") {
         const file = await ctx.db.query("deviceFiles").withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", member.session.caseId!).eq("evidenceId", id)).unique();
         const device = file ? await ctx.db.get(file.deviceId) : null;

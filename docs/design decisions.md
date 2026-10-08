@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-08 — Recorded-statement access
+
+- Asking what an NPC witnessed is an explicit 3-minute bureau question. Its completion shares the NPC's prewritten statements with the session; events they intentionally lie about are withheld. The free-form reply never becomes canonical evidence.
+- Earned statements may be pinned, shown in a later interview, or cited in the final report. Each server operation checks the same session acquisition record.
+
 ## 2026-10-08 — Canonical statement source
 
 - A usable witness statement comes from the case's frozen generated evidence, not from a free-form AI interview reply. Publication stores it privately; session access must be earned through an interview before it can be shown as proof.

@@ -11,9 +11,9 @@ import { hasReadDevice } from "./lib/deviceAccess";
 import { bureauRoomId, settleActions } from "./world";
 
 const MAX_QUESTION = 500;
-const proofTypes = new Set(["item", "forensic", "cctv", "public_record", "device_file", "call", "message"]);
-const proofReference = v.object({ type: v.union(v.literal("item"), v.literal("forensic"), v.literal("cctv"), v.literal("public_record"), v.literal("device_file"), v.literal("call"), v.literal("message")), referenceId: v.string() });
-type ProofReference = { type: "item" | "forensic" | "cctv" | "public_record" | "device_file" | "call" | "message"; referenceId: string };
+const proofTypes = new Set(["item", "forensic", "cctv", "public_record", "device_file", "call", "message", "statement"]);
+const proofReference = v.object({ type: v.union(v.literal("item"), v.literal("forensic"), v.literal("cctv"), v.literal("public_record"), v.literal("device_file"), v.literal("call"), v.literal("message"), v.literal("statement")), referenceId: v.string() });
+type ProofReference = { type: "item" | "forensic" | "cctv" | "public_record" | "device_file" | "call" | "message" | "statement"; referenceId: string };
 const interviewPhone = v.object({
   acquired: v.boolean(),
   requesting: v.boolean(),
@@ -31,6 +31,12 @@ async function npcPhone(ctx: QueryCtx | MutationCtx, caseId: Id<"cases">, npcId:
 async function resolveProof(ctx: MutationCtx, session: Doc<"sessions">, reference: ProofReference) {
   if (!session.caseId) throw new Error("This room has no case.");
   const { type, referenceId: id } = reference;
+  if (type === "statement") {
+    const statement = await ctx.db.query("witnessStatements").withIndex("by_caseId_and_evidenceId", q => q.eq("caseId", session.caseId!).eq("evidenceId", id)).unique();
+    const heard = statement ? await ctx.db.query("sessionStatements").withIndex("by_sessionId_and_statementId", q => q.eq("sessionId", session._id).eq("statementId", statement._id)).unique() : null;
+    if (!statement || !heard) throw new Error("Hear this statement before showing it.");
+    return { evidenceId: statement.evidenceId, text: `${statement.title}\n${statement.text}` };
+  }
   if (type === "item") {
     const itemId = ctx.db.normalizeId("caseItems", id);
     const item = itemId ? await ctx.db.get(itemId) : null;
@@ -84,6 +90,10 @@ export const listAvailableProof = query({
     const gameTime = session.gameTime ?? 0;
     const proof: { type: ProofReference["type"]; referenceId: string; label: string }[] = [];
     // ponytail: Each source is capped at 100; add paging if a replay exceeds that many discoveries of one kind.
+    for (const heard of await ctx.db.query("sessionStatements").withIndex("by_sessionId", q => q.eq("sessionId", session._id)).take(100)) {
+      const statement = await ctx.db.get(heard.statementId);
+      if (statement?.caseId === caseId) proof.push({ type: "statement", referenceId: statement.evidenceId, label: `Statement · ${statement.title}` });
+    }
     for (const found of await ctx.db.query("sessionItems").withIndex("by_sessionId", q => q.eq("sessionId", session._id)).take(100)) {
       const item = await ctx.db.get(found.itemId);
       if (!item || item.caseId !== caseId) continue;
@@ -132,7 +142,7 @@ export const listAvailableProof = query({
 
 export const getInterview = query({
   args: { roomCode: v.string(), npcId: v.id("npcs") },
-  returns: v.union(v.null(), v.object({ threadId: v.union(v.null(), v.string()), bureauPresent: v.boolean(), canTalkHere: v.boolean(), busy: v.boolean(), phone: v.union(v.null(), interviewPhone), turns: v.array(interviewTurn) })),
+  returns: v.union(v.null(), v.object({ threadId: v.union(v.null(), v.string()), bureauPresent: v.boolean(), canTalkHere: v.boolean(), busy: v.boolean(), statementStatus: v.union(v.null(), v.literal("requested"), v.literal("ready")), statements: v.array(v.object({ id: v.string(), title: v.string(), text: v.string() })), phone: v.union(v.null(), interviewPhone), turns: v.array(interviewTurn) })),
   handler: async (ctx, { roomCode, npcId }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
     const npc = await ctx.db.get(npcId);
@@ -145,7 +155,12 @@ export const getInterview = query({
     const access = device ? await ctx.db.query("sessionDevices").withIndex("by_sessionId_and_deviceId", q => q.eq("sessionId", member.session._id).eq("deviceId", device._id)).unique() : null;
     const calls = access?.readAt !== undefined && device ? await ctx.db.query("callLogs").withIndex("by_deviceId_and_timestamp", q => q.eq("deviceId", device._id)).take(100) : [];
     const messages = access?.readAt !== undefined && device ? await ctx.db.query("messages").withIndex("by_deviceId_and_timestamp", q => q.eq("deviceId", device._id)).take(100) : [];
-    return { threadId: conversation?.threadId ?? null, bureauPresent: conversation?.bureauPresent ?? false, canTalkHere: Boolean(await getBureauRoomMember(ctx, roomCode, "npc")), busy: Boolean(roomAction || travel), phone: device ? { acquired: Boolean(access), requesting: turns.some(turn => turn.requestedPhoneId === device._id && turn.status === "waiting"), read: access?.readAt !== undefined, calls: calls.map(row => ({ id: row._id, time: row.timestamp, direction: row.direction, durationSeconds: row.durationSeconds, otherParty: row.otherPartyLabel ?? "Unknown" })), messages: messages.map(row => ({ id: row._id, time: row.timestamp, direction: row.direction, body: row.body, otherParty: row.otherPartyLabel ?? "Unknown" })) } : null, turns: turns.map(({ sequence, status, error }) => ({ sequence, status, error })) };
+    const statements = [];
+    for (const statement of await ctx.db.query("witnessStatements").withIndex("by_witnessNpcId", q => q.eq("witnessNpcId", npcId)).take(100)) {
+      if (statement.caseId !== member.session.caseId) continue;
+      if (await ctx.db.query("sessionStatements").withIndex("by_sessionId_and_statementId", q => q.eq("sessionId", member.session._id).eq("statementId", statement._id)).unique()) statements.push({ id: statement.evidenceId, title: statement.title, text: statement.text });
+    }
+    return { threadId: conversation?.threadId ?? null, bureauPresent: conversation?.bureauPresent ?? false, canTalkHere: Boolean(await getBureauRoomMember(ctx, roomCode, "npc")), busy: Boolean(roomAction || travel), statementStatus: conversation?.statementStatus ?? null, statements, phone: device ? { acquired: Boolean(access), requesting: turns.some(turn => turn.requestedPhoneId === device._id && turn.status === "waiting"), read: access?.readAt !== undefined, calls: calls.map(row => ({ id: row._id, time: row.timestamp, direction: row.direction, durationSeconds: row.durationSeconds, otherParty: row.otherPartyLabel ?? "Unknown" })), messages: messages.map(row => ({ id: row._id, time: row.timestamp, direction: row.direction, body: row.body, otherParty: row.otherPartyLabel ?? "Unknown" })) } : null, turns: turns.map(({ sequence, status, error }) => ({ sequence, status, error })) };
   },
 });
 
@@ -183,9 +198,9 @@ export const callToBureau = mutation({
 });
 
 export const sendQuestion = mutation({
-  args: { roomCode: v.string(), npcId: v.id("npcs"), question: v.string(), proofNodeId: v.optional(v.id("clueBoardNodes")), proofReference: v.optional(proofReference), requestPhone: v.optional(v.boolean()) },
+  args: { roomCode: v.string(), npcId: v.id("npcs"), question: v.string(), proofNodeId: v.optional(v.id("clueBoardNodes")), proofReference: v.optional(proofReference), requestPhone: v.optional(v.boolean()), requestStatements: v.optional(v.boolean()) },
   returns: v.object({ completeGameTime: v.number() }),
-  handler: async (ctx, { roomCode, npcId, question, proofNodeId, proofReference, requestPhone }) => {
+  handler: async (ctx, { roomCode, npcId, question, proofNodeId, proofReference, requestPhone, requestStatements }) => {
     const body = question.trim();
     if (!body || body.length > MAX_QUESTION) throw new Error("Write a question under 500 characters.");
     if (proofNodeId && proofReference) throw new Error("Show one piece of proof at a time.");
@@ -197,6 +212,7 @@ export const sendQuestion = mutation({
     if (!member?.session.caseId) throw new Error("Return to the bureau to interview this person.");
     const conversation = await ctx.db.query("npcConversations").withIndex("by_sessionId_and_npcId", (q) => q.eq("sessionId", member.session._id).eq("npcId", npcId)).unique();
     if (!conversation?.bureauPresent) throw new Error("Call this person to the bureau first.");
+    if (requestStatements && conversation.statementStatus) throw new Error("This person has already been asked for a statement.");
     if (await ctx.db.query("travelActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique()
       || await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique()) throw new Error("Finish your current action first.");
     const roomId = await bureauRoomId(ctx, member.session.caseId, member.player);
@@ -227,8 +243,8 @@ export const sendQuestion = mutation({
     }
     const prompt = `${member.player.nickname} asks: ${body}${proof ? `\nShows evidence from the shared case file: ${proof.text}` : ""}`;
     const { messageId } = await saveMessage(ctx, components.agent, { threadId: conversation.threadId, userId: member.player._id, prompt });
-    const turnId = await ctx.db.insert("npcPendingMessages", { conversationId: conversation._id, playerId: member.player._id, sequence: conversation.nextSequence, promptMessageId: messageId, proofEvidenceId: proof?.evidenceId, requestedPhoneId, status: "waiting", createdAt: now });
-    await ctx.db.patch(conversation._id, { nextSequence: conversation.nextSequence + 1 });
+    const turnId = await ctx.db.insert("npcPendingMessages", { conversationId: conversation._id, playerId: member.player._id, sequence: conversation.nextSequence, promptMessageId: messageId, proofEvidenceId: proof?.evidenceId, requestedPhoneId, requestedStatements: requestStatements || undefined, status: "waiting", createdAt: now });
+    await ctx.db.patch(conversation._id, { nextSequence: conversation.nextSequence + 1, ...(requestStatements ? { statementStatus: "requested" as const } : {}) });
     if (settled.activeCount === 0) await ctx.db.patch(member.session._id, { gameTime: settled.gameTime, clockStartedAt: now });
     const completeGameTime = settled.gameTime + 3;
     await ctx.db.insert("roomActions", { sessionId: member.session._id, playerId: member.player._id, kind: "npc", roomId, npcTurnId: turnId, startGameTime: settled.gameTime, completeGameTime, createdAt: now });

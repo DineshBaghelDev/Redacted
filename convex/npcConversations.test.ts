@@ -41,6 +41,8 @@ test("only a bureau detective can start a shared, timed NPC interview", async ()
     const phoneId = await ctx.db.insert("devices", { caseId, sourceId: "phone:mara", type: "phone", ownerNpcId: npcId, name: "Mara's phone", description: "A mobile phone." });
     const messageId = await ctx.db.insert("messages", { caseId, deviceId: phoneId, evidenceId: "message/secret", timestamp: 44, direction: "outgoing", otherPartyLabel: "Unknown", body: "Meet me at the station." });
     await ctx.db.insert("npcScripts", { caseId, npcId, personality: ["guarded"], job: "conductor", home: "Station Road", relationshipToVictim: "colleague", knowledge: [{ sourceId: "event/1", how: "saw", time: 30, text: "Saw the victim leave work." }], intentionalLies: [{ topic: "whereabouts", claim: "I stayed at work.", truthIds: ["event/1"], reason: "Protect a friend", disprovingEvidenceIds: ["item/ticket"], whenCaught: "backup-lie", backupLie: { claim: "I went straight home.", disprovingEvidenceIds: ["item/receipt"] } }, { topic: "secret", claim: "I never sent a message.", truthIds: ["event/1"], reason: "Hide a meeting", disprovingEvidenceIds: ["message/secret"], whenCaught: "admit-shown" }], behavioralRules: ["Answer briefly."] });
+    await ctx.db.insert("witnessStatements", { caseId, witnessNpcId: npcId, evidenceId: "witness/mara/safe", eventId: "event/2", title: "Station sighting", text: "I saw the station door open." });
+    await ctx.db.insert("witnessStatements", { caseId, witnessNpcId: npcId, evidenceId: "witness/mara/lied", eventId: "event/1", title: "Hidden sighting", text: "I saw the victim leave work." });
     const sessionId = await ctx.db.insert("sessions", { caseId, roomCode: "ABC123", status: "playing", gameTime: 0, createdAt: 1, expiresAt: 1_000_000 });
     for (const authUserId of ["one", "two"]) await ctx.db.insert("sessionPlayers", { sessionId, authUserId, nickname: authUserId, isReady: true, currentPlaceId: placeId, currentRoomId: roomId, joinedAt: 1 });
     const itemId = await ctx.db.insert("caseItems", { caseId, evidenceId: "item/ticket", name: "Ticket", description: "A ticket", placeId, roomId, slot: "desk", discoverableBySearch: true, collectible: true, hidden: true, itemType: "paper" });
@@ -125,4 +127,19 @@ test("only a bureau detective can start a shared, timed NPC interview", async ()
   const exposedAfterPhone = await t.run(async ctx => await ctx.db.query("npcExposedLies").withIndex("by_conversationId_and_lieIndex", q => q.eq("conversationId", conversationId).eq("lieIndex", 1)).unique());
   expect(exposedAfterPhone?.mainExposedAt).toBeDefined();
   await expect(one.mutation(api.npcConversations.readPhone, { roomCode: "ABC123", npcId: ids.npcId })).rejects.toThrow("already been read");
+  await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "statement", referenceId: "witness/mara/safe", x: 0, y: 0 })).rejects.toThrow("Hear this statement");
+  await expect(one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Show this", proofReference: { type: "statement", referenceId: "witness/mara/safe" } })).rejects.toThrow("Hear this statement");
+  expect((await two.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId }))?.statements).toEqual([]);
+  await one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "What did you witness?", requestStatements: true });
+  expect((await two.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId }))?.statementStatus).toBe("requested");
+  await expect(two.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "What did you witness?", requestStatements: true })).rejects.toThrow("already been asked");
+  vi.advanceTimersByTime(3_000);
+  await one.mutation(api.world.finishTravel, { roomCode: "ABC123" });
+  expect((await two.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId }))?.statements).toEqual([{ id: "witness/mara/safe", title: "Station sighting", text: "I saw the station door open." }]);
+  expect(await two.query(api.npcConversations.listAvailableProof, { roomCode: "ABC123" })).toContainEqual({ type: "statement", referenceId: "witness/mara/safe", label: "Statement · Station sighting" });
+  expect(JSON.stringify(await two.query(api.npcConversations.listAvailableProof, { roomCode: "ABC123" }))).not.toContain("witness/mara/lied");
+  await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "statement", referenceId: "witness/mara/lied", x: 0, y: 0 })).rejects.toThrow("Hear this statement");
+  await expect(one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Show this", proofReference: { type: "statement", referenceId: "witness/mara/lied" } })).rejects.toThrow("Hear this statement");
+  const statementNode = await two.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "statement", referenceId: "witness/mara/safe", x: 0, y: 0 });
+  expect((await one.query(api.clueBoard.getNodes, { roomCode: "ABC123" })).some(node => node._id === statementNode)).toBe(true);
 }, 30_000);
