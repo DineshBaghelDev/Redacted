@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-08 — Older passed-case replay recovery
+
+- The development deployment had 23 passed generation jobs but only one published replay case. A private, per-job idempotent repair now reuses frozen-case validation, including a strict read-time translation of the older `killerId`/`timeOfDeath` crime fields.
+- Recovered 17 additional jobs: 18 frozen replay cases are now published. Five older jobs remain invalid (one crime names people absent from its cast; four use the removed body-moving mechanic) and stay hidden. The repair does not alter drafts, publish failed transactions, or add a public creation/generation route. Per-case browser playability is still unverified.
+
 ## 2026-10-08 — Shared recorded statements
 
 - A detective can ask for an NPC's frozen witness account at the bureau. The question costs 3 game minutes; when it completes, the session gains only that NPC's published statements whose events are not covered by their intentional lies. Both detectives can then read, pin, and show those statements as proof.

@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-08 — Recovery of older passed cases
+
+- Older passed generation jobs are published one at a time through an internal-only repair function. The player list remains restricted to fully frozen published cases; it does not generate or expose drafts during replay. Legacy `killerId` and `timeOfDeath` fields can be read as the same canonical crime facts, but missing cast members and the removed body-moving mechanic are not silently repaired.
+
 ## 2026-10-08 — Recorded-statement access
 
 - Asking what an NPC witnessed is an explicit 3-minute bureau question. Its completion shares the NPC's prewritten statements with the session; events they intentionally lie about are withheld. The free-form reply never becomes canonical evidence.

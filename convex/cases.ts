@@ -85,7 +85,10 @@ async function ensureCaseSolution(ctx: MutationCtx, caseId: Id<"cases">, generat
     getDraft(ctx, generationJobId, "cast"),
     getDraft(ctx, generationJobId, "facts"),
   ]);
-  const crime = crimeCoreSchema.safeParse(crimeDraft?.output);
+  const rawCrime = crimeDraft?.output;
+  const crime = crimeCoreSchema.safeParse(rawCrime && typeof rawCrime === "object" && "killerId" in rawCrime && "timeOfDeath" in rawCrime
+    ? { ...rawCrime, type: "murder", culpritId: rawCrime.killerId, crimeTime: rawCrime.timeOfDeath }
+    : rawCrime);
   const cast = castSchema.safeParse(castDraft?.output);
   const facts = solutionFactsSchema.safeParse(factsDraft?.output);
   if (!crime.success || !cast.success || !facts.success) {
@@ -203,6 +206,13 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
   await ctx.db.patch(caseId, { publicationVersion: PUBLICATION_VERSION });
   return caseId;
 }
+
+/** Publishes one older passed job without exposing generation drafts to players. */
+export const publishPassedJob = internalMutation({
+  args: { jobId: v.id("generationJobs") },
+  returns: v.id("cases"),
+  handler: async (ctx, { jobId }) => await ensureCaseForJob(ctx, jobId),
+});
 
 /** Repairs device rows omitted by the first publisher without changing a case's generated truth. */
 export const backfillPublishedDevices = internalMutation({

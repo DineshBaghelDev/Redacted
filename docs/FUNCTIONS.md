@@ -18,6 +18,10 @@ requireBeforeDeadline(session)
 
 ## Session lifecycle
 
+### `cases.publishPassedJob({ jobId })` — internal repair
+
+Publishes one previously passed generation job through the same frozen-case path used when a new job passes. It is idempotent and transactionally refuses invalid drafts; only fully published cases appear in the replay list. Older murder drafts may use `killerId`/`timeOfDeath`, which are read as `culpritId`/`crimeTime` without changing stored drafts. The removed body-moving mechanic and inconsistent casts are not adapted.
+
 ### `createGeneratedGame(input, identity, nickname)`
 
 1. Create placeholder case in `generating`.

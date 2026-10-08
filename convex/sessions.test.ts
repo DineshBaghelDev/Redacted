@@ -3,7 +3,6 @@
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
-import { ensureCaseForJob } from "./cases";
 import { cast, crimeCore } from "./fixtures/caseEasy";
 import { city } from "./fixtures/city";
 import schema from "./schema";
@@ -266,7 +265,8 @@ test("a lobby keeps the selected passed case", async () => {
 
   const user = t.withIdentity({ subject: "player-1" });
   expect(await user.query(api.cases.listPassed, {})).toEqual([]);
-  const publishedCaseId = await t.run(async (ctx) => await ensureCaseForJob(ctx, generationJobId));
+  const publishedCaseId = await t.mutation(internal.cases.publishPassedJob, { jobId: generationJobId });
+  expect(await t.mutation(internal.cases.publishPassedJob, { jobId: generationJobId })).toBe(publishedCaseId);
   const listed = await user.query(api.cases.listPassed, {});
   expect(listed).toMatchObject([{
     generationJobId,
@@ -298,8 +298,29 @@ test("a lobby keeps the selected passed case", async () => {
     }
     return jobId;
   });
-  await expect(t.run(async (ctx) => await ensureCaseForJob(ctx, invalidJobId))).rejects.toThrow("no decisive evidence");
+  await expect(t.mutation(internal.cases.publishPassedJob, { jobId: invalidJobId })).rejects.toThrow("no decisive evidence");
   expect(await t.run(async (ctx) => ctx.db.query("cases").withIndex("by_generationJobId", (q) => q.eq("generationJobId", invalidJobId)).unique())).toBeNull();
+  const legacyJobId = await t.run(async (ctx) => {
+    const jobId = await ctx.db.insert("generationJobs", { seed: 9, difficulty: "easy", createdBy: "tester", createdAt: 5, status: "passed", finishedAt: 6 });
+    for await (const draft of ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId))) {
+      const output = draft.stage === "crime" ? (() => {
+        const { culpritId, crimeTime, type, ...rest } = draft.output as typeof crimeCore;
+        return { ...rest, killerId: culpritId, timeOfDeath: crimeTime };
+      })() : draft.output;
+      await ctx.db.insert("generationDrafts", { jobId, stage: draft.stage, output, checkErrors: [], source: draft.source, updatedAt: 6 });
+    }
+    return jobId;
+  });
+  expect(await t.mutation(internal.cases.publishPassedJob, { jobId: legacyJobId })).toBeTruthy();
+  const movedBodyJobId = await t.run(async (ctx) => {
+    const jobId = await ctx.db.insert("generationJobs", { seed: 10, difficulty: "easy", createdBy: "tester", createdAt: 7, status: "passed", finishedAt: 8 });
+    for await (const draft of ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", legacyJobId))) {
+      await ctx.db.insert("generationDrafts", { jobId, stage: draft.stage, output: draft.stage === "crime" ? { ...draft.output, coverUp: [...draft.output.coverUp, "move-body"] } : draft.output, checkErrors: [], source: draft.source, updatedAt: 8 });
+    }
+    return jobId;
+  });
+  await expect(t.mutation(internal.cases.publishPassedJob, { jobId: movedBodyJobId })).rejects.toThrow("no valid private solution");
+  expect(await t.run(async (ctx) => ctx.db.query("cases").withIndex("by_generationJobId", (q) => q.eq("generationJobId", movedBodyJobId)).unique())).toBeNull();
   await t.run(async (ctx) => ctx.db.patch(invalidJobId, { status: "failed" }));
   const frozen = await t.run(async (ctx) => {
     const session = await ctx.db.get(created.sessionId);
@@ -608,7 +629,7 @@ test("a lobby keeps the selected passed case", async () => {
     if (briefDraft) await ctx.db.patch(briefDraft._id, { output: { title: "Changed draft", summary: "Changed.", initialFacts: [] } });
   });
   expect((await t.run(async (ctx) => await ctx.db.get(created.sessionId)))?.caseId).toBe(publishedCaseId);
-  expect(await user.query(api.cases.listPassed, {})).toEqual([
+  expect(await user.query(api.cases.listPassed, {})).toEqual(expect.arrayContaining([
     expect.objectContaining({
       generationJobId,
       caseId: publishedCaseId,
@@ -616,7 +637,7 @@ test("a lobby keeps the selected passed case", async () => {
       title: "The Selected Case",
       description: "A specific mystery.",
     }),
-  ]);
+  ]));
   const replayed = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId });
   expect(replayed.sessionId).not.toBe(created.sessionId);
   expect(await t.run(async (ctx) => {
