@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-08 — Frozen witness-statement publication
+
+- New cases now publish generated witness statements and their rewritten wording as immutable, private runtime rows. An internal idempotent backfill repairs previously published cases without regenerating story or changing replay creation.
+- Statements are not yet selectable or visible to players. Session acquisition and lie-aware access are the next step; live-provider/browser verification remains open.
+
 ## 2026-10-08 — Direct interview proof
 
 - Detectives can show found evidence directly in a bureau interview without first pinning it to the clueboard. The selector includes discovered items, viewed lab results, reviewed camera records, completed public records, and read device files, calls, and messages. Server checks still reject guessed or unread references; pinned-proof calls remain supported.

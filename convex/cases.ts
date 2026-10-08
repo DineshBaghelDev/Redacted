@@ -11,6 +11,7 @@ import { ensureCaseForensics } from "./lib/publishForensics";
 import { ensureCaseNarrative } from "./lib/publishNarrative";
 import { ensureCaseItems } from "./lib/publishItems";
 import { ensureCaseRecords } from "./lib/publishRecords";
+import { ensureCaseStatements } from "./lib/publishStatements";
 import { ensureCaseWorld } from "./lib/publishWorld";
 import { bureauRoomId, settleActions } from "./world";
 
@@ -155,7 +156,10 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     .withIndex("by_generationJobId", (q) => q.eq("generationJobId", generationJobId))
     .unique();
 
-  if (existing?.publicationVersion === PUBLICATION_VERSION) return existing._id;
+  if (existing?.publicationVersion === PUBLICATION_VERSION) {
+    await ensureCaseStatements(ctx, existing._id, generationJobId);
+    return existing._id;
+  }
 
   const job = await ctx.db.get(generationJobId);
   if (!job || job.status !== "passed") throw new Error("This case is not ready to play.");
@@ -169,6 +173,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     await ensureCaseRecords(ctx, existing._id, generationJobId);
     await ensureCaseForensics(ctx, existing._id, generationJobId);
     await ensureCaseNarrative(ctx, existing._id, generationJobId);
+    await ensureCaseStatements(ctx, existing._id, generationJobId);
     await ctx.db.patch(existing._id, { publicationVersion: PUBLICATION_VERSION });
     return existing._id;
   }
@@ -194,6 +199,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
   await ensureCaseRecords(ctx, caseId, generationJobId);
   await ensureCaseForensics(ctx, caseId, generationJobId);
   await ensureCaseNarrative(ctx, caseId, generationJobId);
+  await ensureCaseStatements(ctx, caseId, generationJobId);
   await ctx.db.patch(caseId, { publicationVersion: PUBLICATION_VERSION });
   return caseId;
 }
@@ -218,6 +224,18 @@ export const backfillPublishedDevices = internalMutation({
       }
     }
     return { laptops, files, physicalPhones };
+  },
+});
+
+/** Publishes pre-generated statement wording omitted from an older frozen case. */
+export const backfillPublishedStatements = internalMutation({
+  args: { caseId: v.id("cases") },
+  returns: v.null(),
+  handler: async (ctx, { caseId }) => {
+    const playableCase = await ctx.db.get(caseId);
+    if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not published.");
+    await ensureCaseStatements(ctx, caseId, playableCase.generationJobId);
+    return null;
   },
 });
 

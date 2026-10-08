@@ -293,6 +293,21 @@ Create an actual corridor room only if the corridor itself is searchable/interac
 
 Logical relation: one NPC to one private script.
 
+### `witnessStatements` — frozen case evidence, server-gated
+
+```ts
+{
+  caseId: Id<"cases">,
+  witnessNpcId: Id<"npcs">,
+  evidenceId: string,
+  eventId: string,
+  title: string,
+  text: string,
+}
+```
+
+These are generated before play and copied from the case's evidence and rewritten text stages. A player's free-form interview transcript is not a canonical statement. Client access requires a separate session discovery gate.
+
 ## Physical objects and search
 
 ### `caseItems`

@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-08 — Canonical statement source
+
+- A usable witness statement comes from the case's frozen generated evidence, not from a free-form AI interview reply. Publication stores it privately; session access must be earned through an interview before it can be shown as proof.
+- Replaying a published case does not consult generation drafts. Older cases receive the same frozen statement rows through an explicit internal backfill.
+
 ## 2026-10-08 — NPC phones are acquired in the interview
 
 - Asking to examine a person's phone is a normal 3-minute bureau question, not an automatic reward for calling them. The handover becomes shared only when the question completes.

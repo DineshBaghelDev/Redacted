@@ -321,6 +321,16 @@ export default defineSchema({
   })
     .index("by_caseId", ["caseId"])
     .index("by_npcId", ["npcId"]),
+  witnessStatements: defineTable({
+    caseId: v.id("cases"),
+    witnessNpcId: v.id("npcs"),
+    evidenceId: v.string(),
+    eventId: v.string(),
+    title: v.string(),
+    text: v.string(),
+  })
+    .index("by_caseId_and_evidenceId", ["caseId", "evidenceId"])
+    .index("by_witnessNpcId", ["witnessNpcId"]),
   npcConversations: defineTable({
     sessionId: v.id("sessions"),
     npcId: v.id("npcs"),
