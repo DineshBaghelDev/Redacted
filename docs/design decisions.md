@@ -7,13 +7,14 @@
 
 ## 2026-10-08 — Proof shown during interviews
 
-- V1's first proof path uses evidence the detectives have pinned to their shared clueboard. Showing proof is part of a 3-minute question, not a separate action.
+- Detectives may show any shared, already-discovered evidence directly during a 3-minute question; a clueboard pin is not required. Pinned evidence remains supported.
 - The server rechecks discovery/read access and compares the evidence's canonical ID to that NPC's own lie script. Main and backup exposures are shared within this session only; merely pressing an NPC without matching proof does not break a lie.
-- This is a first implementation surface, not a replacement for the spec's eventual support for any found evidence and another person's statement.
+- Another person's statement remains to be made available as proof.
 
 ## 2026-10-08 — Bureau calls are immediate in V1
 
 - Calling a living NPC while at the bureau makes them available for a shared interview immediately; there is no separate arrival timer or cost. Each question still occupies its detective for 3 game minutes on the continuous shared clock.
+- V1 interviews are bureau-only by player decision. Do not add NPC travel schedules or field meetings.
 - The other detective may ask concurrently. Questions to the same NPC are answered in server order against one shared conversation. Replaying the case starts a fresh conversation.
 
 ## 2026-10-08 — Victim phone follows the scene search
@@ -277,6 +278,8 @@ Generated character IDs are stored as case-scoped `npcs.sourceId` values only to
 - Innocent suspects don't need a provable alibi; some cases leave people unaccounted for. Nothing decisive may point at an innocent.
 - Not everyone has a secret.
 # Development case
+
+- Interview proof is selected from shared, already-discovered evidence; detectives do not have to pin it to the clueboard first. Pinning remains an optional deduction/organization action and is still required for the current final-report evidence selector.
 
 - During UI development, a new room opens the completed Union Station Death case as a fixed fixture. Case generation is intentionally bypassed until the gameplay surfaces are ready.
 - The game shell is full-screen; account profile controls are not shown during play.

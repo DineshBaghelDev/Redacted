@@ -56,6 +56,9 @@ test("only a bureau detective can start a shared, timed NPC interview", async ()
   await expect(one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Where were you?" })).rejects.toThrow("Call this person");
   await one.mutation(api.npcConversations.callToBureau, { roomCode: "ABC123", npcId: ids.npcId });
   await expect(one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Explain this", proofNodeId: ids.otherNodeId })).rejects.toThrow("this case's clueboard");
+  expect(await one.query(api.npcConversations.listAvailableProof, { roomCode: "ABC123" })).toEqual([]);
+  await expect(one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Explain this", proofReference: { type: "item", referenceId: ids.itemId } })).rejects.toThrow("Find this item");
+  await expect(one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "You sent this?", proofReference: { type: "message", referenceId: ids.messageId } })).rejects.toThrow("Read this phone");
   const guessedNodeId = await t.run(async ctx => await ctx.db.insert("clueBoardNodes", { sessionId: ids.sessionId, type: "item", referenceId: ids.itemId, text: "Ticket", x: 0, y: 0, createdByPlayerId: (await ctx.db.query("sessionPlayers").withIndex("by_sessionId", q => q.eq("sessionId", ids.sessionId)).first())!._id, createdAt: 1, updatedAt: 1 }));
   await expect(one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Explain this", proofNodeId: guessedNodeId })).rejects.toThrow("Find this item");
   expect((await two.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId }))?.bureauPresent).toBe(true);
@@ -92,7 +95,8 @@ test("only a bureau detective can start a shared, timed NPC interview", async ()
   await t.run(async ctx => {
     await ctx.db.insert("sessionItems", { sessionId: ids.sessionId, itemId: ids.itemId, discoveredAt: 6 });
   });
-  await one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Explain this", proofNodeId: guessedNodeId });
+  expect(await two.query(api.npcConversations.listAvailableProof, { roomCode: "ABC123" })).toContainEqual({ type: "item", referenceId: ids.itemId, label: "Item · Ticket" });
+  await one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Explain this", proofReference: { type: "item", referenceId: ids.itemId } });
   const exposed = await t.run(async ctx => await ctx.db.query("npcExposedLies").first());
   expect(exposed?.mainExposedAt).toBe(4);
   expect(exposed?.backupExposedAt).toBeUndefined();
@@ -102,6 +106,7 @@ test("only a bureau detective can start a shared, timed NPC interview", async ()
   expect(JSON.stringify(await one.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId }))).not.toContain("I stayed at work");
   const beforePhone = await one.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId });
   expect(beforePhone?.phone).toMatchObject({ acquired: false, read: false, messages: [] });
+  expect(await one.query(api.npcConversations.listAvailableProof, { roomCode: "ABC123" })).not.toContainEqual(expect.objectContaining({ referenceId: ids.messageId }));
   await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "message", referenceId: ids.messageId, x: 0, y: 0 })).rejects.toThrow("Read this phone");
   await two.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "May I examine your phone?", requestPhone: true });
   expect((await one.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId }))?.phone?.requesting).toBe(true);
@@ -114,6 +119,7 @@ test("only a bureau detective can start a shared, timed NPC interview", async ()
   vi.advanceTimersByTime(5_000);
   await two.mutation(api.world.finishTravel, { roomCode: "ABC123" });
   expect((await two.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId }))?.phone?.messages[0]?.body).toBe("Meet me at the station.");
+  expect(await two.query(api.npcConversations.listAvailableProof, { roomCode: "ABC123" })).toContainEqual({ type: "message", referenceId: ids.messageId, label: "Message · Meet me at the station." });
   const messageNodeId = await one.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "message", referenceId: ids.messageId, x: 0, y: 0 });
   await two.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "You sent this, didn't you?", proofNodeId: messageNodeId });
   const exposedAfterPhone = await t.run(async ctx => await ctx.db.query("npcExposedLies").withIndex("by_conversationId_and_lieIndex", q => q.eq("conversationId", conversationId).eq("lieIndex", 1)).unique());

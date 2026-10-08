@@ -63,7 +63,7 @@ The user chose a continuous action-driven shared clock on 2026-10-07. Concurrent
 ## Locked gameplay decisions
 
 - Investigation actions are location-gated: players must go to the relevant place/tool to perform searches, forensics, CCTV review, device inspection, and public-record searches.
-- Interrogation is allowed only when the NPC is present: either the player calls the NPC to the bureau, or the player goes to meet the NPC.
+- V1 interviews take place at the bureau only. A detective there calls a living NPC in, making them present immediately; each question still costs 3 game minutes. Field meetings are out of V1 scope.
 - City size and case size have no hard upper limit; keep only minimum/solvability constraints and generation/runtime practicality checks.
 - Suspect counts by difficulty: easy has around 3-4 suspects, normal has around 6-7 suspects, and hard has 10 or more suspects.
 - Users may override the default case deadline.

@@ -211,7 +211,7 @@ The mutation:
 
 It does not generate the reply inside the mutation.
 
-Calling an NPC to the bureau is immediate in V1. Retrying a failed answer does not charge another 3 minutes. A question may show a pinned, accessible evidence card; the server checks and records matching lie exposure. Asking for an NPC-held phone is a 3-minute question; handover is shared when it finishes. `readPhone` takes 5 minutes at the bureau and only then exposes frozen calls and messages. Visiting NPCs elsewhere, showing unpinned found evidence, and statement proof remain to be implemented.
+Calling an NPC to the bureau is immediate in V1; field interviews are out of scope. Retrying a failed answer does not charge another 3 minutes. `listAvailableProof` lists accessible found items, viewed lab results, reviewed CCTV records, completed public records, and read device files/calls/messages. A question may show any listed evidence directly without pinning it; `sendQuestion` also accepts existing pinned cards. The server rechecks access and records matching lie exposure. Asking for an NPC-held phone is a 3-minute question; handover is shared when it finishes. `readPhone` takes 5 minutes at the bureau and only then exposes frozen calls and messages. Statement proof remains to be implemented.
 
 ### Clue board
 

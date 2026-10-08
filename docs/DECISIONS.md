@@ -112,7 +112,7 @@ This file records decisions from the technical design discussion so agents do no
 - Different NPC conversations may run simultaneously.
 - NPC lies break only when a player shows found evidence that disproves them (any kind: item, lab result, CCTV record, message, record, file, statement); repeated pressure never forces the truth. The server checks the evidence, not the LLM. Exposed lies are tracked per session, shared by both players.
 - The killer never confesses the murder, even when caught in smaller lies.
-- Interrogation is allowed only when the NPC is present: either the player calls the NPC to the bureau, or the player goes to meet the NPC.
+- V1 interviews take place at the bureau only. Calling a living NPC there makes them present immediately; each question costs 3 game minutes. Field meetings are out of V1 scope.
 
 ## Game time
 

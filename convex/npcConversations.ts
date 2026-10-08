@@ -12,6 +12,8 @@ import { bureauRoomId, settleActions } from "./world";
 
 const MAX_QUESTION = 500;
 const proofTypes = new Set(["item", "forensic", "cctv", "public_record", "device_file", "call", "message"]);
+const proofReference = v.object({ type: v.union(v.literal("item"), v.literal("forensic"), v.literal("cctv"), v.literal("public_record"), v.literal("device_file"), v.literal("call"), v.literal("message")), referenceId: v.string() });
+type ProofReference = { type: "item" | "forensic" | "cctv" | "public_record" | "device_file" | "call" | "message"; referenceId: string };
 const interviewPhone = v.object({
   acquired: v.boolean(),
   requesting: v.boolean(),
@@ -26,52 +28,107 @@ async function npcPhone(ctx: QueryCtx | MutationCtx, caseId: Id<"cases">, npcId:
   return owned.find(row => row.type === "phone" && !row.sourceItemId) ?? null;
 }
 
-async function resolveProof(ctx: MutationCtx, session: Doc<"sessions">, nodeId: Id<"clueBoardNodes">) {
-  const node = await ctx.db.get(nodeId);
-  if (!node || node.sessionId !== session._id || !node.referenceId || !proofTypes.has(node.type) || !session.caseId) throw new Error("Choose proof from this case's clueboard.");
-  const id = node.referenceId;
-  if (node.type === "item") {
+async function resolveProof(ctx: MutationCtx, session: Doc<"sessions">, reference: ProofReference) {
+  if (!session.caseId) throw new Error("This room has no case.");
+  const { type, referenceId: id } = reference;
+  if (type === "item") {
     const itemId = ctx.db.normalizeId("caseItems", id);
     const item = itemId ? await ctx.db.get(itemId) : null;
     const found = itemId ? await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", q => q.eq("sessionId", session._id).eq("itemId", itemId)).unique() : null;
     if (!item || item.caseId !== session.caseId || !found) throw new Error("Find this item before showing it.");
-    return { evidenceId: item.evidenceId, text: node.text };
+    return { evidenceId: item.evidenceId, text: `${item.name}\nFound object` };
   }
-  if (node.type === "forensic") {
+  if (type === "forensic") {
     const outputId = ctx.db.normalizeId("forensicOutputs", id);
     const output = outputId ? await ctx.db.get(outputId) : null;
     const request = outputId ? await ctx.db.query("forensicRequests").withIndex("by_sessionId_and_forensicOutputId", q => q.eq("sessionId", session._id).eq("forensicOutputId", outputId)).unique() : null;
     if (!output || output.caseId !== session.caseId || request?.viewedAt === undefined) throw new Error("View this lab result before showing it.");
-    return { evidenceId: output.evidenceId, text: node.text };
+    return { evidenceId: output.evidenceId, text: `${output.testType} report\n${output.result}` };
   }
-  if (node.type === "call" || node.type === "message") {
-    const recordId = node.type === "call" ? ctx.db.normalizeId("callLogs", id) : ctx.db.normalizeId("messages", id);
+  if (type === "call" || type === "message") {
+    const recordId = type === "call" ? ctx.db.normalizeId("callLogs", id) : ctx.db.normalizeId("messages", id);
     const record = recordId ? await ctx.db.get(recordId) : null;
     const device = record ? await ctx.db.get(record.deviceId) : null;
     if (!record || record.caseId !== session.caseId || !device || device.caseId !== session.caseId || !(await hasReadDevice(ctx, session._id, device))) throw new Error("Read this phone before showing its records.");
-    return { evidenceId: record.evidenceId, text: node.text };
+    return { evidenceId: record.evidenceId, text: "durationSeconds" in record ? `Call ${record.direction === "incoming" ? "from" : "to"} ${record.otherPartyLabel ?? "Unknown"}\n${record.durationSeconds}s` : `Message ${record.direction === "incoming" ? "from" : "to"} ${record.otherPartyLabel ?? "Unknown"}\n${record.body}` };
   }
-  if (node.type === "device_file") {
+  if (type === "device_file") {
     const file = await ctx.db.query("deviceFiles").withIndex("by_caseId_and_evidenceId", q => q.eq("caseId", session.caseId!).eq("evidenceId", id)).unique();
     const device = file ? await ctx.db.get(file.deviceId) : null;
-    const known = device?.sourceItemId ? await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", q => q.eq("sessionId", session._id).eq("itemId", device.sourceItemId!)).unique() : null;
-    if (!file || device?.caseId !== session.caseId || known?.readAt === undefined) throw new Error("Read this device before showing its file.");
-    return { evidenceId: file.evidenceId, text: node.text };
+    if (!file || !device || device.caseId !== session.caseId || !(await hasReadDevice(ctx, session._id, device))) throw new Error("Read this device before showing its file.");
+    return { evidenceId: file.evidenceId, text: `${file.title}\n${file.body}` };
   }
-  if (node.type === "public_record") {
+  if (type === "public_record") {
     const record = await ctx.db.query("publicRecords").withIndex("by_caseId_and_evidenceId", q => q.eq("caseId", session.caseId!).eq("evidenceId", id)).unique();
     const access = record ? await ctx.db.query("sessionPublicRecords").withIndex("by_sessionId_and_recordId", q => q.eq("sessionId", session._id).eq("recordId", record._id)).unique() : null;
     if (!record || !access || access.completeGameTime > (session.gameTime ?? 0)) throw new Error("Find this record before showing it.");
-    return { evidenceId: record.evidenceId, text: node.text };
+    return { evidenceId: record.evidenceId, text: `${record.title}\n${record.content}` };
   }
   const record = await ctx.db.query("cctvRecords").withIndex("by_caseId_and_evidenceId", q => q.eq("caseId", session.caseId!).eq("evidenceId", id)).unique();
   const camera = record ? await ctx.db.get(record.cameraId) : null;
   if (!record || camera?.caseId !== session.caseId) throw new Error("Review this camera record before showing it.");
   for await (const review of ctx.db.query("cctvReviews").withIndex("by_sessionId_and_cameraId_and_minute", q => q.eq("sessionId", session._id).eq("cameraId", camera._id).gte("minute", record.startTime - 20).lte("minute", record.endTime + 20))) {
-    if (review.completeGameTime <= (session.gameTime ?? 0)) return { evidenceId: record.evidenceId, text: node.text };
+    if (review.completeGameTime <= (session.gameTime ?? 0)) return { evidenceId: record.evidenceId, text: `${camera.name}\n${record.description}` };
   }
   throw new Error("Review this camera record before showing it.");
 }
+
+export const listAvailableProof = query({
+  args: { roomCode: v.string() },
+  returns: v.array(v.object({ type: proofReference.fields.type, referenceId: v.string(), label: v.string() })),
+  handler: async (ctx, { roomCode }) => {
+    const member = await getPlayingRoomMember(ctx, roomCode);
+    if (!member?.session.caseId) return [];
+    const { session } = member;
+    const caseId = member.session.caseId!;
+    const gameTime = session.gameTime ?? 0;
+    const proof: { type: ProofReference["type"]; referenceId: string; label: string }[] = [];
+    // ponytail: Each source is capped at 100; add paging if a replay exceeds that many discoveries of one kind.
+    for (const found of await ctx.db.query("sessionItems").withIndex("by_sessionId", q => q.eq("sessionId", session._id)).take(100)) {
+      const item = await ctx.db.get(found.itemId);
+      if (!item || item.caseId !== caseId) continue;
+      proof.push({ type: "item", referenceId: item._id, label: `Item · ${item.name}` });
+    }
+    for (const request of await ctx.db.query("forensicRequests").withIndex("by_sessionId", q => q.eq("sessionId", session._id)).take(100)) {
+      if (request.viewedAt === undefined) continue;
+      const output = await ctx.db.get(request.forensicOutputId);
+      if (!output || output.caseId !== caseId) continue;
+      proof.push({ type: "forensic", referenceId: output._id, label: `Lab · ${output.testType} report` });
+    }
+    for (const access of await ctx.db.query("sessionPublicRecords").withIndex("by_sessionId_and_recordId", q => q.eq("sessionId", session._id)).take(100)) {
+      if (access.completeGameTime > gameTime) continue;
+      const record = await ctx.db.get(access.recordId);
+      if (!record || record.caseId !== caseId) continue;
+      proof.push({ type: "public_record", referenceId: record.evidenceId, label: `Record · ${record.title}` });
+    }
+    const reviewed = new Set<string>();
+    for (const review of await ctx.db.query("cctvReviews").withIndex("by_sessionId_and_cameraId_and_minute", q => q.eq("sessionId", session._id)).take(100)) {
+      if (review.completeGameTime > gameTime) continue;
+      const camera = await ctx.db.get(review.cameraId);
+      if (!camera || camera.caseId !== caseId) continue;
+      for (const record of await ctx.db.query("cctvRecords").withIndex("by_cameraId_and_startTime", q => q.eq("cameraId", camera._id).lte("startTime", review.minute + 20)).order("desc").take(100)) {
+        if (record.endTime < review.minute - 20 || reviewed.has(record.evidenceId)) continue;
+        reviewed.add(record.evidenceId);
+        proof.push({ type: "cctv", referenceId: record.evidenceId, label: `Camera · ${camera.name}: ${record.description}` });
+      }
+    }
+    const readDevices = new Set<Id<"devices">>();
+    for (const access of await ctx.db.query("sessionDevices").withIndex("by_sessionId", q => q.eq("sessionId", session._id)).take(100)) if (access.readAt !== undefined) readDevices.add(access.deviceId);
+    const devices = await ctx.db.query("devices").withIndex("by_caseId", q => q.eq("caseId", caseId)).take(100);
+    for (const found of await ctx.db.query("sessionItems").withIndex("by_sessionId", q => q.eq("sessionId", session._id)).take(100)) {
+      if (found.readAt === undefined) continue;
+      for (const device of devices) if (device.sourceItemId === found.itemId) readDevices.add(device._id);
+    }
+    for (const deviceId of readDevices) {
+      const device = await ctx.db.get(deviceId);
+      if (!device || device.caseId !== caseId) continue;
+      for (const file of await ctx.db.query("deviceFiles").withIndex("by_deviceId", q => q.eq("deviceId", device._id)).take(100)) proof.push({ type: "device_file", referenceId: file.evidenceId, label: `File · ${file.title}` });
+      for (const call of await ctx.db.query("callLogs").withIndex("by_deviceId_and_timestamp", q => q.eq("deviceId", device._id)).take(100)) proof.push({ type: "call", referenceId: call._id, label: `Call · ${call.direction === "incoming" ? "From" : "To"} ${call.otherPartyLabel ?? "Unknown"}` });
+      for (const message of await ctx.db.query("messages").withIndex("by_deviceId_and_timestamp", q => q.eq("deviceId", device._id)).take(100)) proof.push({ type: "message", referenceId: message._id, label: `Message · ${message.body.slice(0, 80)}` });
+    }
+    return proof;
+  },
+});
 
 export const getInterview = query({
   args: { roomCode: v.string(), npcId: v.id("npcs") },
@@ -126,11 +183,12 @@ export const callToBureau = mutation({
 });
 
 export const sendQuestion = mutation({
-  args: { roomCode: v.string(), npcId: v.id("npcs"), question: v.string(), proofNodeId: v.optional(v.id("clueBoardNodes")), requestPhone: v.optional(v.boolean()) },
+  args: { roomCode: v.string(), npcId: v.id("npcs"), question: v.string(), proofNodeId: v.optional(v.id("clueBoardNodes")), proofReference: v.optional(proofReference), requestPhone: v.optional(v.boolean()) },
   returns: v.object({ completeGameTime: v.number() }),
-  handler: async (ctx, { roomCode, npcId, question, proofNodeId, requestPhone }) => {
+  handler: async (ctx, { roomCode, npcId, question, proofNodeId, proofReference, requestPhone }) => {
     const body = question.trim();
     if (!body || body.length > MAX_QUESTION) throw new Error("Write a question under 500 characters.");
+    if (proofNodeId && proofReference) throw new Error("Show one piece of proof at a time.");
     const playing = await getPlayingRoomMember(ctx, roomCode);
     if (!playing?.session.caseId) throw new Error("Start the investigation first.");
     const now = Date.now();
@@ -154,7 +212,10 @@ export const sendQuestion = mutation({
       }
       requestedPhoneId = phone._id;
     }
-    const proof = proofNodeId ? await resolveProof(ctx, { ...member.session, gameTime: settled.gameTime }, proofNodeId) : null;
+    const node = proofNodeId ? await ctx.db.get(proofNodeId) : null;
+    if (proofNodeId && (!node || node.sessionId !== member.session._id || !node.referenceId || !proofTypes.has(node.type))) throw new Error("Choose proof from this case's clueboard.");
+    const reference = proofReference ?? (node && node.referenceId ? { type: node.type as ProofReference["type"], referenceId: node.referenceId } : null);
+    const proof = reference ? await resolveProof(ctx, { ...member.session, gameTime: settled.gameTime }, reference) : null;
     if (proof) {
       const script = await ctx.db.query("npcScripts").withIndex("by_npcId", q => q.eq("npcId", npcId)).unique();
       if (!script || script.caseId !== member.session.caseId) throw new Error("Interview file unavailable.");

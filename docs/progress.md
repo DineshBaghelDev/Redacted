@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-08 — Direct interview proof
+
+- Detectives can show found evidence directly in a bureau interview without first pinning it to the clueboard. The selector includes discovered items, viewed lab results, reviewed camera records, completed public records, and read device files, calls, and messages. Server checks still reject guessed or unread references; pinned-proof calls remain supported.
+- The current selector is bounded to the first 100 rows of each discovery source. Another person's statement remains open; field interviews are out of V1 scope by player decision. Real-provider and browser playthrough are still unverified.
+
 ## 2026-10-08 — NPC-phone handover and read
 
 - Added a deliberate bureau interview request for NPC-held phones. After the 3-minute question, both detectives share the handover; a separate 5-minute read reveals the phone's pre-generated calls and messages.
@@ -9,7 +14,7 @@
 ## 2026-10-08 — Bureau interview path in progress
 
 - Pinned, already-discovered evidence can now be shown with a bureau question. The server rechecks case/session access, resolves the frozen evidence ID, and marks matching main or backup lies exposed for that shared conversation. The NPC reply sees only that NPC's lie exposure state for the queued turn; no solution or script is sent to clients.
-- This is an initial proof path: unpinned discovered evidence and another person's statement are not selectable yet; NPC meetings away from the bureau and a real-provider/browser interview pass remain open.
+- At this stage, unpinned discovered evidence and another person's statement were not selectable yet; the real-provider/browser interview pass remains open.
 - Added the shared NPC conversation component, a bureau call action, a 3-minute question action, per-NPC ordered processing, and a responsive conversation view. Calling an NPC to the bureau is immediate by player decision.
 - The NPC reply worker sees only that NPC's private script and thread history, not the hidden case solution. Live model replies, evidence presentation, and full browser playthrough remain to be verified before treating interviews as complete.
 
