@@ -102,10 +102,13 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
 
 function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person: { id: Id<"npcs">; name: string; publicDescription: string }; onBack: () => void }) {
   const interview = useQuery(api.npcConversations.getInterview, { roomCode, npcId: person.id });
+  const boardNodes = useQuery(api.clueBoard.getNodes, { roomCode });
+  const proofCards = boardNodes?.filter((node) => node.type === "item" || node.type === "forensic" || node.type === "cctv" || node.type === "public_record" || node.type === "device_file" || node.type === "call" || node.type === "message") ?? [];
   const callToBureau = useMutation(api.npcConversations.callToBureau);
   const sendQuestion = useMutation(api.npcConversations.sendQuestion);
   const retryFailed = useMutation(api.npcConversations.retryFailed);
   const [question, setQuestion] = useState("");
+  const [proofNodeId, setProofNodeId] = useState<Id<"clueBoardNodes"> | "">("");
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
 
@@ -123,9 +126,15 @@ function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person
       <p className="mt-2 text-sm leading-relaxed text-[#4b3b2d]">{person.publicDescription}</p>
       {!interview?.bureauPresent ? <div className="mt-5 border-t border-[#8b7355] pt-4"><p className="text-sm">Bring this person to the bureau before asking questions.</p><button className="mt-3 min-h-11 border-2 border-red-900 bg-red-950 px-4 text-xs uppercase text-red-50 hover:bg-red-900 disabled:opacity-50" disabled={working || !interview?.canTalkHere} onClick={() => run(callToBureau({ roomCode, npcId: person.id }))} type="button">Call to bureau</button>{interview && !interview.canTalkHere ? <p className="mt-2 text-sm text-red-800">Return to the bureau to make the call.</p> : null}</div> : null}
       {interview?.threadId ? <ConversationMessages roomCode={roomCode} threadId={interview.threadId} /> : null}
-      {interview?.bureauPresent ? <form className="mt-5 border-t border-[#8b7355] pt-4" onSubmit={(event) => { event.preventDefault(); const body = question.trim(); if (!body) return; run(sendQuestion({ roomCode, npcId: person.id, question: body }), () => setQuestion("")); }}>
+      {interview?.bureauPresent ? <form className="mt-5 border-t border-[#8b7355] pt-4" onSubmit={(event) => { event.preventDefault(); const body = question.trim(); if (!body) return; run(sendQuestion({ roomCode, npcId: person.id, question: body, proofNodeId: proofNodeId || undefined }), () => { setQuestion(""); setProofNodeId(""); }); }}>
         <label className="block text-xs uppercase tracking-widest text-red-800" htmlFor="interview-question">Ask a question · 3 game min</label>
         <textarea className="mt-2 min-h-24 w-full resize-y border-2 border-[#8b7355] bg-[#f7efdc] p-3 text-base outline-none focus:border-red-900" id="interview-question" maxLength={500} onChange={(event) => setQuestion(event.target.value)} placeholder="What were you doing that night?" value={question} />
+        <label className="mt-3 block text-xs uppercase tracking-widest text-red-800" htmlFor="interview-proof">Show proof (optional)</label>
+        <select className="mt-2 min-h-11 w-full border-2 border-[#8b7355] bg-[#f7efdc] px-3 text-sm" id="interview-proof" onChange={(event) => setProofNodeId(event.target.value as Id<"clueBoardNodes"> | "")} value={proofNodeId}>
+          <option value="">No proof</option>
+          {proofCards.map((node) => <option key={node._id} value={node._id}>{node.text.split("\n")[0]}</option>)}
+        </select>
+        {!proofCards.length ? <p className="mt-2 text-xs text-[#725f42]">Pin found evidence to the clueboard to show it here.</p> : null}
         <button className="mt-2 min-h-11 border-2 border-red-900 bg-red-950 px-5 text-xs uppercase text-red-50 hover:bg-red-900 disabled:opacity-50" disabled={working || interview.busy || !interview.canTalkHere || !question.trim()} type="submit">{interview.busy ? "Finish current action" : "Ask question"}</button>
         {!interview.canTalkHere ? <p className="mt-2 text-sm text-red-800">Return to the bureau to continue this interview.</p> : null}
       </form> : null}

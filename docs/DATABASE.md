@@ -646,13 +646,27 @@ Use if the selected conversation library does not provide exactly the queue sema
   playerId: Id<"sessionPlayers">,
   sequence: number,
   promptMessageId: string,
+  proofEvidenceId?: string,
   status: "waiting" | "queued" | "processing" | "complete" | "failed",
   createdAt: number,
   error?: string,
 }
 ```
 
-The Agent component owns the transcript. The local pending row only tracks the question's timed gate, player attribution, processing order, and failure state.
+The Agent component owns the transcript. The local pending row tracks the question's timed gate, player attribution, processing order, optional shown proof, and failure state.
+
+### `npcExposedLies`
+
+```ts
+{
+  conversationId: Id<"npcConversations">,
+  lieIndex: number,
+  mainExposedAt: number, // question sequence
+  backupExposedAt?: number, // question sequence
+}
+```
+
+One row per exposed lie in a shared session conversation. Sequence markers keep earlier queued questions from seeing proof shown later. This table is server-only.
 
 ### `npcMemories`
 

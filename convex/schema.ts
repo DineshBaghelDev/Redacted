@@ -336,10 +336,17 @@ export default defineSchema({
     playerId: v.id("sessionPlayers"),
     sequence: v.number(),
     promptMessageId: v.string(),
+    proofEvidenceId: v.optional(v.string()),
     status: v.union(v.literal("waiting"), v.literal("queued"), v.literal("processing"), v.literal("complete"), v.literal("failed")),
     createdAt: v.number(),
     error: v.optional(v.string()),
   }).index("by_conversationId_and_sequence", ["conversationId", "sequence"]),
+  npcExposedLies: defineTable({
+    conversationId: v.id("npcConversations"),
+    lieIndex: v.number(),
+    mainExposedAt: v.number(),
+    backupExposedAt: v.optional(v.number()),
+  }).index("by_conversationId_and_lieIndex", ["conversationId", "lieIndex"]),
   sessions: defineTable({
     caseId: v.optional(v.id("cases")),
     roomCode: v.string(),

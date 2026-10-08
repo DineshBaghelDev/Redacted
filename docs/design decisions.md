@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-10-08 — Proof shown during interviews
+
+- V1's first proof path uses evidence the detectives have pinned to their shared clueboard. Showing proof is part of a 3-minute question, not a separate action.
+- The server rechecks discovery/read access and compares the evidence's canonical ID to that NPC's own lie script. Main and backup exposures are shared within this session only; merely pressing an NPC without matching proof does not break a lie.
+- This is a first implementation surface, not a replacement for the spec's eventual support for any found evidence and another person's statement.
+
 ## 2026-10-08 — Bureau calls are immediate in V1
 
 - Calling a living NPC while at the bureau makes them available for a shared interview immediately; there is no separate arrival timer or cost. Each question still occupies its detective for 3 game minutes on the continuous shared clock.
