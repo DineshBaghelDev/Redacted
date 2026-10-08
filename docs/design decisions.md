@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Continue menu eligibility
+
+- A room with a case row but no completed publication marker is not a playable previous game and stays out of Continue. Its stored data is preserved for private repair.
+
 ## 2026-10-09 — Existing replay rooms
 
 - Older playing rooms with a published case receive the same frozen default deadline without restarting their investigation. Legacy rooms without a published case are not assigned a guessed deadline or case.

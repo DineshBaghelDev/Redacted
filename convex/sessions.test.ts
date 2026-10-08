@@ -680,6 +680,10 @@ test("a lobby keeps the selected passed case", async () => {
     createdAt: 5,
   }));
   await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: unpublishedCaseId })).rejects.toThrow("not ready to replay");
+  await t.run(async (ctx) => {
+    const sessionId = await ctx.db.insert("sessions", { caseId: unpublishedCaseId, roomCode: "OLDCASE", status: "waiting", createdAt: Date.now(), expiresAt: Date.now() + 60_000 });
+    await ctx.db.insert("sessionPlayers", { sessionId, authUserId: "player-1", nickname: "Detective", joinedAt: Date.now() });
+  });
   await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { caseId: unpublishedCaseId }));
   await expect(t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).rejects.toThrow("not published");
   await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { caseId: publishedCaseId }));
@@ -687,6 +691,7 @@ test("a lobby keeps the selected passed case", async () => {
     expect.objectContaining({ roomCode: created.roomCode, caseTitle: "The Selected Case", status: "playing" }),
     expect.objectContaining({ roomCode: replayed.roomCode, caseTitle: "The Selected Case", status: "playing" }),
   ]));
+  expect(await user.query(api.sessions.listMine, {})).not.toContainEqual(expect.objectContaining({ roomCode: "OLDCASE" }));
   await t.run(async (ctx) => {
     const cityId = frozen.storedCity!._id;
     const anchor = await ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", cityId)).first();

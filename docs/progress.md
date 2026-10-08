@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-09 — Continue menu only shows playable cases
+
+- An older room linked to an unpublished case no longer appears in the Continue menu. The room and its data remain untouched; only fully published cases are offered as replay rooms.
+
 ## 2026-10-09 — Older active replay deadlines
 
 - A private idempotent repair can add the published case's default deadline to an already-playing room without resetting its clock, conversation, or evidence. It refuses waiting, case-less, and unpublished rooms.

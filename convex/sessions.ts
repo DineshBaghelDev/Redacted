@@ -290,7 +290,7 @@ export const listMine = query({
       const session = await ctx.db.get(membership.sessionId);
       if (!session || session.expiresAt < Date.now() || !session.caseId) continue;
       const playableCase = await ctx.db.get(session.caseId);
-      if (!playableCase) continue;
+      if (playableCase?.publicationVersion !== PUBLICATION_VERSION) continue;
       const players = await ctx.db.query("sessionPlayers").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).take(2);
       rooms.push({
         roomCode: session.roomCode,
