@@ -138,6 +138,7 @@ export function RoomHub() {
       {screen === "previous" ? (
         <PreviousGamesScreen
           isWorking={isWorking}
+          onBack={() => setScreen("menu")}
           onPlay={(game) => createOrJoin("create", game)}
         />
       ) : null}

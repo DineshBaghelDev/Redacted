@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-09 — Previous-case picker navigation
+
+- Added a visible Back to menu action above the scrolling case list, so detectives can leave the picker without browser navigation or opening a case.
+
 ## 2026-10-09 — Continue menu only shows playable cases
 
 - An older room linked to an unpublished case no longer appears in the Continue menu. The room and its data remain untouched; only fully published cases are offered as replay rooms.

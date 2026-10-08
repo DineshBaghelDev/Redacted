@@ -4,18 +4,22 @@ import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { api } from "../../../../convex/_generated/api";
+import { menuButton } from "../constants";
 
 type PreviousGamesScreenProps = {
   isWorking: boolean;
+  onBack: () => void;
   onPlay: (game: { generationJobId: Id<"generationJobs">; caseId: Id<"cases"> }) => void;
 };
 
-export function PreviousGamesScreen({ isWorking, onPlay }: PreviousGamesScreenProps) {
+export function PreviousGamesScreen({ isWorking, onBack, onPlay }: PreviousGamesScreenProps) {
   const { isLoaded, isSignedIn } = useAuth();
   const cases = useQuery(api.cases.listPassed, isLoaded && isSignedIn ? {} : "skip");
 
   return (
-    <section className="grid max-h-[50vh] min-w-0 flex-1 gap-4 overflow-y-auto px-1 pb-4 pr-3 md:grid-cols-3 lg:max-h-[calc(100vh-4rem)]">
+    <div className="flex min-w-0 flex-1 flex-col gap-4">
+      <button className={`${menuButton} w-fit`} onClick={onBack} type="button">Back to menu</button>
+      <section className="grid max-h-[50vh] min-w-0 gap-4 overflow-y-auto px-1 pb-4 pr-3 md:grid-cols-3 lg:max-h-[calc(100vh-8rem)]">
         {cases === undefined ? <p className="text-xl uppercase text-cyan-100">Loading cases...</p> : null}
         {cases?.length === 0 ? <p className="text-xl uppercase text-cyan-100">No passed cases yet.</p> : null}
         {cases?.map((game) => (
@@ -38,6 +42,7 @@ export function PreviousGamesScreen({ isWorking, onPlay }: PreviousGamesScreenPr
             </button>
           </article>
         ))}
-    </section>
+      </section>
+    </div>
   );
 }

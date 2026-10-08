@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Previous-case picker return
+
+- The picker keeps Back to menu outside its scrolling card list, so the exit remains available on mobile and desktop without changing any room state.
+
 ## 2026-10-09 — Continue menu eligibility
 
 - A room with a case row but no completed publication marker is not a playable previous game and stays out of Continue. Its stored data is preserved for private repair.
