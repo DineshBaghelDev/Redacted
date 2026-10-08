@@ -109,7 +109,7 @@ export function RoomHub() {
           setScreen("join");
         }}
         onContinue={continueRoom}
-        onPrevious={() => setScreen("previous")}
+        onPrevious={() => { setError(""); setScreen("previous"); }}
         onSettings={() => setScreen("settings")}
       />
 
@@ -137,8 +137,9 @@ export function RoomHub() {
 
       {screen === "previous" ? (
         <PreviousGamesScreen
+          error={error}
           isWorking={isWorking}
-          onBack={() => setScreen("menu")}
+          onBack={() => { setError(""); setScreen("menu"); }}
           onPlay={(game) => createOrJoin("create", game)}
         />
       ) : null}

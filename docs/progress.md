@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-09 — Replay creation feedback
+
+- Failed replay-room creation now shows its error in the previous-case picker instead of silently leaving the detective on the same list. Entering or leaving the picker clears unrelated old errors.
+
 ## 2026-10-09 — Previous-case picker navigation
 
 - Added a visible Back to menu action above the scrolling case list, so detectives can leave the picker without browser navigation or opening a case.
