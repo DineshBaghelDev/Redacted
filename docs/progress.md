@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-09 — Profile edit return
+
+- The profile panel now has Back to menu. Leaving without Save restores the stored detective name, so an unsaved edit does not silently affect the next room.
+
 ## 2026-10-09 — Replay creation feedback
 
 - Failed replay-room creation now shows its error in the previous-case picker instead of silently leaving the detective on the same list. Entering or leaving the picker clears unrelated old errors.

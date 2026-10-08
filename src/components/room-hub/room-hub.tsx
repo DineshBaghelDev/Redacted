@@ -23,13 +23,16 @@ export function RoomHub() {
   const [detectiveName, setDetectiveName] = useState(() =>
     typeof window === "undefined" ? "" : window.localStorage.getItem(DETECTIVE_NAME_KEY) ?? "",
   );
+  const [savedDetectiveName, setSavedDetectiveName] = useState(() =>
+    typeof window === "undefined" ? "" : window.localStorage.getItem(DETECTIVE_NAME_KEY) ?? "",
+  );
   const [hasDetectiveName, setHasDetectiveName] = useState(() =>
     typeof window !== "undefined" && Boolean(window.localStorage.getItem(DETECTIVE_NAME_KEY)?.trim()),
   );
   const isMounted = useSyncExternalStore(subscribeToNothing, () => true, () => false);
 
   const fallbackName = user?.firstName || user?.username || "Detective";
-  const nickname = detectiveName.trim() || fallbackName;
+  const nickname = (hasDetectiveName ? savedDetectiveName : detectiveName).trim() || fallbackName;
 
   // All hooks must be called before any conditional return.
   const {
@@ -62,8 +65,9 @@ export function RoomHub() {
   }
 
   function saveDetectiveName() {
-    const savedName = nickname.trim() || "Detective";
+    const savedName = detectiveName.trim() || fallbackName;
     window.localStorage.setItem(DETECTIVE_NAME_KEY, savedName);
+    setSavedDetectiveName(savedName);
     setDetectiveName(savedName);
     setHasDetectiveName(true);
     setScreen("menu");
@@ -131,6 +135,7 @@ export function RoomHub() {
           canSave={Boolean(nickname.trim())}
           detectiveName={detectiveName}
           onChange={setDetectiveName}
+          onBack={() => { setDetectiveName(savedDetectiveName); setScreen("menu"); }}
           onSave={saveDetectiveName}
         />
       ) : null}
