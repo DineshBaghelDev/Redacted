@@ -37,6 +37,7 @@ Available systems:
 Investigation actions are location-gated. Players must go to the relevant place/tool to perform searches, forensics, CCTV review, device inspection, and public-record searches.
 
 Interrogation is allowed only when the NPC is present: either the player calls the NPC to the bureau, or the player goes to meet the NPC.
+In V1, a bureau call makes a living NPC available immediately; the question itself costs 3 minutes. Meeting an NPC elsewhere is a remaining route to implement.
 
 ### Case close
 

@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-08 — Bureau interview path in progress
+
+- Added the shared NPC conversation component, a bureau call action, a 3-minute question action, per-NPC ordered processing, and a responsive conversation view. Calling an NPC to the bureau is immediate by player decision.
+- The NPC reply worker sees only that NPC's private script and thread history, not the hidden case solution. Live model replies, evidence presentation, and full browser playthrough remain to be verified before treating interviews as complete.
+
 ## 2026-10-08 — Searchable victim phone and shared records
 
 - Reconfirmed continuous, action-driven play with no turns. The clock remains paused when neither detective has a timed action.

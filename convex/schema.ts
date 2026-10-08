@@ -320,6 +320,26 @@ export default defineSchema({
   })
     .index("by_caseId", ["caseId"])
     .index("by_npcId", ["npcId"]),
+  npcConversations: defineTable({
+    sessionId: v.id("sessions"),
+    npcId: v.id("npcs"),
+    threadId: v.string(),
+    nextSequence: v.number(),
+    nextToProcess: v.number(),
+    activeTurnId: v.optional(v.id("npcPendingMessages")),
+    bureauPresent: v.boolean(),
+  })
+    .index("by_sessionId_and_npcId", ["sessionId", "npcId"])
+    .index("by_threadId", ["threadId"]),
+  npcPendingMessages: defineTable({
+    conversationId: v.id("npcConversations"),
+    playerId: v.id("sessionPlayers"),
+    sequence: v.number(),
+    promptMessageId: v.string(),
+    status: v.union(v.literal("waiting"), v.literal("queued"), v.literal("processing"), v.literal("complete"), v.literal("failed")),
+    createdAt: v.number(),
+    error: v.optional(v.string()),
+  }).index("by_conversationId_and_sequence", ["conversationId", "sequence"]),
   sessions: defineTable({
     caseId: v.optional(v.id("cases")),
     roomCode: v.string(),
@@ -356,9 +376,10 @@ export default defineSchema({
   roomActions: defineTable({
     sessionId: v.id("sessions"),
     playerId: v.id("sessionPlayers"),
-    kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic"), v.literal("cctv"), v.literal("records"), v.literal("device")),
+    kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic"), v.literal("cctv"), v.literal("records"), v.literal("device"), v.literal("npc")),
     roomId: v.id("rooms"),
     itemId: v.optional(v.id("caseItems")),
+    npcTurnId: v.optional(v.id("npcPendingMessages")),
     startGameTime: v.number(),
     completeGameTime: v.number(),
     createdAt: v.number(),

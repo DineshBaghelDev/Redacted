@@ -71,6 +71,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   const actionLabel = place.action?.kind === "move" ? `Moving to ${actionRoom?.name ?? "room"}`
     : place.action?.kind === "search" ? `Searching ${actionRoom?.name ?? "room"}`
       : place.action?.kind === "device" ? "Reading device"
+      : place.action?.kind === "npc" ? "Speaking with a person"
       : place.action?.kind === "forensic" ? "Submitting lab test"
         : place.action?.kind === "cctv" ? "Reviewing camera records"
           : place.action?.kind === "records" ? "Searching public records" : "Inspecting item";

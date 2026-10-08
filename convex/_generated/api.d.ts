@@ -61,6 +61,7 @@ import type * as lib_publishItems from "../lib/publishItems.js";
 import type * as lib_publishNarrative from "../lib/publishNarrative.js";
 import type * as lib_publishRecords from "../lib/publishRecords.js";
 import type * as lib_publishWorld from "../lib/publishWorld.js";
+import type * as npcConversations from "../npcConversations.js";
 import type * as npcs from "../npcs.js";
 import type * as publicRecords from "../publicRecords.js";
 import type * as sessions from "../sessions.js";
@@ -126,6 +127,7 @@ declare const fullApi: ApiFromModules<{
   "lib/publishNarrative": typeof lib_publishNarrative;
   "lib/publishRecords": typeof lib_publishRecords;
   "lib/publishWorld": typeof lib_publishWorld;
+  npcConversations: typeof npcConversations;
   npcs: typeof npcs;
   publicRecords: typeof publicRecords;
   sessions: typeof sessions;
@@ -160,4 +162,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   workflow: import("@convex-dev/workflow/_generated/component.js").ComponentApi<"workflow">;
+  agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
 };

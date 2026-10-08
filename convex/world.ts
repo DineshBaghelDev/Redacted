@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getPlayingRoomMember } from "./lib/auth";
@@ -72,6 +73,13 @@ export async function settleActions(ctx: MutationCtx, session: Doc<"sessions">, 
   }
   for (const action of dueRoom) {
     if (action.kind === "move") await ctx.db.patch(action.playerId, { currentRoomId: action.roomId });
+    else if (action.kind === "npc" && action.npcTurnId) {
+      const turn = await ctx.db.get(action.npcTurnId);
+      if (turn?.status === "waiting") {
+        await ctx.db.patch(turn._id, { status: "queued" });
+        await ctx.scheduler.runAfter(0, internal.npcConversations.processNext, { conversationId: turn.conversationId });
+      }
+    }
     else if ((action.kind === "inspect" || action.kind === "device") && action.itemId) {
       const known = await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", action.itemId!)).unique();
       if (known && action.kind === "inspect" && known.inspectedAt === undefined) await ctx.db.patch(known._id, { inspectedAt: now });

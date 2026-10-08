@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-08 — Bureau calls are immediate in V1
+
+- Calling a living NPC while at the bureau makes them available for a shared interview immediately; there is no separate arrival timer or cost. Each question still occupies its detective for 3 game minutes on the continuous shared clock.
+- The other detective may ask concurrently. Questions to the same NPC are answered in server order against one shared conversation. Replaying the case starts a fresh conversation.
+
 ## 2026-10-08 — Victim phone follows the scene search
 
 - A victim phone whose generated access says scene search is a hidden, collectible item in that room, even when the room template has no ordinary item slot. It is not granted automatically.

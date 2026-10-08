@@ -193,23 +193,24 @@ forensics.markViewed({ roomCode, forensicOutputId })
 ### NPC messages
 
 ```ts
-npcConversations.sendMessage({
-  sessionId,
-  npcId,
-  message,
-})
+npcConversations.callToBureau({ roomCode, npcId })
+npcConversations.getInterview({ roomCode, npcId })
+npcConversations.sendQuestion({ roomCode, npcId, question })
+npcConversations.retryFailed({ roomCode, npcId })
 ```
 
 The mutation:
 
 1. validates membership and NPC/case relation,
-2. verifies the NPC is present because the player called them to the bureau or went to meet them,
+2. verifies the NPC was called to the bureau and the detective is there,
 3. assigns the next sequence number transactionally,
 4. persists/queues the message,
-5. schedules processing if the conversation is idle,
-6. advances game time by the interrogation-question cost.
+5. starts a 3-minute timed action; completion queues processing,
+6. processes one same-NPC reply at a time and streams it to both detectives through the Agent thread.
 
 It does not generate the reply inside the mutation.
+
+Calling an NPC to the bureau is immediate in V1. Retrying a failed answer does not charge another 3 minutes. Visiting NPCs elsewhere and showing evidence to break lies remain to be implemented.
 
 ### Clue board
 

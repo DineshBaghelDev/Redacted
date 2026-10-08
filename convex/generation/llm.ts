@@ -113,6 +113,11 @@ function chatModel(model: string, strict: boolean) {
   };
 }
 
+/** Reuse the configured NPC provider without exposing its key to clients. */
+export function npcLanguageModel() {
+  return chatModel(MODELS.npc, false).model;
+}
+
 /** A failed call's message plus, for provider errors, the status and the start of the reply body. */
 function describeError(error: unknown) {
   if (!(error instanceof Error)) return String(error);

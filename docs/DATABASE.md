@@ -625,8 +625,10 @@ Do not log ordinary UI navigation.
   sessionId: Id<"sessions">,
   npcId: Id<"npcs">,
   threadId: string,
-  activeGeneration: boolean,
   nextSequence: number,
+  nextToProcess: number,
+  activeTurnId?: Id<"npcPendingMessages">,
+  bureauPresent: boolean,
 }
 ```
 
@@ -643,11 +645,14 @@ Use if the selected conversation library does not provide exactly the queue sema
   conversationId: Id<"npcConversations">,
   playerId: Id<"sessionPlayers">,
   sequence: number,
-  body: string,
-  status: "queued" | "processing" | "complete" | "failed",
+  promptMessageId: string,
+  status: "waiting" | "queued" | "processing" | "complete" | "failed",
   createdAt: number,
+  error?: string,
 }
 ```
+
+The Agent component owns the transcript. The local pending row only tracks the question's timed gate, player attribution, processing order, and failure state.
 
 ### `npcMemories`
 
