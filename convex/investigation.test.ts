@@ -15,7 +15,7 @@ test("partners search, inspect, and collect shared items without revealing hidde
   const t = convexTest(schema, modules);
   const ids = await t.run(async (ctx) => {
     const generationJobId = await ctx.db.insert("generationJobs", { seed: 1, difficulty: "easy", createdBy: "tester", createdAt: 1 });
-    const caseId = await ctx.db.insert("cases", { generationJobId, difficulty: "easy", title: "Search test", summary: "A case.", initialFacts: [], publicationVersion: 1, createdAt: 1 });
+    const caseId = await ctx.db.insert("cases", { generationJobId, difficulty: "easy", title: "Search test", summary: "A case.", initialFacts: [], estimatedOptimalMinutes: 120, publicationVersion: 1, createdAt: 1 });
     const cityId = await ctx.db.insert("cities", { caseId, name: "City", seed: "1", version: 1 });
     await ctx.db.patch(caseId, { cityId });
     const placeId = await ctx.db.insert("places", { cityId, sourceId: "bureau", order: 0, name: "Bureau", type: "public_building", kind: "bureau", area: "midtown", description: "Bureau", mapX: 10, mapY: 10, crimeSceneAllowed: true, jobSlots: [] });

@@ -16,7 +16,7 @@ test("partners travel in parallel and the shared clock pauses after the last jou
   const t = convexTest(schema, modules);
   await t.run(async (ctx) => {
     const generationJobId = await ctx.db.insert("generationJobs", { seed: 1, difficulty: "easy", createdBy: "tester", createdAt: 1 });
-    const caseId = await ctx.db.insert("cases", { generationJobId, difficulty: "easy", title: "Travel test", summary: "A case.", initialFacts: [], publicationVersion: 1, createdAt: 1 });
+    const caseId = await ctx.db.insert("cases", { generationJobId, difficulty: "easy", title: "Travel test", summary: "A case.", initialFacts: [], estimatedOptimalMinutes: 120, publicationVersion: 1, createdAt: 1 });
     const cityId = await ctx.db.insert("cities", { caseId, name: "City", seed: "1", version: 1 });
     await ctx.db.patch(caseId, { cityId });
     const place = async (sourceId: string, order: number, kind: "bureau" | "public") => await ctx.db.insert("places", {

@@ -11,7 +11,7 @@ test("published witness statements are frozen before replay and can be backfille
   const t = convexTest(schema, modules);
   const { caseId, draftId } = await t.run(async ctx => {
     const jobId = await ctx.db.insert("generationJobs", { seed: 1, difficulty: "easy", createdBy: "tester", createdAt: 1, status: "passed" });
-    const caseId = await ctx.db.insert("cases", { generationJobId: jobId, difficulty: "easy", title: "Case", summary: "A case", initialFacts: [], publicationVersion: 1, createdAt: 1 });
+    const caseId = await ctx.db.insert("cases", { generationJobId: jobId, difficulty: "easy", title: "Case", summary: "A case", initialFacts: [], estimatedOptimalMinutes: 120, publicationVersion: 1, createdAt: 1 });
     await ctx.db.insert("npcs", { caseId, sourceId: "maya", role: "witness", name: "Maya", publicDescription: "A witness" });
     await ctx.db.insert("generationDrafts", { jobId, stage: "evidence", output: { evidence: [{ id: "witness/maya/cafe", type: "witness", title: "Maya at the cafe", summary: "Maya saw someone leave.", access: { tool: "interrogation", witnessId: "maya" }, data: { witnessId: "maya", eventId: "cafe" } }] }, checkErrors: [], source: "code", updatedAt: 1 });
     const draftId = await ctx.db.insert("generationDrafts", { jobId, stage: "text", output: { texts: [{ id: "witness/maya/cafe", text: "I saw someone leave the cafe." }] }, checkErrors: [], source: "llm", updatedAt: 1 });

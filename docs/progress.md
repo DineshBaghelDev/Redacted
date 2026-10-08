@@ -4,6 +4,10 @@
 
 - An older room linked to an unpublished case no longer appears in the Continue menu. The room and its data remain untouched; only fully published cases are offered as replay rooms.
 
+## 2026-10-09 — Replay test fixtures
+
+- Updated three published-case fixtures with frozen time estimates so replay creation and start tests exercise the required deadline contract again.
+
 ## 2026-10-09 — Older active replay deadlines
 
 - A private idempotent repair can add the published case's default deadline to an already-playing room without resetting its clock, conversation, or evidence. It refuses waiting, case-less, and unpublished rooms.
@@ -12,7 +16,7 @@
 ## 2026-10-08 — Replay deadline state
 
 - New replay rooms now store a paused game clock at minute zero and a default deadline of the case's frozen estimate plus 1,440 minutes. Previously created waiting rooms receive the same default on start.
-- A live dev replay of a case with a 375-minute estimate stored minute 0 and a 1,815-minute deadline as expected. Override entry, deadline display, expired-action rules, and older already-playing session backfill remain open.
+- A live dev replay of a case with a 375-minute estimate stored minute 0 and a 1,815-minute deadline as expected. Override entry, deadline display, and expired-action rules remain open; older already-playing sessions were repaired on October 9.
 
 ## 2026-10-08 — Frozen replay time estimate
 
