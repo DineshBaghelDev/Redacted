@@ -99,7 +99,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
         </button>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-rows-[minmax(19rem,3fr)_minmax(12rem,2fr)] lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-1">
+      <div className="grid min-h-0 flex-1 grid-rows-[minmax(19rem,3fr)_minmax(12rem,2fr)] overflow-y-auto lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-1 lg:overflow-hidden">
         <div className="min-h-0 overflow-auto p-3 sm:p-5">
           <label className="mb-3 block text-xs uppercase tracking-[0.18em] text-cyan-100/65 sm:hidden" htmlFor="mobile-place-picker">
             Find a place

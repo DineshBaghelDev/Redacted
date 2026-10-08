@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-08 — Short-screen map access
+
+- On narrow, short viewports the stacked city map scrolls as one surface so route details and travel remain reachable; desktop keeps its two-panel layout.
+
 ## 2026-10-08 — Recovery of older passed cases
 
 - Older passed generation jobs are published one at a time through an internal-only repair function. The player list remains restricted to fully frozen published cases; it does not generate or expose drafts during replay. Legacy `killerId` and `timeOfDeath` fields can be read as the same canonical crime facts, but missing cast members and the removed body-moving mechanic are not silently repaired.

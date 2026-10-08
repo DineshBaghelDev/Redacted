@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-08 — Short-screen city map
+
+- The mobile map's route details can now be reached by scrolling when the stacked map and details exceed the available height. Desktop keeps its separate map and details scrolling.
+- A signed-in short-screen visual check remains open.
+
 ## 2026-10-08 — Room browser-history navigation
 
 - The replay shell now derives its visible screen and current room code from the URL on every navigation. Browser Back/Forward no longer leaves a previous screen or room-lobby overlay visible over a different route.
