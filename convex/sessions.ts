@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { requireUserId } from "./lib/auth";
 import type { Id } from "./_generated/dataModel";
@@ -60,6 +60,22 @@ export const createReplay = mutation({
     const playableCase = await ctx.db.get(caseId);
     if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not ready to replay.");
     return await createSession(ctx, authUserId, nickname, caseId, defaultDeadline(playableCase.estimatedOptimalMinutes));
+  },
+});
+
+/** Repairs a pre-deadline playing room without changing its investigation clock. */
+export const backfillPlayingDeadline = internalMutation({
+  args: { sessionId: v.id("sessions") },
+  returns: v.number(),
+  handler: async (ctx, { sessionId }) => {
+    const session = await ctx.db.get(sessionId);
+    if (!session || session.status !== "playing" || !session.caseId) throw new Error("This room has no playable case.");
+    const playableCase = await ctx.db.get(session.caseId);
+    if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not published.");
+    if (session.deadline !== undefined) return session.deadline;
+    const deadline = defaultDeadline(playableCase.estimatedOptimalMinutes);
+    await ctx.db.patch(sessionId, { deadline });
+    return deadline;
   },
 });
 

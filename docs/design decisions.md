@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Existing replay rooms
+
+- Older playing rooms with a published case receive the same frozen default deadline without restarting their investigation. Legacy rooms without a published case are not assigned a guessed deadline or case.
+
 ## 2026-10-08 — Default replay deadline
 
 - A replay's default deadline is fixed from the case's published optimal-time estimate plus one in-game day, with minute zero as the session origin. Waiting does not advance the clock.

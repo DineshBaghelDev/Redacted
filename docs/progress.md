@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-09 — Older active replay deadlines
+
+- A private idempotent repair can add the published case's default deadline to an already-playing room without resetting its clock, conversation, or evidence. It refuses waiting, case-less, and unpublished rooms.
+- The seven eligible dev rooms were repaired. A read-back found all eight current published-case rooms (seven playing, one waiting) have the expected default deadline, with no missing or mismatched values. Legacy case-less and unpublished rooms were left unchanged.
+
 ## 2026-10-08 — Replay deadline state
 
 - New replay rooms now store a paused game clock at minute zero and a default deadline of the case's frozen estimate plus 1,440 minutes. Previously created waiting rooms receive the same default on start.

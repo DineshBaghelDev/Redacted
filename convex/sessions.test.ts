@@ -289,6 +289,7 @@ test("a lobby keeps the selected passed case", async () => {
 
   const created = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId });
   expect(await t.run(async (ctx) => ctx.db.get(created.sessionId))).toMatchObject({ gameTime: 0, deadline: 1665, status: "waiting" });
+  await expect(t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: created.sessionId })).rejects.toThrow("no playable case");
   await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId });
   const invalidJobId = await t.run(async (ctx) => {
     const jobId = await ctx.db.insert("generationJobs", {
@@ -666,6 +667,9 @@ test("a lobby keeps the selected passed case", async () => {
   await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { deadline: undefined }));
   await user.mutation(api.sessions.start, { roomCode: replayed.roomCode });
   expect((await t.run(async (ctx) => ctx.db.get(replayed.sessionId)))?.deadline).toBe(1665);
+  await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { deadline: undefined }));
+  expect(await t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).toBe(1665);
+  expect(await t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).toBe(1665);
   expect(await user.query(api.sessions.get, { roomCode: replayed.roomCode })).toMatchObject({ status: "playing" });
   const unpublishedCaseId = await t.run(async (ctx) => ctx.db.insert("cases", {
     generationJobId: invalidJobId,
@@ -676,6 +680,9 @@ test("a lobby keeps the selected passed case", async () => {
     createdAt: 5,
   }));
   await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: unpublishedCaseId })).rejects.toThrow("not ready to replay");
+  await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { caseId: unpublishedCaseId }));
+  await expect(t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).rejects.toThrow("not published");
+  await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { caseId: publishedCaseId }));
   expect(await user.query(api.sessions.listMine, {})).toEqual(expect.arrayContaining([
     expect.objectContaining({ roomCode: created.roomCode, caseTitle: "The Selected Case", status: "playing" }),
     expect.objectContaining({ roomCode: replayed.roomCode, caseTitle: "The Selected Case", status: "playing" }),
