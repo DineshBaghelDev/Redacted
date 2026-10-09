@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-09 — Map and leave-confirmation usability
+
+- The stacked map now has one vertical scroll surface on narrow screens, so the place picker, map, and route actions move together. Desktop retains separate map and detail scrolling. A signed-in visual check at a short mobile viewport is still open.
+- The in-game Leave confirmation now uses the same native modal-dialog behavior as the room modals. Keyboard focus stays in the decision, and Escape cancels rather than leaving. A signed-in keyboard pass is still open.
+- In a synthetic dev replay, an earlier toxicology request progressed to minute 247, became ready, and showed its frozen result only after the detective viewed it at the forensic lab. An outsider could not read that room's lab data.
+
 ## 2026-10-09 — Interview and scene-path live check
 
 - In a synthetic dev replay of Keel Street Incident, calling Dina Hartigan at the bureau made her immediately available. Asking what she witnessed completed at shared game minute 3 and exposed her stored statement; no field interview was needed or added.

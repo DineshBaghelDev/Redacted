@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-09 — Mobile map scroll ownership
+
+- On narrow screens, the place picker, map, and route details share one vertical scroll container; the map and details do not create nested scroll areas. Desktop keeps independently scrollable panels.
+- The irreversible Leave game confirmation is a modal decision: keyboard focus remains in it, and Escape means Stay. The existing leave mutation and room rules are unchanged.
+
 ## 2026-10-09 — Clueboard placement at larger case sizes
 
 - Automatically pinned cards keep advancing down the board after each row of four; do not cycle back over existing cards after sixteen. Players can still rearrange cards directly.

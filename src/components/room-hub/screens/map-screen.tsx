@@ -99,8 +99,8 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
         </button>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-rows-[minmax(19rem,3fr)_minmax(12rem,2fr)] overflow-y-auto lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-1 lg:overflow-hidden">
-        <div className="min-h-0 overflow-auto p-3 sm:p-5">
+      <div className="grid min-h-0 flex-1 grid-rows-[auto_auto] overflow-y-auto lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-1 lg:overflow-hidden">
+        <div className="min-h-0 overflow-visible p-3 sm:p-5 lg:overflow-auto">
           <label className="mb-3 block text-xs uppercase tracking-[0.18em] text-cyan-100/65 sm:hidden" htmlFor="mobile-place-picker">
             Find a place
             <select
@@ -112,7 +112,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
               {city.places.map((place, index) => <option key={place.id} value={place.id}>{index + 1}. {place.name}</option>)}
             </select>
           </label>
-          <div className="relative mx-auto aspect-[5/4] h-full min-h-[18rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden border border-[#c6a96d]/35 bg-[#11151b] shadow-[inset_0_0_40px_rgba(0,0,0,0.7)]">
+          <div className="relative mx-auto aspect-[5/4] h-auto min-h-[18rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden border border-[#c6a96d]/35 bg-[#11151b] shadow-[inset_0_0_40px_rgba(0,0,0,0.7)] lg:h-full">
             <div className="absolute inset-x-0 top-0 h-[34%] bg-[#18303a]/25" />
             <div className="absolute inset-x-0 top-[34%] h-[38%] bg-[#3a3020]/20" />
             <div className="absolute inset-x-0 bottom-0 h-[28%] bg-[#38202a]/20" />
@@ -161,7 +161,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
           </div>
         </div>
 
-        <aside className="min-h-0 overflow-y-auto border-t border-cyan-300/25 bg-[#07111b] p-4 lg:border-l lg:border-t-0 lg:p-5">
+        <aside className="min-h-0 overflow-visible border-t border-cyan-300/25 bg-[#07111b] p-4 lg:overflow-y-auto lg:border-l lg:border-t-0 lg:p-5">
           <div className="mb-4 border border-cyan-300/25 bg-[#0a1722] p-3 text-xs uppercase tracking-wide">
             <p className="text-cyan-100/55">Your location</p>
             <p className="mt-1 text-base text-yellow-100">{city.places.find((place) => place.id === city.currentPlaceId)?.name ?? "Bureau"}</p>

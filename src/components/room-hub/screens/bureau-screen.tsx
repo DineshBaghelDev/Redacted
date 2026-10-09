@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { currentGameMinute, formatGameMinute } from "../../../lib/game-time";
 
@@ -77,6 +77,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   const pathname = usePathname();
   const router = useRouter();
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const leaveDialogRef = useRef<HTMLDialogElement>(null);
   const [clockError, setClockError] = useState(false);
   const [now, setNow] = useState(0);
   const pathParts = pathname.split("/");
@@ -115,6 +116,13 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
     return () => { cancelled = true; window.clearTimeout(timeout); };
   }, [city, roomCode, settleClock]);
 
+  useEffect(() => {
+    if (!confirmLeave || activeStation) return;
+    const dialog = leaveDialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+    return () => { if (dialog?.open) dialog.close(); };
+  }, [confirmLeave, activeStation]);
+
   function openStation(nextStation: Station) {
     const path = nextStation === "map" || nextStation === "place" || nextStation === "lab" || nextStation === "case"
       ? `/lobby/${roomCode}/${nextStation}`
@@ -132,14 +140,15 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
       {!activeStation ? (
         <div className="absolute right-4 top-12 z-30 flex flex-col items-end gap-2">
           {confirmLeave ? (
-            <div aria-labelledby="leave-game-title" className="w-64 border border-red-300 bg-[#13070a]/95 p-3 text-red-50 shadow-[0_0_20px_rgba(248,113,113,0.3)]" role="alertdialog">
+            <dialog aria-labelledby="leave-game-title" className="fixed right-4 top-12 m-0 ml-auto w-64 border border-red-300 bg-[#13070a]/95 p-3 text-red-50 shadow-[0_0_20px_rgba(248,113,113,0.3)] backdrop:bg-black/70" onCancel={(event) => { event.preventDefault(); setConfirmLeave(false); }} ref={leaveDialogRef} role="alertdialog">
               <p className="text-sm uppercase" id="leave-game-title">Leave this investigation?</p>
               <p className="mt-2 text-xs leading-relaxed text-red-100/75">You cannot rejoin after leaving a started room.</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button autoFocus className="min-h-10 border border-cyan-300/60 text-xs uppercase text-cyan-100 hover:border-cyan-100" onClick={() => setConfirmLeave(false)} type="button">Stay</button>
                 <button className="min-h-10 border border-red-400 bg-red-950 text-xs uppercase hover:border-red-200" onClick={onLeave} type="button">Leave</button>
               </div>
-            </div>
+              {error ? <p className="mt-3 text-sm text-red-200" role="alert">{error}</p> : null}
+            </dialog>
           ) : (
             <button
               className="border border-red-400 bg-red-950/90 px-4 py-2 text-sm uppercase text-red-100 shadow-[0_0_16px_rgba(248,113,113,0.25)] hover:border-red-200"
@@ -149,7 +158,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
               Leave game
             </button>
           )}
-          {error ? <p className="max-w-xs bg-[#050712]/90 px-3 py-2 text-sm text-red-200">{error}</p> : null}
+          {error && !confirmLeave ? <p className="max-w-xs bg-[#050712]/90 px-3 py-2 text-sm text-red-200" role="alert">{error}</p> : null}
         </div>
       ) : null}
       <div className="relative h-full w-full bg-black">
