@@ -6,16 +6,23 @@ import { afterEach, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
 
+const modelState = vi.hoisted(() => ({ failNext: false }));
+
 vi.mock("./generation/llm", async () => {
-  const { MockLanguageModelV4, simulateReadableStream } = await import("ai/test");
-  return { npcLanguageModel: () => new MockLanguageModelV4({ doStream: async () => ({
-    stream: simulateReadableStream({ chunks: [
-      { type: "text-start", id: "reply" },
-      { type: "text-delta", id: "reply", delta: "I saw him leave work." },
-      { type: "text-end", id: "reply" },
-      { type: "finish", finishReason: { unified: "stop", raw: undefined }, usage: { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } } },
-    ] }),
-  }) }) };
+  const { MockLanguageModelV4 } = await import("ai/test");
+  return { npcLanguageModel: () => ({ model: new MockLanguageModelV4({ doGenerate: async ({ providerOptions }) => {
+    expect(providerOptions).toMatchObject({ moonshot: { thinking: { type: "disabled" } } });
+    if (modelState.failNext) {
+      modelState.failNext = false;
+      throw new Error("Provider unavailable");
+    }
+    return {
+      content: [{ type: "text" as const, text: "I saw him leave work." }],
+      finishReason: { unified: "stop" as const, raw: undefined },
+      usage: { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } },
+      warnings: [],
+    };
+  } }), providerOptions: { moonshot: { thinking: { type: "disabled" } } } }) };
 });
 
 const modules = import.meta.glob("./**/*.ts");
@@ -87,8 +94,8 @@ test("only a bureau detective can start a shared, timed NPC interview", async ()
   await one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Anything else?" });
   vi.advanceTimersByTime(3_000);
   await one.mutation(api.world.finishTravel, { roomCode: "ABC123" });
-  const failed = await t.mutation(internal.npcConversations.claimNext, { conversationId });
-  await t.mutation(internal.npcConversations.finishTurn, { turnId: failed!.turnId, error: "Reply unavailable." });
+  modelState.failNext = true;
+  await t.action(internal.npcConversations.processNext, { conversationId });
   expect((await one.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId }))?.turns.at(-1)?.status).toBe("failed");
   await one.mutation(api.npcConversations.retryFailed, { roomCode: "ABC123", npcId: ids.npcId });
   expect((await one.query(api.world.getMap, { roomCode: "ABC123" }))?.clock.gameTime).toBe(6);

@@ -33,7 +33,7 @@ export const MODELS = {
   /** Case generation (crime, cast, story, lies, writing). */
   main: "moonshotai/kimi-k3",
   /** NPC conversations during play. */
-  npc: "moonshotai/kimi-k2.6",
+  npc: "moonshot:kimi-k2.6",
 } as const;
 
 /** Paid (the owner's Kimi key): the most reliable for the big stages. $3 in / $15 out per 1M tokens. */
@@ -115,7 +115,7 @@ function chatModel(model: string, strict: boolean) {
 
 /** Reuse the configured NPC provider without exposing its key to clients. */
 export function npcLanguageModel() {
-  return chatModel(MODELS.npc, false).model;
+  return chatModel(MODELS.npc, false);
 }
 
 /** A failed call's message plus, for provider errors, the status and the start of the reply body. */

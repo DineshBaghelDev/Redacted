@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-10-09 — Live interview provider repair
+
+- A fresh dev replay of Whitlock Office Murder started at bureau with its frozen deadline and a paused clock. Calling Priya Kaur was immediate, and one question consumed 3 shared minutes, but the configured NVIDIA-hosted Kimi endpoint returned 404 for this account and the streamed reply left the turn stuck in processing.
+- Interviews now use the existing Moonshot-hosted Kimi model and save a short reply as one message. A modeled provider failure moves the turn to a retryable failed state instead of leaving it processing. A live retry confirmed that behavior without another time charge, but produced reasoning with no spoken text; the worker now forwards the existing thinking-off option and treats empty replies as failed.
+- A second live question returned a visible 599-character NPC answer, with the shared clock paused at minute 6. A dev-wide read-back found no remaining processing interview turns. Signed-in browser presentation is still unverified.
+- Provider failures now log only the error message, not the raw request object that can contain an NPC's private script.
+
 ## 2026-10-09 — Deadline visibility
 
 - The investigation strip now shows each replay room's stored due time beside the shared case clock, including across station screens. This is display-only; deadline override and expiry behavior still await player decisions.

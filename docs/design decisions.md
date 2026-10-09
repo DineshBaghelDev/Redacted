@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Reliable interview replies
+
+- Use the configured Moonshot provider for short live NPC replies because the NVIDIA-hosted model returned 404 for this deployment. Save each reply when complete instead of streaming token deltas; the existing waiting state covers the delay and provider errors can reach the retry action.
+
 ## 2026-10-09 — Deadline display
 
 - Show the stored due time beside the shared case clock as a compact, read-only reference. Do not imply that the case ends or actions stop at that time until the expiry rule is decided.
