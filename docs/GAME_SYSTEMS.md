@@ -36,7 +36,7 @@ Available systems:
 
 Investigation actions are location-gated. Players must go to the relevant place/tool to perform searches, forensics, CCTV review, device inspection, and public-record searches.
 
-Interrogation is allowed only when the NPC is present: either the player calls the NPC to the bureau, or the player goes to meet the NPC.
+V1 interviews take place at the bureau only. A detective there calls a living NPC in, making them present immediately; each question costs 3 minutes. Field meetings are out of V1 scope.
 
 ### Case close
 
@@ -157,6 +157,8 @@ Device data:
 - call logs,
 - messages.
 
+Found laptops can also hold generated files. Reading a physical laptop takes 5 shared game minutes; its stored files become available to both detectives afterward and may be pinned as evidence. A victim phone found by searching the scene takes the same 5-minute read. An NPC-held phone is handed over when a detective asks for it during a bureau interview (the question takes 3 minutes); a separate 5-minute read then reveals its frozen calls and messages to both detectives. The player chooses which records to pin.
+
 No social-post system in V1.
 
 ### Call logs
@@ -196,6 +198,8 @@ discover source/item
   -> result becomes ready
   -> inspect result
 ```
+
+The victim's body is a known lab source for autopsy and body-based tests; it does not require inventing a collectible item. Other tests still require their stored item or room source to be discovered.
 
 Supported base test types:
 
@@ -289,7 +293,11 @@ No Liveblocks in V1.
 
 The case has a shared deadline and deterministic action durations.
 
-**Concurrency semantics are still unresolved:** because partners are explicitly meant to split work, we must decide whether simultaneous actions overlap in simulated time or simply add to one shared clock. Do not silently lock additive global time during implementation. The fixed costs below are valid regardless of the eventual concurrency rule.
+The replay creator may set a custom shared deadline before creating the room; otherwise the frozen case estimate plus 1,440 minutes is used. Once set, it is fixed for both players. Passing it shows Overdue without stopping play or changing the five-star score. Submitting the final report ends new investigation actions, while existing case data and the report remain readable.
+
+V1 uses a continuous action-driven clock. Time advances only while at least one timed action is active, and concurrent player actions overlap on the same shared timeline. When the final active action ends, the clock pauses automatically. The server derives elapsed game time from timestamp anchors instead of writing a database update every minute. This preserves free discussion and evidence review while rewarding partners who split investigative work.
+
+The real-time-to-game-time scale is a server-owned tuning value. Changing it affects only how long players wait in real time, never the deterministic in-game cost of an action.
 
 V1 fixed costs:
 

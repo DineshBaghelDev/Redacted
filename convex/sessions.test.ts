@@ -1,0 +1,810 @@
+/// <reference types="vite/client" />
+
+import { convexTest } from "convex-test";
+import { expect, test } from "vitest";
+import { api, internal } from "./_generated/api";
+import { cast, crimeCore } from "./fixtures/caseEasy";
+import { city } from "./fixtures/city";
+import schema from "./schema";
+
+const modules = import.meta.glob("./**/*.ts");
+
+test("a lobby keeps the selected passed case", async () => {
+  const t = convexTest(schema, modules);
+  const generationJobId = await t.run(async (ctx) => {
+    const jobId = await ctx.db.insert("generationJobs", {
+      seed: 7,
+      difficulty: "easy",
+      createdBy: "tester",
+      createdAt: 1,
+      status: "passed",
+      finishedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "crime",
+      output: crimeCore,
+      checkErrors: [],
+      source: "hand-written",
+      updatedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "cast",
+      output: cast,
+      checkErrors: [],
+      source: "hand-written",
+      updatedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "facts",
+      output: {
+        facts: [
+          { id: "culprit-at-scene", kind: "culprit", text: "Private culprit marker", evidenceIds: ["evidence/culprit"] },
+          { id: "motive", kind: "motive", text: "Private motive marker", evidenceIds: ["evidence/motive"] },
+        ],
+        decisiveIds: ["evidence/culprit"],
+      },
+      checkErrors: [],
+      source: "code",
+      updatedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "story",
+      output: {
+        events: [{
+          id: "station-meeting",
+          actors: [crimeCore.culpritId],
+          roomId: "keel-14:kitchen",
+          start: 70,
+          end: 75,
+          action: "Waited in the kitchen.",
+          visibility: "private",
+          itemsUsed: [],
+        }],
+        comms: [
+          { id: "call-1", from: crimeCore.culpritId, to: crimeCore.victimId, time: 90, type: "call", durationMinutes: 2, gist: "", proves: [] },
+          { id: "message-1", from: crimeCore.victimId, to: crimeCore.culpritId, time: 95, type: "message", gist: "Meet me there.", proves: [] },
+        ],
+        purchases: [{ id: "purchase-1", who: crimeCore.culpritId, placeId: "station", time: 80, item: "Train ticket", payment: "card" }],
+        items: [{
+          id: "ledger",
+          name: "Private ledger",
+          kind: "document",
+          description: "A ledger hidden in the kitchen.",
+          startRoomId: "keel-14:kitchen",
+          finalRoomId: "keel-14:kitchen",
+          finalSlot: "kitchen drawer",
+          proves: ["motive"],
+          contents: [],
+        }, {
+          id: "laptop", name: "Work laptop", kind: "device", description: "Still logged in.",
+          startRoomId: "keel-14:kitchen", finalRoomId: "keel-14:kitchen", finalSlot: "kitchen drawer",
+          proves: [], contents: [{ title: "Accounts", text: "Original file text.", proves: ["motive"] }],
+        }],
+      },
+      checkErrors: [],
+      source: "hand-written",
+      updatedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "brief",
+      output: { title: "The Selected Case", summary: "A specific mystery.", initialFacts: ["One fact."] },
+      checkErrors: [],
+      source: "llm",
+      updatedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "estimate",
+      output: { estimatedOptimalMinutes: 225 },
+      checkErrors: [],
+      source: "code",
+      updatedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "evidence",
+      output: {
+        cameras: [{ id: "cam:station", name: "Union Station · concourse", faulty: false }],
+        evidence: [
+          {
+            id: `device/phone:${crimeCore.culpritId}`,
+            type: "device",
+            title: "Suspect phone",
+            summary: "A mobile phone.",
+            access: { tool: "interrogation", witnessId: crimeCore.culpritId },
+            aboutIds: [crimeCore.culpritId],
+            sourceIds: [],
+            data: { deviceId: `phone:${crimeCore.culpritId}`, ownerId: crimeCore.culpritId },
+          },
+          {
+            id: `device/phone:${crimeCore.victimId}`,
+            type: "device",
+            title: "Victim phone",
+            summary: "A mobile phone.",
+            access: { tool: "search", roomId: "keel-14:kitchen", slot: "kitchen drawer" },
+            aboutIds: [crimeCore.victimId],
+            sourceIds: [],
+            data: { deviceId: `phone:${crimeCore.victimId}`, ownerId: crimeCore.victimId },
+          },
+          ...[crimeCore.culpritId, crimeCore.victimId].flatMap((ownerId) => [
+            {
+              id: `call/call-1/${ownerId}`,
+              type: "call",
+              title: "Call",
+              summary: "Two minute call.",
+              access: { tool: "phone", deviceId: `phone:${ownerId}` },
+              time: 90,
+              aboutIds: [crimeCore.culpritId, crimeCore.victimId],
+              sourceIds: ["call-1"],
+              data: { ownerId, from: crimeCore.culpritId, to: crimeCore.victimId, proves: [] },
+            },
+            {
+              id: `message/message-1/${ownerId}`,
+              type: "message",
+              title: "Message",
+              summary: "Meet me there.",
+              access: { tool: "phone", deviceId: `phone:${ownerId}` },
+              time: 95,
+              aboutIds: [crimeCore.culpritId, crimeCore.victimId],
+              sourceIds: ["message-1"],
+              data: { ownerId, from: crimeCore.victimId, to: crimeCore.culpritId, proves: [] },
+            },
+          ]),
+          {
+            id: `record/${crimeCore.culpritId}/address`,
+            type: "record",
+            title: "Address record",
+            summary: "Lives at Keel Street.",
+            access: { tool: "records" },
+            aboutIds: [crimeCore.culpritId],
+            sourceIds: [],
+            data: { personId: crimeCore.culpritId, kind: "address", proves: [] },
+          },
+          {
+            id: "card/purchase-1",
+            type: "card",
+            title: "Card payment",
+            summary: "Paid for a train ticket.",
+            access: { tool: "records" },
+            time: 80,
+            aboutIds: [crimeCore.culpritId],
+            sourceIds: ["purchase-1"],
+            data: { who: crimeCore.culpritId, placeId: "station" },
+          },
+          {
+            id: "forensic/scene/prints",
+            type: "forensic",
+            title: "Fingerprints",
+            summary: "Fingerprints match the suspect.",
+            access: { tool: "lab", subjectId: "room:keel-14:kitchen" },
+            aboutIds: [crimeCore.culpritId],
+            sourceIds: ["hidden-event-id"],
+            data: { test: "fingerprints", subjectId: "room:keel-14:kitchen", printsOf: [crimeCore.culpritId] },
+          },
+          {
+            id: "forensic/body/toxicology",
+            type: "forensic",
+            title: "Toxicology",
+            summary: "A frozen body test result.",
+            access: { tool: "lab", subjectId: `body:${crimeCore.victimId}` },
+            aboutIds: [crimeCore.victimId],
+            sourceIds: ["hidden-event-id"],
+            data: { test: "toxicology", subjectId: `body:${crimeCore.victimId}` },
+          },
+          {
+            id: "item/ledger",
+            type: "item",
+            title: "Private ledger",
+            summary: "A ledger hidden in the kitchen.",
+            access: { tool: "search", roomId: "keel-14:kitchen", slot: "kitchen drawer" },
+            aboutIds: [crimeCore.culpritId],
+            sourceIds: ["ledger"],
+            data: { itemId: "ledger", proves: ["motive"] },
+          },
+          {
+            id: "item/laptop", type: "item", title: "Work laptop", summary: "Still logged in.",
+            access: { tool: "search", roomId: "keel-14:kitchen", slot: "kitchen drawer" },
+            aboutIds: [], sourceIds: ["laptop"], data: { itemId: "laptop", proves: [] },
+          },
+          {
+            id: "file/laptop/0", type: "file", title: "Work laptop · Accounts", summary: "Original file text.",
+            access: { tool: "device", itemId: "laptop" }, aboutIds: [], sourceIds: ["laptop"],
+            data: { itemId: "laptop", proves: ["motive"] },
+          },
+          {
+            id: "cctv/1",
+            type: "cctv",
+            title: "Hidden title",
+            summary: "Tall person in a dark coat: crosses the concourse.",
+            access: { tool: "cctv", cameraId: "cam:station" },
+            time: 120,
+            end: 125,
+            aboutIds: [crimeCore.culpritId],
+            sourceIds: ["hidden-event-id"],
+            data: { placeId: "station", kind: "pass" },
+          },
+          {
+            id: "cctv/2",
+            type: "cctv",
+            title: "Later record",
+            summary: "Short person with an umbrella: waits by the doors.",
+            access: { tool: "cctv", cameraId: "cam:station" },
+            time: 300,
+            end: 305,
+            aboutIds: [crimeCore.victimId],
+            sourceIds: ["another-hidden-event"],
+            data: { placeId: "station", kind: "stay" },
+          },
+        ],
+      },
+      checkErrors: [],
+      source: "code",
+      updatedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "text",
+      output: { texts: [{ id: "message-1", text: "Meet me by the station." }, { id: "file/laptop/0", text: "Rewritten file text." }] },
+      checkErrors: [],
+      source: "llm",
+      updatedAt: 2,
+    });
+    await ctx.db.insert("generationDrafts", {
+      jobId,
+      stage: "scripts",
+      output: cast.characters.filter((character) => character.role !== "victim").map((character) => ({
+        npcId: character.id,
+        name: character.name,
+        age: character.age,
+        gender: character.gender,
+        job: character.job?.title ?? "no job",
+        home: character.homeUnitId,
+        personality: character.traits,
+        relationshipToVictim: character.relationshipToVictim,
+        secret: character.secret,
+        protects: character.protects,
+        knowledge: character.id === crimeCore.culpritId
+          ? [{ id: "station-meeting", how: "took part", time: 70, end: 75, where: "14 Keel Street, Kitchen", text: "Waited in the kitchen." }]
+          : [],
+        lies: [],
+        rules: ["Only discuss known events."],
+      })),
+      checkErrors: [],
+      source: "code",
+      updatedAt: 2,
+    });
+    return jobId;
+  });
+
+  const user = t.withIdentity({ subject: "player-1" });
+  expect(await user.query(api.cases.listPassed, {})).toEqual([]);
+  const publishedCaseId = await t.mutation(internal.cases.publishPassedJob, { jobId: generationJobId });
+  expect(await t.mutation(internal.cases.publishPassedJob, { jobId: generationJobId })).toBe(publishedCaseId);
+  expect((await t.run(async (ctx) => ctx.db.get(publishedCaseId)))?.estimatedOptimalMinutes).toBe(225);
+  await t.run(async (ctx) => ctx.db.patch(publishedCaseId, { estimatedOptimalMinutes: undefined }));
+  expect(await t.mutation(internal.cases.publishPassedJob, { jobId: generationJobId })).toBe(publishedCaseId);
+  expect((await t.run(async (ctx) => ctx.db.get(publishedCaseId)))?.estimatedOptimalMinutes).toBe(225);
+  const listed = await user.query(api.cases.listPassed, {});
+  expect(listed).toMatchObject([{
+    generationJobId,
+    caseId: publishedCaseId,
+    title: "The Selected Case",
+    description: "A specific mystery.",
+  }]);
+
+  const created = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId });
+  expect(await t.run(async (ctx) => ctx.db.get(created.sessionId))).toMatchObject({ gameTime: 0, deadline: 1665, status: "waiting" });
+  const custom = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: 90 });
+  expect(await t.run(async (ctx) => ctx.db.get(custom.sessionId))).toMatchObject({ gameTime: 0, deadline: 90, status: "waiting" });
+  await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: 0 })).rejects.toThrow("valid deadline");
+  await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: 1.5 })).rejects.toThrow("valid deadline");
+  await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: Number.MAX_SAFE_INTEGER + 1 })).rejects.toThrow("valid deadline");
+  await t.run(async (ctx) => ctx.db.patch(custom.sessionId, { status: "playing", gameTime: 91 }));
+  expect(await user.mutation(api.world.startTravel, { roomCode: custom.roomCode, destinationId: "forensic-lab" })).toMatchObject({ completeGameTime: expect.any(Number) });
+  await expect(t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: created.sessionId })).rejects.toThrow("no playable case");
+  await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId });
+  const invalidJobId = await t.run(async (ctx) => {
+    const jobId = await ctx.db.insert("generationJobs", {
+      seed: 8,
+      difficulty: "easy",
+      createdBy: "tester",
+      createdAt: 3,
+      status: "passed",
+      finishedAt: 4,
+    });
+    for await (const draft of ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId))) {
+      await ctx.db.insert("generationDrafts", {
+        jobId,
+        stage: draft.stage,
+        output: draft.stage === "facts" ? { facts: [], decisiveIds: [] } : draft.output,
+        checkErrors: [],
+        source: draft.source,
+        updatedAt: 4,
+      });
+    }
+    return jobId;
+  });
+  await expect(t.mutation(internal.cases.publishPassedJob, { jobId: invalidJobId })).rejects.toThrow("no decisive evidence");
+  expect(await t.run(async (ctx) => ctx.db.query("cases").withIndex("by_generationJobId", (q) => q.eq("generationJobId", invalidJobId)).unique())).toBeNull();
+  const legacyJobId = await t.run(async (ctx) => {
+    const jobId = await ctx.db.insert("generationJobs", { seed: 9, difficulty: "easy", createdBy: "tester", createdAt: 5, status: "passed", finishedAt: 6 });
+    for await (const draft of ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId))) {
+      const output = draft.stage === "crime" ? (() => {
+        const { culpritId, crimeTime, type, ...rest } = draft.output as typeof crimeCore;
+        return { ...rest, killerId: culpritId, timeOfDeath: crimeTime };
+      })() : draft.output;
+      await ctx.db.insert("generationDrafts", { jobId, stage: draft.stage, output, checkErrors: [], source: draft.source, updatedAt: 6 });
+    }
+    return jobId;
+  });
+  expect(await t.mutation(internal.cases.publishPassedJob, { jobId: legacyJobId })).toBeTruthy();
+  const movedBodyJobId = await t.run(async (ctx) => {
+    const jobId = await ctx.db.insert("generationJobs", { seed: 10, difficulty: "easy", createdBy: "tester", createdAt: 7, status: "passed", finishedAt: 8 });
+    for await (const draft of ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", legacyJobId))) {
+      await ctx.db.insert("generationDrafts", { jobId, stage: draft.stage, output: draft.stage === "crime" ? { ...draft.output, coverUp: [...draft.output.coverUp, "move-body"] } : draft.output, checkErrors: [], source: draft.source, updatedAt: 8 });
+    }
+    return jobId;
+  });
+  await expect(t.mutation(internal.cases.publishPassedJob, { jobId: movedBodyJobId })).rejects.toThrow("no valid private solution");
+  expect(await t.run(async (ctx) => ctx.db.query("cases").withIndex("by_generationJobId", (q) => q.eq("generationJobId", movedBodyJobId)).unique())).toBeNull();
+  await t.run(async (ctx) => ctx.db.patch(invalidJobId, { status: "failed" }));
+  const frozen = await t.run(async (ctx) => {
+    const session = await ctx.db.get(created.sessionId);
+    const solution = session?.caseId
+      ? await ctx.db.query("caseSolutions").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).unique()
+      : null;
+    const culprit = solution ? await ctx.db.get(solution.culpritNpcId) : null;
+    const npcs = session?.caseId
+      ? await ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const items = session?.caseId
+      ? await ctx.db.query("caseItems").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const cameras = session?.caseId
+      ? await ctx.db.query("cctvCameras").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const cameraRecords = cameras[0]
+      ? await ctx.db.query("cctvRecords").withIndex("by_cameraId_and_startTime", (q) => q.eq("cameraId", cameras[0]._id)).collect()
+      : [];
+    const devices = session?.caseId
+      ? await ctx.db.query("devices").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const deviceFiles = devices.find((device) => device.type === "laptop")
+      ? await ctx.db.query("deviceFiles").withIndex("by_deviceId", (q) => q.eq("deviceId", devices.find((device) => device.type === "laptop")!._id)).collect() : [];
+    const calls = session?.caseId
+      ? await ctx.db.query("callLogs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const messages = session?.caseId
+      ? await ctx.db.query("messages").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const records = session?.caseId
+      ? await ctx.db.query("publicRecords").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const forensics = session?.caseId
+      ? await ctx.db.query("forensicOutputs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const events = session?.caseId
+      ? await ctx.db.query("caseEvents").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const scripts = session?.caseId
+      ? await ctx.db.query("npcScripts").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      : [];
+    const storedCase = session?.caseId ? await ctx.db.get(session.caseId) : null;
+    const storedCity = storedCase?.cityId ? await ctx.db.get(storedCase.cityId) : null;
+    const caseCity = session?.caseId
+      ? await ctx.db.query("cities").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).unique()
+      : null;
+    const places = storedCase?.cityId
+      ? await ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", storedCase.cityId!)).collect()
+      : [];
+    const streets = storedCase?.cityId
+      ? await ctx.db.query("placeConnections").withIndex("by_cityId_and_order", (q) => q.eq("cityId", storedCase.cityId!)).collect()
+      : [];
+    let buildingCount = 0;
+    let floorCount = 0;
+    let roomCount = 0;
+    let roomConnectionCount = 0;
+    let homeUnitCount = 0;
+    let cameraRoom = null;
+    for (const place of places) {
+      if (!place.buildingId) continue;
+      buildingCount += 1;
+      floorCount += (await ctx.db.query("floors").withIndex("by_buildingId_and_floorNumber", (q) => q.eq("buildingId", place.buildingId!)).collect()).length;
+      const rooms = await ctx.db.query("rooms").withIndex("by_buildingId_and_order", (q) => q.eq("buildingId", place.buildingId!)).collect();
+      roomCount += rooms.length;
+      roomConnectionCount += (await ctx.db.query("roomConnections").withIndex("by_buildingId_and_order", (q) => q.eq("buildingId", place.buildingId!)).collect()).length;
+      homeUnitCount += (await ctx.db.query("homeUnits").withIndex("by_buildingId", (q) => q.eq("buildingId", place.buildingId!)).collect()).length;
+      cameraRoom ??= rooms.find((room) => room.sourceId === "carver-towers:corridor-6") ?? null;
+    }
+    return {
+      solution,
+      culprit,
+      npcs,
+      items,
+      cameras,
+      cameraRecords,
+      devices,
+      deviceFiles,
+      calls,
+      messages,
+      records,
+      forensics,
+      events,
+      scripts,
+      storedCase,
+      storedCity,
+      caseCity,
+      places,
+      streets,
+      buildingCount,
+      floorCount,
+      roomCount,
+      roomConnectionCount,
+      homeUnitCount,
+      cameraRoom,
+    };
+  });
+  expect(frozen.culprit).toMatchObject({ sourceId: crimeCore.culpritId, role: "suspect" });
+  expect(frozen.npcs).toHaveLength(cast.characters.length);
+  expect(frozen.items).toHaveLength(3);
+  expect(frozen.items[0]).toMatchObject({
+    evidenceId: "item/ledger",
+    sourceId: "ledger",
+    slot: "kitchen drawer",
+    itemType: "document",
+    discoverableBySearch: true,
+    collectible: true,
+    hidden: true,
+  });
+  expect(frozen.cameras).toHaveLength(1);
+  expect(frozen.cameraRecords).toHaveLength(2);
+  expect(frozen.cameraRecords[0].npcIds).toContain(frozen.culprit?._id);
+  expect(frozen.devices).toHaveLength(3);
+  expect(frozen.devices.find((device) => device.type === "laptop")?.sourceItemId).toBe(frozen.items[1]._id);
+  expect(frozen.devices.find((device) => device.sourceId === `phone:${crimeCore.victimId}`)?.sourceItemId).toBe(frozen.items[2]._id);
+  expect(frozen.deviceFiles).toEqual([expect.objectContaining({ evidenceId: "file/laptop/0", title: "Work laptop · Accounts", body: "Rewritten file text." })]);
+  await t.run(async (ctx) => {
+    await ctx.db.delete(frozen.deviceFiles[0]._id);
+    await ctx.db.delete(frozen.devices.find((device) => device.type === "laptop")!._id);
+    await ctx.db.delete(frozen.items[2]._id);
+    await ctx.db.patch(frozen.devices.find((device) => device.sourceId === `phone:${crimeCore.victimId}`)!._id, { sourceItemId: undefined });
+    await ctx.db.patch(frozen.items[2].roomId, { searchable: false });
+  });
+  expect(await t.mutation(internal.cases.backfillPublishedDevices, { caseId: publishedCaseId })).toEqual({ laptops: 1, files: 1, physicalPhones: 1 });
+  expect(await t.mutation(internal.cases.backfillPublishedDevices, { caseId: publishedCaseId })).toEqual({ laptops: 1, files: 1, physicalPhones: 1 });
+  expect(await t.run(async (ctx) => (await ctx.db.get(frozen.items[2].roomId))?.searchable)).toBe(true);
+  expect(frozen.calls).toHaveLength(2);
+  expect(frozen.calls.map((call) => call.durationSeconds)).toEqual([120, 120]);
+  expect(frozen.messages).toHaveLength(2);
+  expect(frozen.messages.map((message) => message.body)).toEqual(["Meet me by the station.", "Meet me by the station."]);
+  expect(frozen.records).toHaveLength(2);
+  expect(frozen.records).toEqual(expect.arrayContaining([
+    expect.objectContaining({ evidenceId: `record/${crimeCore.culpritId}/address`, type: "person", title: "Address record" }),
+    expect.objectContaining({ evidenceId: "card/purchase-1", type: "other", title: "Card payment" }),
+  ]));
+  expect(frozen.forensics).toEqual([
+    expect.objectContaining({
+      evidenceId: "forensic/scene/prints",
+      sourceRoomId: expect.any(String),
+      testType: "fingerprint",
+      linkedNpcIds: [frozen.culprit?._id],
+      turnaroundMinutes: 60,
+    }),
+    expect.objectContaining({
+      evidenceId: "forensic/body/toxicology",
+      sourceNpcId: frozen.npcs.find((npc) => npc.role === "victim")?._id,
+      testType: "toxicology",
+      turnaroundMinutes: 240,
+    }),
+  ]);
+  await t.run(async (ctx) => ctx.db.patch(frozen.forensics[1]._id, { sourceNpcId: undefined }));
+  expect(await t.mutation(internal.cases.backfillPublishedBodyForensics, { caseId: publishedCaseId })).toBe(1);
+  expect(await t.mutation(internal.cases.backfillPublishedBodyForensics, { caseId: publishedCaseId })).toBe(0);
+  expect((await t.run(async (ctx) => ctx.db.get(frozen.forensics[1]._id)))?.sourceNpcId).toBe(frozen.npcs.find((npc) => npc.role === "victim")?._id);
+  expect(frozen.events).toEqual([
+    expect.objectContaining({ sourceId: "station-meeting", startTime: 70, endTime: 75, description: "Waited in the kitchen." }),
+  ]);
+  expect(frozen.scripts).toHaveLength(cast.characters.filter((character) => character.role !== "victim").length);
+  expect(frozen.scripts.find((script) => script.npcId === frozen.culprit?._id)).toMatchObject({
+    knowledge: [expect.objectContaining({ sourceId: "station-meeting", how: "took part" })],
+    behavioralRules: ["Only discuss known events."],
+  });
+  expect(frozen.storedCase?.cityId).toBe(frozen.storedCity?._id);
+  expect(frozen.caseCity?._id).toBe(frozen.storedCity?._id);
+  expect(frozen.storedCity).toMatchObject({ version: city.version, seed: `fixture:v${city.version}` });
+  expect(frozen.places.map((place) => place.sourceId)).toEqual(city.places.map((place) => place.id));
+  expect(frozen.streets.map((street) => street.sourceId)).toEqual(city.streets.map((street) => street.id));
+  expect(frozen.buildingCount).toBe(city.places.length);
+  expect(frozen.floorCount).toBe(city.places.reduce((count, place) => count + new Set(place.building.rooms.map((room) => room.floor)).size, 0));
+  expect(frozen.roomCount).toBe(city.places.reduce((count, place) => count + place.building.rooms.length, 0));
+  expect(frozen.roomConnectionCount).toBe(city.places.reduce((count, place) => count + place.building.doors.length, 0));
+  expect(frozen.homeUnitCount).toBe(city.places.reduce((count, place) => count + place.building.homeUnits.length, 0));
+  expect(frozen.cameraRoom).toMatchObject({ floorId: expect.any(String), hasCamera: true, type: "corridor" });
+  expect(frozen.solution).toMatchObject({
+    motive: crimeCore.motive.details,
+    method: crimeCore.method,
+    weaponDescription: crimeCore.weapon.name,
+    evidenceGroups: expect.arrayContaining([
+      { description: "Decisive evidence", requiredEvidenceIds: ["evidence/culprit"] },
+    ]),
+  });
+  expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toBeNull();
+  expect(await user.query(api.sessions.get, { roomCode: created.roomCode })).toMatchObject({
+    caseTitle: "The Selected Case",
+  });
+  expect(await user.query(api.cases.getBrief, { roomCode: created.roomCode })).toEqual({
+    title: "The Selected Case",
+    summary: "A specific mystery.",
+    initialFacts: ["One fact."],
+  });
+  expect(JSON.stringify(await user.query(api.cases.listPassed, {}))).not.toContain(crimeCore.motive.details);
+  expect(JSON.stringify(await user.query(api.cases.getBrief, { roomCode: created.roomCode }))).not.toContain(crimeCore.method);
+  expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toBeNull();
+  await t.run(async (ctx) => ctx.db.patch(created.sessionId, { status: "playing" }));
+  const publicPeople = await user.query(api.npcs.list, { roomCode: created.roomCode });
+  expect(publicPeople).toHaveLength(cast.characters.length);
+  expect(publicPeople?.find((person) => person.id === frozen.culprit?._id)).toMatchObject({
+    name: frozen.culprit?.name,
+    role: "suspect",
+  });
+  expect(JSON.stringify(publicPeople)).not.toContain("sourceId");
+  await t.run(async (ctx) => {
+    for (let index = 0; index < 33; index += 1) {
+      await ctx.db.insert("npcs", {
+        caseId: frozen.storedCase!._id,
+        sourceId: `extra-witness-${index}`,
+        role: "witness",
+        name: `Extra Witness ${index}`,
+        publicDescription: "A public witness.",
+      });
+    }
+  });
+  expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toHaveLength(cast.characters.length + 33);
+  expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" })).toEqual({ status: "available", records: [], savedTerms: [] });
+  await user.mutation(api.publicRecords.performSearch, { roomCode: created.roomCode, search: "Keel" });
+  await t.run(async (ctx) => {
+    const session = await ctx.db.get(created.sessionId);
+    await ctx.db.insert("publicRecords", { caseId: session!.caseId!, evidenceId: "record/late", type: "other", title: "Keel update", content: "Added after this search started." });
+  });
+  expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" })).toEqual({ status: "pending", records: [], savedTerms: ["keel"] });
+  await t.run(async (ctx) => ctx.db.patch(created.sessionId, { clockStartedAt: Date.now() - 11_000 }));
+  await user.mutation(api.investigation.finishAction, { roomCode: created.roomCode });
+  expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" })).toEqual({ status: "ready", savedTerms: ["keel"], records: [
+    expect.objectContaining({ type: "person", title: "Address record", content: "Lives at Keel Street." }),
+  ] });
+  expect(JSON.stringify(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" }))).not.toContain("subjectNpcId");
+  await t.run(async (ctx) => ctx.db.patch(created.sessionId, { status: "waiting" }));
+  expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toBeNull();
+  expect(await user.query(api.cases.getCctv, { roomCode: created.roomCode })).toBeNull();
+  expect(await user.query(api.world.getMap, { roomCode: created.roomCode })).toBeNull();
+  await t.run(async (ctx) => ctx.db.patch(created.sessionId, { status: "playing" }));
+  await t.run(async (ctx) => {
+    const evidenceDraft = await ctx.db
+      .query("generationDrafts")
+      .withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId).eq("stage", "evidence"))
+      .unique();
+    if (evidenceDraft) await ctx.db.patch(evidenceDraft._id, { output: { cameras: [], evidence: [] } });
+  });
+  expect(await user.query(api.cases.getCctv, { roomCode: created.roomCode })).toEqual({
+    caseTitle: "The Selected Case",
+    start: 120,
+    end: 305,
+    cameras: [{ id: "cam:station", name: "Union Station · concourse", faulty: false, start: 120, end: 305 }],
+  });
+  expect(await user.query(api.cases.getCctvWindow, {
+    roomCode: created.roomCode,
+    cameraId: "cam:station",
+    minute: 120,
+  })).toEqual({ status: "available", records: [] });
+  await user.mutation(api.cases.startCctvReview, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 });
+  expect(await user.query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).toMatchObject({ status: "pending", records: [] });
+  await t.run(async (ctx) => ctx.db.patch(created.sessionId, { clockStartedAt: Date.now() - 6_000 }));
+  await user.mutation(api.investigation.finishAction, { roomCode: created.roomCode });
+  expect(await t.run(async (ctx) => {
+    const session = await ctx.db.get(created.sessionId);
+    return { gameTime: session?.gameTime, clockStartedAt: session?.clockStartedAt };
+  })).toEqual({ gameTime: 15, clockStartedAt: undefined });
+  expect(await user.query(api.cases.getCctvWindow, {
+    roomCode: created.roomCode,
+    cameraId: "cam:station",
+    minute: 120,
+  })).toEqual({ status: "ready", records: [{
+      id: "cctv/1",
+      cameraId: "cam:station",
+      start: 120,
+      end: 125,
+      summary: "Tall person in a dark coat: crosses the concourse.",
+      kind: "pass",
+  }] });
+  await t.run(async (ctx) => ctx.db.insert("sessionPlayers", { sessionId: created.sessionId, authUserId: "player-2", nickname: "Partner", joinedAt: Date.now() }));
+  expect((await t.withIdentity({ subject: "player-2" }).query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 }))?.status).toBe("ready");
+  expect((await t.withIdentity({ subject: "player-2" }).query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" }))?.records).toHaveLength(1);
+  await t.run(async (ctx) => {
+    const session = await ctx.db.get(created.sessionId);
+    const camera = session?.caseId
+      ? await ctx.db.query("cctvCameras").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).first()
+      : null;
+    if (!session?.caseId || !camera) throw new Error("Expected a published camera.");
+    for (let index = 0; index < 513; index += 1) {
+      await ctx.db.insert("cctvRecords", {
+        caseId: session.caseId,
+        evidenceId: `old-record-${index}`,
+        cameraId: camera._id,
+        startTime: 100,
+        endTime: 100,
+        npcIds: [],
+        vehicleIds: [],
+        description: "Old activity.",
+        kind: "pass",
+      });
+    }
+    await ctx.db.insert("cctvRecords", {
+      caseId: session.caseId,
+      evidenceId: "late-record",
+      cameraId: camera._id,
+      startTime: 300,
+      endTime: 305,
+      npcIds: [],
+      vehicleIds: [],
+      description: "Late activity remains visible after many earlier rows.",
+      kind: "stay",
+    });
+  });
+  await user.mutation(api.cases.startCctvReview, { roomCode: created.roomCode, cameraId: "cam:station", minute: 300 });
+  await t.run(async (ctx) => ctx.db.patch(created.sessionId, { clockStartedAt: Date.now() - 6_000 }));
+  await user.mutation(api.investigation.finishAction, { roomCode: created.roomCode });
+  expect((await user.query(api.cases.getCctvWindow, {
+    roomCode: created.roomCode,
+    cameraId: "cam:station",
+    minute: 300,
+  }))?.records).toEqual(expect.arrayContaining([expect.objectContaining({ id: "late-record", start: 300, end: 305 })]));
+  await t.run(async (ctx) => {
+    const job = await ctx.db.get(generationJobId);
+    if (job) await ctx.db.patch(job._id, { status: "failed" });
+    const briefDraft = await ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId).eq("stage", "brief")).unique();
+    if (briefDraft) await ctx.db.patch(briefDraft._id, { output: { title: "Changed draft", summary: "Changed.", initialFacts: [] } });
+  });
+  expect((await t.run(async (ctx) => await ctx.db.get(created.sessionId)))?.caseId).toBe(publishedCaseId);
+  expect(await user.query(api.cases.listPassed, {})).toEqual(expect.arrayContaining([
+    expect.objectContaining({
+      generationJobId,
+      caseId: publishedCaseId,
+      difficulty: "easy",
+      title: "The Selected Case",
+      description: "A specific mystery.",
+    }),
+  ]));
+  const replayed = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId });
+  expect(replayed.sessionId).not.toBe(created.sessionId);
+  expect(await t.run(async (ctx) => {
+    const [first, second] = await Promise.all([ctx.db.get(created.sessionId), ctx.db.get(replayed.sessionId)]);
+    return first?.caseId === second?.caseId;
+  })).toBe(true);
+  const partner = t.withIdentity({ subject: "player-2" });
+  expect(await partner.mutation(api.sessions.join, { roomCode: replayed.roomCode, nickname: "Partner" })).toMatchObject({ ok: true });
+  expect(await user.query(api.sessions.get, { roomCode: replayed.roomCode })).toMatchObject({ status: "waiting", playerCount: 2 });
+  expect(await partner.query(api.npcs.list, { roomCode: replayed.roomCode })).toBeNull();
+  await user.mutation(api.sessions.setReady, { roomCode: replayed.roomCode, isReady: true });
+  await partner.mutation(api.sessions.setReady, { roomCode: replayed.roomCode, isReady: true });
+  await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { deadline: undefined }));
+  await user.mutation(api.sessions.start, { roomCode: replayed.roomCode });
+  expect((await t.run(async (ctx) => ctx.db.get(replayed.sessionId)))?.deadline).toBe(1665);
+  await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { deadline: undefined }));
+  expect(await t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).toBe(1665);
+  expect(await t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).toBe(1665);
+  expect(await user.query(api.sessions.get, { roomCode: replayed.roomCode })).toMatchObject({ status: "playing" });
+  const unpublishedCaseId = await t.run(async (ctx) => ctx.db.insert("cases", {
+    generationJobId: invalidJobId,
+    difficulty: "easy",
+    title: "Incomplete case",
+    summary: "Not ready.",
+    initialFacts: [],
+    createdAt: 5,
+  }));
+  await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: unpublishedCaseId })).rejects.toThrow("not ready to replay");
+  await t.run(async (ctx) => {
+    const sessionId = await ctx.db.insert("sessions", { caseId: unpublishedCaseId, roomCode: "OLDCASE", status: "waiting", createdAt: Date.now(), expiresAt: Date.now() + 60_000 });
+    await ctx.db.insert("sessionPlayers", { sessionId, authUserId: "player-1", nickname: "Detective", joinedAt: Date.now() });
+  });
+  await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { caseId: unpublishedCaseId }));
+  await expect(t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).rejects.toThrow("not published");
+  await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { caseId: publishedCaseId }));
+  expect(await user.query(api.sessions.listMine, {})).toEqual(expect.arrayContaining([
+    expect.objectContaining({ roomCode: created.roomCode, caseTitle: "The Selected Case", status: "playing" }),
+    expect.objectContaining({ roomCode: replayed.roomCode, caseTitle: "The Selected Case", status: "playing" }),
+  ]));
+  expect(await user.query(api.sessions.listMine, {})).not.toContainEqual(expect.objectContaining({ roomCode: "OLDCASE" }));
+  expect(await user.query(api.sessions.listMine, {})).toEqual(expect.arrayContaining([
+    expect.objectContaining({ roomCode: created.roomCode, reportSubmitted: false }),
+    expect.objectContaining({ roomCode: replayed.roomCode, reportSubmitted: false }),
+  ]));
+  await t.run(async (ctx) => {
+    const npc = await ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", publishedCaseId)).first();
+    if (!npc) throw new Error("Expected a published person.");
+    await ctx.db.insert("accusations", {
+      sessionId: created.sessionId,
+      submittedByPlayerId: created.playerId,
+      culpritNpcId: npc._id,
+      motiveExplanation: "A test theory.",
+      weaponDescription: "A test weapon.",
+      evidenceIds: ["test evidence"],
+      evidenceExplanation: "A test explanation.",
+      methodExplanation: "A test method.",
+      status: "pending",
+      attempts: 1,
+      createdAt: 1,
+      updatedAt: 1,
+    });
+  });
+  expect(await user.query(api.sessions.listMine, {})).toEqual(expect.arrayContaining([
+    expect.objectContaining({ roomCode: created.roomCode, reportSubmitted: true }),
+    expect.objectContaining({ roomCode: replayed.roomCode, reportSubmitted: false }),
+  ]));
+  await expect(user.mutation(api.world.startTravel, { roomCode: created.roomCode, destinationId: "forensic-lab" })).rejects.toThrow("review-only");
+  await expect(user.mutation(api.clueBoard.createNoteNode, { roomCode: created.roomCode, text: "Late note", x: 0, y: 0 })).rejects.toThrow("review-only");
+  await expect(user.mutation(api.publicRecords.performSearch, { roomCode: created.roomCode, search: "Address" })).rejects.toThrow("review-only");
+  await expect(user.mutation(api.npcConversations.callToBureau, { roomCode: created.roomCode, npcId: frozen.culprit!._id })).rejects.toThrow("review-only");
+  await expect(t.withIdentity({ subject: "player-2" }).mutation(api.world.startTravel, { roomCode: created.roomCode, destinationId: "forensic-lab" })).rejects.toThrow("review-only");
+  await expect(t.withIdentity({ subject: "player-3" }).mutation(api.world.startTravel, { roomCode: created.roomCode, destinationId: "forensic-lab" })).rejects.toThrow("Start the investigation first");
+  expect(await user.query(api.clueBoard.getNodes, { roomCode: created.roomCode })).toEqual([]);
+  expect(await user.mutation(api.investigation.finishAction, { roomCode: created.roomCode })).toMatchObject({ busy: false });
+  await t.run(async (ctx) => {
+    const cityId = frozen.storedCity!._id;
+    const anchor = await ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", cityId)).first();
+    if (!anchor) throw new Error("Expected a published place.");
+    for (let index = 0; index < 33; index += 1) {
+      await ctx.db.insert("places", {
+        cityId,
+        sourceId: `extra-place-${index}`,
+        order: 100 + index,
+        name: `Extra Place ${index}`,
+        type: "other",
+        kind: "public",
+        area: "midtown",
+        description: "A public place.",
+        mapX: index,
+        mapY: index,
+        crimeSceneAllowed: false,
+        jobSlots: [],
+      });
+    }
+    for (let index = city.streets.length; index < 65; index += 1) {
+      await ctx.db.insert("placeConnections", {
+        cityId,
+        sourceId: `extra-street-${index}`,
+        order: 100 + index,
+        fromPlaceId: anchor._id,
+        toPlaceId: anchor._id,
+        travelMinutes: 1,
+        bidirectional: true,
+        hasCamera: false,
+      });
+    }
+  });
+  const cityMap = await user.query(api.world.getMap, { roomCode: created.roomCode });
+  expect(cityMap?.places).toHaveLength(city.places.length + 33);
+  expect(cityMap?.streets).toHaveLength(65);
+  expect(cityMap?.places.find((place) => place.id === "police-bureau")).toMatchObject({
+    name: "Police Bureau",
+    kind: "bureau",
+  });
+  expect(cityMap?.streets.some((street) => street.a === "police-bureau" && street.b === "forensic-lab" && street.minutes === 2)).toBe(true);
+  expect(cityMap?.streets.slice(0, city.streets.length)).toEqual(city.streets);
+
+  const stranger = t.withIdentity({ subject: "player-3" });
+  expect(await stranger.query(api.sessions.listMine, {})).toEqual([]);
+  expect(await stranger.query(api.sessions.get, { roomCode: created.roomCode })).toBeNull();
+  expect(await stranger.query(api.cases.getBrief, { roomCode: created.roomCode })).toBeNull();
+  expect(await stranger.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toBeNull();
+  await expect(stranger.mutation(api.publicRecords.performSearch, { roomCode: created.roomCode, search: "Address" })).rejects.toThrow("Start the investigation first");
+  expect(await stranger.query(api.cases.getCctv, { roomCode: created.roomCode })).toBeNull();
+  expect(await stranger.query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).toBeNull();
+  await expect(stranger.mutation(api.cases.startCctvReview, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).rejects.toThrow("Start the investigation first");
+  expect(await stranger.query(api.world.getMap, { roomCode: created.roomCode })).toBeNull();
+  expect(await stranger.query(api.npcs.list, { roomCode: created.roomCode })).toBeNull();
+}, 15_000);

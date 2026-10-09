@@ -1,46 +1,99 @@
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import type { Screen } from "./constants";
+
+type WorkingAction = "create" | "join" | "ready" | "start" | "copy" | "leave" | null;
+
+function screenForPath(pathname: string): Screen {
+  if (pathname === "/join") return "join";
+  if (pathname === "/previous") return "previous";
+  if (pathname === "/settings") return "settings";
+  if (pathname === "/game" || pathname.startsWith("/game/")) return "bureau";
+  if (/^\/lobby\/[^/]+\/(?:bureau(?:\/.*)?|map|place|lab|case)$/.test(pathname)) return "bureau";
+  if (/^\/lobby\/[^/]+\/brief$/.test(pathname)) return "brief";
+  return "menu";
+}
+
+function pathForScreen(screen: Screen, roomCode: string) {
+  if (screen === "join") return "/join";
+  if (screen === "previous") return "/previous";
+  if (screen === "settings") return "/settings";
+  if (screen === "brief") return roomCode ? `/lobby/${roomCode}/brief` : "/";
+  if (screen === "bureau") return roomCode ? `/lobby/${roomCode}/bureau` : "/game";
+  return "/";
+}
+
+function roomCodeForPath(pathname: string) {
+  const match = pathname.match(/^\/lobby\/([^/]+)(?:\/|$)/);
+  return match ? decodeURIComponent(match[1]).toUpperCase() : "";
+}
+
+function isLobbyPath(pathname: string) {
+  return /^\/lobby\/[^/]+$/.test(pathname);
+}
 
 export function useRoomSession(nickname: string) {
   const { isLoaded, isSignedIn } = useAuth();
-  const createRoom = useMutation(api.sessions.create);
+  const pathname = usePathname();
+  const router = useRouter();
+  const createReplay = useMutation(api.sessions.createReplay);
   const joinRoom = useMutation(api.sessions.join);
   const setReady = useMutation(api.sessions.setReady);
   const startRoom = useMutation(api.sessions.start);
   const leaveSession = useMutation(api.sessions.leave);
 
-  const [screen, setScreen] = useState<Screen>("menu");
-  const [roomCode, setRoomCode] = useState("");
-  const [joinedRoomCode, setJoinedRoomCode] = useState("");
-  const [showRoom, setShowRoom] = useState(false);
-  const [freshStartCase, setFreshStartCase] = useState("");
-  const [activeCaseId, setActiveCaseId] = useState("");
+  const screen = screenForPath(pathname);
+  const joinedRoomCode = roomCodeForPath(pathname);
+  const [roomCode, setRoomCode] = useState(joinedRoomCode);
   const [error, setError] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
-  const [isWorking, setIsWorking] = useState(false);
+  const [workingAction, setWorkingAction] = useState<WorkingAction>(null);
+  const isWorking = workingAction !== null;
 
   const room = useQuery(
     api.sessions.get,
-    joinedRoomCode ? { roomCode: joinedRoomCode } : "skip",
+    joinedRoomCode && isLoaded && isSignedIn ? { roomCode: joinedRoomCode } : "skip",
   );
+  const activeRooms = useQuery(
+    api.sessions.listMine,
+    isLoaded && isSignedIn ? {} : "skip",
+  );
+  const gameRoute = screen === "brief" || screen === "bureau";
+  const lobbyRoute = isLobbyPath(pathname);
+  const missingRoom = !!joinedRoomCode && room === null && (gameRoute || lobbyRoute);
+  const waitingGameRoute = gameRoute && room?.status === "waiting";
+  const lobbyVisible = !missingRoom && (lobbyRoute || waitingGameRoute);
+  const roomStarted = lobbyVisible && room?.status === "playing";
 
-  async function createOrJoin(action: "create" | "join") {
+  useEffect(() => {
+    if (!joinedRoomCode) return;
+    if (missingRoom) router.replace("/");
+    else if (waitingGameRoute) router.replace(`/lobby/${joinedRoomCode}`);
+    else if (roomStarted) router.replace(`/lobby/${joinedRoomCode}/brief`);
+  }, [joinedRoomCode, missingRoom, roomStarted, router, waitingGameRoute]);
+
+  function navigateTo(nextScreen: Screen) {
+    router.push(pathForScreen(nextScreen, joinedRoomCode));
+  }
+
+  async function createOrJoin(action: "create" | "join", selection?: { generationJobId: Id<"generationJobs">; caseId: Id<"cases">; deadlineMinutes?: number }) {
     if (!isLoaded || !isSignedIn) {
       setError("Still signing in. Try again in a moment.");
       return;
     }
-
-    setIsWorking(true);
+    setWorkingAction(action);
     setError("");
 
     try {
-      const result =
-        action === "create"
-          ? await createRoom({ nickname })
-          : await joinRoom({ roomCode, nickname });
+      const result = action === "create"
+        ? selection
+          ? await createReplay({ nickname, caseId: selection.caseId, ...(selection.deadlineMinutes === undefined ? {} : { deadlineMinutes: selection.deadlineMinutes }) })
+          : { roomCode: "", message: "Choose a case first." }
+        : await joinRoom({ roomCode, nickname });
       if (!result.roomCode) {
         setError(
           "message" in result
@@ -49,91 +102,104 @@ export function useRoomSession(nickname: string) {
         );
         return;
       }
-      setJoinedRoomCode(result.roomCode);
       setRoomCode(result.roomCode);
-      setShowRoom(true);
-      setScreen("menu");
-    } catch (caught) {
+      router.push(`/lobby/${result.roomCode}`);
+    } catch {
       setError(
         action === "join"
           ? "No room found with that code. Check it and try again."
-          : caught instanceof Error
-            ? caught.message
-            : "Something went wrong.",
+          : "Could not open this case. Try again later or choose another case.",
       );
     } finally {
-      setIsWorking(false);
+      setWorkingAction(null);
     }
   }
 
   async function toggleReady() {
-    if (!joinedRoomCode) return;
+    if (!joinedRoomCode || workingAction) return;
+    setWorkingAction("ready");
     setError("");
     try {
       await setReady({ roomCode: joinedRoomCode, isReady: !room?.meReady });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not update your ready status.");
+    } finally {
+      setWorkingAction(null);
     }
   }
 
   async function startInvestigation() {
-    if (!joinedRoomCode || !room?.allReady) return;
+    if (!joinedRoomCode || !room?.allReady || workingAction) return;
+    setWorkingAction("start");
     setError("");
     try {
       await startRoom({ roomCode: joinedRoomCode });
-      openBrief();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not start the investigation.");
+    } finally {
+      setWorkingAction(null);
     }
   }
 
   async function copyRoomCode() {
-    await navigator.clipboard.writeText(joinedRoomCode);
-    setCopiedCode(true);
-    window.setTimeout(() => setCopiedCode(false), 1200);
+    if (!joinedRoomCode || workingAction) return;
+    setWorkingAction("copy");
+    setError("");
+    try {
+      await navigator.clipboard.writeText(joinedRoomCode);
+      setCopiedCode(true);
+      window.setTimeout(() => setCopiedCode(false), 1200);
+    } catch {
+      setError("Could not copy the room code. Select it from the room heading instead.");
+    } finally {
+      setWorkingAction(null);
+    }
   }
 
   function closeJoin() {
-    setScreen("menu");
+    navigateTo("menu");
     setRoomCode("");
     setError("");
   }
 
   async function leaveRoom() {
-    if (!joinedRoomCode) return;
+    if (!joinedRoomCode || workingAction) return;
+    setWorkingAction("leave");
     setError("");
     try {
       await leaveSession({ roomCode: joinedRoomCode });
-      setShowRoom(false);
-      setJoinedRoomCode("");
       setRoomCode("");
+      navigateTo("menu");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not leave the room.");
+    } finally {
+      setWorkingAction(null);
     }
   }
 
-  function openBrief(caseId = "") {
-    setActiveCaseId(caseId);
-    setShowRoom(false);
-    setScreen("loading");
-    window.setTimeout(() => setScreen("brief"), 1200);
+  function continueRoom(roomCode: string, status: "waiting" | "playing", reportSubmitted: boolean) {
+    setRoomCode(roomCode);
+    if (status === "waiting") {
+      router.push(`/lobby/${roomCode}`);
+    } else {
+      router.push(`/lobby/${roomCode}/${reportSubmitted ? "case" : "bureau"}`);
+    }
   }
 
   return {
-    screen,
-    setScreen,
+    screen: missingRoom || waitingGameRoute ? "menu" : roomStarted ? "brief" : screen,
+    setScreen: navigateTo,
     roomCode,
     setRoomCode,
     joinedRoomCode,
     room,
-    showRoom,
-    freshStartCase,
-    setFreshStartCase,
-    activeCaseId,
-    error,
+    activeRooms,
+    showRoom: lobbyVisible && !roomStarted,
+    error: missingRoom ? "That room is no longer available." : error,
     setError,
     copiedCode,
     isWorking,
+    workingAction,
     isLoaded,
     isSignedIn,
     createOrJoin,
@@ -142,6 +208,6 @@ export function useRoomSession(nickname: string) {
     copyRoomCode,
     closeJoin,
     leaveRoom,
-    openBrief,
+    continueRoom,
   };
 }

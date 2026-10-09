@@ -1,8 +1,12 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import { menuButton, panel } from "../constants";
 
 export type RoomLobbyState = {
   roomCode: string;
   status: "waiting" | "playing";
+  caseTitle: string;
   playerCount: number;
   allReady: boolean;
   meReady: boolean;
@@ -19,6 +23,7 @@ type RoomLobbyModalProps = {
   onToggleReady: () => void;
   onStart: () => void;
   onLeave: () => void;
+  workingAction: "create" | "join" | "ready" | "start" | "copy" | "leave" | null;
 };
 
 export function RoomLobbyModal({
@@ -31,20 +36,40 @@ export function RoomLobbyModal({
   onToggleReady,
   onStart,
   onLeave,
+  workingAction,
 }: RoomLobbyModalProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const openingCase = room?.status === "playing";
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+    return () => {
+      if (dialog?.open) dialog.close();
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/70 p-4">
+    <dialog
+      aria-labelledby="room-lobby-title"
+      aria-busy={workingAction !== null}
+      className="fixed inset-0 z-20 m-0 hidden h-full max-h-none w-full max-w-none items-center justify-center bg-black/70 p-4 text-cyan-100 open:flex"
+      onCancel={(event) => event.preventDefault()}
+      ref={dialogRef}
+    >
       <div className={`${panel} w-full max-w-lg`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-3xl uppercase text-cyan-50">Room {joinedRoomCode}</h2>
+          <h2 className="text-3xl uppercase text-cyan-50" id="room-lobby-title">Room {joinedRoomCode}</h2>
           <button
             className="h-10 border border-cyan-300 bg-[#06142d] px-4 text-base uppercase text-yellow-200"
+            disabled={workingAction !== null}
             onClick={onCopyCode}
             type="button"
           >
-            {copiedCode ? "Copied" : "Copy code"}
+            {workingAction === "copy" ? "Copying..." : copiedCode ? "Copied" : "Copy code"}
           </button>
         </div>
+        <p className="mt-3 text-lg uppercase text-yellow-200">{room?.caseTitle ?? "Loading case..."}</p>
         <p className="mt-4 text-xl uppercase text-cyan-100">Connected players</p>
         <ul className="mt-2 space-y-2 text-xl text-cyan-200">
           {(room?.players?.length
@@ -60,34 +85,37 @@ export function RoomLobbyModal({
           ))}
         </ul>
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button className={`${menuButton} text-yellow-200`} onClick={onToggleReady} type="button">
-            {room?.meReady ? "Unready" : "Ready"}
+          <button className={`${menuButton} text-yellow-200`} disabled={!room || openingCase || workingAction !== null} onClick={onToggleReady} type="button">
+            {workingAction === "ready" ? "Saving..." : room?.meReady ? "Unready" : "Ready"}
           </button>
           <button
             className={`${menuButton} h-auto min-h-12 whitespace-normal py-2 leading-tight`}
-            disabled={!room?.allReady}
+            disabled={!room?.allReady || openingCase || workingAction !== null}
             onClick={onStart}
             type="button"
           >
-            Start
+            {workingAction === "start" ? "Starting..." : openingCase ? "Opening case..." : "Start"}
           </button>
           <button
             className={`${menuButton} border-red-400 bg-red-950/80 text-red-200 hover:border-red-200 hover:text-red-100 sm:col-span-2`}
+            disabled={workingAction !== null}
             onClick={onLeave}
             type="button"
           >
-            Leave room
+            {workingAction === "leave" ? "Leaving..." : "Leave room"}
           </button>
         </div>
         {room ? (
           <p className="mt-4 text-center text-sm uppercase text-cyan-100">
-            {room.allReady
+            {openingCase
+              ? "Investigation started. Opening the case file..."
+              : room.allReady
               ? "All detectives are ready"
               : `${room.playerCount}/2 detectives connected. Waiting for ready.`}
           </p>
         ) : null}
-        {error ? <p className="mt-3 text-center text-sm text-red-300">{error}</p> : null}
+        {error ? <p className="mt-3 text-center text-sm text-red-300" role="alert">{error}</p> : null}
       </div>
-    </div>
+    </dialog>
   );
 }

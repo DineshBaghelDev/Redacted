@@ -2,6 +2,8 @@
 
 The schema is normalized. Generated truth and mutable session state are deliberately separated.
 
+Current generated cases also store a `publicationVersion` marker. It is written only after every immutable runtime table for that version has been copied successfully; replay trusts a marked case rather than its generation drafts.
+
 IDs below represent Convex document IDs such as `Id<"npcs">`.
 
 ## Case generation and metadata
@@ -95,6 +97,7 @@ Indexes:
 ```ts
 {
   caseId: Id<"cases">,
+  sourceId: string,
   startTime: number,
   endTime?: number,
   npcIds: Id<"npcs">[],
@@ -113,6 +116,7 @@ Indexes:
   caseId: Id<"cases">,
   name: string,
   seed: string,
+  version: number,
 }
 ```
 
@@ -123,6 +127,8 @@ At least 10 per city.
 ```ts
 {
   cityId: Id<"cities">,
+  sourceId: string,
+  order: number,
   name: string,
   type:
     | "residence"
@@ -137,6 +143,12 @@ At least 10 per city.
     | "public_building"
     | "other",
   description: string,
+  kind: "home" | "work" | "public" | "bureau" | "lab",
+  area: "northside" | "midtown" | "eastside",
+  mapX: number,
+  mapY: number,
+  crimeSceneAllowed: boolean,
+  jobSlots: string[],
   buildingId?: Id<"buildings">,
 }
 ```
@@ -146,10 +158,13 @@ At least 10 per city.
 ```ts
 {
   cityId: Id<"cities">,
+  sourceId: string,
+  order: number,
   fromPlaceId: Id<"places">,
   toPlaceId: Id<"places">,
   travelMinutes: number,
   bidirectional: boolean,
+  hasCamera: boolean,
 }
 ```
 
@@ -185,9 +200,15 @@ At least 10 per city.
 ```ts
 {
   floorId: Id<"floors">,
+  buildingId: Id<"buildings">,
+  sourceId: string,
+  order: number,
   name: string,
   type: string,
   searchable: boolean,
+  isEntrance: boolean,
+  itemSlots: string[],
+  hasCamera: boolean,
 }
 ```
 
@@ -198,9 +219,22 @@ Corridors are normally edges, not rooms.
 ```ts
 {
   buildingId: Id<"buildings">,
+  order: number,
   fromRoomId: Id<"rooms">,
   toRoomId: Id<"rooms">,
   type: "door" | "corridor" | "stairs" | "elevator",
+}
+```
+
+### `homeUnits`
+
+```ts
+{
+  cityId: Id<"cities">,
+  buildingId: Id<"buildings">,
+  roomId: Id<"rooms">,
+  sourceId: string,
+  label: string,
 }
 ```
 
@@ -213,6 +247,8 @@ Create an actual corridor room only if the corridor itself is searchable/interac
 ```ts
 {
   caseId: Id<"cases">,
+  sourceId: string, // stable id from the immutable generated case
+  role: "victim" | "suspect" | "witness",
   name: string,
   age?: number,
   occupation?: string,
@@ -228,11 +264,20 @@ Create an actual corridor room only if the corridor itself is searchable/interac
 {
   caseId: Id<"cases">,
   npcId: Id<"npcs">,
-  personality: string,
-  goals: string[],
-  experiences: string[],
-  knowledge: string[],
-  secrets: string[],
+  personality: string[],
+  job: string,
+  home: string,
+  relationshipToVictim: string,
+  secret?: string,
+  protects?: string,
+  knowledge: {
+    sourceId: string,
+    how: "took part" | "saw" | "sent" | "received" | "bought" | "heard",
+    time: number,
+    end?: number,
+    where?: string,
+    text: string,
+  }[],
   intentionalLies: {
     topic: "whereabouts" | "relationship" | "motive" | "item" | "secret",
     claim: string,
@@ -248,6 +293,21 @@ Create an actual corridor room only if the corridor itself is searchable/interac
 
 Logical relation: one NPC to one private script.
 
+### `witnessStatements` — frozen case evidence, server-gated
+
+```ts
+{
+  caseId: Id<"cases">,
+  witnessNpcId: Id<"npcs">,
+  evidenceId: string,
+  eventId: string,
+  title: string,
+  text: string,
+}
+```
+
+These are generated before play and copied from the case's evidence and rewritten text stages. A player's free-form interview transcript is not a canonical statement. Client access requires a separate session discovery gate.
+
 ## Physical objects and search
 
 ### `caseItems`
@@ -257,10 +317,13 @@ Physical recoverable/inspectable objects only. Forensic conclusions do not belon
 ```ts
 {
   caseId: Id<"cases">,
+  evidenceId: string,
+  sourceId?: string,
   name: string,
   description: string,
   placeId: Id<"places">,
   roomId?: Id<"rooms">,
+  slot: string,
   discoverableBySearch: boolean,
   collectible: boolean,
   hidden: boolean,
@@ -277,8 +340,10 @@ Pre-generated truth.
 ```ts
 {
   caseId: Id<"cases">,
+  evidenceId: string,
   sourceItemId?: Id<"caseItems">,
   sourceRoomId?: Id<"rooms">,
+  sourceNpcId?: Id<"npcs">, // victim body source
   testType:
     | "fingerprint"
     | "footprint"
@@ -305,9 +370,11 @@ Mutable per session.
   forensicOutputId: Id<"forensicOutputs">,
   requestedAtGameTime: number,
   readyAtGameTime: number,
-  status: "pending" | "ready" | "viewed",
+  viewedAt?: number,
 }
 ```
+
+Readiness is derived from the shared game clock; `viewedAt` records the explicit first opening of a ready result. The canonical result and linked people stay in `forensicOutputs` and are never copied into the request row.
 
 ## CCTV
 
@@ -316,12 +383,16 @@ Mutable per session.
 ```ts
 {
   caseId: Id<"cases">,
+  sourceId: string,
   placeId?: Id<"places">,       // interior camera
   roomId?: Id<"rooms">,
   streetFromPlaceId?: Id<"places">, // street camera on a graph edge
   streetToPlaceId?: Id<"places">,
   name: string,
   description: string,
+  faulty: boolean,
+  startTime: number,
+  endTime: number,
 }
 ```
 
@@ -330,14 +401,29 @@ Mutable per session.
 ```ts
 {
   caseId: Id<"cases">,
+  evidenceId: string,
   cameraId: Id<"cctvCameras">,
   startTime: number,
   endTime: number,
   npcIds: Id<"npcs">[],     // server-only, for validation; never returned to clients
   vehicleIds: Id<"vehicles">[],
   description: string,      // appearance description, not names
+  kind: "stay" | "pass" | "offline",
 }
 ```
+
+### `cctvReviews`
+
+```ts
+{
+  sessionId: Id<"sessions">,
+  cameraId: Id<"cctvCameras">,
+  minute: number,
+  completeGameTime: number,
+}
+```
+
+One row per selected camera window in a shared session. The frozen records remain in `cctvRecords`; queries expose them only after the review's game-time completion.
 
 ## Vehicles
 
@@ -361,10 +447,26 @@ Mutable per session.
 ```ts
 {
   caseId: Id<"cases">,
+  sourceId: string,
   type: "phone" | "laptop",
   ownerNpcId?: Id<"npcs">,
+  sourceItemId?: Id<"caseItems">, // physical laptop item
   name: string,
   description: string,
+}
+```
+
+### `deviceFiles`
+
+Frozen laptop files, linked to a device. Only a session that has completed a physical-device read may receive title and body through gameplay queries.
+
+```ts
+{
+  caseId: Id<"cases">,
+  deviceId: Id<"devices">,
+  evidenceId: string,
+  title: string,
+  body: string,
 }
 ```
 
@@ -375,6 +477,7 @@ This replaces the earlier incorrect `contacts` concept.
 ```ts
 {
   caseId: Id<"cases">,
+  evidenceId: string,
   deviceId: Id<"devices">,
   otherPartyNpcId?: Id<"npcs">,
   otherPartyLabel?: string,
@@ -389,6 +492,7 @@ This replaces the earlier incorrect `contacts` concept.
 ```ts
 {
   caseId: Id<"cases">,
+  evidenceId: string,
   deviceId: Id<"devices">,
   otherPartyNpcId?: Id<"npcs">,
   otherPartyLabel?: string,
@@ -407,6 +511,7 @@ There is no social-post table in V1.
 ```ts
 {
   caseId: Id<"cases">,
+  evidenceId: string,
   type:
     | "person"
     | "property"
@@ -422,6 +527,10 @@ There is no social-post table in V1.
 }
 ```
 
+### `publicRecordSearches` and `sessionPublicRecords`
+
+`publicRecordSearches` stores a normalized search term, its ten-minute `completeGameTime`, and up to 50 matched record IDs per shared session. `sessionPublicRecords` stores each returned record ID with the earliest game time it becomes available. Both tables are session-scoped; the frozen file text remains only in `publicRecords`. Access rows optionally record `sourceSearchId` and `previousCompleteGameTime` so canceling a pending search preserves another search’s access or restores the prior availability time.
+
 ## Sessions and multiplayer
 
 ### `sessions`
@@ -432,6 +541,7 @@ There is no social-post table in V1.
   roomCode: string,
   status: "generating" | "waiting" | "playing" | "judging" | "completed" | "expired",
   gameTime: number,
+  clockStartedAt?: number,
   deadline: number,
   deadlineOverrideMinutes?: number,
   createdAt: number,
@@ -463,6 +573,17 @@ Abandoned sessions expire after 7 days.
 ```
 
 Enforce maximum 2 players in mutation logic.
+
+Current runtime keeps `gameTime`, `currentPlaceId`, and `currentRoomId` optional for pre-clock sessions. A started session places both players at the bureau entrance room. `clockStartedAt` is set while any timed travel or room action is active; the server currently uses 1 real second per game minute as a playtest tuning value.
+
+### `travelActions`
+
+One active journey per player. Rows store the destination place, starting and completion game minutes, and creation timestamp. The `by_sessionId` and `by_playerId` indexes support shared clock settlement and each player's current journey. Completed rows are removed when the next authorized timed interaction settles them.
+
+### `roomActions`, `searchedRooms`, and `sessionItems`
+
+`roomActions` stores a player's timed move, search, inspection, device read, interview question, lab submission, CCTV review, or public-record search. A player can have only one active travel or room action. Optional `npcTurnId`, `cctvReviewId`, and `recordSearchId` references identify pending work to cancel when its owner leaves. A device action refers to either a physical `itemId` or a handed-over `deviceId`. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, collection, and device-read timestamps. Item description is returned to clients only after inspection; device files only after reading; undiscovered items are not returned.
+Clueboard item references store only the item's ID and a discovery-safe label; creating them requires a matching `sessionItems` row.
 
 ### `sessionState`
 
@@ -520,8 +641,11 @@ Do not log ordinary UI navigation.
   sessionId: Id<"sessions">,
   npcId: Id<"npcs">,
   threadId: string,
-  activeGeneration: boolean,
   nextSequence: number,
+  nextToProcess: number,
+  activeTurnId?: Id<"npcPendingMessages">,
+  bureauPresent: boolean,
+  statementStatus?: "requested" | "ready",
 }
 ```
 
@@ -538,11 +662,55 @@ Use if the selected conversation library does not provide exactly the queue sema
   conversationId: Id<"npcConversations">,
   playerId: Id<"sessionPlayers">,
   sequence: number,
-  body: string,
-  status: "queued" | "processing" | "complete" | "failed",
+  promptMessageId: string,
+  proofEvidenceId?: string,
+  requestedPhoneId?: Id<"devices">,
+  requestedStatements?: boolean,
+  status: "waiting" | "queued" | "processing" | "complete" | "failed",
   createdAt: number,
+  error?: string,
 }
 ```
+
+The Agent component owns the transcript. The local pending row tracks the question's timed gate, player attribution, processing order, optional shown proof, and failure state.
+
+### `npcExposedLies`
+
+```ts
+{
+  conversationId: Id<"npcConversations">,
+  lieIndex: number,
+  mainExposedAt: number, // question sequence
+  backupExposedAt?: number, // question sequence
+}
+```
+
+One row per exposed lie in a shared session conversation. Sequence markers keep earlier queued questions from seeing proof shown later. This table is server-only.
+
+### `sessionDevices`
+
+```ts
+{
+  sessionId: Id<"sessions">,
+  deviceId: Id<"devices">,
+  acquiredAt: number,
+  readAt?: number,
+}
+```
+
+NPC-phone handover and reading belong to the replay session, not the immutable case. Until `readAt` is set, calls and messages on that phone remain hidden and cannot be pinned or cited.
+
+### `sessionStatements`
+
+```ts
+{
+  sessionId: Id<"sessions">,
+  statementId: Id<"witnessStatements">,
+  heardAt: number,
+}
+```
+
+An explicit 3-minute bureau question grants non-lied frozen statements at completion. This shared session row gates interview text, proof, clueboard pins, and final-report citations.
 
 ### `npcMemories`
 
@@ -576,7 +744,8 @@ Player claims must remain claims, not canonical facts.
     | "forensic"
     | "vehicle"
     | "place"
-    | "public_record",
+    | "public_record"
+    | "statement",
   referenceId?: string,
   text?: string,
   x: number,
@@ -595,6 +764,7 @@ Player claims must remain claims, not canonical facts.
   sourceNodeId: Id<"clueBoardNodes">,
   targetNodeId: Id<"clueBoardNodes">,
   label?: string,
+  color: "red" | "gold" | "blue" | "green",
   createdByPlayerId: Id<"sessionPlayers">,
   createdAt: number,
 }
@@ -624,7 +794,10 @@ Player claims must remain claims, not canonical facts.
     method: { star: boolean, feedback?: string },
     totalStars: 0 | 1 | 2 | 3 | 4 | 5,
   },
+  error?: string,
+  attempts: number,
   createdAt: number,
+  updatedAt: number,
 }
 ```
 

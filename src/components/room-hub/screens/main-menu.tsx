@@ -1,22 +1,28 @@
 import { menuOptionButton } from "../constants";
 
 type MainMenuScreenProps = {
-  onCreate: () => void;
+  activeRooms?: Array<{
+    roomCode: string;
+    status: "waiting" | "playing";
+    caseTitle: string;
+    playerCount: number;
+    reportSubmitted: boolean;
+  }>;
+  onContinue: (roomCode: string, status: "waiting" | "playing", reportSubmitted: boolean) => void;
   onJoin: () => void;
   onPrevious: () => void;
   onSettings: () => void;
-  isWorking: boolean;
   isLoaded: boolean | undefined;
   isSignedIn: boolean | undefined;
   error: string;
 };
 
 export function MainMenuScreen({
-  onCreate,
+  activeRooms,
+  onContinue,
   onJoin,
   onPrevious,
   onSettings,
-  isWorking,
   isLoaded,
   isSignedIn,
   error,
@@ -27,19 +33,27 @@ export function MainMenuScreen({
         REDACTED
       </h1>
       <div className="flex w-full flex-col gap-3">
-        <button
-          className={`${menuOptionButton} text-yellow-200`}
-          disabled={isWorking || !isLoaded || !isSignedIn}
-          onClick={onCreate}
-          type="button"
-        >
-          Create room
+        {activeRooms?.map((room) => (
+          <button
+            className="mb-1 min-h-16 border border-yellow-200/70 bg-[#06142d]/90 px-5 py-3 text-left text-cyan-50 shadow-[0_0_18px_rgba(250,204,21,0.16)] transition hover:border-yellow-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-200"
+            key={room.roomCode}
+            onClick={() => onContinue(room.roomCode, room.status, room.reportSubmitted)}
+            type="button"
+          >
+            <span className="block text-xs uppercase tracking-[0.18em] text-yellow-200">
+              {room.reportSubmitted ? "Open case report" : room.status === "playing" ? "Continue investigation" : "Return to lobby"}
+            </span>
+            <span className="mt-1 block truncate text-lg uppercase">{room.caseTitle}</span>
+            <span className="mt-1 block text-xs uppercase text-cyan-100/55">
+              Room {room.roomCode} · {room.playerCount}/2 connected
+            </span>
+          </button>
+        ))}
+        <button className={`${menuOptionButton} text-yellow-200`} onClick={onPrevious} type="button">
+          Play a previous case
         </button>
         <button className={menuOptionButton} onClick={onJoin} type="button">
           Join room
-        </button>
-        <button className={menuOptionButton} onClick={onPrevious} type="button">
-          Previous games
         </button>
         <button className={menuOptionButton} onClick={onSettings} type="button">
           Settings

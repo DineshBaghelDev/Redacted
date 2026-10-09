@@ -16,17 +16,16 @@ This repository's technical decisions are split across the files below. Agents s
 
 | File | Read when working on |
 |---|---|
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | System boundaries, deployment, runtime topology, data ownership |
-| [DATABASE.md](./DATABASE.md) | Convex tables, fields, indexes, relations, immutable vs mutable data |
-| [API.md](./API.md) | Public Convex queries/mutations/actions and their contracts |
-| [FUNCTIONS.md](./FUNCTIONS.md) | Internal functions, workflows, state transitions, queueing, time advancement |
-| [GAME_SYSTEMS.md](./GAME_SYSTEMS.md) | City, travel, interiors, search, CCTV, devices, forensics, interrogation, clue board, case close |
-| [GENERATION.md](./GENERATION.md) | Case-generation stages, schemas, repair policy, immutable generation rules |
-| [VALIDATION_EVALS.md](./VALIDATION_EVALS.md) | Deterministic validation, LLM evals, multiplayer tests, acceptance gates |
-| [SECURITY.md](./SECURITY.md) | Hidden solution boundaries, Clerk authentication, authorization, abuse/rate-limit rules |
-| [TOOLING.md](./TOOLING.md) | Libraries/services chosen and explicitly rejected |
-[DECISIONS.md](./DECISIONS.md) | Locked decisions, rejected alternatives, unresolved items |
-|  |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System boundaries, deployment, runtime topology, data ownership |
+| [DATABASE.md](./docs/DATABASE.md) | Convex tables, fields, indexes, relations, immutable vs mutable data |
+| [API.md](./docs/API.md) | Public Convex queries/mutations/actions and their contracts |
+| [FUNCTIONS.md](./docs/FUNCTIONS.md) | Internal functions, workflows, state transitions, queueing, time advancement |
+| [GAME_SYSTEMS.md](./docs/GAME_SYSTEMS.md) | City, travel, interiors, search, CCTV, devices, forensics, interrogation, clue board, case close |
+| [GENERATION.md](./docs/GENERATION.md) | Case-generation stages, schemas, repair policy, immutable generation rules |
+| [VALIDATION_EVALS.md](./docs/VALIDATION_EVALS.md) | Deterministic validation, LLM evals, multiplayer tests, acceptance gates |
+| [SECURITY.md](./docs/SECURITY.md) | Hidden solution boundaries, Clerk authentication, authorization, abuse/rate-limit rules |
+| [TOOLING.md](./docs/TOOLING.md) | Libraries/services chosen and explicitly rejected |
+| [DECISIONS.md](./docs/DECISIONS.md) | Locked decisions, rejected alternatives, unresolved items |
 | [progress.md](./docs/progress.md) | Current implementation progress and latest shipped UI/backend changes |
 | [design decisions.md](./docs/design decisions.md) | Product and UI decisions made during implementation |
 
@@ -57,16 +56,14 @@ This repository's technical decisions are split across the files below. Agents s
 - Do not implement generated interiors with an LLM. Use deterministic templates plus generated parameters.
 - Do not start implementation with generation. Build and test the game using a hardcoded fixture case first.
 
-## Current unresolved items
+## Parallel time semantics
 
-Do not invent answers to these during implementation:
-
-- **Parallel time semantics:** two partners can work simultaneously, but we have not explicitly decided whether concurrent time-consuming actions add to one global clock or overlap in simulated time. This must be resolved before finalizing the time engine.
+The user chose a continuous action-driven shared clock on 2026-10-07. Concurrent actions overlap in simulated time, and the clock pauses when no timed action is active. See `docs/GAME_SYSTEMS.md` and `docs/design decisions.md`.
 
 ## Locked gameplay decisions
 
 - Investigation actions are location-gated: players must go to the relevant place/tool to perform searches, forensics, CCTV review, device inspection, and public-record searches.
-- Interrogation is allowed only when the NPC is present: either the player calls the NPC to the bureau, or the player goes to meet the NPC.
+- V1 interviews take place at the bureau only. A detective there calls a living NPC in, making them present immediately; each question still costs 3 game minutes. Field meetings are out of V1 scope.
 - City size and case size have no hard upper limit; keep only minimum/solvability constraints and generation/runtime practicality checks.
 - Suspect counts by difficulty: easy has around 3-4 suspects, normal has around 6-7 suspects, and hard has 10 or more suspects.
 - Users may override the default case deadline.

@@ -4,6 +4,7 @@ type SettingsPanelProps = {
   detectiveName: string;
   onChange: (value: string) => void;
   canSave: boolean;
+  onBack: () => void;
   onSave: () => void;
 };
 
@@ -11,6 +12,7 @@ export function SettingsPanel({
   detectiveName,
   onChange,
   canSave,
+  onBack,
   onSave,
 }: SettingsPanelProps) {
   return (
@@ -31,13 +33,10 @@ export function SettingsPanel({
         onChange={(event) => onChange(event.target.value)}
         value={detectiveName}
       />
-      <button
-        className={`${menuButton} mt-4 w-full text-yellow-200`}
-        disabled={!canSave}
-        type="submit"
-      >
-        Save
-      </button>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <button className={menuButton} onClick={onBack} type="button">Back to menu</button>
+        <button className={`${menuButton} text-yellow-200`} disabled={!canSave} type="submit">Save</button>
+      </div>
     </form>
   );
 }

@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { shadcn } from "@clerk/ui/themes";
 import { Geist_Mono, Pixelify_Sans } from "next/font/google";
 import { AppConvexProvider } from "@/components/convex-provider";
+import "@xyflow/react/dist/style.css";
 import "./globals.css";
 
 const pixelifySans = Pixelify_Sans({
@@ -31,7 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${pixelifySans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full">
+      <body className="min-h-full vsc-initialized">
         <ClerkProvider appearance={{ theme: shadcn }}>
           <AppConvexProvider>{children}</AppConvexProvider>
         </ClerkProvider>

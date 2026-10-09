@@ -1,37 +1,38 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRoomSession } from "./use-room-session";
-import { FreshStartModal } from "./screens/fresh-start-modal";
 import { JoinModal } from "./screens/join-modal";
 import { MainMenuScreen } from "./screens/main-menu";
 import { NameEntryScreen } from "./screens/name-entry";
 import { PreviousGamesScreen } from "./screens/previous-games";
 import { RoomLobbyModal } from "./screens/room-lobby-modal";
 import { SettingsPanel } from "./screens/settings-panel";
-import { CaseBriefScreen, LoadingScreen } from "./screens/status-screens";
+import { CaseBriefScreen } from "./screens/status-screens";
+import { BureauScreen } from "./screens/bureau-screen";
 
 const DETECTIVE_NAME_KEY = "redacted.detectiveName";
+const subscribeToNothing = () => () => {};
 
 export function RoomHub() {
   const { user } = useUser();
   // localStorage is not available during server rendering, so the saved
   // detective name is only known after the client mounts. Render nothing until
   // then so the name dialog never flashes on reload.
-  const [detectiveName, setDetectiveName] = useState("");
-  const [hasDetectiveName, setHasDetectiveName] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    const savedName = window.localStorage.getItem(DETECTIVE_NAME_KEY) ?? "";
-    setDetectiveName(savedName);
-    setHasDetectiveName(Boolean(savedName.trim()));
-    setIsMounted(true);
-  }, []);
+  const [detectiveName, setDetectiveName] = useState(() =>
+    typeof window === "undefined" ? "" : window.localStorage.getItem(DETECTIVE_NAME_KEY) ?? "",
+  );
+  const [savedDetectiveName, setSavedDetectiveName] = useState(() =>
+    typeof window === "undefined" ? "" : window.localStorage.getItem(DETECTIVE_NAME_KEY) ?? "",
+  );
+  const [hasDetectiveName, setHasDetectiveName] = useState(() =>
+    typeof window !== "undefined" && Boolean(window.localStorage.getItem(DETECTIVE_NAME_KEY)?.trim()),
+  );
+  const isMounted = useSyncExternalStore(subscribeToNothing, () => true, () => false);
 
   const fallbackName = user?.firstName || user?.username || "Detective";
-  const nickname = detectiveName.trim() || fallbackName;
+  const nickname = (hasDetectiveName ? savedDetectiveName : detectiveName).trim() || fallbackName;
 
   // All hooks must be called before any conditional return.
   const {
@@ -41,14 +42,13 @@ export function RoomHub() {
     setRoomCode,
     joinedRoomCode,
     room,
+    activeRooms,
     showRoom,
-    freshStartCase,
-    setFreshStartCase,
-    activeCaseId,
     error,
     setError,
     copiedCode,
     isWorking,
+    workingAction,
     isLoaded,
     isSignedIn,
     createOrJoin,
@@ -57,7 +57,7 @@ export function RoomHub() {
     copyRoomCode,
     closeJoin,
     leaveRoom,
-    openBrief,
+    continueRoom,
   } = useRoomSession(nickname);
 
   if (!isMounted) {
@@ -65,8 +65,9 @@ export function RoomHub() {
   }
 
   function saveDetectiveName() {
-    const savedName = nickname.trim() || "Detective";
+    const savedName = detectiveName.trim() || fallbackName;
     window.localStorage.setItem(DETECTIVE_NAME_KEY, savedName);
+    setSavedDetectiveName(savedName);
     setDetectiveName(savedName);
     setHasDetectiveName(true);
     setScreen("menu");
@@ -84,28 +85,35 @@ export function RoomHub() {
     );
   }
 
-  if (screen === "loading") {
-    return <LoadingScreen />;
+  if (screen === "brief") {
+    return (
+      <CaseBriefScreen
+        error={error}
+        onBegin={() => setScreen("bureau")}
+        onLeave={leaveRoom}
+        roomCode={joinedRoomCode}
+      />
+    );
   }
 
-  if (screen === "brief") {
-    return <CaseBriefScreen caseId={activeCaseId} />;
+  if (screen === "bureau") {
+    return <BureauScreen error={error} onLeave={leaveRoom} />;
   }
 
   return (
     <div className="flex w-full flex-col gap-8 lg:flex-row lg:items-start">
       <MainMenuScreen
+        activeRooms={screen === "menu" ? activeRooms : undefined}
         error={screen === "menu" ? error : ""}
         isLoaded={isLoaded}
         isSignedIn={isSignedIn}
-        isWorking={isWorking}
-        onCreate={() => createOrJoin("create")}
         onJoin={() => {
           setError("");
           setRoomCode("");
           setScreen("join");
         }}
-        onPrevious={() => setScreen("previous")}
+        onContinue={continueRoom}
+        onPrevious={() => { setError(""); setScreen("previous"); }}
         onSettings={() => setScreen("settings")}
       />
 
@@ -127,14 +135,17 @@ export function RoomHub() {
           canSave={Boolean(nickname.trim())}
           detectiveName={detectiveName}
           onChange={setDetectiveName}
+          onBack={() => { setDetectiveName(savedDetectiveName); setScreen("menu"); }}
           onSave={saveDetectiveName}
         />
       ) : null}
 
       {screen === "previous" ? (
         <PreviousGamesScreen
-          onContinue={openBrief}
-          onFreshStart={setFreshStartCase}
+          error={error}
+          isWorking={isWorking}
+          onBack={() => { setError(""); setScreen("menu"); }}
+          onPlay={(game, deadlineMinutes) => createOrJoin("create", { ...game, deadlineMinutes })}
         />
       ) : null}
 
@@ -149,18 +160,10 @@ export function RoomHub() {
           onStart={startInvestigation}
           onToggleReady={toggleReady}
           room={room}
+          workingAction={workingAction}
         />
       ) : null}
 
-      {freshStartCase ? (
-        <FreshStartModal
-          onCancel={() => setFreshStartCase("")}
-          onConfirm={() => {
-            openBrief(freshStartCase);
-            setFreshStartCase("");
-          }}
-        />
-      ) : null}
     </div>
   );
 }

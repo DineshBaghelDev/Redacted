@@ -1,5 +1,425 @@
 # Progress
 
+## 2026-10-09 — Review corrections
+
+- Clueboard reads return null when the playing room is unavailable; records searches report an active action before the bureau-location error.
+- Publication failures are recorded separately from generation status updates. Leaving cancels owned interview turns, CCTV reviews, and record searches while preserving other shared record access.
+- Replay deadline input validates hours and rounds to whole minutes; API and development-case documentation match published-case replay.
+- Validation: all 158 tests passed across the full-suite run and corrected-fixture rerun; TypeScript and lint passed (existing lint warnings). Convex sync is blocked in this sandbox because the local backend requires a newer glibc.
+
+## 2026-10-09 — Replay deadline and review-only rooms
+
+- Replay creation accepts an optional, fixed shared deadline in whole game minutes; omitted input keeps the frozen estimate plus 1,440 minutes. Invalid numeric deadlines are rejected server-side.
+- A submitted final report now blocks new travel, searches, inspections, lab work, records/CCTV review, interviews, and clueboard edits for both players. Reads and grading retry remain available, and already-started timed work may settle. The deadline itself never blocks play or reduces the report score.
+- Focused replay and review-only tests passed, followed by all 139 tests, TypeScript, lint (no errors), production build, and a personal-dev Convex function sync. A signed-in browser check is still unverified; the full 18-case playthrough sweep is intentionally skipped per player direction.
+- A follow-up read-only data check confirmed text CCTV records across all 18 published cases (3,562 rows in the personal dev deployment). An initial partial count was caused by truncated command output, not missing records. No case data was changed.
+
+
+## 2026-10-09 — Clueboard connection without dragging
+
+- A detective can tie two selected board cards from the clueboard header using the existing shared edge action and chosen string color. This gives keyboard and touch users a non-drag route while retaining pin-to-pin dragging; the server still rejects invalid or cross-room links.
+- Keyboard movement of cards and a signed-in touch/keyboard playtest remain open.
+
+## 2026-10-09 — Map and leave-confirmation usability
+
+- The stacked map now has one vertical scroll surface on narrow screens, so the place picker, map, and route actions move together. Desktop retains separate map and detail scrolling. A signed-in visual check at a short mobile viewport is still open.
+- The in-game Leave confirmation now uses the same native modal-dialog behavior as the room modals. Keyboard focus stays in the decision, and Escape cancels rather than leaving. A signed-in keyboard pass is still open.
+- In a synthetic dev replay, an earlier toxicology request progressed to minute 247, became ready, and showed its frozen result only after the detective viewed it at the forensic lab. An outsider could not read that room's lab data.
+
+## 2026-10-09 — Interview and scene-path live check
+
+- In a synthetic dev replay of Keel Street Incident, calling Dina Hartigan at the bureau made her immediately available. Asking what she witnessed completed at shared game minute 3 and exposed her stored statement; no field interview was needed or added.
+- The same detective travelled to 14 Keel Street (minute 26), moved through the hallway to the main bedroom (minute 29), searched it (minute 44), and found Freya Winslow's phone. A separate five-minute read exposed its frozen call and message rows at minute 49. The shared clock paused between actions.
+- A read-only audit of all 18 published cases matched every decisive evidence reference to one frozen runtime row and found no invalid or provably unreachable acquisition route through rooms, lab, CCTV, records, devices, or interviews. This is a static reachability check plus one live path, not 18 full playthroughs or signed-in browser UX verification.
+
+## 2026-10-09 — All-published-case startup smoke
+
+- On the personal dev deployment, all 18 published cases created a fresh synthetic replay, readied and started a one-player lobby, and returned a public brief, 20-place map, NPC list, 60-camera list, and an available bureau public-record search. The test rooms remain under a synthetic identity. This covers replay boot and initial safe queries, not complete case playthroughs or signed-in browser UX.
+
+## 2026-10-09 — Clueboard pin placement
+
+- Auto-placed notes and evidence cards now continue into new rows after the sixteenth card instead of wrapping onto the first row and covering earlier pins. The board still has its existing 100-node limit.
+
+## 2026-10-09 — Keep case generation off the player site
+
+- The existing allowlisted generation tester route now returns 404 outside Next development mode, matching the other development-only example route. A local production server returned HTTP 404 for `/dev/generation`. The normal player menu still offers only replays of published cases; dev tester functions retain their separate server allowlist.
+
+## 2026-10-09 — Body-source lab repair
+
+- The nine inaccessible optional lab rows all trace to exact `body:<victim>` subjects in their frozen evidence drafts. Publication and lab access now preserve an explicit victim source for body-based tests, while keeping their results behind the normal request, wait, and view steps. A strict internal repair matches draft evidence ID and victim before patching an older row.
+- The personal dev deployment repaired 27 source links across all 18 published cases (18 autopsy rows and nine additional body tests); a second pass changed zero. In a fresh replay of Keel Street Incident, travel to the lab exposed its toxicology test as available with no result text. Requesting it moved it to pending with the result still hidden, and a non-member saw no lab data. The full timed ready/view path is covered by the fixture test, not a live playthrough.
+
+## 2026-10-09 — Published replay data audit
+
+- A read-only dev audit found 18 published replay cases. Each has a valid frozen estimate, a bureau, a connected 20-place city, NPC scripts for all living people, and the decisive evidence IDs present in runtime tables. Every case has stored camera records, confirmed again by a full untruncated count.
+- Nine cases each have one optional, non-decisive lab result without an item or room source, so that result cannot currently be requested. Frozen-data presence does not prove the complete player journey; per-case signed-in playthroughs and a safe repair for these lab links remain open.
+
+## 2026-10-09 — Reopening a submitted report
+
+- Continue now distinguishes a room with a submitted final report from an active investigation. It opens the existing case-file result/retry screen for that room, including while grading is in progress, without treating the published case as consumed. A fresh replay remains available from Previous cases.
+
+## 2026-10-09 — Explore during travel
+
+- Revisiting Explore from browser history while travelling now shows the existing travel notice and map route instead of saying the current place has no rooms. Signed-in browser verification is still open.
+
+## 2026-10-09 — Live final-report check
+
+- A test-only dev replay submitted a pinned camera record and complete five-part theory. Private grading returned a completed five-category star result; outsider and anonymous callers received no result. This verifies one backend case-close path, not the signed-in UI or every published replay.
+- The written case-close API now matches the live room-code contract, including retry after a grading failure.
+
+## 2026-10-09 — Saved records-search wording
+
+- The public-records button now recognizes repeated spaces and case changes in a recent saved search. Searches not on the recent list use a neutral label because an older saved search may still reopen for free; the pending state now uses the server's normalization too. Signed-in visual verification remains open.
+- A dev replay camera check hid a frozen record before review, kept it pending during the 5-minute action, then exposed and pinned it to the shared clueboard at minute 11. A non-member could not read the window.
+
+## 2026-10-09 — Live interview provider repair
+
+- A fresh dev replay of Whitlock Office Murder started at bureau with its frozen deadline and a paused clock. Calling Priya Kaur was immediate, and one question consumed 3 shared minutes, but the configured NVIDIA-hosted Kimi endpoint returned 404 for this account and the streamed reply left the turn stuck in processing.
+- Interviews now use the existing Moonshot-hosted Kimi model and save a short reply as one message. A modeled provider failure moves the turn to a retryable failed state instead of leaving it processing. A live retry confirmed that behavior without another time charge, but produced reasoning with no spoken text; the worker now forwards the existing thinking-off option and treats empty replies as failed.
+- A second live question returned a visible 599-character NPC answer, with the shared clock paused at minute 6. A dev-wide read-back found no remaining processing interview turns. Signed-in browser presentation is still unverified.
+- Provider failures now log only the error message, not the raw request object that can contain an NPC's private script.
+
+## 2026-10-09 — Deadline visibility
+
+- The investigation strip now shows each replay room's stored due time beside the shared case clock, including across station screens. This is display-only; deadline override and expiry behavior still await player decisions.
+- A signed-in read-only query against an existing dev replay returned the expected due minute (1,815) alongside its paused shared clock (minute 20). All 136 tests, type-check, lint, and production build passed; signed-in visual sizing remains unverified.
+
+## 2026-10-09 — Shared case-time display
+
+- A slim case-time strip now stays visible across the bureau and investigation stations, using the existing shared clock. It advances only while timed work is active and reserves its own space above station controls. Expiry behavior remains separate pending a player decision.
+
+## 2026-10-09 — Profile edit return
+
+- The profile panel now has Back to menu. Leaving without Save restores the stored detective name, so an unsaved edit does not silently affect the next room.
+
+## 2026-10-09 — Replay creation feedback
+
+- Failed replay-room creation now shows its error in the previous-case picker instead of silently leaving the detective on the same list. Entering or leaving the picker clears unrelated old errors.
+
+## 2026-10-09 — Previous-case picker navigation
+
+- Added a visible Back to menu action above the scrolling case list, so detectives can leave the picker without browser navigation or opening a case.
+
+## 2026-10-09 — Continue menu only shows playable cases
+
+- An older room linked to an unpublished case no longer appears in the Continue menu. The room and its data remain untouched; only fully published cases are offered as replay rooms.
+
+## 2026-10-09 — Replay test fixtures
+
+- Updated three published-case fixtures with frozen time estimates so replay creation and start tests exercise the required deadline contract again.
+
+## 2026-10-09 — Older active replay deadlines
+
+- A private idempotent repair can add the published case's default deadline to an already-playing room without resetting its clock, conversation, or evidence. It refuses waiting, case-less, and unpublished rooms.
+- The seven eligible dev rooms were repaired. A read-back found all eight current published-case rooms (seven playing, one waiting) have the expected default deadline, with no missing or mismatched values. Legacy case-less and unpublished rooms were left unchanged.
+
+## 2026-10-08 — Replay deadline state
+
+- New replay rooms now store a paused game clock at minute zero and a default deadline of the case's frozen estimate plus 1,440 minutes. Previously created waiting rooms receive the same default on start.
+- A live dev replay of a case with a 375-minute estimate stored minute 0 and a 1,815-minute deadline as expected. Override entry, deadline display, and expired-action rules remain open; older already-playing sessions were repaired on October 9.
+
+## 2026-10-08 — Frozen replay time estimate
+
+- Publication now copies the positive integer investigation estimate into the immutable case record. Re-publishing an older published case fills that missing field idempotently from its original generated draft; replay will not have to read drafts to set a deadline.
+- Verified the dev deployment: all 18 playable published cases now have positive frozen estimates. One older row remains unpublished and hidden because its original cast/statement data is inconsistent. Deadline selection and enforcement remain open.
+
+## 2026-10-08 — Short-screen city map
+
+- The mobile map's route details can now be reached by scrolling when the stacked map and details exceed the available height. Desktop keeps its separate map and details scrolling.
+- A signed-in short-screen visual check remains open.
+
+## 2026-10-08 — Room browser-history navigation
+
+- The replay shell now derives its visible screen and current room code from the URL on every navigation. Browser Back/Forward no longer leaves a previous screen or room-lobby overlay visible over a different route.
+- Signed-out desktop and mobile boot screens were visually checked at 1440×900 and 390×844. Signed-in history interaction remains unverified without an authenticated browser session.
+
+## 2026-10-08 — Older passed-case replay recovery
+
+- The development deployment had 23 passed generation jobs but only one published replay case. A private, per-job idempotent repair now reuses frozen-case validation, including a strict read-time translation of the older `killerId`/`timeOfDeath` crime fields.
+- Recovered 17 additional jobs: 18 frozen replay cases are now published. Five older jobs remain invalid (one crime names people absent from its cast; four use the removed body-moving mechanic) and stay hidden. The repair does not alter drafts, publish failed transactions, or add a public creation/generation route. Per-case browser playability is still unverified.
+
+## 2026-10-08 — Shared recorded statements
+
+- A detective can ask for an NPC's frozen witness account at the bureau. The question costs 3 game minutes; when it completes, the session gains only that NPC's published statements whose events are not covered by their intentional lies. Both detectives can then read, pin, and show those statements as proof.
+- Clueboard pinning, proof presentation, and final-report citation recheck the session access row, so guessed statement IDs and forged board cards do not reveal or cite private statements. Mocked timing, two-player sharing, lie exclusion, and case-close access tests pass. Live-provider/browser verification remains open.
+
+## 2026-10-08 — Frozen witness-statement publication
+
+- New cases now publish generated witness statements and their rewritten wording as immutable, private runtime rows. An internal idempotent backfill repairs previously published cases without regenerating story or changing replay creation.
+- Runtime acquisition is described above; live-provider/browser verification remains open.
+
+## 2026-10-08 — Direct interview proof
+
+- Detectives can show found evidence directly in a bureau interview without first pinning it to the clueboard. The selector includes discovered items, viewed lab results, reviewed camera records, completed public records, and read device files, calls, and messages. Server checks still reject guessed or unread references; pinned-proof calls remain supported.
+- The current selector is bounded to the first 100 rows of each discovery source. Another person's statement remains open; field interviews are out of V1 scope by player decision. Real-provider and browser playthrough are still unverified.
+
+## 2026-10-08 — NPC-phone handover and read
+
+- Added a deliberate bureau interview request for NPC-held phones. After the 3-minute question, both detectives share the handover; a separate 5-minute read reveals the phone's pre-generated calls and messages.
+- The interview panel now shows read records and can pin them. Clueboard pinning, interview proof, and final-report submission all check the same session read gate, so a guessed record ID cannot reveal an unread NPC phone.
+- Mocked two-player backend coverage confirms hidden-before-read, shared-after-read, partner duplicate-read rejection, and a message used to expose a lie. Real-provider and browser playthrough remain unverified.
+
+## 2026-10-08 — Bureau interview path in progress
+
+- Pinned, already-discovered evidence can now be shown with a bureau question. The server rechecks case/session access, resolves the frozen evidence ID, and marks matching main or backup lies exposed for that shared conversation. The NPC reply sees only that NPC's lie exposure state for the queued turn; no solution or script is sent to clients.
+- At this stage, unpinned discovered evidence and another person's statement were not selectable yet; the real-provider/browser interview pass remains open.
+- Added the shared NPC conversation component, a bureau call action, a 3-minute question action, per-NPC ordered processing, and a responsive conversation view. Calling an NPC to the bureau is immediate by player decision.
+- The NPC reply worker sees only that NPC's private script and thread history, not the hidden case solution. Live model replies, evidence presentation, and full browser playthrough remain to be verified before treating interviews as complete.
+
+## 2026-10-08 — Searchable victim phone and shared records
+
+- Reconfirmed continuous, action-driven play with no turns. The clock remains paused when neither detective has a timed action.
+- Generated victim phones with a scene-search location now publish as hidden physical items. If the scene room otherwise has no searchable slots, publication enables the room search so the phone is reachable. The existing internal backfill repairs already-published cases without regenerating evidence.
+- A 5-minute read reveals the phone's frozen calls and messages to both detectives. Either can pin an individual record and cite it in the final report; guessed IDs cannot bypass the read. NPC-held phones still need a separate handover route.
+
+## 2026-10-08 — Playable laptop files
+
+- Searchable laptops now publish their frozen files into playable case rows. An investigator must find the physical laptop, then spend 5 shared game minutes to read it; contents remain hidden until completion and are shared with the partner.
+- Read files can be pinned to the clueboard and cited in the final report. Direct file-ID guesses, non-members, and duplicate partner reads cannot bypass discovery.
+- Added an idempotent internal backfill for already-published cases whose first publisher omitted laptop files. Victim-phone records are now playable; NPC-held phone access remains unfinished.
+
+## 2026-10-08 — Shared-clock settlement correction
+
+- When one action or lab request completes while another continues, settlement now saves the current shared-time anchor. Later result availability and the next completion timer no longer read an outdated baseline.
+- Added a regression covering staggered lab results and pause after the last result; corrected the locked decision record and source-of-truth links.
+
+## 2026-10-08 — Timed public-record searches
+
+- Searching the bureau's public records now costs 10 shared game minutes. Typed text alone reveals nothing; completed searches and their results are shared with the partner.
+- Only files returned by a completed search may be pinned to the clueboard. Direct record-ID guesses no longer bypass the search.
+- Search now matches the file contents as well as titles, so an address such as Keel Street can be found even when the title only names a person.
+- Each search stores its matched file IDs at start, so later search-index or corpus changes cannot make a completed search display an unpinnable file.
+
+## 2026-10-08 — Timed CCTV review
+
+- Reviewing a camera time window now occupies a detective for 5 shared game minutes. Results remain server-hidden until completion, and a completed window is available to both partners without another charge.
+- The bureau terminal shows available, in-progress, and reviewed states. Direct clueboard pinning cannot bypass a completed review by guessing a CCTV record ID.
+
+## 2026-10-07 — Forensic lab requests and results
+
+- Added shared lab requests for tests backed by collected objects, searched rooms, or the autopsy. Submission occupies the detective for 5 game minutes; the frozen turnaround keeps the shared clock running and overlaps other work.
+- The lab lists eligible test names and pending times without exposing result text. Either partner can open a ready result at the lab, after which it is shared. No evidence is generated during play.
+- A room-level clock settlement timer handles completed travel, room actions, and pending lab work even when the player leaves a specific station screen.
+- Viewed lab reports and discovered objects can be pinned to the clueboard and selected as proof in the final report. The server converts those pins to canonical evidence IDs before grading, without exposing unviewed reports.
+- The final report now offers collected inventory as an explicit weapon choice. Server validation rejects guessed or uncollected item IDs while retaining a text description for non-item weapons.
+
+## 2026-10-07 — Room investigation and shared inventory
+
+- Added connected room movement, 15-minute room searches, 2-minute item inspection, and explicit collection on the continuous shared clock. Two players can act concurrently; the clock pauses after the last action.
+- Search reveals only frozen case items in that room. Discovered items, inspected descriptions, searched rooms, and collected inventory are shared. Hidden items remain unavailable until a legitimate search.
+- Added a responsive Explore screen with room navigation, action progress, local finds, and shared inventory, reachable from the city map or the away-from-bureau notice.
+- Discovered objects can now be pinned to the shared clueboard. Pinning is refused until the team finds the object and never reveals its description early.
+- Closed a clueboard location bypass: public-record and CCTV cards can only be created while the detective has bureau-terminal access.
+- CodeRabbit review closed two gameplay races: a started session can no longer be started again to reset the clock, and partners cannot waste time by searching the same room simultaneously.
+- Published the checked hand-written case in the development deployment and verified a two-player replay/travel backend flow. Browser playthrough remains to be checked.
+
+## 2026-10-07 — Continuous multiplayer clock decision
+
+- Chose an action-driven shared clock: concurrent detective actions overlap, the clock pauses when no timed action is active, and server timestamp anchors avoid turn prompts and per-minute writes.
+- Kept the real-time speed multiplier adjustable for playtesting while preserving the documented in-game minute costs.
+- Added the first timed action: detectives can choose any reachable city destination, travel concurrently along the shortest route, and arrive independently. The shared clock pauses after the last journey; stale journeys settle on return.
+- The map shows each detective's location and journey progress. Bureau CCTV and public-record reads now require that detective to be physically at the bureau and not travelling; away detectives see a route back to the map.
+- Publishing the checked hand-written case exposed cameras with no observations. The publisher now keeps those cameras across the case window instead of rejecting the case.
+
+## 2026-10-07 — Stale room recovery
+
+- Expired, unknown, or inaccessible room URLs now return to the home screen instead of showing an empty game or permanent loading lobby.
+- The home screen explains that the room is no longer available while preserving normal room creation and join flows.
+
+## 2026-10-07 — Waiting-room route guard
+
+- Direct brief or bureau URLs now return waiting sessions to their ready lobby instead of visually bypassing it.
+- Once either player starts, the lobby route still advances both detectives to the shared case brief.
+
+## 2026-10-07 — Safe investigation exit
+
+- Leaving a started room now requires confirmation because the membership removal is irreversible.
+- The bureau explains that the player cannot rejoin, with a keyboard-focused `Stay` action as the safe default.
+
+## 2026-10-07 — Complete CCTV windows
+
+- Camera timeline queries now apply the selected time boundary in the database index and inspect every earlier overlapping row.
+- Later activity no longer disappears when a camera has more than 512 stored records.
+
+## 2026-10-07 — Truthful station guidance
+
+- The bureau now calls the roster surface `People` until live interviews exist, while preserving its room-scoped route.
+- The Case File description now matches its actual briefing and final-report flow.
+- CCTV no longer claims the timeline contains activity marks that are not rendered.
+
+## 2026-10-07 — Case-close evidence limit
+
+- The final-report form now shows the server's 12-record limit before submission.
+- Once 12 records are selected, extra choices are disabled while selected records remain removable.
+
+## 2026-10-07 — Shared lobby start transition
+
+- When either detective starts a ready room, both clients now follow the shared `playing` status into the case brief.
+- The partner no longer remains trapped in a stale lobby after the starter navigates away.
+- Lobby controls enter a truthful opening state while the shared route transition completes.
+
+## 2026-10-07 — Shared map-place references
+
+- Every map-visible place can now be pinned directly to the shared clueboard without implying travel or discovery.
+- The server validates the place against the replayed case's city, derives player-safe card text, and de-duplicates the reference for both players.
+- Every clueboard card now has an accessible full-detail view on mobile and desktop.
+- The bureau names its currently playable evidence surface `Public records` instead of advertising unfinished inventory, messages, or lab results.
+
+## 2026-10-06 — Ready-gated investigation start
+
+- A second player joining a replay room no longer starts the investigation automatically.
+- The room stays in the lobby with investigation data hidden until every connected player marks ready and a player explicitly starts.
+- Regression coverage follows the two-player join, ready, and start flow end to end.
+
+## 2026-09-28 — Private case-close grading
+
+- A signed-in room member can submit one final five-part theory using a case NPC and evidence pinned to that session's clueboard.
+- Killer, weapon identity/name, canonical evidence-group coverage, and the five-star total are checked server-side; motive, non-item weapon, evidence reasoning, and method use a private structured judge.
+- Canonical answers and model-written text never enter the public result. Provider failure leaves a bounded retry path instead of a stuck judging state.
+- The Case File station now carries the complete responsive flow: public brief, five findings, evidence selection, irreversible confirmation, shared judging state, retry, and the five-category result.
+
+## 2026-09-28 — Evidence reference cards
+
+- Known people, visible public records, and CCTV rows can now be pinned directly to the shared clueboard.
+- Reference cards keep their case evidence ID, use server-derived display text, cannot be rewritten as notes, and de-duplicate across both players.
+- The clueboard remains editable only after the investigation starts; cross-case references are rejected server-side.
+- Shared strings can now be labelled, recoloured after selection, and removed; labels are bounded and rendered directly on the board.
+
+## 2026-09-28 — Active-game investigation guard
+
+- One shared server guard now keeps the city map, public NPC list, CCTV console, and public-record search unavailable until a room enters play.
+- The public case brief remains visible in the lobby, and regression coverage checks both waiting and playing states.
+- Map and public-person reads no longer cut large cases off at 32 places/NPCs or 64 streets.
+
+## 2026-09-27 — Records access review fix
+
+- CodeRabbit found that room membership alone could read public records before an investigation started.
+- The records query now requires both membership and a playing session; the regression test covers waiting, playing, and non-member access.
+
+## 2026-09-27 — Replay-only home menu
+
+- Removed the disabled new-case affordance from the home screen.
+- Playing a previous case is now the primary action, followed by joining a partner's room and settings.
+
+## 2026-09-27 — Bureau records terminal
+
+- The Evidence station now provides a responsive searchable public-record terminal using the frozen case corpus.
+- Results expose only type, title, and player-facing content; normalized subject links and proof/source metadata stay server-side.
+- Room membership is enforced, with clear loading, empty, and unavailable states on mobile and desktop.
+
+## 2026-09-27 — Case-ID replay contract
+
+- Published previous-case entries now carry their frozen case ID and create new sessions through `sessions.createReplay`.
+- The replay mutation rejects partial or unpublished cases and never reads generation jobs or drafts.
+- Unpublished generation drafts are hidden from players and cannot create sessions; only fully frozen cases are replayable.
+
+## 2026-09-27 — Active-room resume
+
+- The home menu now shows the signed-in player's unexpired rooms with case title, room code, player count, and clear lobby/investigation wording.
+- Continuing a waiting room reopens its lobby; continuing a started room goes directly to the bureau.
+- The query is Clerk-identity scoped and does not reveal other players' rooms.
+
+## 2026-09-27 — Frozen-case replay authority
+
+- A case receives a publication version only after all current immutable runtime tables are written successfully.
+- Previous-case listing uses frozen title, summary, and difficulty after publication, even if generation drafts or job status later change.
+- Replaying that entry creates a fresh room against the same case row without re-reading generation data.
+
+## 2026-09-27 — Private narrative freeze
+
+- Passed cases now copy their canonical event timeline and per-NPC roleplay scripts into server-only runtime tables.
+- Event actors and locations are normalized to frozen case rows; scripts retain only that NPC's checked knowledge, lies, and behavior rules.
+- Neither table has a client-callable query, preserving the hidden-solution boundary.
+
+## 2026-09-27 — Publication review fixes
+
+- Case publication no longer truncates cities, rooms, casts, items, or evidence-link resolution at arbitrary row counts.
+- A passed generation job with no decisive evidence now fails atomically instead of creating an incomplete playable case.
+
+## 2026-09-27 — Forensic truth freeze
+
+- Generated lab truth now publishes into immutable case-owned forensic outputs with normalized item, room, and NPC links.
+- Test names are normalized to the documented runtime vocabulary and use the locked V1 turnaround constants.
+- No forensic request, result release, or game-clock behavior was added while parallel time semantics remain unresolved.
+
+## 2026-09-27 — Public-record evidence freeze
+
+- Address, employment/background, and card-payment evidence now publishes into immutable case-owned records.
+- Records keep normalized subject links but omit generation-only proof and source-event tags.
+- Player search remains deferred until its location gate and discovery rules are implemented.
+
+## 2026-09-27 — Digital evidence freeze
+
+- Passed cases now copy phones, call logs, and messages into immutable runtime tables before a lobby is created.
+- Message wording uses the checked text-stage rewrite when present; both participants' phone copies remain consistent.
+- Runtime records use normalized NPC/device links and no public query exposes them yet.
+
+## 2026-09-27 — Immutable CCTV records
+
+- Cameras and appearance-only records now publish into case-owned Convex tables with real place, room, street, and NPC references.
+- The player CCTV queries no longer read mutable generation drafts; they return only camera labels, time bounds, status, and sanitized record wording.
+- Hidden NPC links stay server-side and vehicle links are ready for future generated vehicle data.
+
+## 2026-09-27 — Physical evidence freeze
+
+- Searchable story objects and seeded clutter now publish into normalized case-item rows with their stored place, room, slot, type, and collection rules.
+- Item publication reads the generated access rule rather than guessing a location, fails closed on unknown rooms, and runs exactly once per case.
+- Items remain hidden and have no public query until a legitimate room search reveals them.
+
+## 2026-09-27 — Immutable playable world snapshot
+
+- Starting a session now publishes the complete V1 city, buildings, floors, rooms, doors, home units, and travel edges into normalized case-owned Convex rows exactly once.
+- The player city map now reads the selected case's stored snapshot instead of importing the generator fixture at request time.
+- Stable source IDs and explicit ordering preserve map labels, routes, camera flags, and deterministic path tie-breaking for replays.
+
+## 2026-09-27 — Case-specific interview roster
+
+- The bureau interview station now shows the selected case's normalized victim, people of interest, and witnesses in a responsive case-file layout.
+- The public NPC query is room-member scoped and omits generated source IDs and all private scripts/solution data.
+- Asking questions remains deferred until the shared multiplayer clock rule is decided.
+
+## 2026-09-27 — Private solution freeze
+
+- Passed generated cases now freeze their cast into normalized NPC rows and store one server-only canonical solution before play.
+- Existing passed cases are backfilled idempotently the next time a new session is created; no client-callable function exposes the solution.
+- The weapon uses the documented text fallback until physical case items are published.
+
+## 2026-09-27
+
+- Replaced the client-only Union Station CCTV demo data with the selected case's generated cameras and appearance-only records.
+- CCTV reads are scoped through the authenticated room membership and omit hidden people, source events, and solution data.
+- Camera faults and temporary outages now come from each case, and the timeline adapts to that case's recorded window on mobile and desktop.
+- Replaced the map placeholder with the permanent 20-place city and its real street connections, travel minutes, and camera-marked routes.
+- The city map is room-member-only, supports place and direct-route inspection, and adapts into a stacked layout on small screens.
+- Starting a ready room now opens the selected case's full public briefing instead of skipping from a decorative loading screen straight to the bureau.
+- The room-scoped briefing survives reloads and gives players explicit Begin investigation and Leave room actions on mobile and desktop.
+- Added a dedicated mobile bureau station menu so every investigation surface has a reliable touch target even when the room artwork is cropped on narrow screens.
+- Join and lobby overlays now use native modal dialogs, keeping keyboard focus inside the active room flow and announcing errors to assistive technology.
+- Lobby actions now prevent repeat submissions, show their active state, and report clipboard failures instead of silently doing nothing.
+- Changed the previous-case action from technical `Play in lobby` wording to the player-facing `Play case`.
+- Added a named mobile place picker above the city map so players do not have to guess numbered map markers or hit tightly spaced dots.
+- CCTV now requests only the selected camera's nearby time window from Convex; the browser no longer receives the case's full camera-record corpus or activity markers.
+
+## 2026-09-26
+
+- New rooms now enter the fixed Union Station Death development case without running generation; added the bureau image as the first playable investigation surface with clickable Interrogate, CCTV, Clueboard, and Evidence stations.
+- Removed the account profile badge and made the app shell and bureau use the full viewport width.
+- Kept the home/menu background image while locking the bureau scene to the viewport with no page scroll.
+- Removed the bureau header and bottom instruction panel so the scene is unobstructed.
+- Made screen state URL-backed: reloading `/game` or a station route no longer returns to the home menu.
+- Kept room creation and the lobby on `/lobby` so route navigation does not clear the newly created room modal.
+- Lobby URLs now include the room code (`/lobby/:roomCode`) and restore the room query on reload.
+- Investigation routes are room-scoped: `/lobby/:roomCode/bureau` and `/lobby/:roomCode/bureau/:station`.
+- Added bureau hotspots for the window map (`/map`) and desk case file (`/case`).
+- The desk case route now renders the fixed Union Station Death brief and initial facts.
+- Case brief content now comes from the room's selected passed case through a public-fields-only query; no case facts are hardcoded in the UI.
+- Gated room and case queries on Clerk readiness to prevent unauthenticated Convex calls during lobby-route reloads.
+
+- Added the shared Convex-backed clueboard: players can create, edit, drag, and remove note cards and join their pushpins with red, gold, blue, or green strings.
+- Clueboard edits sync to both room players, consume no game time, and never modify case truth.
+- Added the first playable CCTV console: choose a camera, drag through the case timeline, and read appearance-only records near the selected time. All footage, names, and hidden case data stay out of the client.
+- Hid the bureau's persistent Leave game control while a station is open so it no longer covers the station's Back button.
+
 ## 2026-09-24
 
 - Restricted the Sentry demo page and error API to development; enabled example logging and disabled collection of user details and request bodies.
@@ -91,7 +511,17 @@
 
 ## Pending
 
+### Clue board — remaining
+
+- Add reference cards for vehicles when that discovery surface becomes playable. Discovered items, calls/messages, and forensics are already pinnable.
+
 ### Case generation — remaining
+
+- Passed generated cases now appear in Previous cases. Choosing one creates an immutable public case record, links a new lobby session to it, and scopes the lobby and bureau case brief to that selected case.
+- Only the Previous cases panel scrolls inside the fixed-height game screen, so every card remains reachable without moving the main menu.
+- Previous-case cards show the full player-safe public brief summary instead of clipping it or showing the generation date.
+- The bureau/game screen has a persistent Leave game control that removes the player from the room and returns to the main menu.
+- Create room is disabled in the main menu until player-facing case generation is ready. Passed cases remain playable through Previous cases.
 
 - **Freeze into playable cases (Stage 13):** a passed job still lives in `generationJobs`/`generationDrafts`. Writing it into the game's case tables (`cases`, `caseSolutions`, `caseEvents`, `npcScripts`, …) waits for those tables, which the game builds first on the hand-written case.
 - **Restart with a new seed:** a job that still fails after its repairs is marked failed; the spec's "restart with a new seed, fail after 2 restarts" isn't built.

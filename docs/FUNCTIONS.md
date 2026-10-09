@@ -18,6 +18,10 @@ requireBeforeDeadline(session)
 
 ## Session lifecycle
 
+### `cases.publishPassedJob({ jobId })` — internal repair
+
+Publishes one previously passed generation job through the same frozen-case path used when a new job passes. It is idempotent and transactionally refuses invalid drafts; only fully published cases appear in the replay list. Older murder drafts may use `killerId`/`timeOfDeath`, which are read as `culpritId`/`crimeTime` without changing stored drafts. The removed body-moving mechanic and inconsistent casts are not adapted.
+
 ### `createGeneratedGame(input, identity, nickname)`
 
 1. Create placeholder case in `generating`.
@@ -82,17 +86,16 @@ Snapshot is for fast reads. Event log is for debugging/reconstruction, not the p
 
 All time values are integer in-game minutes.
 
-### `advanceGameTime(sessionId, minutes, reason, actorPlayerId?)`
+### Continuous action-driven clock
 
-Transactionally:
+- Store an integer game-time anchor and an optional wall-clock timestamp for when the active interval began.
+- While one or more timed actions are active, derive current game time from the anchor, elapsed wall time, and the server-owned speed multiplier.
+- New actions start at that derived game time and may overlap actions already in progress.
+- When the last active action completes, persist the derived game time and clear the wall-clock anchor so discussion and review do not consume the deadline.
+- Treat actions and forensic requests as complete when derived game time reaches their recorded completion time; materialize completion during the next authorized server interaction rather than writing per-minute ticks.
+- Preserve state after the deadline is crossed; show Overdue and keep investigation actions available.
 
-1. assert `minutes >= 0`,
-2. increment session `gameTime`,
-3. resolve pending forensic requests whose `readyAtGameTime <= gameTime`,
-4. append time/action event,
-5. preserve state even if the deadline has now been crossed.
-
-The deadline prevents further ordinary investigation actions according to final UX rules, but existing data is not deleted.
+The deadline is informational in V1: crossing it has no action lock or scoring penalty. Submission of a final report, not the deadline, makes the room review-only. Already-started actions may finish.
 
 ### Fixed action costs
 
@@ -168,22 +171,22 @@ Corridors are represented as connection edges unless they are searchable locatio
 - compute deterministic shortest path from current place to destination,
 - reject if unreachable,
 - sum `travelMinutes` across the path,
-- update player current place,
-- clear/update room position appropriately,
-- advance game time by summed path cost.
+- start a journey ending at the derived shared game time plus that cost,
+- update player current place only when that journey completes,
+- pause the shared clock at the final journey's completion time when no timed journey remains.
 
 Both players may be at different places simultaneously.
 
-### `moveToRoom(sessionId, playerId, destinationRoomId)`
+### `moveToRoom(roomCode, destinationRoomId)`
 
 - same building/floor graph validation,
 - use 1 minute for normal room edge,
 - 2 minutes when transition crosses floors,
-- update current room.
+- update current room on completion; allow another player to act concurrently.
 
 ## Search
 
-### `searchRoom(sessionId, playerId, roomId)`
+### `searchRoom(roomCode)`
 
 - require player physically present in room,
 - require searchable room,
@@ -192,15 +195,18 @@ Both players may be at different places simultaneously.
 - never generate new evidence,
 - add only collectible items to inventory when explicitly collected.
 
+`inspectItem(roomCode, itemId)` requires a discovered item in the current room or shared inventory and reveals its stored description after 2 game minutes. `collectItem(roomCode, itemId)` requires a discovered, collectible item in the player's current room and adds it to shared inventory without inventing evidence.
+
 If progressive/multiple searches per room are later desired, add deterministic search tiers rather than LLM generation.
 
 ## CCTV
 
-### `inspectCctvWindow(sessionId, cameraId, start, end)`
+### `cases.startCctvReview(roomCode, cameraId, minute)` / `cases.getCctvWindow(roomCode, cameraId, minute)`
 
-- validate camera access and time range,
-- charge fixed action time,
-- return matching pre-generated CCTV records,
+- validate bureau access, camera, and selected time,
+- start a fixed 5-minute action for the selected 40-minute window,
+- withhold matching pre-generated CCTV records until the action completes,
+- share completed reviews with both players,
 - never fabricate missing footage.
 
 CCTV output is textual/data only and never visual media.
@@ -215,10 +221,11 @@ CCTV output is textual/data only and never visual media.
 
 ## Public records
 
-### `searchPublicRecords(sessionId, query)`
+### `publicRecords.performSearch(roomCode, search)` / `publicRecords.search(roomCode, search)`
 
-- charge fixed cost,
-- perform deterministic lexical/fuzzy search over this case's `publicRecords`,
+- charge 10 minutes for each new normalized term and share its completed results,
+- perform deterministic title-and-content search over this case's `publicRecords`,
+- keep result text hidden until the search action completes,
 - no LLM required for retrieval.
 
 ## Forensics
@@ -228,7 +235,9 @@ CCTV output is textual/data only and never visual media.
 - verify the relevant source item/location has been legitimately discovered/available,
 - reject duplicate equivalent active request,
 - charge submission time,
-- set `readyAtGameTime = currentGameTime + turnaroundMinutes`.
+- set `readyAtGameTime = currentGameTime + 5 submission minutes + turnaroundMinutes`.
+
+An outstanding request keeps the shared clock running through its turnaround, overlapping other detectives' work. Once ready, the clock pauses if no other timed action remains. Reading a ready result is a separate free action at the lab.
 
 No actual calculation is done during the wait. The pre-generated output is hidden until ready.
 

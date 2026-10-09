@@ -33,7 +33,7 @@ export const MODELS = {
   /** Case generation (crime, cast, story, lies, writing). */
   main: "moonshotai/kimi-k3",
   /** NPC conversations during play. */
-  npc: "moonshotai/kimi-k2.6",
+  npc: "moonshot:kimi-k2.6",
 } as const;
 
 /** Paid (the owner's Kimi key): the most reliable for the big stages. $3 in / $15 out per 1M tokens. */
@@ -66,6 +66,7 @@ const STAGE_MODELS: Record<string, string[]> = {
   lies: [SOL, KIMI_K3, GEMINI_FLASH, MODELS.main],
   text: [GROQ_FAST, SOL, KIMI_FAST, GEMINI_FLASH, MODELS.main],
   brief: [GROQ_FAST, SOL, KIMI_FAST, MODELS.main],
+  caseClose: [GROQ_FAST, SOL, KIMI_FAST, GEMINI_FLASH, MODELS.main],
 };
 
 /** The models to try for a stage, in order; providers without a key in this environment are skipped. */
@@ -110,6 +111,11 @@ function chatModel(model: string, strict: boolean) {
     model: createOpenAICompatible({ name, baseURL, apiKey, supportsStructuredOutputs: strict, includeUsage: true }).chatModel(id),
     providerOptions: { [name]: thinkingOptions(name, id, effort) },
   };
+}
+
+/** Reuse the configured NPC provider without exposing its key to clients. */
+export function npcLanguageModel() {
+  return chatModel(MODELS.npc, false);
 }
 
 /** A failed call's message plus, for provider errors, the status and the start of the reply body. */

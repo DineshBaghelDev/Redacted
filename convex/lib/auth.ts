@@ -1,6 +1,8 @@
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
 
 type AnyCtx = QueryCtx | MutationCtx | ActionCtx;
+type DbCtx = QueryCtx | MutationCtx;
 
 /**
  * Retrieves the authenticated user's identity.
@@ -14,6 +16,45 @@ export async function requireUserId(ctx: AnyCtx) {
     throw new Error("Sign in first.");
   }
   return identity.subject;
+}
+
+/** Returns a room and the signed-in member, or null when the room is unavailable to them. */
+export async function getRoomMember(ctx: DbCtx, roomCode: string) {
+  const authUserId = await requireUserId(ctx);
+  const session = await ctx.db
+    .query("sessions")
+    .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase()))
+    .unique();
+  if (!session || session.expiresAt < Date.now()) return null;
+  const player = await ctx.db
+    .query("sessionPlayers")
+    .withIndex("by_sessionId_authUserId", (q) => q.eq("sessionId", session._id).eq("authUserId", authUserId))
+    .unique();
+  return player ? { session, player } : null;
+}
+
+/** Returns a signed-in room member only after the investigation has started. */
+export async function getPlayingRoomMember(ctx: DbCtx, roomCode: string) {
+  const member = await getRoomMember(ctx, roomCode);
+  return member?.session.status === "playing" ? member : null;
+}
+
+/** A submitted report freezes new investigation writes, including while grading is pending. */
+export async function requireInvestigationOpen(ctx: MutationCtx, sessionId: Id<"sessions">) {
+  const report = await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId)).unique();
+  if (report) throw new Error("The final report is submitted. This room is review-only.");
+}
+
+/** Bureau terminals are available only to a detective physically at the bureau. */
+export async function getBureauRoomMember(ctx: DbCtx, roomCode: string, allowedActionKind?: "cctv" | "records" | "npc") {
+  const member = await getPlayingRoomMember(ctx, roomCode);
+  if (!member) return null;
+  if (await ctx.db.query("travelActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique()) return null;
+  const action = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique();
+  if (action && action.kind !== allowedActionKind) return null;
+  if (!member.player.currentPlaceId) return member; // Pre-clock rooms began at the bureau.
+  const place = await ctx.db.get(member.player.currentPlaceId);
+  return place?.kind === "bureau" ? member : null;
 }
 
 /**

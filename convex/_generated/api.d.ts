@@ -8,9 +8,13 @@
  * @module
  */
 
+import type * as caseClose from "../caseClose.js";
+import type * as cases from "../cases.js";
+import type * as clueBoard from "../clueBoard.js";
 import type * as dev_tester from "../dev/tester.js";
 import type * as fixtures_caseEasy from "../fixtures/caseEasy.js";
 import type * as fixtures_city from "../fixtures/city.js";
+import type * as forensics from "../forensics.js";
 import type * as generation_aiStage from "../generation/aiStage.js";
 import type * as generation_core_brief from "../generation/core/brief.js";
 import type * as generation_core_buildings from "../generation/core/buildings.js";
@@ -48,8 +52,22 @@ import type * as generation_prompts_story from "../generation/prompts/story.js";
 import type * as generation_prompts_text from "../generation/prompts/text.js";
 import type * as generation_stages from "../generation/stages.js";
 import type * as generation_workflow from "../generation/workflow.js";
+import type * as investigation from "../investigation.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_deviceAccess from "../lib/deviceAccess.js";
+import type * as lib_publishCctv from "../lib/publishCctv.js";
+import type * as lib_publishDevices from "../lib/publishDevices.js";
+import type * as lib_publishForensics from "../lib/publishForensics.js";
+import type * as lib_publishItems from "../lib/publishItems.js";
+import type * as lib_publishNarrative from "../lib/publishNarrative.js";
+import type * as lib_publishRecords from "../lib/publishRecords.js";
+import type * as lib_publishStatements from "../lib/publishStatements.js";
+import type * as lib_publishWorld from "../lib/publishWorld.js";
+import type * as npcConversations from "../npcConversations.js";
+import type * as npcs from "../npcs.js";
+import type * as publicRecords from "../publicRecords.js";
 import type * as sessions from "../sessions.js";
+import type * as world from "../world.js";
 
 import type {
   ApiFromModules,
@@ -58,9 +76,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  caseClose: typeof caseClose;
+  cases: typeof cases;
+  clueBoard: typeof clueBoard;
   "dev/tester": typeof dev_tester;
   "fixtures/caseEasy": typeof fixtures_caseEasy;
   "fixtures/city": typeof fixtures_city;
+  forensics: typeof forensics;
   "generation/aiStage": typeof generation_aiStage;
   "generation/core/brief": typeof generation_core_brief;
   "generation/core/buildings": typeof generation_core_buildings;
@@ -98,8 +120,22 @@ declare const fullApi: ApiFromModules<{
   "generation/prompts/text": typeof generation_prompts_text;
   "generation/stages": typeof generation_stages;
   "generation/workflow": typeof generation_workflow;
+  investigation: typeof investigation;
   "lib/auth": typeof lib_auth;
+  "lib/deviceAccess": typeof lib_deviceAccess;
+  "lib/publishCctv": typeof lib_publishCctv;
+  "lib/publishDevices": typeof lib_publishDevices;
+  "lib/publishForensics": typeof lib_publishForensics;
+  "lib/publishItems": typeof lib_publishItems;
+  "lib/publishNarrative": typeof lib_publishNarrative;
+  "lib/publishRecords": typeof lib_publishRecords;
+  "lib/publishStatements": typeof lib_publishStatements;
+  "lib/publishWorld": typeof lib_publishWorld;
+  npcConversations: typeof npcConversations;
+  npcs: typeof npcs;
+  publicRecords: typeof publicRecords;
   sessions: typeof sessions;
+  world: typeof world;
 }>;
 
 /**
@@ -130,4 +166,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   workflow: import("@convex-dev/workflow/_generated/component.js").ComponentApi<"workflow">;
+  agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
 };
