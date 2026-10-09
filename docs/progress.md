@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-10-10 — Player map legibility pass
+
+- Replaced the numbered square markers with generated pixel place icons for homes, workplaces, public buildings, the bureau, and the lab. A restrained generated drafting-paper plate sits behind the live city graph; it contains no invented streets, places, or labels.
+- Brought the useful tester-map cues into play: district-colored markers, visible names on wide screens, selected street travel times, and dashed camera streets with a compact legend. The SVG now scales on the same percentage coordinates as the clickable markers, so route lines meet their destinations.
+- Kept the actual case graph, travel action, location gating, and mobile place selector unchanged.
+
+
 ## 2026-10-10 — Illustrated game interface, in progress
 
 - Generated and inspected a restrained eight-icon pixel atlas, a reusable metal terminal frame, a paper dossier frame, and separate archive, records, lab, interview, and report-desk scenes. All plates are text-free; the CCTV icon is a terminal symbol and no screen includes camera imagery.

@@ -112,21 +112,29 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
               {city.places.map((place, index) => <option key={place.id} value={place.id}>{index + 1}. {place.name}</option>)}
             </select>
           </label>
-          <div className="game-panel city-map relative mx-auto aspect-[5/4] h-auto min-h-[18rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden bg-[#10191a] lg:h-full">
-            <span className="absolute left-3 top-2 text-xs uppercase tracking-[0.25em] text-[#c8d8d2]/55">Northside</span>
-            <span className="absolute left-3 top-[36%] text-xs uppercase tracking-[0.25em] text-[#f1c987]/55">Midtown</span>
-            <span className="absolute bottom-2 left-3 text-xs uppercase tracking-[0.25em] text-[#d8a498]/55">Eastside</span>
+          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs uppercase text-[#b9ccc4]">
+            <span className="text-[#e8c486]">Street network</span>
+            <span><i aria-hidden="true" className="mr-1 inline-block w-5 border-t-2 border-dashed border-[#d88977] align-middle" />Camera route</span>
+            <span><i aria-hidden="true" className="mr-1 inline-block w-5 border-t-2 border-[#e8ac51] align-middle" />Selected routes</span>
+          </div>
+          <div className="city-map relative mx-auto aspect-[5/4] h-auto min-h-[18rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden lg:aspect-[16/10] lg:h-full">
+            <span className="pointer-events-none absolute left-3 top-2 text-xs uppercase tracking-[0.25em] text-[#92c1c7]/70">Northside</span>
+            <span className="pointer-events-none absolute left-3 top-[36%] text-xs uppercase tracking-[0.25em] text-[#e4bc75]/70">Midtown</span>
+            <span className="pointer-events-none absolute bottom-2 left-3 text-xs uppercase tracking-[0.25em] text-[#d5a18e]/70">Eastside</span>
 
-            <svg aria-hidden="true" className="absolute inset-0 h-full w-full" viewBox="0 0 100 100">
+            <svg aria-hidden="true" className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100">
               {city.streets.map((street) => {
                 const a = city.places.find((place) => place.id === street.a)!;
                 const b = city.places.find((place) => place.id === street.b)!;
                 const active = activeStreetIds.has(street.id);
                 return (
                   <line
-                    className={active ? "stroke-[#e8ac51]" : street.hasCamera ? "stroke-[#35625f]" : "stroke-slate-600"}
+                    className={active ? "stroke-[#e8ac51]" : street.hasCamera ? "stroke-[#d88977]" : "stroke-[#68848a]"}
                     key={street.id}
-                    strokeWidth={active ? 0.8 : 0.45}
+                    opacity={active ? 1 : 0.75}
+                    strokeDasharray={street.hasCamera ? "5 5" : undefined}
+                    strokeWidth={active ? 3 : 2}
+                    vectorEffect="non-scaling-stroke"
                     x1={a.x}
                     x2={b.x}
                     y1={a.y}
@@ -136,22 +144,37 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
               })}
             </svg>
 
-            {city.places.map((place, index) => {
+            {city.streets.filter((street) => activeStreetIds.has(street.id)).map((street) => {
+              const a = city.places.find((place) => place.id === street.a)!;
+              const b = city.places.find((place) => place.id === street.b)!;
+              return (
+                <span
+                  aria-hidden="true"
+                  className="map-route-time pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2"
+                  key={street.id}
+                  style={{ left: `${(a.x + b.x) / 2}%`, top: `${(a.y + b.y) / 2}%` }}
+                >
+                  {street.minutes}m{street.hasCamera ? " · CAM" : ""}
+                </span>
+              );
+            })}
+
+            {city.places.map((place) => {
               const active = place.id === selected.id;
+              const current = place.id === city.currentPlaceId;
               return (
                 <button
                   aria-label={`Review ${place.name}`}
                   aria-pressed={active}
-                  className={`group absolute z-10 h-8 w-8 -translate-x-1/2 -translate-y-1/2 border text-xs shadow-[0_2px_0_rgba(0,0,0,0.5)] transition sm:h-9 sm:w-9 sm:text-xs ${active ? "border-[#f1c987] bg-[#d69943] text-[#17120a]" : "border-[#6f9f98]/60 bg-[#0b1a1c] text-[#c8d8d2] hover:border-[#e8ac51]"}`}
+                  className={`map-marker absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center transition sm:h-9 sm:w-9 ${active ? "z-30" : "z-20 hover:z-30 focus-visible:z-30"} map-marker--${place.area}`}
                   key={place.id}
                   onClick={() => setSelectedId(place.id)}
                   style={{ left: `${place.x}%`, top: `${place.y}%` }}
                   type="button"
                 >
-                  {index + 1}
-                  <span className={`absolute left-1/2 top-full mt-1 hidden -translate-x-1/2 whitespace-nowrap border bg-[#0b1a1c]/95 px-1.5 py-0.5 text-xs uppercase text-[#e4e6d8] sm:block ${active ? "border-[#e8ac51]" : "border-[#6f9f98]/30 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"}`}>
-                    {place.name}
-                  </span>
+                  <span aria-hidden="true" className={`map-place-icon map-place-icon--${place.kind} size-5 sm:size-7`} />
+                  {current ? <span aria-hidden="true" className="absolute -right-1 -top-1 block size-2 bg-[#ffd287]" /> : null}
+                  <span className={`map-marker-label ${place.y > 77 ? "map-marker-label--above" : ""} ${place.x > 82 ? "map-marker-label--right" : ""}`}>{place.name}</span>
                 </button>
               );
             })}
@@ -161,7 +184,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
         <aside className="min-h-0 overflow-visible border-t border-[#6f9f98]/25 bg-[#0b1a1c] p-4 lg:overflow-y-auto lg:border-l lg:border-t-0 lg:p-5">
           <div className="mb-4 border border-[#6f9f98]/25 bg-[#102224] p-3 text-xs uppercase tracking-wide">
             <p className="text-[#c8d8d2]/55">Your location</p>
-            <p className="mt-1 text-base text-[#f1c987]">{city.places.find((place) => place.id === city.currentPlaceId)?.name ?? "Bureau"}</p>
+            <p className="mt-1 break-words text-base text-[#f1c987]">{city.places.find((place) => place.id === city.currentPlaceId)?.name ?? "Bureau"}</p>
             {city.activeTravel ? (
               <div className="mt-2 text-[#c8d8d2]">
                 <p>Travelling to {city.activeTravel.destinationName} · {travelRemaining} game min</p>
@@ -175,7 +198,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
             ) : null}
           </div>
           <p className="text-xs uppercase tracking-[0.2em] text-[#e8ac51]/70">{selected.area}</p>
-          <h3 className="mt-1 text-2xl uppercase leading-none">{selected.name}</h3>
+          <h3 className="mt-1 break-words text-2xl uppercase leading-tight">{selected.name}</h3>
           <p className="mt-2 text-sm uppercase text-[#c8d8d2]/65">{kindLabels[selected.kind]}</p>
           <button
             className="mt-4 min-h-11 w-full border border-[#e8ac51]/70 bg-[#e8ac51]/10 px-3 text-sm uppercase text-[#f1c987] hover:bg-[#e8ac51]/20 disabled:cursor-default disabled:opacity-45"
@@ -217,7 +240,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
           <ul className="mt-2 space-y-2">
             {connected.map((route) => (
               <li className="flex items-center justify-between gap-3 border border-[#6f9f98]/15 bg-[#102224] px-3 py-2" key={route.id}>
-                <button className="min-h-8 text-left text-sm uppercase hover:text-[#e8ac51]" onClick={() => setSelectedId(route.place.id)} type="button">
+                <button className="min-h-8 min-w-0 flex-1 break-words text-left text-sm uppercase hover:text-[#e8ac51]" onClick={() => setSelectedId(route.place.id)} type="button">
                   {route.place.name}
                 </button>
                 <span className="shrink-0 font-mono text-xs text-[#e8ac51]">{route.minutes} min{route.hasCamera ? " · CCTV" : ""}</span>

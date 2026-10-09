@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-10-10 — City map visual language
+
+- The map background is a blank drafting texture; only stored place coordinates and street connections draw the geography. Place icons communicate kind, marker edge color communicates district, dashed red routes communicate cameras, and selected-route chips show direct travel minutes.
+- On narrow screens, the named place selector remains the reliable touch path. Marker labels surface on selection or focus; wide screens can show them all. The map preserves its existing travel and pin actions.
+
+
 ## 2026-10-10 — Physical interface surfaces
 
 - Use the generated metal frame for major terminal actions and control panels and the paper frame for case files and records. One illustrated environment per station group establishes place; the data remains a real interactive layer above it.
