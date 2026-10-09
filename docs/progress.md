@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-09 — Clueboard connection without dragging
+
+- A detective can tie two selected board cards from the clueboard header using the existing shared edge action and chosen string color. This gives keyboard and touch users a non-drag route while retaining pin-to-pin dragging; the server still rejects invalid or cross-room links.
+- Keyboard movement of cards and a signed-in touch/keyboard playtest remain open.
+
 ## 2026-10-09 — Map and leave-confirmation usability
 
 - The stacked map now has one vertical scroll surface on narrow screens, so the place picker, map, and route actions move together. Desktop retains separate map and detail scrolling. A signed-in visual check at a short mobile viewport is still open.

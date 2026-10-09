@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Clueboard connection controls
+
+- Keep direct pin-to-pin string dragging, but provide a compact two-card selector for players who cannot drag. Both routes save through the same shared clueboard edge rules and use the currently chosen string color.
+
 ## 2026-10-09 — Mobile map scroll ownership
 
 - On narrow screens, the place picker, map, and route details share one vertical scroll container; the map and details do not create nested scroll areas. Desktop keeps independently scrollable panels.
