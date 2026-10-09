@@ -6,6 +6,7 @@
 - Camera choices are a short, visible icon list at each access point. The long camera dropdown is removed. Each camera still uses the same text-only time review and five-minute action.
 - Map icons use the generated silhouettes at a larger size without backing squares. Select and focus states use a restrained glow; place names remain readable without clipping case data.
 - Character files combine stable pixel hair, face, skin, clothing, and accessory layers from a person ID. These portraits identify a file visually; the public case description remains the authoritative appearance evidence.
+- Station artwork is kept visible through a lighter content scrim. Mobile bureau navigation uses the generated station symbols without individual card borders; the whole button remains a touch target.
 
 ## 2026-10-10 — City map visual language
 

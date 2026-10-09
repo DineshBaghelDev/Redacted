@@ -5,6 +5,7 @@
 - Replaced the city marker squares with larger transparent place icons and kept a clear focus state. Long case titles and generated text wrap inside menus, dossiers, and station panels.
 - Split CCTV by physical access point: street and bureau cameras at the bureau, building cameras in their actual camera room. The room list marks camera rooms and opens the same written log there. The server now filters the list, reads, reviews, and pins by location; the long dropdown is gone.
 - Added stable pixel upper-body portraits assembled from face, hair, skin, clothing, and accessory variations in the people roster and interview record. Portrait art is illustrative; public descriptions remain the source for investigative appearance details.
+- Reduced the station-wide dark overlay so generated room art remains visible, and removed redundant borders behind mobile bureau station icons.
 
 ## 2026-10-10 — Player map legibility pass
 

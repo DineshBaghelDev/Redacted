@@ -189,7 +189,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
           {stationOrder.map((item) => {
             return (
               <button
-                className="flex min-h-14 flex-col items-center justify-center gap-1 border border-[#45635d] bg-[#0b1a1c] px-1 text-xs uppercase text-[#e4e6d8] active:border-[#e8ac51] active:text-[#e8ac51]"
+                className="flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs uppercase text-[#e4e6d8] hover:text-[#e8ac51] active:text-[#e8ac51]"
                 key={item}
                 onClick={() => openStation(item)}
                 type="button"
