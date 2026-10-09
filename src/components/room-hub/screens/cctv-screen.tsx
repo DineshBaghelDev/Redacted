@@ -39,7 +39,14 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
   if (!data) return <CctvMessage message="Camera records are not available for this case." onBack={onBack} />;
 
   const camera = data.cameras.find((item) => item.id === cameraId)!;
+  const cameraIndex = data.cameras.findIndex((item) => item.id === cameraId);
   const records = visibleWindow?.status === "ready" ? visibleWindow.records : [];
+
+  function selectCamera(id: string) {
+    setCameraId(id);
+    setMinute(null);
+    setError("");
+  }
 
   function reviewWindow() {
     setReviewing(true);
@@ -81,57 +88,47 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
         </button>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[17rem_1fr] md:grid-rows-1">
-        <aside className="max-h-[38vh] overflow-y-auto border-b border-[#6f9f98]/25 bg-[#081417] p-3 md:max-h-none md:border-b-0 md:border-r">
-          <p className="mb-3 text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/65">Choose camera</p>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-1">
+      <div className="game-station-main min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto grid max-w-6xl items-start gap-6 lg:grid-cols-[minmax(15rem,19rem)_minmax(0,1fr)]">
+        <aside className="min-w-0 border-b border-[#6f9f98]/35 pb-5 lg:border-b-0 lg:border-r lg:pr-6">
+          <label className="block text-xs uppercase tracking-[0.18em] text-[#e8ac51]" htmlFor="camera-picker">01 / Choose camera</label>
+          <select
+            className="mt-3 min-h-12 w-full min-w-0 border border-[#6f9f98] bg-[#0b1a1c] px-3 text-sm text-[#e4e6d8]"
+            id="camera-picker"
+            onChange={(event) => selectCamera(event.target.value)}
+            value={cameraId}
+          >
             {data.cameras.map((item, index) => (
-              <button
-                aria-pressed={item.id === cameraId}
-                className={`min-w-0 border p-3 text-left transition focus-visible:outline-2 focus-visible:outline-[#e8ac51] ${
-                  item.id === cameraId
-                    ? "border-[#e8ac51] bg-[#e8ac51]/10 shadow-[inset_3px_0_0_#e8ac51]"
-                    : "border-[#6f9f98]/15 bg-[#0b1a1c] hover:border-[#6f9f98]/50"
-                }`}
-                key={item.id}
-                onClick={() => setCameraId(item.id)}
-                type="button"
-              >
-                <span className="flex items-center justify-between gap-2 text-sm uppercase">
-                  <span className="truncate">{String(index + 1).padStart(2, "0")} · {item.name}</span>
-                  <span className={`h-2 w-2 shrink-0 ${item.faulty ? "bg-red-500" : "bg-[#89ae9c]"}`} />
-                </span>
-              </button>
+              <option key={item.id} value={item.id}>{String(index + 1).padStart(2, "0")} · {item.name}{item.faulty ? " (offline)" : ""}</option>
             ))}
+          </select>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <button className="min-h-10 border border-[#6f9f98]/60 px-3 text-sm uppercase disabled:opacity-40" disabled={cameraIndex <= 0} onClick={() => selectCamera(data.cameras[cameraIndex - 1].id)} type="button">← Previous</button>
+            <span className="text-xs text-[#b8ccc1]">{cameraIndex + 1} / {data.cameras.length}</span>
+            <button className="min-h-10 border border-[#6f9f98]/60 px-3 text-sm uppercase disabled:opacity-40" disabled={cameraIndex >= data.cameras.length - 1} onClick={() => selectCamera(data.cameras[cameraIndex + 1].id)} type="button">Next →</button>
           </div>
+          <p className="mt-4 break-words text-sm leading-relaxed text-[#b8ccc1]">{camera.faulty ? "This camera has no recording for the case period." : "Pick a time, then review its written activity log."}</p>
         </aside>
 
-        <main className="game-station-main flex min-h-0 flex-col overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="min-w-0">
           {error ? <p className="mb-4 border border-red-300 bg-red-950/80 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
-          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#6f9f98]/20 pb-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/65">Camera {String(data.cameras.indexOf(camera) + 1).padStart(2, "0")}</p>
-              <h3 className="mt-1 text-2xl uppercase text-[#e4e6d8] sm:text-3xl">{camera.name}</h3>
-            </div>
-            <p className={`border px-3 py-1 text-xs uppercase tracking-[0.18em] ${camera.faulty ? "border-red-400/50 text-red-300" : "border-emerald-400/50 text-emerald-300"}`}>
-              {camera.faulty ? "offline" : "online"}
-            </p>
-          </div>
+          <h3 className="break-words text-2xl uppercase leading-tight text-[#e4e6d8] sm:text-3xl">{camera.name}</h3>
 
           <div className="game-panel mt-6 p-5">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <label className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55" htmlFor="cctv-time">
-                Choose a time to review
+                02 / Choose time
               </label>
               <output className="font-mono text-lg text-[#e8ac51]" htmlFor="cctv-time" aria-live="polite">
                 {formatTime(minute)}
               </output>
             </div>
 
-            <div className="relative mt-7 pb-6">
+            <div className="mt-7">
               <input
                 aria-valuetext={formatTime(minute)}
                 className="relative z-10 h-2 w-full cursor-ew-resize appearance-none bg-[#102224] accent-[#d69943]"
+                disabled={camera.faulty}
                 id="cctv-time"
                 max={camera.end}
                 min={camera.start}
@@ -140,21 +137,24 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
                 type="range"
                 value={minute}
               />
-              <span className="absolute bottom-0 left-0 font-mono text-xs text-[#c8d8d2]/65">{formatTime(camera.start)}</span>
-              <span className="absolute bottom-0 right-0 font-mono text-xs text-[#c8d8d2]/65">{formatTime(camera.end)}</span>
+              <div className="mt-2 flex justify-between gap-3 font-mono text-xs text-[#c8d8d2]/65">
+                <span>{formatTime(camera.start)}</span>
+                <span className="text-right">{formatTime(camera.end)}</span>
+              </div>
             </div>
-            <p className="mt-3 text-xs text-[#c8d8d2]/65">Each review covers 20 minutes before and after the selected time.</p>
+            <p className="mt-3 text-sm leading-relaxed text-[#c8d8d2]">Review written records from 20 minutes before to 20 minutes after this time. It takes 5 game minutes.</p>
             {!camera.faulty && visibleWindow?.status === "available" ? (
               <button className="mt-4 min-h-11 border border-[#e8ac51] px-4 text-sm uppercase text-[#e8ac51] hover:bg-[#e8ac51] hover:text-[#071014] disabled:opacity-50" disabled={reviewing} onClick={reviewWindow} type="button">
-                {reviewing ? "Starting review..." : "Review window · 5 min"}
+                {reviewing ? "Starting review..." : "Review this time · 5 min"}
               </button>
             ) : null}
             {visibleWindow?.status === "pending" ? <p className="mt-4 text-sm uppercase text-[#e8ac51]" role="status">Review in progress. Records will appear when it finishes.</p> : null}
+            {visibleWindow?.status === "ready" ? <p className="mt-4 text-sm text-[#a9d1b7]" role="status">This time has been reviewed. Its log is below.</p> : null}
           </div>
 
           <div className="mt-5">
             <div className="flex items-center justify-between gap-3">
-              <h4 className="text-sm uppercase tracking-[0.18em] text-[#c8d8d2]/65">Recorded activity</h4>
+              <h4 className="text-sm uppercase tracking-[0.18em] text-[#e8ac51]">03 / Activity log</h4>
               <span className="font-mono text-xs text-[#c8d8d2]/65">{visibleWindow?.status === "ready" ? `${records.length} ${records.length === 1 ? "record" : "records"}` : "Not reviewed"}</span>
             </div>
 
@@ -172,11 +172,11 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
                 {visibleWindow.status === "pending" ? "Review in progress." : "Review this time window to see its records."}
               </div>
             ) : records.length ? (
-              <ul className="mt-3 grid gap-3 lg:grid-cols-2">
+              <ul className="mt-3 space-y-2">
                 {records.map((record) => (
-                  <li className={`border p-4 ${record.kind === "offline" ? "border-red-400/30 bg-red-950/20" : "border-[#6f9f98]/25 bg-[#0b1a1c] shadow-[inset_3px_0_0_#6f9f98]"}`} key={record.id}>
+                  <li className={`border-l-2 bg-[#0b1a1c]/85 p-4 ${record.kind === "offline" ? "border-red-400 text-red-100" : "border-[#6f9f98]"}`} key={record.id}>
                     <p className="font-mono text-xs text-[#e8ac51]">{formatTime(record.start)}–{formatTime(record.end).split(" · ")[1]}</p>
-                    <p className="mt-3 text-base leading-relaxed text-[#e4e6d8]">{record.summary}</p>
+                    <p className="mt-2 break-words text-base leading-relaxed text-[#e4e6d8]">{record.summary}</p>
                     <button
                       className="mt-4 min-h-11 border border-[#6f9f98]/60 px-3 text-xs uppercase text-[#c8d8d2] hover:border-[#e8ac51] hover:text-[#e8ac51] disabled:cursor-default disabled:opacity-50"
                       disabled={pinning === record.id || boardNodes?.some((node) => node.type === "cctv" && node.referenceId === record.id)}
@@ -195,8 +195,9 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
             )}
           </div>
 
-          <p className="pb-4 pt-6 text-xs uppercase tracking-[0.14em] text-[#c8d8d2]/65">Recorded descriptions only · identities are not provided</p>
+          <p className="pb-4 pt-6 text-xs uppercase tracking-[0.14em] text-[#c8d8d2]/65">Written descriptions only · identities are not provided</p>
         </main>
+        </div>
       </div>
     </section>
   );

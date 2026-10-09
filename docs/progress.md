@@ -6,6 +6,11 @@
 - Brought the useful tester-map cues into play: district-colored markers, visible names on wide screens, selected street travel times, and dashed camera streets with a compact legend. The SVG now scales on the same percentage coordinates as the clickable markers, so route lines meet their destinations.
 - Kept the actual case graph, travel action, location gating, and mobile place selector unchanged.
 
+## 2026-10-10 — Camera log navigation
+
+- Replaced the long nested camera-button scroller with a named camera picker and previous/next controls. The screen now gives the existing action a clear order: choose camera, choose time, review written activity.
+- Kept the same stored camera windows, 20-minute range either side of the selected time, 5-minute review cost, and pin actions. Offline, pending, ready, and empty states now sit next to the action they explain. No camera imagery was added.
+
 
 ## 2026-10-10 — Illustrated game interface, in progress
 

@@ -5,6 +5,10 @@
 - The map background is a blank drafting texture; only stored place coordinates and street connections draw the geography. Place icons communicate kind, marker edge color communicates district, dashed red routes communicate cameras, and selected-route chips show direct travel minutes.
 - On narrow screens, the named place selector remains the reliable touch path. Marker labels surface on selection or focus; wide screens can show them all. The map preserves its existing travel and pin actions.
 
+## 2026-10-10 — Camera records as an ordered log
+
+- The CCTV desk presents one camera at a time using a native name picker and adjacent previous/next controls. Time selection, the five-minute review, and the written results appear in order on one scroll surface; there is no visual footage or thumbnail.
+
 
 ## 2026-10-10 — Physical interface surfaces
 
