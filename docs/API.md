@@ -90,7 +90,7 @@ presence.list({ sessionId })
 ### Case close
 
 ```ts
-caseClose.getResult({ sessionId })
+caseClose.getResult({ roomCode })
 ```
 
 ## Public mutations
@@ -232,7 +232,7 @@ Item references require shared discovery; forensic references require the lab re
 
 ```ts
 caseClose.submit({
-  sessionId,
+  roomCode,
   culpritNpcId,
   motiveExplanation,
   weaponItemId?,
@@ -241,9 +241,10 @@ caseClose.submit({
   evidenceExplanation,
   methodExplanation,
 })
+caseClose.retry({ roomCode })
 ```
 
-Mutation stores the submission and schedules the private grading action.
+Submission stores the report and schedules private grading. If grading fails, the room can retry the same report without submitting a replacement.
 
 ## Public actions
 

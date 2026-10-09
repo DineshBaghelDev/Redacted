@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-09 — Live final-report check
+
+- A test-only dev replay submitted a pinned camera record and complete five-part theory. Private grading returned a completed five-category star result; outsider and anonymous callers received no result. This verifies one backend case-close path, not the signed-in UI or every published replay.
+- The written case-close API now matches the live room-code contract, including retry after a grading failure.
+
 ## 2026-10-09 — Saved records-search wording
 
 - The public-records button now recognizes repeated spaces and case changes in a recent saved search. Searches not on the recent list use a neutral label because an older saved search may still reopen for free; the pending state now uses the server's normalization too. Signed-in visual verification remains open.
