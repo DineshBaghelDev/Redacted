@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { CharacterPortrait } from "../character-portrait";
 
 const roleLabels = {
   victim: "Victim",
@@ -68,24 +69,30 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
 
           {!selected && people.length ? (
             <ul className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {people.map((person, index) => (
-                <li className="game-dossier relative min-h-48 p-3 text-[#211d17]" key={person.id}>
-                  <span className="absolute right-3 top-3 font-mono text-xs text-[#4b3b2d]">#{String(index + 1).padStart(2, "0")}</span>
-                  <p className="text-xs uppercase tracking-[0.2em] text-red-800">{roleLabels[person.role]}</p>
-                  <h3 className="mt-2 pr-10 text-2xl uppercase leading-none">{person.name}</h3>
-                  <p className="mt-3 text-sm uppercase text-[#5d4d3d]">
-                    {[person.age ? `Age ${person.age}` : null, person.occupation].filter(Boolean).join(" · ") || "No public occupation"}
-                  </p>
-                  <p className="mt-5 border-t border-[#8b7355]/50 pt-4 text-sm leading-relaxed text-[#3e342a]">{person.publicDescription}</p>
-                  <button
-                    className="mt-4 min-h-11 border-2 border-[#573821] px-3 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2] disabled:cursor-default disabled:opacity-55"
-                    disabled={pinning === person.id || boardNodes?.some((node) => node.type === "npc" && node.referenceId === person.id)}
-                    onClick={() => pinPerson(person.id)}
-                    type="button"
-                  >
-                    {pinning === person.id ? "Pinning..." : boardNodes?.some((node) => node.type === "npc" && node.referenceId === person.id) ? "Pinned to clueboard" : "Pin to clueboard"}
-                  </button>
-                  {person.role !== "victim" ? <button className="ml-2 mt-4 min-h-11 border-2 border-red-900 bg-red-950 px-3 text-xs uppercase text-red-50 hover:bg-red-900" onClick={() => setSelectedId(person.id)} type="button">Interview</button> : null}
+              {people.map((person) => (
+                <li className="game-dossier min-w-0 p-4 text-[#211d17]" key={person.id}>
+                  <div className="flex min-w-0 gap-4">
+                    <CharacterPortrait className="w-20" id={person.id} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs uppercase tracking-[0.12em] text-red-800">{roleLabels[person.role]}</p>
+                      <h3 className="mt-2 break-words text-xl uppercase leading-tight">{person.name}</h3>
+                      <p className="mt-2 break-words text-xs uppercase text-[#5d4d3d]">
+                        {[person.age ? `Age ${person.age}` : null, person.occupation].filter(Boolean).join(" · ") || "No public occupation"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-4 break-words border-t border-[#8b7355]/50 pt-3 text-sm leading-relaxed text-[#3e342a]">{person.publicDescription}</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      className="min-h-11 border-2 border-[#573821] px-3 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2] disabled:cursor-default disabled:opacity-55"
+                      disabled={pinning === person.id || boardNodes?.some((node) => node.type === "npc" && node.referenceId === person.id)}
+                      onClick={() => pinPerson(person.id)}
+                      type="button"
+                    >
+                      {pinning === person.id ? "Pinning..." : boardNodes?.some((node) => node.type === "npc" && node.referenceId === person.id) ? "Pinned to clueboard" : "Pin to clueboard"}
+                    </button>
+                    {person.role !== "victim" ? <button className="min-h-11 border-2 border-red-900 bg-red-950 px-3 text-xs uppercase text-red-50 hover:bg-red-900" onClick={() => setSelectedId(person.id)} type="button">Interview</button> : null}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -128,9 +135,14 @@ function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person
   return <div className="mx-auto max-w-3xl">
     <button className="min-h-11 border-2 border-[#573821] px-4 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">← All people</button>
     <div className="game-dossier mt-4 p-4 text-[#211d17] sm:p-6">
-      <p className="text-xs uppercase tracking-[0.2em] text-red-800">Interview record</p>
-      <h3 className="mt-2 text-2xl uppercase">{person.name}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-[#4b3b2d]">{person.publicDescription}</p>
+      <div className="flex min-w-0 items-start gap-4">
+        <CharacterPortrait className="w-24" id={person.id} />
+        <div className="min-w-0 flex-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-red-800">Interview record</p>
+          <h3 className="mt-2 break-words text-2xl uppercase">{person.name}</h3>
+          <p className="mt-2 break-words text-sm leading-relaxed text-[#4b3b2d]">{person.publicDescription}</p>
+        </div>
+      </div>
       {!interview?.bureauPresent ? <div className="mt-5 border-t border-[#8b7355] pt-4"><p className="text-sm">Bring this person to the bureau before asking questions.</p><button className="mt-3 min-h-11 border-2 border-red-900 bg-red-950 px-4 text-xs uppercase text-red-50 hover:bg-red-900 disabled:opacity-50" disabled={working || !interview?.canTalkHere} onClick={() => run(callToBureau({ roomCode, npcId: person.id }))} type="button">Call to bureau</button>{interview && !interview.canTalkHere ? <p className="mt-2 text-sm text-red-800">Return to the bureau to make the call.</p> : null}</div> : null}
       {interview?.threadId ? <ConversationMessages roomCode={roomCode} threadId={interview.threadId} /> : null}
       {interview?.bureauPresent ? <div className="mt-5 border-t border-[#8b7355] pt-4">

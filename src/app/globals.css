@@ -26,6 +26,10 @@
     filter: drop-shadow(6px 8px 0 rgb(0 0 0 / 35%));
   }
 
+  .game-station-main, .game-dossier, .game-panel {
+    overflow-wrap: anywhere;
+  }
+
   .game-icon {
     display: inline-block;
     flex: none;
@@ -44,6 +48,15 @@
   .game-icon--case { background-position: 33.333% 100%; }
   .game-icon--lab { background-position: 66.667% 100%; }
   .game-icon--interview { background-position: 100% 100%; }
+
+  .character-portrait {
+    display: block;
+    flex: none;
+    aspect-ratio: 4 / 5;
+    height: auto;
+    image-rendering: pixelated;
+    box-shadow: 3px 4px 0 rgb(0 0 0 / 28%);
+  }
 
   .game-archive-scene {
     background: #071014 url('/assets/archive-room.png') center / cover no-repeat;
@@ -167,10 +180,11 @@
 
   .map-place-icon {
     display: block;
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 2.5rem;
+    height: 2.5rem;
     background: url('/assets/map-places.png') no-repeat 0 0 / 300% 200%;
     image-rendering: pixelated;
+    filter: drop-shadow(2px 3px 0 #061013);
   }
   .map-place-icon--home { background-position: 0 0; }
   .map-place-icon--work { background-position: 50% 0; }
@@ -180,14 +194,13 @@
   .map-place-icon--current { background-position: 100% 100%; }
 
   .map-marker {
-    border: 2px solid #91b5b4;
-    background: #08181c;
-    box-shadow: 0 2px 0 #02090a;
+    border: 0;
+    background: transparent;
   }
-  .map-marker--northside { border-color: #68b9c4; }
-  .map-marker--midtown { border-color: #cba35e; }
-  .map-marker--eastside { border-color: #bc8b78; }
-  .map-marker[aria-pressed='true'] { border-color: #ffd287; background: #594126; box-shadow: 0 0 0 3px rgb(255 210 135 / 25%); }
+  .map-marker[aria-pressed='true'] .map-place-icon,
+  .map-marker:hover .map-place-icon { filter: drop-shadow(0 0 4px #ffd287) drop-shadow(2px 3px 0 #061013); }
+  .map-marker:focus-visible { outline: 2px solid #ffd287; outline-offset: 1px; }
+  .map-marker-current { clip-path: polygon(50% 100%, 0 0, 100% 0); filter: drop-shadow(1px 2px 0 #061013); }
   .map-marker-label {
     display: none;
     position: absolute;

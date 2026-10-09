@@ -45,7 +45,7 @@ export function MainMenuScreen({
             <GameIcon name="case" className="size-10" />
             <span className="min-w-0 flex-1">
               <span className="block text-xs uppercase tracking-[0.12em] text-[#e8ac51]">{room.reportSubmitted ? "Open case report" : room.status === "playing" ? "Continue investigation" : "Return to lobby"}</span>
-              <span className="mt-1 block truncate text-lg uppercase">{room.caseTitle}</span>
+              <span className="mt-1 block break-words text-lg uppercase leading-tight">{room.caseTitle}</span>
               <span className="block text-xs text-[#adbbb1]">Room {room.roomCode} · {room.playerCount}/2 connected</span>
             </span>
             <ArrowRight aria-hidden="true" className="size-4 shrink-0" />

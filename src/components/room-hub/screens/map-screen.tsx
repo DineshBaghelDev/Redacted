@@ -166,14 +166,14 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
                 <button
                   aria-label={`Review ${place.name}`}
                   aria-pressed={active}
-                  className={`map-marker absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center transition sm:h-9 sm:w-9 ${active ? "z-30" : "z-20 hover:z-30 focus-visible:z-30"} map-marker--${place.area}`}
+                  className={`map-marker absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center transition ${active ? "z-30" : "z-20 hover:z-30 focus-visible:z-30"} map-marker--${place.area}`}
                   key={place.id}
                   onClick={() => setSelectedId(place.id)}
                   style={{ left: `${place.x}%`, top: `${place.y}%` }}
                   type="button"
                 >
-                  <span aria-hidden="true" className={`map-place-icon map-place-icon--${place.kind} size-5 sm:size-7`} />
-                  {current ? <span aria-hidden="true" className="absolute -right-1 -top-1 block size-2 bg-[#ffd287]" /> : null}
+                  <span aria-hidden="true" className={`map-place-icon map-place-icon--${place.kind}`} />
+                  {current ? <span aria-hidden="true" className="map-marker-current absolute -right-0.5 -top-0.5 block size-3 bg-[#ffd287]" /> : null}
                   <span className={`map-marker-label ${place.y > 77 ? "map-marker-label--above" : ""} ${place.x > 82 ? "map-marker-label--right" : ""}`}>{place.name}</span>
                 </button>
               );

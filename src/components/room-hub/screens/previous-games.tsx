@@ -48,7 +48,7 @@ export function PreviousGamesScreen({ error, isWorking, onBack, onPlay }: Previo
             key={game.generationJobId}
           >
             <p className="text-lg uppercase">{game.difficulty} case</p>
-            <h2 className="min-h-16 border-b border-[#573821] pb-2 text-2xl uppercase leading-none">
+            <h2 className="min-h-16 break-words border-b border-[#573821] pb-2 text-2xl uppercase leading-tight">
               {game.title}
             </h2>
             <p className="mt-4 break-words text-base leading-snug">{game.description}</p>
