@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-09 — Keep case generation off the player site
+
+- The existing allowlisted generation tester route now returns 404 outside Next development mode, matching the other development-only example route. A local production server returned HTTP 404 for `/dev/generation`. The normal player menu still offers only replays of published cases; dev tester functions retain their separate server allowlist.
+
 ## 2026-10-09 — Body-source lab repair
 
 - The nine inaccessible optional lab rows all trace to exact `body:<victim>` subjects in their frozen evidence drafts. Publication and lab access now preserve an explicit victim source for body-based tests, while keeping their results behind the normal request, wait, and view steps. A strict internal repair matches draft evidence ID and victim before patching an older row.

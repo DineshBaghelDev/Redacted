@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Generation tester visibility
+
+- The allowlisted generation tester remains a local development tool, but its page is not rendered in a production Next build. Player-facing case choice stays limited to frozen previous cases.
+
 ## 2026-10-09 — Body-based forensic tests
 
 - Preserve the generated `body:<victim>` subject as an explicit victim source in frozen forensic rows. Body tests are available at the lab like the autopsy, but their results still require a timed request and deliberate view. Existing published rows may restore only that deterministic source link; never infer a body source from general person associations or invent an item/room.
