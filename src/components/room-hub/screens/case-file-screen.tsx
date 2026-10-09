@@ -95,20 +95,20 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
 
   return (
     <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#0d0a08] text-[#2b2118]">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b-4 border-[#63452e] bg-[#d8c8a7] px-4 py-3 sm:px-6">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b-4 border-[#63452e] bg-[#ad9e80] px-4 py-3 sm:px-6">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.24em] text-red-900/70">Final investigation file</p>
+          <p className="text-xs uppercase tracking-[0.24em] text-red-900/70">Final investigation file</p>
           <h2 className="mt-1 text-xl uppercase sm:text-2xl">Case file</h2>
         </div>
         <button className="min-h-11 border-2 border-[#573821] px-4 text-sm uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">Back</button>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto bg-[#cbb993] p-4 sm:p-6 lg:p-8">
+      <main className="min-h-0 flex-1 overflow-y-auto bg-[#241c17] p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-4xl">
           {error ? <p className="mb-4 border-2 border-red-800 bg-red-950 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
 
           {closeState?.status === "complete" && closeState.result ? (
-            <section className="border-2 border-[#6d5138] bg-[#eee2bd] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] sm:p-8" aria-live="polite">
+            <section className="border-2 border-[#6d5138] bg-[#cbbd9d] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] sm:p-8" aria-live="polite">
               <p className="text-xs uppercase tracking-[0.2em] text-red-800">Case closed</p>
               <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#6d5138] pb-5">
                 <h3 className="text-3xl uppercase sm:text-4xl">Your final report</h3>
@@ -120,7 +120,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                 {fields.map(([key, label]) => {
                   const category = closeState.result![key];
                   return (
-                    <li className={`border-2 p-4 ${category.star ? "border-emerald-800 bg-emerald-50" : "border-red-900/60 bg-red-50"}`} key={key}>
+                    <li className={`border-2 p-4 ${category.star ? "border-emerald-800 bg-[#bac5aa]" : "border-red-900/60 bg-[#cdb09b]"}`} key={key}>
                       <p className="flex items-center justify-between gap-3 uppercase"><span>{label}</span><span aria-hidden="true">{category.star ? "★" : "☆"}</span></p>
                       {"feedback" in category && category.feedback ? <p className="mt-2 text-sm leading-relaxed text-[#5b4635]">{category.feedback}</p> : null}
                     </li>
@@ -129,13 +129,13 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               </ul>
             </section>
           ) : closeState?.status === "judging" || (closeState?.status === "pending" && !closeState.error) ? (
-            <section className="border-2 border-[#6d5138] bg-[#eee2bd] p-8 text-center shadow-[7px_7px_0_rgba(55,34,20,0.3)]" aria-live="polite">
+            <section className="border-2 border-[#6d5138] bg-[#cbbd9d] p-8 text-center shadow-[7px_7px_0_rgba(55,34,20,0.3)]" aria-live="polite">
               <p className="text-xs uppercase tracking-[0.2em] text-red-800">Report submitted</p>
               <h3 className="mt-3 text-3xl uppercase">Reviewing your theory...</h3>
               <p className="mt-4 text-sm leading-relaxed text-[#5b4635]">Both detectives will see the result here when the review is complete.</p>
             </section>
           ) : closeState?.error ? (
-            <section className="border-2 border-red-900 bg-[#eee2bd] p-6 text-center">
+            <section className="border-2 border-red-900 bg-[#cbbd9d] p-6 text-center">
               <h3 className="text-2xl uppercase">Review interrupted</h3>
               <p className="mt-3 text-sm">{closeState.error}</p>
               <button className="mt-5 min-h-11 border-2 border-red-900 px-5 uppercase hover:bg-red-900 hover:text-white disabled:opacity-50" disabled={submitting} onClick={retry} type="button">
@@ -143,7 +143,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               </button>
             </section>
           ) : !closing ? (
-            <section className="border-2 border-[#6d5138] bg-[#eee2bd] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] sm:p-8">
+            <section className="border-2 border-[#6d5138] bg-[#cbbd9d] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] sm:p-8">
               {brief === undefined ? <p className="uppercase">Loading case file...</p> : !brief ? <p className="uppercase text-red-800">No completed case is available.</p> : (
                 <>
                   <p className="text-xs uppercase tracking-[0.18em] text-red-800">Public brief</p>
@@ -160,7 +160,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               )}
             </section>
           ) : reviewing ? (
-            <section className="border-2 border-red-900 bg-[#eee2bd] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] sm:p-8">
+            <section className="border-2 border-red-900 bg-[#cbbd9d] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] sm:p-8">
               <p className="text-xs uppercase tracking-[0.2em] text-red-800">Final check</p>
               <h3 className="mt-2 text-3xl uppercase">Submit this theory?</h3>
               <p className="mt-4 text-sm leading-relaxed text-[#5b4635]">This closes the case for both detectives. Your report cannot be replaced after submission.</p>
@@ -176,7 +176,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               </div>
             </section>
           ) : (
-            <form className="space-y-5 border-2 border-[#6d5138] bg-[#eee2bd] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] sm:p-8" onSubmit={review}>
+            <form className="space-y-5 border-2 border-[#6d5138] bg-[#cbbd9d] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] sm:p-8" onSubmit={review}>
               <div className="border-b-2 border-[#6d5138] pb-4"><p className="text-xs uppercase tracking-[0.2em] text-red-800">Five findings · five stars</p><h3 className="mt-2 text-3xl uppercase">Your final theory</h3></div>
               <label className="block"><span className="case-close-label">1 · Who did it?</span><select className="case-close-input" onChange={(event) => setCulpritNpcId(event.target.value)} required value={culpritNpcId}><option value="">Choose a person</option>{people?.filter((person) => person.role !== "victim").map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
               <label className="block"><span className="case-close-label">2 · Why did they do it?</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setMotiveExplanation(event.target.value)} required value={motiveExplanation} /></label>

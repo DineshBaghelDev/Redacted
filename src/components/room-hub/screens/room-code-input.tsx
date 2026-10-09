@@ -3,7 +3,7 @@ import { useRef } from "react";
 const CODE_LENGTH = 6;
 
 const otpInputClass =
-  "h-12 min-w-0 flex-1 border border-cyan-300 bg-[#020817]/90 text-center text-xl uppercase text-cyan-100 outline-none placeholder:text-cyan-100/45";
+  "h-12 min-w-0 flex-1 border border-[#6f9f98] bg-[#071014]/90 text-center text-xl uppercase text-[#c8d8d2] outline-none placeholder:text-[#c8d8d2]/65";
 
 type RoomCodeInputProps = {
   value: string;

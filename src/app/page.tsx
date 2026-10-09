@@ -12,26 +12,26 @@ import { RoomHub } from "@/components/room-hub/room-hub";
  */
 export default function Home() {
   return (
-    <main className="min-h-screen w-full bg-[#050712] text-cyan-100">
+    <main className="game-ui min-h-screen w-full">
       <Show when="signed-out">
         <section
-          className="flex min-h-screen w-full items-center justify-start border-0 bg-cover bg-center px-6 shadow-[inset_0_0_24px_rgba(34,211,238,0.22)] sm:px-16"
+          className="flex min-h-screen w-full items-center justify-start bg-cover bg-left px-6 sm:bg-center sm:px-16"
           style={{
             backgroundImage:
-              "linear-gradient(90deg, rgba(5,7,18,0.82), rgba(5,7,18,0.18)), url('/home-background.png')",
+              "url('/assets/menu-noir.png')",
           }}
         >
           <div className="flex w-full max-w-xs flex-col gap-3">
-            <h1 className="mb-8 text-5xl leading-none text-cyan-50 drop-shadow-[0_3px_0_rgba(236,72,153,0.9)] sm:text-7xl">
+            <h1 className="game-title mb-8 text-5xl leading-none sm:text-7xl">
               REDACTED
             </h1>
             <SignInButton>
-              <button className="h-12 border border-cyan-300 bg-[#06142d]/80 px-5 text-left text-xl uppercase text-yellow-200 shadow-[0_0_16px_rgba(34,211,238,0.25)]">
+              <button className="game-menu-button w-full text-xl uppercase">
                 Sign in
               </button>
             </SignInButton>
             <SignUpButton>
-              <button className="h-12 border border-cyan-300 bg-[#06142d]/80 px-5 text-left text-xl uppercase text-cyan-100 shadow-[0_0_16px_rgba(34,211,238,0.25)]">
+              <button className="game-menu-button w-full text-xl uppercase">
                 Sign up
               </button>
             </SignUpButton>
@@ -41,10 +41,10 @@ export default function Home() {
 
       <Show when="signed-in">
         <section
-          className="relative flex h-screen w-full items-center justify-start overflow-hidden border-0 bg-cover bg-center bg-[#050712] px-0 shadow-[inset_0_0_24px_rgba(34,211,238,0.22)]"
+          className="relative flex h-screen w-full items-center justify-start overflow-hidden bg-[#071014] bg-cover bg-left sm:bg-center"
           style={{
             backgroundImage:
-              "linear-gradient(90deg, rgba(5,7,18,0.82), rgba(5,7,18,0.18)), url('/home-background.png')",
+              "url('/assets/menu-noir.png')",
           }}
         >
           <RoomHub />

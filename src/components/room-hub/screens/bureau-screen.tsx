@@ -4,6 +4,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Database, DoorOpen, FileText, FlaskConical, Map, Network, ScanLine, Users, type LucideIcon } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import { currentGameMinute, formatGameMinute } from "../../../lib/game-time";
 
@@ -71,6 +72,7 @@ const stations: Record<Station, { label: string; description: string }> = {
 };
 
 const stationOrder: Station[] = ["interrogate", "cctv", "clueboard", "evidence", "map", "case"];
+const stationIcons: Record<Station, LucideIcon> = { interrogate: Users, cctv: ScanLine, clueboard: Network, evidence: Database, map: Map, place: DoorOpen, lab: FlaskConical, case: FileText };
 
 export function BureauScreen({ error, onLeave }: { error: string; onLeave: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
@@ -132,10 +134,10 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   }
 
   return (
-    <section className="relative h-screen w-full overflow-hidden border border-cyan-300/70 bg-[#050712] shadow-[0_0_30px_rgba(34,211,238,0.22)]">
-      <div className="absolute inset-x-0 top-0 z-30 flex h-9 items-center justify-center gap-2 border-b border-cyan-300/30 bg-[#050712]/95 px-2 text-[10px] uppercase tracking-[0.06em] text-yellow-100 sm:gap-4 sm:text-xs sm:tracking-[0.15em]">
+    <section className="relative h-screen w-full overflow-hidden bg-[#071014]">
+      <div className="absolute inset-x-0 top-0 z-30 flex h-10 items-center justify-center gap-3 border-b border-[#45635d] bg-[#071014]/95 px-2 text-xs uppercase tracking-[0.08em] text-[#e8ac51] sm:gap-5 sm:text-xs sm:tracking-[0.15em]">
         <span>Case time · {gameTime === null ? "Syncing..." : formatGameMinute(gameTime)}</span>
-        {city?.deadline != null ? <span className={overdue ? "text-amber-200" : "text-cyan-100"}>{overdue ? "Overdue" : `Due · ${formatGameMinute(city.deadline)}`}</span> : null}
+        {city?.deadline != null ? <span className={overdue ? "text-[#e5a18e]" : "text-[#b8ccc1]"}>{overdue ? "Overdue" : `Due · ${formatGameMinute(city.deadline)}`}</span> : null}
       </div>
       {clockError ? <p className="absolute inset-x-3 top-11 z-50 mx-auto w-fit border border-red-300/60 bg-red-950/95 px-3 py-2 text-sm text-red-100" role="status">Clock sync delayed. Retrying...</p> : null}
       {!activeStation ? (
@@ -145,7 +147,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
               <p className="text-sm uppercase" id="leave-game-title">Leave this investigation?</p>
               <p className="mt-2 text-xs leading-relaxed text-red-100/75">You cannot rejoin after leaving a started room.</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <button autoFocus className="min-h-10 border border-cyan-300/60 text-xs uppercase text-cyan-100 hover:border-cyan-100" onClick={() => setConfirmLeave(false)} type="button">Stay</button>
+                <button autoFocus className="min-h-10 border border-[#6f9f98]/60 text-xs uppercase text-[#c8d8d2] hover:border-[#c8d8d2]" onClick={() => setConfirmLeave(false)} type="button">Stay</button>
                 <button className="min-h-10 border border-red-400 bg-red-950 text-xs uppercase hover:border-red-200" onClick={onLeave} type="button">Leave</button>
               </div>
               {error ? <p className="mt-3 text-sm text-red-200" role="alert">{error}</p> : null}
@@ -159,7 +161,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
               Leave game
             </button>
           )}
-          {error && !confirmLeave ? <p className="max-w-xs bg-[#050712]/90 px-3 py-2 text-sm text-red-200" role="alert">{error}</p> : null}
+          {error && !confirmLeave ? <p className="max-w-xs bg-[#071014]/90 px-3 py-2 text-sm text-red-200" role="alert">{error}</p> : null}
         </div>
       ) : null}
       <div className="relative h-full w-full bg-black">
@@ -168,37 +170,41 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
           className="object-cover"
           fill
           priority
-          src="/assets/bureau.jpg"
+          src="/assets/bureau-noir.png"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050712]/35 via-transparent to-[#050712]/45" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#071014]/15 via-transparent to-[#071014]/20" />
 
-        <Hotspot label="People" className="left-[4%] top-[26%] h-[40%] w-[18%]" onClick={() => openStation("interrogate")} />
-        <Hotspot label="CCTV" className="left-[24%] top-[27%] h-[39%] w-[17%]" onClick={() => openStation("cctv")} />
-        <Hotspot label="Clueboard" className="left-[41%] top-[27%] h-[29%] w-[21%]" onClick={() => openStation("clueboard")} />
-        <Hotspot label="Public records" className="left-[62%] top-[26%] h-[40%] w-[19%]" onClick={() => openStation("evidence")} />
-        <Hotspot label="Map" className="left-[82%] top-[17%] h-[43%] w-[18%]" onClick={() => openStation("map")} />
-        <Hotspot label="Case" className="left-[18%] top-[59%] h-[39%] w-[64%]" onClick={() => openStation("case")} />
+        <Hotspot label="People" className="left-[2%] top-[23%] h-[43%] w-[15%]" onClick={() => openStation("interrogate")} />
+        <Hotspot label="CCTV" className="left-[19%] top-[34%] h-[33%] w-[18%]" onClick={() => openStation("cctv")} />
+        <Hotspot label="Clueboard" className="left-[38%] top-[23%] h-[34%] w-[23%]" onClick={() => openStation("clueboard")} />
+        <Hotspot label="Public records" className="left-[63%] top-[34%] h-[33%] w-[16%]" onClick={() => openStation("evidence")} />
+        <Hotspot label="Map" className="left-[80%] top-[23%] h-[34%] w-[19%]" onClick={() => openStation("map")} />
+        <Hotspot label="Case" className="left-[39%] top-[76%] h-[22%] w-[23%]" onClick={() => openStation("case")} />
 
       </div>
 
       {!activeStation ? (
-        <nav aria-label="Investigation stations" className="absolute inset-x-3 bottom-3 z-20 grid grid-cols-2 gap-2 border border-cyan-300/50 bg-[#050712]/95 p-3 shadow-[0_0_24px_rgba(34,211,238,0.2)] sm:hidden">
-          <p className="col-span-2 text-xs uppercase tracking-[0.2em] text-cyan-100/55">Choose a bureau station</p>
-          {stationOrder.map((item) => (
-            <button
-              className="min-h-12 border border-cyan-300/40 bg-[#06142d] px-2 text-sm uppercase text-cyan-50 active:border-yellow-200 active:text-yellow-200"
-              key={item}
-              onClick={() => openStation(item)}
-              type="button"
-            >
-              {stations[item].label}
-            </button>
-          ))}
+        <nav aria-label="Investigation stations" className="game-panel absolute inset-x-2 bottom-2 z-20 grid grid-cols-3 gap-1.5 p-2 sm:hidden">
+          <p className="col-span-3 px-1 text-xs uppercase tracking-[0.12em] text-[#b8ccc1]">Bureau stations</p>
+          {stationOrder.map((item) => {
+            const Icon = stationIcons[item];
+            return (
+              <button
+                className="flex min-h-14 flex-col items-center justify-center gap-1 border border-[#45635d] bg-[#0b1a1c] px-1 text-xs uppercase text-[#e4e6d8] active:border-[#e8ac51] active:text-[#e8ac51]"
+                key={item}
+                onClick={() => openStation(item)}
+                type="button"
+              >
+                <Icon aria-hidden="true" className="size-4" />
+                {stations[item].label}
+              </button>
+            );
+          })}
         </nav>
       ) : null}
 
       {activeStation || showAwayNotice ? (
-        <div className="absolute inset-x-0 bottom-0 top-9 z-20">
+        <div className="absolute inset-x-0 bottom-0 top-10 z-20">
           {station === "clueboard" ? <ClueBoardScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
           {station === "cctv" ? <CctvScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
           {station === "map" ? <MapScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
@@ -208,17 +214,17 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
           {station === "evidence" ? <EvidenceScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
           {station === "case" ? <CaseFileScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
           {showAwayNotice ? (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#050712]/95 p-4 text-cyan-50">
-              <div className="w-full max-w-lg border border-cyan-300/50 bg-[#07111b] p-6 text-center shadow-[0_0_30px_rgba(34,211,238,0.18)]">
-                <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/55">Current location</p>
-                <h2 className="mt-2 text-2xl uppercase text-yellow-100">{city?.activeTravel ? `On the way to ${city.activeTravel.destinationName}` : currentPlace?.name ?? "Away from bureau"}</h2>
-                <p className="mt-3 text-sm text-cyan-100/70">Bureau terminals are available when you return. You can still review your case and clueboard.</p>
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#071014]/95 p-4 text-[#e4e6d8]">
+              <div className="game-panel w-full max-w-lg p-6 text-center">
+                <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Current location</p>
+                <h2 className="mt-2 text-2xl uppercase text-[#f1c987]">{city?.activeTravel ? `On the way to ${city.activeTravel.destinationName}` : currentPlace?.name ?? "Away from bureau"}</h2>
+                <p className="mt-3 text-sm text-[#c8d8d2]/70">Bureau terminals are available when you return. You can still review your case and clueboard.</p>
                 <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                  <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("map")} type="button">City map</button>
-                  {!city?.activeTravel && currentPlace?.hasInterior ? <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("place")} type="button">Explore this place</button> : null}
-                  {!city?.activeTravel && currentPlace?.kind === "lab" ? <button className="min-h-11 border border-yellow-200/70 px-3 text-sm uppercase text-yellow-100" onClick={() => openStation("lab")} type="button">Forensic lab</button> : null}
-                  <button className="min-h-11 border border-cyan-300/50 px-3 text-sm uppercase" onClick={() => openStation("clueboard")} type="button">Clueboard</button>
-                  <button className="min-h-11 border border-cyan-300/50 px-3 text-sm uppercase" onClick={() => openStation("case")} type="button">Case file</button>
+                  <button className="min-h-11 border border-[#e8ac51]/70 px-3 text-sm uppercase text-[#f1c987]" onClick={() => openStation("map")} type="button">City map</button>
+                  {!city?.activeTravel && currentPlace?.hasInterior ? <button className="min-h-11 border border-[#e8ac51]/70 px-3 text-sm uppercase text-[#f1c987]" onClick={() => openStation("place")} type="button">Explore this place</button> : null}
+                  {!city?.activeTravel && currentPlace?.kind === "lab" ? <button className="min-h-11 border border-[#e8ac51]/70 px-3 text-sm uppercase text-[#f1c987]" onClick={() => openStation("lab")} type="button">Forensic lab</button> : null}
+                  <button className="min-h-11 border border-[#6f9f98]/50 px-3 text-sm uppercase" onClick={() => openStation("clueboard")} type="button">Clueboard</button>
+                  <button className="min-h-11 border border-[#6f9f98]/50 px-3 text-sm uppercase" onClick={() => openStation("case")} type="button">Case file</button>
                 </div>
               </div>
             </div>
@@ -241,11 +247,11 @@ function Hotspot({
   return (
     <button
       aria-label={label}
-      className={`group absolute hidden border border-transparent transition hover:border-cyan-200/80 hover:bg-cyan-300/10 focus-visible:border-yellow-200 focus-visible:bg-yellow-200/10 sm:block ${className}`}
+      className={`group absolute hidden border border-transparent transition hover:border-[#e8ac51]/80 hover:bg-[#e8ac51]/10 focus-visible:border-[#e8ac51] focus-visible:bg-[#e8ac51]/10 sm:block ${className}`}
       onClick={onClick}
       type="button"
     >
-      <span className="absolute left-1/2 top-2 -translate-x-1/2 -translate-y-full whitespace-nowrap border border-cyan-300/70 bg-[#06142d]/90 px-2 py-1 text-xs uppercase text-cyan-100 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+      <span className="absolute left-1/2 top-2 -translate-x-1/2 -translate-y-full whitespace-nowrap border border-[#e8ac51] bg-[#071014]/95 px-2 py-1 text-xs uppercase text-[#f5c87f] opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
         {label}
       </span>
     </button>

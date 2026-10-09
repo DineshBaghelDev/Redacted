@@ -16,8 +16,8 @@ export function NameEntryScreen({
   canSubmit,
 }: NameEntryScreenProps) {
   return (
-    <div className="flex w-full max-w-sm flex-col gap-8">
-      <h1 className="text-5xl leading-none text-cyan-50 drop-shadow-[0_3px_0_rgba(236,72,153,0.9)] sm:text-7xl">
+    <div className="flex w-full max-w-sm flex-col gap-8 px-5 sm:px-0">
+      <h1 className="game-title text-5xl leading-none sm:text-7xl">
         REDACTED
       </h1>
       <form
@@ -27,7 +27,7 @@ export function NameEntryScreen({
           onSubmit();
         }}
       >
-        <label className="mb-3 block text-xl uppercase text-cyan-100" htmlFor="detective-name">
+        <label className="mb-3 block text-xl uppercase text-[#e4e6d8]" htmlFor="detective-name">
           Detective name
         </label>
         <input
@@ -39,7 +39,7 @@ export function NameEntryScreen({
           value={detectiveName}
         />
         <button
-          className={`${menuButton} mt-4 w-full text-yellow-200`}
+          className={`${menuButton} mt-4 w-full text-[#e8ac51]`}
           disabled={!canSubmit}
           type="submit"
         >

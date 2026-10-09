@@ -1,5 +1,16 @@
 # Design Decisions
 
+## 2026-10-10 — No service worker in V1
+
+- The game does not register or serve a service worker. Requests for `/sw.js` receive a plain 404 outside the Clerk-wrapped page tree.
+
+## 2026-10-10 — Pixel-noir interface direction
+
+- Use charcoal, petrol teal, and aged amber for the player UI, with red reserved for warnings and irreversible actions. Avoid purple or white app-like surfaces.
+- Keep environment art sparse and text-free so actual controls and case data stay readable. The bureau scene has a text-only CCTV terminal; no visual footage, stills, or thumbnails appear in generated art.
+- Use Pixelify Sans for titles and actions, Geist Mono for longer reading, and a clear keyboard focus outline. Keep physical paper surfaces only where the game is presenting a dossier, statement, or clueboard note.
+- The main menu appears by itself. The archive and settings occupy their own screen, while desktop bureau hotspots and a compact mobile station menu retain the existing navigation paths.
+
 ## 2026-10-09 — Replay deadline and submitted-room behavior
 
 - Offer an optional custom shared deadline when creating a replay room. Blank uses the frozen case estimate plus one day. It cannot change after room creation.

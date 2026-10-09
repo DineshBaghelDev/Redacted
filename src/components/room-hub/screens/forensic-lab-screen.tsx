@@ -54,31 +54,31 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
   }
 
   return (
-    <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#080b12] text-cyan-50">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-cyan-300/30 bg-[#07111b] px-4 py-3 sm:px-6">
+    <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-[#6f9f98]/30 bg-[#0b1a1c] px-4 py-3 sm:px-6">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-cyan-200/55">Evidence analysis</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Evidence analysis</p>
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">Forensic lab</h2>
-          <p className="mt-1 text-xs text-cyan-100/50">{lab.placeName}</p>
+          <p className="mt-1 text-xs text-[#c8d8d2]/65">{lab.placeName}</p>
         </div>
-        <button className="min-h-11 border border-cyan-300/70 px-4 py-2 text-sm uppercase hover:border-yellow-200 hover:text-yellow-200" onClick={onBack} type="button">Back</button>
+        <button className="min-h-11 border border-[#6f9f98]/70 px-4 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">Back</button>
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-5xl">
-          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-cyan-300/20 pb-4">
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#6f9f98]/20 pb-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/45">Available examinations</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/65">Available examinations</p>
               <h3 className="mt-1 text-2xl uppercase sm:text-3xl">Case evidence</h3>
             </div>
-            <p className="font-mono text-sm text-yellow-200">{formatGameMinute(gameTime)}</p>
+            <p className="font-mono text-sm text-[#e8ac51]">{formatGameMinute(gameTime)}</p>
           </div>
 
           {lab.action ? (
-            <div className="mt-5 border border-yellow-200/45 bg-[#211d15] p-4" role="status">
-              <p className="text-sm uppercase text-yellow-100">Processing lab request</p>
-              <p className="mt-1 text-xs text-yellow-100/70">{actionRemaining} game min remaining</p>
-              <progress aria-label="Lab request progress" className="mt-3 h-2 w-full accent-yellow-200" max={Math.max(1, lab.action.completeGameTime - lab.action.startGameTime)} value={Math.max(0, gameTime - lab.action.startGameTime)} />
+            <div className="mt-5 border border-[#e8ac51]/45 bg-[#211d15] p-4" role="status">
+              <p className="text-sm uppercase text-[#f1c987]">Processing lab request</p>
+              <p className="mt-1 text-xs text-[#f1c987]/70">{actionRemaining} game min remaining</p>
+              <progress aria-label="Lab request progress" className="mt-3 h-2 w-full accent-[#e8ac51]" max={Math.max(1, lab.action.completeGameTime - lab.action.startGameTime)} value={Math.max(0, gameTime - lab.action.startGameTime)} />
             </div>
           ) : null}
 
@@ -90,29 +90,29 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
                 const remaining = test.readyAtGameTime === undefined ? 0 : Math.max(0, test.readyAtGameTime - gameTime);
                 const pinned = boardNodes?.some((node) => node.type === "forensic" && node.referenceId === test.id) ?? false;
                 return (
-                  <li className="border border-cyan-300/25 bg-[#0b1822] p-4 sm:p-5" key={test.id}>
+                  <li className="border border-[#6f9f98]/25 bg-[#102224] p-4 sm:p-5" key={test.id}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-100/45">{test.testType.replaceAll("_", " ")}</p>
+                        <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/65">{test.testType.replaceAll("_", " ")}</p>
                         <h4 className="mt-1 text-lg uppercase">{test.sourceName}</h4>
                       </div>
-                      <span className={`border px-2 py-1 text-[10px] uppercase tracking-wider ${test.status === "viewed" ? "border-emerald-300/50 text-emerald-200" : test.status === "ready" ? "border-yellow-200/60 text-yellow-100" : "border-cyan-300/30 text-cyan-100/55"}`}>
+                      <span className={`border px-2 py-1 text-xs uppercase tracking-wider ${test.status === "viewed" ? "border-emerald-300/50 text-emerald-200" : test.status === "ready" ? "border-[#e8ac51]/60 text-[#f1c987]" : "border-[#6f9f98]/30 text-[#c8d8d2]/55"}`}>
                         {test.status === "available" ? "Not requested" : test.status}
                       </span>
                     </div>
 
                     {test.status === "pending" ? (
                       <div className="mt-4">
-                        <div className="flex justify-between text-xs text-cyan-100/55"><span>In progress</span><span>{remaining} game min left</span></div>
-                        <progress aria-label={`${test.testType} processing`} className="mt-2 h-2 w-full accent-cyan-300" />
+                        <div className="flex justify-between text-xs text-[#c8d8d2]/55"><span>In progress</span><span>{remaining} game min left</span></div>
+                        <progress aria-label={`${test.testType} processing`} className="mt-2 h-2 w-full accent-[#6f9f98]" />
                       </div>
                     ) : null}
 
-                    {test.status === "viewed" ? <p className="mt-4 border-l-2 border-yellow-200/70 bg-[#17170f] p-3 text-sm leading-relaxed text-yellow-50">{test.result}</p> : null}
+                    {test.status === "viewed" ? <p className="mt-4 border-l-2 border-[#e8ac51]/70 bg-[#17170f] p-3 text-sm leading-relaxed text-[#f6dfb2]">{test.result}</p> : null}
 
                     {test.status === "available" ? (
                       <button
-                        className="mt-4 min-h-11 border border-yellow-200/70 bg-yellow-200/10 px-4 text-xs uppercase text-yellow-100 hover:bg-yellow-200/20 disabled:cursor-wait disabled:opacity-45"
+                        className="mt-4 min-h-11 border border-[#e8ac51]/70 bg-[#e8ac51]/10 px-4 text-xs uppercase text-[#f1c987] hover:bg-[#e8ac51]/20 disabled:cursor-wait disabled:opacity-45"
                         disabled={Boolean(lab.action) || Boolean(working)}
                         onClick={() => run(test.id, requestTest({ roomCode, forensicOutputId: test.id }))}
                         type="button"
@@ -120,7 +120,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
                     ) : null}
                     {test.status === "ready" ? (
                       <button
-                        className="mt-4 min-h-11 border border-yellow-200/70 bg-yellow-200/10 px-4 text-xs uppercase text-yellow-100 hover:bg-yellow-200/20 disabled:opacity-45"
+                        className="mt-4 min-h-11 border border-[#e8ac51]/70 bg-[#e8ac51]/10 px-4 text-xs uppercase text-[#f1c987] hover:bg-[#e8ac51]/20 disabled:opacity-45"
                         disabled={Boolean(working)}
                         onClick={() => run(test.id, markViewed({ roomCode, forensicOutputId: test.id }))}
                         type="button"
@@ -128,7 +128,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
                     ) : null}
                     {test.status === "viewed" ? (
                       <button
-                        className="mt-4 min-h-11 border border-cyan-300/60 px-4 text-xs uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:opacity-45"
+                        className="mt-4 min-h-11 border border-[#6f9f98]/60 px-4 text-xs uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] disabled:opacity-45"
                         disabled={Boolean(working) || pinned}
                         onClick={() => {
                           const count = boardNodes?.length ?? 0;
@@ -142,7 +142,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
               })}
             </ul>
           ) : (
-            <p className="mt-6 border border-dashed border-cyan-300/25 p-6 text-center text-sm text-cyan-100/55">No evidence is ready for examination yet. Bring collected evidence or search rooms to uncover available tests.</p>
+            <p className="mt-6 border border-dashed border-[#6f9f98]/25 p-6 text-center text-sm text-[#c8d8d2]/55">No evidence is ready for examination yet. Bring collected evidence or search rooms to uncover available tests.</p>
           )}
         </div>
       </main>
@@ -152,10 +152,10 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
 
 function LabMessage({ message, onBack }: { message: string; onBack: () => void }) {
   return (
-    <section className="absolute inset-0 z-20 flex items-center justify-center bg-[#080b12] p-4 text-cyan-50">
-      <div className="w-full max-w-lg border border-cyan-300/30 bg-[#07111b] p-6 text-center">
+    <section className="absolute inset-0 z-20 flex items-center justify-center bg-[#071014] p-4 text-[#e4e6d8]">
+      <div className="w-full max-w-lg border border-[#6f9f98]/30 bg-[#0b1a1c] p-6 text-center">
         <p className="text-lg uppercase">{message}</p>
-        <button className="mt-5 min-h-11 border border-cyan-300/70 px-4 py-2 uppercase hover:border-yellow-200 hover:text-yellow-200" onClick={onBack} type="button">Back</button>
+        <button className="mt-5 min-h-11 border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">Back</button>
       </div>
     </section>
   );

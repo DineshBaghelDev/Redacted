@@ -23,8 +23,8 @@ export function SettingsPanel({
         onSave();
       }}
     >
-      <h2 className="mb-5 text-3xl uppercase text-cyan-50">Detective profile</h2>
-      <label className="mb-3 block text-xl uppercase text-cyan-100" htmlFor="profile-name">
+      <h2 className="mb-5 text-3xl uppercase text-[#e4e6d8]">Detective profile</h2>
+      <label className="mb-3 block text-xl uppercase text-[#c8d8d2]" htmlFor="profile-name">
         Detective name
       </label>
       <input
@@ -35,7 +35,7 @@ export function SettingsPanel({
       />
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <button className={menuButton} onClick={onBack} type="button">Back to menu</button>
-        <button className={`${menuButton} text-yellow-200`} disabled={!canSave} type="submit">Save</button>
+        <button className={`${menuButton} text-[#e8ac51]`} disabled={!canSave} type="submit">Save</button>
       </div>
     </form>
   );

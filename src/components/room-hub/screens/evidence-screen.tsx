@@ -57,16 +57,16 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
   }
 
   return (
-    <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#050712]/96 text-cyan-100 backdrop-blur-sm">
-      <header className="flex shrink-0 items-start justify-between gap-4 border-b border-cyan-300/35 bg-[#06142d] p-4 sm:p-6">
+    <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014]/96 text-[#c8d8d2] backdrop-blur-sm">
+      <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#6f9f98]/35 bg-[#0b1a1c] p-4 sm:p-6">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-yellow-200/75">Bureau records terminal</p>
-          <h2 className="mt-1 text-2xl uppercase text-cyan-50 sm:text-3xl">Public records</h2>
-          <p className="mt-2 max-w-xl text-sm text-cyan-100/60">Search addresses, employment, background records, and card payments already stored with this case.</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-[#e8ac51]/75">Bureau records terminal</p>
+          <h2 className="mt-1 text-2xl uppercase text-[#e4e6d8] sm:text-3xl">Public records</h2>
+          <p className="mt-2 max-w-xl text-sm text-[#c8d8d2]/60">Search addresses, employment, background records, and card payments already stored with this case.</p>
         </div>
         <button
           aria-label="Return to bureau"
-          className="min-h-11 shrink-0 border border-cyan-300 px-4 text-sm uppercase hover:border-yellow-200 hover:text-yellow-200 focus-visible:outline-2 focus-visible:outline-yellow-200"
+          className="min-h-11 shrink-0 border border-[#6f9f98] px-4 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] focus-visible:outline-2 focus-visible:outline-[#e8ac51]"
           onClick={onBack}
           type="button"
         >
@@ -74,12 +74,12 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
         </button>
       </header>
 
-      <form className="shrink-0 border-b border-cyan-300/25 bg-[#020817] p-4 sm:px-6" onSubmit={submitSearch}>
-        <label className="block text-xs uppercase tracking-[0.18em] text-cyan-100/60" htmlFor="record-search">Search records</label>
+      <form className="shrink-0 border-b border-[#6f9f98]/25 bg-[#071014] p-4 sm:px-6" onSubmit={submitSearch}>
+        <label className="block text-xs uppercase tracking-[0.18em] text-[#c8d8d2]/60" htmlFor="record-search">Search records</label>
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
           <input
             autoComplete="off"
-            className="h-12 min-w-0 flex-1 border border-cyan-300/60 bg-[#06142d] px-4 text-base text-cyan-50 outline-none placeholder:text-cyan-100/35 focus:border-yellow-200"
+            className="h-12 min-w-0 flex-1 border border-[#6f9f98]/60 bg-[#0b1a1c] px-4 text-base text-[#e4e6d8] outline-none placeholder:text-[#c8d8d2]/65 focus:border-[#e8ac51]"
             id="record-search"
             maxLength={80}
             onChange={(event) => setSearch(event.target.value)}
@@ -88,7 +88,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
             value={search}
           />
           <button
-            className="min-h-12 border border-yellow-200 px-5 text-sm uppercase text-yellow-200 hover:bg-yellow-200 hover:text-[#020817] focus-visible:outline-2 focus-visible:outline-yellow-200 disabled:cursor-wait disabled:opacity-50"
+            className="min-h-12 border border-[#e8ac51] px-5 text-sm uppercase text-[#e8ac51] hover:bg-[#e8ac51] hover:text-[#071014] focus-visible:outline-2 focus-visible:outline-[#e8ac51] disabled:cursor-wait disabled:opacity-50"
             disabled={startingSearch || (result?.status === "pending" && normalizedTerm(submittedSearch) === currentTerm)}
             type="submit"
           >
@@ -97,11 +97,11 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
         </div>
         {result?.savedTerms.length ? (
           <div className="mt-3 flex flex-wrap items-center gap-2" aria-label="Recent shared searches">
-            <span className="mr-1 text-[10px] uppercase tracking-[0.16em] text-cyan-100/45">Shared searches</span>
+            <span className="mr-1 text-xs uppercase tracking-[0.16em] text-[#c8d8d2]/65">Shared searches</span>
             {result.savedTerms.map((term) => (
               <button
                 aria-pressed={search === term}
-                className={`min-h-9 border px-3 text-xs uppercase focus-visible:outline-2 focus-visible:outline-yellow-200 ${search === term ? "border-yellow-200 text-yellow-100" : "border-cyan-300/25 text-cyan-100/70 hover:border-cyan-200"}`}
+                className={`min-h-9 border px-3 text-xs uppercase focus-visible:outline-2 focus-visible:outline-[#e8ac51] ${search === term ? "border-[#e8ac51] text-[#f1c987]" : "border-[#6f9f98]/25 text-[#c8d8d2]/70 hover:border-[#a5c6bb]"}`}
                 key={term}
                 onClick={() => { setSearch(term); setSubmittedSearch(term); setHasSubmitted(true); setError(""); }}
                 type="button"
@@ -111,7 +111,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
             ))}
           </div>
         ) : null}
-        <p className="mt-2 text-xs text-cyan-100/40">New searches take 10 case minutes. Reopen a saved search for free.</p>
+        <p className="mt-2 text-xs text-[#c8d8d2]/65">New searches take 10 case minutes. Reopen a saved search for free.</p>
       </form>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
@@ -132,10 +132,10 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
             {records.map((record) => {
               const isPinned = boardNodes?.some((node) => node.type === "public_record" && node.referenceId === record.id);
               return (
-                <li className="border border-[#b8a77d] bg-[#e9dfc5] p-4 text-[#211d17] shadow-[4px_4px_0_rgba(0,0,0,0.3)]" key={record.id}>
+                <li className="border border-[#b8a77d] bg-[#c8b99b] p-4 text-[#211d17] shadow-[4px_4px_0_rgba(0,0,0,0.3)]" key={record.id}>
                   <div className="flex items-start justify-between gap-3 border-b border-[#211d17]/30 pb-2">
                     <h3 className="text-lg uppercase leading-tight">{record.title}</h3>
-                    <span className="shrink-0 border border-red-800 px-2 py-1 text-[10px] uppercase tracking-wide text-red-800">{record.type}</span>
+                    <span className="shrink-0 border border-red-800 px-2 py-1 text-xs uppercase tracking-wide text-red-800">{record.type}</span>
                   </div>
                   <p className="mt-3 text-sm leading-relaxed sm:text-base">{record.content}</p>
                   <button
@@ -157,5 +157,5 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
 }
 
 function TerminalMessage({ children, role }: { children: React.ReactNode; role?: "status" }) {
-  return <p className="mx-auto mt-12 max-w-lg border border-cyan-300/35 bg-[#06142d] p-5 text-center text-sm uppercase text-cyan-100/70" role={role}>{children}</p>;
+  return <p className="mx-auto mt-12 max-w-lg border border-[#6f9f98]/35 bg-[#0b1a1c] p-5 text-center text-sm uppercase text-[#c8d8d2]/70" role={role}>{children}</p>;
 }

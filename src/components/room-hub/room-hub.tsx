@@ -101,21 +101,23 @@ export function RoomHub() {
   }
 
   return (
-    <div className="flex w-full flex-col gap-8 lg:flex-row lg:items-start">
-      <MainMenuScreen
-        activeRooms={screen === "menu" ? activeRooms : undefined}
-        error={screen === "menu" ? error : ""}
-        isLoaded={isLoaded}
-        isSignedIn={isSignedIn}
-        onJoin={() => {
-          setError("");
-          setRoomCode("");
-          setScreen("join");
-        }}
-        onContinue={continueRoom}
-        onPrevious={() => { setError(""); setScreen("previous"); }}
-        onSettings={() => setScreen("settings")}
-      />
+    <div className="flex h-full w-full flex-col gap-6 overflow-hidden px-5 py-8 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-12">
+      {screen === "menu" || screen === "join" || showRoom ? (
+        <MainMenuScreen
+          activeRooms={screen === "menu" ? activeRooms : undefined}
+          error={screen === "menu" ? error : ""}
+          isLoaded={isLoaded}
+          isSignedIn={isSignedIn}
+          onJoin={() => {
+            setError("");
+            setRoomCode("");
+            setScreen("join");
+          }}
+          onContinue={continueRoom}
+          onPrevious={() => { setError(""); setScreen("previous"); }}
+          onSettings={() => setScreen("settings")}
+        />
+      ) : null}
 
       {screen === "join" ? (
         <JoinModal

@@ -148,7 +148,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
           <X aria-hidden="true" size={18} /> Back
         </button>
         <div className="mr-auto">
-          <p className="text-[10px] uppercase tracking-[0.22em] text-[#c99b63]">Shared case workspace</p>
+          <p className="text-xs uppercase tracking-[0.22em] text-[#c99b63]">Shared case workspace</p>
           <h1 className="text-xl uppercase text-[#fff1c9]">Clueboard</h1>
         </div>
         <button className="clue-board-button" onClick={addNote} type="button">
@@ -240,10 +240,10 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
         ) : null}
         {inspected ? (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#080605]/75 p-4">
-            <section aria-labelledby="board-detail-title" aria-modal="true" className="max-h-[80vh] w-full max-w-lg overflow-y-auto border-2 border-[#b4a06d] bg-[#eee2bd] p-5 text-[#292014] shadow-[8px_10px_0_rgba(0,0,0,0.55)]" role="dialog">
+            <section aria-labelledby="board-detail-title" aria-modal="true" className="max-h-[80vh] w-full max-w-lg overflow-y-auto border-2 border-[#b4a06d] bg-[#cbbd9d] p-5 text-[#292014] shadow-[8px_10px_0_rgba(0,0,0,0.55)]" role="dialog">
               <div className="flex items-start justify-between gap-4 border-b border-[#7a5636]/35 pb-3">
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#7a5636]">{boardLabel(inspected.type)}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#7a5636]">{boardLabel(inspected.type)}</p>
                   <h2 className="mt-1 text-xl uppercase" id="board-detail-title">Board item</h2>
                 </div>
                 <button
@@ -272,18 +272,18 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
 function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
   const label = boardLabel(data.kind);
   return (
-    <article className={`relative w-48 rotate-[-1deg] border border-[#b4a06d] bg-[#eee2bd] p-3 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(20,10,5,0.45)] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
+    <article className={`relative w-48 rotate-[-1deg] border border-[#b4a06d] bg-[#cbbd9d] p-3 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(20,10,5,0.45)] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
       <Handle
         className="clue-pin"
         position={Position.Top}
         title="Drag to another pin"
         type="source"
       />
-      <p className="mb-2 text-[9px] uppercase tracking-[0.16em] text-[#7a5636]">{label}</p>
+      <p className="mb-2 text-xs uppercase tracking-[0.16em] text-[#7a5636]">{label}</p>
       {data.kind === "note" ? (
         <textarea
           aria-label="Note text"
-          className="nodrag nowheel min-h-24 w-full resize-none bg-transparent text-base leading-5 outline-none placeholder:text-[#725f42]"
+          className="nodrag nowheel min-h-24 w-full resize-none bg-transparent text-base leading-5 outline-none placeholder:text-[#4b3b2d]"
           defaultValue={data.text}
           key={data.text}
           maxLength={500}

@@ -1,5 +1,19 @@
 # Progress
 
+## 2026-10-10 — Missing service-worker request
+
+- `/sw.js` is not an app asset, but requests for it fell through to the Clerk-wrapped catch-all page while the default proxy matcher skipped `.js` files. That produced repeated Clerk middleware errors and HTTP 500 responses.
+- An explicit `/sw.js` route now answers 404 without rendering the app. Authentication and the proxy matcher remain unchanged.
+- Live local checks: `/sw.js` changed from HTTP 500 to 404 with an empty response, `/` remained HTTP 200, and TypeScript plus focused lint passed.
+
+## 2026-10-10 — Pixel-noir player UI refresh
+
+- Replaced the player menu and bureau backgrounds with inspected, deliberately sparse pixel-art scenes. The bureau art contains text-only terminals, not CCTV footage, and its six click targets were aligned to the visible objects.
+- Reworked the title menu into icon-led game actions. Case archive and settings now take their own focused screen instead of sitting beside the persistent menu; the archive alone scrolls through cases.
+- Applied a shared charcoal, petrol-teal, and amber palette across the lobby, brief, map, exploration, records, CCTV, lab, interviews, clueboard, and case report. Dossier surfaces remain muted paper against dark surroundings. Raised micro-labels to a 12px minimum and kept keyboard focus visible.
+- No Convex functions, routes, action durations, evidence rules, or game mechanics changed. The generated UI concept frames were references only; fictional records and extra navigation in those frames were not implemented.
+- Verification: TypeScript, focused lint, all 158 tests, and the production build passed. A signed-in visual playtest remains unverified because neither available browser surface could open the local app.
+
 ## 2026-10-09 — Review corrections
 
 - Clueboard reads return null when the playing room is unavailable; records searches report an active action before the bureau-location error.

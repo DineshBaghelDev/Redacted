@@ -19,8 +19,8 @@ export function CaseBriefScreen({
   const brief = useQuery(api.cases.getBrief, isLoaded && isSignedIn && roomCode ? { roomCode } : "skip");
 
   return (
-    <section className="flex h-screen w-full items-center justify-center overflow-y-auto bg-[#050712]/92 p-4 text-[#211d17] sm:p-8">
-      <div className="my-auto w-full max-w-3xl border-4 border-[#8b5b38] bg-[#e9dfc5] p-5 shadow-[10px_10px_0_rgba(0,0,0,0.5)] sm:p-8">
+    <section className="flex h-screen w-full items-center justify-center overflow-y-auto bg-[#071014]/92 p-4 text-[#211d17] sm:p-8">
+      <div className="my-auto w-full max-w-3xl border-4 border-[#8b5b38] bg-[#c8b99b] p-5 shadow-[10px_10px_0_rgba(0,0,0,0.5)] sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-[#211d17] pb-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-red-800">Bureau case file</p>
@@ -34,7 +34,7 @@ export function CaseBriefScreen({
         {brief ? (
           <div className="py-6">
             <p className="text-lg leading-relaxed sm:text-xl">{brief.summary}</p>
-            <div className="mt-6 border-l-4 border-red-800 bg-[#d8c8a7]/55 p-4">
+            <div className="mt-6 border-l-4 border-red-800 bg-[#ad9e80]/55 p-4">
               <h2 className="text-sm uppercase tracking-[0.18em] text-red-800">Known before the investigation</h2>
               <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed sm:text-lg">
                 {brief.initialFacts.map((fact) => <li key={fact}>{fact}</li>)}
@@ -45,7 +45,7 @@ export function CaseBriefScreen({
 
         <div className="grid gap-3 border-t-2 border-[#211d17] pt-5 sm:grid-cols-[1fr_auto]">
           <button
-            className="min-h-12 border-2 border-[#211d17] bg-[#16283a] px-5 text-lg uppercase text-yellow-100 disabled:cursor-not-allowed disabled:opacity-45"
+            className="min-h-12 border-2 border-[#211d17] bg-[#243335] px-5 text-lg uppercase text-[#f1c987] disabled:cursor-not-allowed disabled:opacity-45"
             disabled={!brief}
             onClick={onBegin}
             type="button"

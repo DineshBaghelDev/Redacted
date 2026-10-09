@@ -53,15 +53,15 @@ export function RoomLobbyModal({
     <dialog
       aria-labelledby="room-lobby-title"
       aria-busy={workingAction !== null}
-      className="fixed inset-0 z-20 m-0 hidden h-full max-h-none w-full max-w-none items-center justify-center bg-black/70 p-4 text-cyan-100 open:flex"
+      className="fixed inset-0 z-20 m-0 hidden h-full max-h-none w-full max-w-none items-center justify-center bg-black/70 p-4 text-[#c8d8d2] open:flex"
       onCancel={(event) => event.preventDefault()}
       ref={dialogRef}
     >
       <div className={`${panel} w-full max-w-lg`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-3xl uppercase text-cyan-50" id="room-lobby-title">Room {joinedRoomCode}</h2>
+          <h2 className="text-3xl uppercase text-[#e4e6d8]" id="room-lobby-title">Room {joinedRoomCode}</h2>
           <button
-            className="h-10 border border-cyan-300 bg-[#06142d] px-4 text-base uppercase text-yellow-200"
+            className="h-10 border border-[#6f9f98] bg-[#0b1a1c] px-4 text-base uppercase text-[#e8ac51]"
             disabled={workingAction !== null}
             onClick={onCopyCode}
             type="button"
@@ -69,23 +69,23 @@ export function RoomLobbyModal({
             {workingAction === "copy" ? "Copying..." : copiedCode ? "Copied" : "Copy code"}
           </button>
         </div>
-        <p className="mt-3 text-lg uppercase text-yellow-200">{room?.caseTitle ?? "Loading case..."}</p>
-        <p className="mt-4 text-xl uppercase text-cyan-100">Connected players</p>
-        <ul className="mt-2 space-y-2 text-xl text-cyan-200">
+        <p className="mt-3 text-lg uppercase text-[#e8ac51]">{room?.caseTitle ?? "Loading case..."}</p>
+        <p className="mt-4 text-xl uppercase text-[#c8d8d2]">Connected players</p>
+        <ul className="mt-2 space-y-2 text-xl text-[#a5c6bb]">
           {(room?.players?.length
             ? room.players
             : [{ name: nickname, isReady: false }]
           ).map((player) => (
             <li className="flex justify-between gap-3" key={player.name}>
               <span>{player.name}</span>
-              <span className={player.isReady ? "text-yellow-200" : "text-cyan-100/60"}>
+              <span className={player.isReady ? "text-[#e8ac51]" : "text-[#c8d8d2]/60"}>
                 {player.isReady ? "Ready" : "Not ready"}
               </span>
             </li>
           ))}
         </ul>
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button className={`${menuButton} text-yellow-200`} disabled={!room || openingCase || workingAction !== null} onClick={onToggleReady} type="button">
+          <button className={`${menuButton} text-[#e8ac51]`} disabled={!room || openingCase || workingAction !== null} onClick={onToggleReady} type="button">
             {workingAction === "ready" ? "Saving..." : room?.meReady ? "Unready" : "Ready"}
           </button>
           <button
@@ -106,7 +106,7 @@ export function RoomLobbyModal({
           </button>
         </div>
         {room ? (
-          <p className="mt-4 text-center text-sm uppercase text-cyan-100">
+          <p className="mt-4 text-center text-sm uppercase text-[#c8d8d2]">
             {openingCase
               ? "Investigation started. Opening the case file..."
               : room.allReady

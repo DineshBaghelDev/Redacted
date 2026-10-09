@@ -1,3 +1,4 @@
+import { ArrowRight, FolderOpen, History, Settings2, Users } from "lucide-react";
 import { menuOptionButton } from "../constants";
 
 type MainMenuScreenProps = {
@@ -28,41 +29,44 @@ export function MainMenuScreen({
   error,
 }: MainMenuScreenProps) {
   return (
-    <div className="flex w-full max-w-sm flex-col gap-8">
-      <h1 className="text-5xl leading-none text-cyan-50 drop-shadow-[0_3px_0_rgba(236,72,153,0.9)] sm:text-7xl">
+    <div className="flex max-h-full w-full max-w-md flex-col gap-7 overflow-y-auto py-1">
+      <h1 className="game-title text-5xl leading-none sm:text-7xl">
         REDACTED
       </h1>
-      <div className="flex w-full flex-col gap-3">
+      <nav aria-label="Main menu" className="flex w-full flex-col gap-2">
         {activeRooms?.map((room) => (
           <button
-            className="mb-1 min-h-16 border border-yellow-200/70 bg-[#06142d]/90 px-5 py-3 text-left text-cyan-50 shadow-[0_0_18px_rgba(250,204,21,0.16)] transition hover:border-yellow-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-200"
+            className="game-menu-button mb-2 min-h-20 border-[#e8ac51] bg-[#2b2419]"
             key={room.roomCode}
             onClick={() => onContinue(room.roomCode, room.status, room.reportSubmitted)}
             type="button"
           >
-            <span className="block text-xs uppercase tracking-[0.18em] text-yellow-200">
-              {room.reportSubmitted ? "Open case report" : room.status === "playing" ? "Continue investigation" : "Return to lobby"}
+            <FolderOpen aria-hidden="true" className="size-6 shrink-0 text-[#e8ac51]" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs uppercase tracking-[0.12em] text-[#e8ac51]">{room.reportSubmitted ? "Open case report" : room.status === "playing" ? "Continue investigation" : "Return to lobby"}</span>
+              <span className="mt-1 block truncate text-lg uppercase">{room.caseTitle}</span>
+              <span className="block text-xs text-[#adbbb1]">Room {room.roomCode} · {room.playerCount}/2 connected</span>
             </span>
-            <span className="mt-1 block truncate text-lg uppercase">{room.caseTitle}</span>
-            <span className="mt-1 block text-xs uppercase text-cyan-100/55">
-              Room {room.roomCode} · {room.playerCount}/2 connected
-            </span>
+            <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
           </button>
         ))}
-        <button className={`${menuOptionButton} text-yellow-200`} onClick={onPrevious} type="button">
+        <button className={menuOptionButton} onClick={onPrevious} type="button">
+          <History aria-hidden="true" className="size-5 shrink-0" />
           Play a previous case
         </button>
         <button className={menuOptionButton} onClick={onJoin} type="button">
+          <Users aria-hidden="true" className="size-5 shrink-0" />
           Join room
         </button>
         <button className={menuOptionButton} onClick={onSettings} type="button">
+          <Settings2 aria-hidden="true" className="size-5 shrink-0" />
           Settings
         </button>
         {isLoaded && !isSignedIn ? (
-          <p className="text-center text-sm text-cyan-100">Still signing in.</p>
+          <p className="text-sm text-[#c5d2c8]">Still signing in.</p>
         ) : null}
-        {error ? <p className="text-center text-sm text-yellow-200">{error}</p> : null}
-      </div>
+        {error ? <p className="text-sm text-[#e8ac51]" role="alert">{error}</p> : null}
+      </nav>
     </div>
   );
 }

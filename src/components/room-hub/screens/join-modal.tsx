@@ -39,7 +39,7 @@ export function JoinModal({
   return (
     <dialog
       aria-labelledby="join-room-title"
-      className="fixed inset-0 z-20 m-0 hidden h-full max-h-none w-full max-w-none items-center justify-center bg-black/70 p-4 text-cyan-100 open:flex"
+      className="fixed inset-0 z-20 m-0 hidden h-full max-h-none w-full max-w-none items-center justify-center bg-black/70 p-4 text-[#c8d8d2] open:flex"
       onCancel={(event) => {
         event.preventDefault();
         onClose();
@@ -57,10 +57,10 @@ export function JoinModal({
         onSubmit={(event) => event.preventDefault()}
       >
         <div className="mb-5 flex items-center justify-between gap-3">
-          <h2 className="text-3xl uppercase text-cyan-50" id="join-room-title">Join room</h2>
+          <h2 className="text-3xl uppercase text-[#e4e6d8]" id="join-room-title">Join room</h2>
           <button
             aria-label="Close join room"
-            className="h-10 border border-cyan-300 bg-[#06142d] px-4 text-base uppercase text-cyan-100 transition hover:border-yellow-200 hover:text-yellow-200"
+            className="h-10 border border-[#6f9f98] bg-[#0b1a1c] px-4 text-base uppercase text-[#c8d8d2] transition hover:border-[#e8ac51] hover:text-[#e8ac51]"
             onClick={onClose}
             type="button"
           >
@@ -69,14 +69,14 @@ export function JoinModal({
         </div>
         <RoomCodeInput onChange={onRoomCodeChange} value={roomCode} />
         <button
-          className={`${menuButton} mt-4 w-full text-yellow-200`}
+          className={`${menuButton} mt-4 w-full text-[#e8ac51]`}
           disabled={!canJoin}
           onClick={onJoin}
           type="submit"
         >
           Join
         </button>
-        {error ? <p className="mt-4 text-center text-sm text-yellow-200" role="alert">{error}</p> : null}
+        {error ? <p className="mt-4 text-center text-sm text-[#e8ac51]" role="alert">{error}</p> : null}
       </form>
     </dialog>
   );
