@@ -1,5 +1,6 @@
-import { ArrowRight, FolderOpen, History, Settings2, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { menuOptionButton } from "../constants";
+import { GameIcon } from "../game-icon";
 
 type MainMenuScreenProps = {
   activeRooms?: Array<{
@@ -41,7 +42,7 @@ export function MainMenuScreen({
             onClick={() => onContinue(room.roomCode, room.status, room.reportSubmitted)}
             type="button"
           >
-            <FolderOpen aria-hidden="true" className="size-6 shrink-0 text-[#e8ac51]" />
+            <GameIcon name="case" className="size-10" />
             <span className="min-w-0 flex-1">
               <span className="block text-xs uppercase tracking-[0.12em] text-[#e8ac51]">{room.reportSubmitted ? "Open case report" : room.status === "playing" ? "Continue investigation" : "Return to lobby"}</span>
               <span className="mt-1 block truncate text-lg uppercase">{room.caseTitle}</span>
@@ -51,15 +52,15 @@ export function MainMenuScreen({
           </button>
         ))}
         <button className={menuOptionButton} onClick={onPrevious} type="button">
-          <History aria-hidden="true" className="size-5 shrink-0" />
+          <GameIcon name="case" />
           Play a previous case
         </button>
         <button className={menuOptionButton} onClick={onJoin} type="button">
-          <Users aria-hidden="true" className="size-5 shrink-0" />
+          <GameIcon name="badge" />
           Join room
         </button>
         <button className={menuOptionButton} onClick={onSettings} type="button">
-          <Settings2 aria-hidden="true" className="size-5 shrink-0" />
+          <GameIcon name="records" />
           Settings
         </button>
         {isLoaded && !isSignedIn ? (

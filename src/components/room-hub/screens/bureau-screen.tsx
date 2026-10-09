@@ -4,9 +4,9 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Database, DoorOpen, FileText, FlaskConical, Map, Network, ScanLine, Users, type LucideIcon } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import { currentGameMinute, formatGameMinute } from "../../../lib/game-time";
+import { GameIcon } from "../game-icon";
 
 const ClueBoardScreen = dynamic(() =>
   import("./clue-board-screen").then((module) => module.ClueBoardScreen),
@@ -72,7 +72,7 @@ const stations: Record<Station, { label: string; description: string }> = {
 };
 
 const stationOrder: Station[] = ["interrogate", "cctv", "clueboard", "evidence", "map", "case"];
-const stationIcons: Record<Station, LucideIcon> = { interrogate: Users, cctv: ScanLine, clueboard: Network, evidence: Database, map: Map, place: DoorOpen, lab: FlaskConical, case: FileText };
+const stationIcons: Record<Station, Parameters<typeof GameIcon>[0]["name"]> = { interrogate: "interview", cctv: "cctv", clueboard: "clueboard", evidence: "records", map: "map", place: "map", lab: "lab", case: "case" };
 
 export function BureauScreen({ error, onLeave }: { error: string; onLeave: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
@@ -187,7 +187,6 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         <nav aria-label="Investigation stations" className="game-panel absolute inset-x-2 bottom-2 z-20 grid grid-cols-3 gap-1.5 p-2 sm:hidden">
           <p className="col-span-3 px-1 text-xs uppercase tracking-[0.12em] text-[#b8ccc1]">Bureau stations</p>
           {stationOrder.map((item) => {
-            const Icon = stationIcons[item];
             return (
               <button
                 className="flex min-h-14 flex-col items-center justify-center gap-1 border border-[#45635d] bg-[#0b1a1c] px-1 text-xs uppercase text-[#e4e6d8] active:border-[#e8ac51] active:text-[#e8ac51]"
@@ -195,7 +194,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
                 onClick={() => openStation(item)}
                 type="button"
               >
-                <Icon aria-hidden="true" className="size-4" />
+                <GameIcon name={stationIcons[item]} className="size-7" />
                 {stations[item].label}
               </button>
             );

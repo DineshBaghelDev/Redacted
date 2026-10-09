@@ -1,5 +1,12 @@
 # Design Decisions
 
+## 2026-10-10 — Physical interface surfaces
+
+- Use the generated metal frame for major terminal actions and control panels and the paper frame for case files and records. One illustrated environment per station group establishes place; the data remains a real interactive layer above it.
+- Reuse the eight-object pixel atlas for navigation and station headers. Keep environmental plates sparse, with quiet center space and no generated writing, clues, people, or CCTV footage. Use the live graph and actual case data for all information-bearing visuals.
+- On narrow screens, crop the menu scene to the city and dim it behind controls. Keep large touch targets and visible Back actions on full-screen stations.
+
+
 ## 2026-10-10 — No service worker in V1
 
 - The game does not register or serve a service worker. Requests for `/sw.js` receive a plain 404 outside the Clerk-wrapped page tree.

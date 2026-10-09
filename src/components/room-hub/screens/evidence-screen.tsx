@@ -57,8 +57,8 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
   }
 
   return (
-    <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014]/96 text-[#c8d8d2] backdrop-blur-sm">
-      <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#6f9f98]/35 bg-[#0b1a1c] p-4 sm:p-6">
+    <section className="game-evidence-scene game-records-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#c8d8d2]">
+      <header className="game-station-header flex shrink-0 items-start justify-between gap-4 p-4 sm:p-6">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-[#e8ac51]/75">Bureau records terminal</p>
           <h2 className="mt-1 text-2xl uppercase text-[#e4e6d8] sm:text-3xl">Public records</h2>
@@ -74,7 +74,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
         </button>
       </header>
 
-      <form className="shrink-0 border-b border-[#6f9f98]/25 bg-[#071014] p-4 sm:px-6" onSubmit={submitSearch}>
+      <form className="shrink-0 border-b border-[#6f9f98]/25 bg-[#071014]/90 p-4 sm:px-6" onSubmit={submitSearch}>
         <label className="block text-xs uppercase tracking-[0.18em] text-[#c8d8d2]/60" htmlFor="record-search">Search records</label>
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
           <input
@@ -114,7 +114,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
         <p className="mt-2 text-xs text-[#c8d8d2]/65">New searches take 10 case minutes. Reopen a saved search for free.</p>
       </form>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+      <div className="game-station-main min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
         {error ? <p className="mx-auto mb-4 max-w-5xl border border-red-300 bg-red-950/80 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
         {result === undefined ? <TerminalMessage>Connecting to the records desk...</TerminalMessage> : null}
         {result === null ? <TerminalMessage>This room cannot access these records.</TerminalMessage> : null}
@@ -132,7 +132,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
             {records.map((record) => {
               const isPinned = boardNodes?.some((node) => node.type === "public_record" && node.referenceId === record.id);
               return (
-                <li className="border border-[#b8a77d] bg-[#c8b99b] p-4 text-[#211d17] shadow-[4px_4px_0_rgba(0,0,0,0.3)]" key={record.id}>
+                <li className="game-dossier p-3 text-[#211d17]" key={record.id}>
                   <div className="flex items-start justify-between gap-3 border-b border-[#211d17]/30 pb-2">
                     <h3 className="text-lg uppercase leading-tight">{record.title}</h3>
                     <span className="shrink-0 border border-red-800 px-2 py-1 text-xs uppercase tracking-wide text-red-800">{record.type}</span>

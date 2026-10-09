@@ -4,6 +4,7 @@ import {
   SignUpButton,
 } from "@clerk/nextjs";
 import { RoomHub } from "@/components/room-hub/room-hub";
+import { GameIcon } from "@/components/room-hub/game-icon";
 
 /**
  * Renders the authentication-dependent home page.
@@ -15,23 +16,25 @@ export default function Home() {
     <main className="game-ui min-h-screen w-full">
       <Show when="signed-out">
         <section
-          className="flex min-h-screen w-full items-center justify-start bg-cover bg-left px-6 sm:bg-center sm:px-16"
+          className="game-menu-scene flex min-h-screen w-full items-center justify-start bg-cover px-6 sm:px-16"
           style={{
             backgroundImage:
               "url('/assets/menu-noir.png')",
           }}
         >
-          <div className="flex w-full max-w-xs flex-col gap-3">
+          <div className="relative z-10 flex w-full max-w-xs flex-col gap-3">
             <h1 className="game-title mb-8 text-5xl leading-none sm:text-7xl">
               REDACTED
             </h1>
             <SignInButton>
               <button className="game-menu-button w-full text-xl uppercase">
+                <GameIcon name="badge" />
                 Sign in
               </button>
             </SignInButton>
             <SignUpButton>
               <button className="game-menu-button w-full text-xl uppercase">
+                <GameIcon name="case" />
                 Sign up
               </button>
             </SignUpButton>
@@ -41,7 +44,7 @@ export default function Home() {
 
       <Show when="signed-in">
         <section
-          className="relative flex h-screen w-full items-center justify-start overflow-hidden bg-[#071014] bg-cover bg-left sm:bg-center"
+          className="game-menu-scene relative flex h-screen w-full items-center justify-start overflow-hidden bg-[#071014] bg-cover"
           style={{
             backgroundImage:
               "url('/assets/menu-noir.png')",

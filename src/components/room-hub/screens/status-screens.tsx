@@ -20,7 +20,7 @@ export function CaseBriefScreen({
 
   return (
     <section className="flex h-screen w-full items-center justify-center overflow-y-auto bg-[#071014]/92 p-4 text-[#211d17] sm:p-8">
-      <div className="my-auto w-full max-w-3xl border-4 border-[#8b5b38] bg-[#c8b99b] p-5 shadow-[10px_10px_0_rgba(0,0,0,0.5)] sm:p-8">
+      <div className="game-dossier my-auto w-full max-w-3xl p-5 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-[#211d17] pb-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-red-800">Bureau case file</p>

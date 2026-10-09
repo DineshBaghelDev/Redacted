@@ -88,8 +88,8 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
   }
 
   return (
-    <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-[#6f9f98]/30 bg-[#0b1a1c] px-4 py-3 sm:px-6">
+    <section className="game-map-scene absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
+      <header className="game-station-header flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Investigation routes</p>
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">City map</h2>
@@ -112,7 +112,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
               {city.places.map((place, index) => <option key={place.id} value={place.id}>{index + 1}. {place.name}</option>)}
             </select>
           </label>
-          <div className="city-map relative mx-auto aspect-[5/4] h-auto min-h-[18rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden border border-[#6f9f98]/35 bg-[#10191a] lg:h-full">
+          <div className="game-panel city-map relative mx-auto aspect-[5/4] h-auto min-h-[18rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden bg-[#10191a] lg:h-full">
             <span className="absolute left-3 top-2 text-xs uppercase tracking-[0.25em] text-[#c8d8d2]/55">Northside</span>
             <span className="absolute left-3 top-[36%] text-xs uppercase tracking-[0.25em] text-[#f1c987]/55">Midtown</span>
             <span className="absolute bottom-2 left-3 text-xs uppercase tracking-[0.25em] text-[#d8a498]/55">Eastside</span>

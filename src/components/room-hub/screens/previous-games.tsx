@@ -25,6 +25,7 @@ export function PreviousGamesScreen({ error, isWorking, onBack, onPlay }: Previo
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
       <button className={`${menuButton} w-fit`} onClick={onBack} type="button">Back to menu</button>
+      <h1 className="game-title text-3xl uppercase sm:text-5xl">Case archive</h1>
       {error ? <p className="border border-red-300 bg-red-950/90 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
       <label className="flex w-fit flex-col gap-1 text-sm uppercase text-[#c8d8d2]" htmlFor="replay-deadline-hours">
         Optional deadline (hours)
@@ -43,7 +44,7 @@ export function PreviousGamesScreen({ error, isWorking, onBack, onPlay }: Previo
         {cases?.length === 0 ? <p className="text-xl uppercase text-[#c8d8d2]">No passed cases yet.</p> : null}
         {cases?.map((game) => (
           <article
-            className="border-2 border-[#8b7355] bg-[#b7a281] p-5 text-[#211d17] shadow-[5px_5px_0_rgba(0,0,0,0.4)]"
+            className="game-dossier p-3 text-[#211d17] sm:p-5"
             key={game.generationJobId}
           >
             <p className="text-lg uppercase">{game.difficulty} case</p>

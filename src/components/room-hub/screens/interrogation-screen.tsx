@@ -42,8 +42,8 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
   const selected = people.find((person) => person.id === selectedId);
 
   return (
-    <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-[#45635d] bg-[#0b1a1c] px-4 py-3 sm:px-6">
+    <section className="game-interview-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#e4e6d8]">
+      <header className="game-station-header flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-[#e8ac51]">Bureau interview desk</p>
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">{selected ? selected.name : "People in this case"}</h2>
@@ -53,7 +53,7 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
         </button>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+      <main className="game-station-main min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-6xl">
           {error ? <p className="mb-4 border-2 border-red-800 bg-red-950/90 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
           {selected ? <InterviewPanel key={selected.id} roomCode={roomCode} person={selected} onBack={() => setSelectedId(null)} /> : <div className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#573821] pb-4">
@@ -69,7 +69,7 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
           {!selected && people.length ? (
             <ul className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {people.map((person, index) => (
-                <li className="relative min-h-48 border-2 border-[#8b7355] bg-[#c8b99b] p-5 text-[#211d17] shadow-[5px_5px_0_rgba(0,0,0,0.35)]" key={person.id}>
+                <li className="game-dossier relative min-h-48 p-3 text-[#211d17]" key={person.id}>
                   <span className="absolute right-3 top-3 font-mono text-xs text-[#4b3b2d]">#{String(index + 1).padStart(2, "0")}</span>
                   <p className="text-xs uppercase tracking-[0.2em] text-red-800">{roleLabels[person.role]}</p>
                   <h3 className="mt-2 pr-10 text-2xl uppercase leading-none">{person.name}</h3>
@@ -127,7 +127,7 @@ function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person
 
   return <div className="mx-auto max-w-3xl">
     <button className="min-h-11 border-2 border-[#573821] px-4 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">← All people</button>
-    <div className="mt-4 border-2 border-[#8b7355] bg-[#c8b99b] p-4 text-[#211d17] sm:p-6">
+    <div className="game-dossier mt-4 p-4 text-[#211d17] sm:p-6">
       <p className="text-xs uppercase tracking-[0.2em] text-red-800">Interview record</p>
       <h3 className="mt-2 text-2xl uppercase">{person.name}</h3>
       <p className="mt-2 text-sm leading-relaxed text-[#4b3b2d]">{person.publicDescription}</p>

@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-10-10 — Illustrated game interface, in progress
+
+- Generated and inspected a restrained eight-icon pixel atlas, a reusable metal terminal frame, a paper dossier frame, and separate archive, records, lab, interview, and report-desk scenes. All plates are text-free; the CCTV icon is a terminal symbol and no screen includes camera imagery.
+- Integrated framed menu actions, station icons, case archive and interview dossiers, and scene-backed records, CCTV, lab, interview, and report screens. The live city graph remains the map; its frame is decorative.
+- Kept routes, room actions, timers, queries, and case data untouched. TypeScript and focused TSX lint pass. Local Playwright desktop and mobile signed-out captures were inspected; signed-in station captures still need verification.
+
+
 ## 2026-10-10 — Missing service-worker request
 
 - `/sw.js` is not an app asset, but requests for it fell through to the Clerk-wrapped catch-all page while the default proxy matcher skipped `.js` files. That produced repeated Clerk middleware errors and HTTP 500 responses.

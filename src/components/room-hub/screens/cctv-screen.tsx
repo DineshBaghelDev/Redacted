@@ -65,8 +65,8 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
   }
 
   return (
-    <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
-      <header className="flex items-center justify-between gap-4 border-b border-[#6f9f98]/30 bg-[#0b1a1c] px-4 py-3 sm:px-6">
+    <section className="game-cctv-scene game-records-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#e4e6d8]">
+      <header className="game-station-header flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">{data.caseTitle} · security records</p>
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">Camera records</h2>
@@ -106,7 +106,7 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
           </div>
         </aside>
 
-        <main className="flex min-h-0 flex-col overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="game-station-main flex min-h-0 flex-col overflow-y-auto p-4 sm:p-6 lg:p-8">
           {error ? <p className="mb-4 border border-red-300 bg-red-950/80 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#6f9f98]/20 pb-4">
             <div>
@@ -118,7 +118,7 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
             </p>
           </div>
 
-          <div className="mt-6 border border-[#6f9f98]/20 bg-[#081417] p-4 sm:p-6">
+          <div className="game-panel mt-6 p-2 sm:p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <label className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55" htmlFor="cctv-time">
                 Choose a time to review

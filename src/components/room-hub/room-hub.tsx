@@ -101,7 +101,7 @@ export function RoomHub() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col gap-6 overflow-hidden px-5 py-8 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-12">
+    <div className={`relative z-10 flex h-full w-full flex-col gap-6 overflow-hidden px-5 py-8 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-12 ${screen === "previous" ? "game-archive-scene" : ""}`}>
       {screen === "menu" || screen === "join" || showRoom ? (
         <MainMenuScreen
           activeRooms={screen === "menu" ? activeRooms : undefined}
