@@ -242,7 +242,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
         ) : null}
         {inspected ? (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#080605]/75 p-4">
-            <section aria-labelledby="board-detail-title" aria-modal="true" className="max-h-[80vh] w-full max-w-lg overflow-y-auto border-2 border-[#b4a06d] bg-[#cbbd9d] p-5 text-[#292014] shadow-[8px_10px_0_rgba(0,0,0,0.55)]" role="dialog">
+            <section aria-labelledby="board-detail-title" aria-modal="true" className="max-h-[80vh] w-full max-w-lg overflow-y-auto border-2 border-[#b4a06d] bg-[#cbbd9d] p-5 text-[#292014] shadow-[8px_10px_0_rgba(0,0,0,0.55)] [overflow-wrap:anywhere]" role="dialog">
               <div className="flex items-start justify-between gap-4 border-b border-[#7a5636]/35 pb-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-[#7a5636]">{boardLabel(inspected.type)}</p>
@@ -274,7 +274,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
 function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
   const label = boardLabel(data.kind);
   return (
-    <article className={`relative w-48 rotate-[-1deg] border border-[#b4a06d] bg-[#cbbd9d] p-3 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(20,10,5,0.45)] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
+    <article className={`relative w-48 rotate-[-1deg] border border-[#b4a06d] bg-[#cbbd9d] p-3 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(20,10,5,0.45)] [overflow-wrap:anywhere] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
       <Handle
         className="clue-pin"
         position={Position.Top}

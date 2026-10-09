@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { formatGameMinute } from "../../../lib/game-time";
+import { InvestigationIcon } from "../investigation-icon";
 
 export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
@@ -85,18 +86,21 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
           {error ? <p className="mt-4 border border-red-300/60 bg-red-950/70 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
 
           {lab.tests.length ? (
-            <ul className="game-panel mt-5 grid gap-3 p-5 md:grid-cols-2">
+            <ul className="mt-5 grid gap-3 md:grid-cols-2">
               {lab.tests.map((test) => {
                 const remaining = test.readyAtGameTime === undefined ? 0 : Math.max(0, test.readyAtGameTime - gameTime);
                 const pinned = boardNodes?.some((node) => node.type === "forensic" && node.referenceId === test.id) ?? false;
                 return (
-                  <li className="border-b border-[#6f9f98]/35 p-4" key={test.id}>
+                  <li className="border-b border-[#6f9f98]/35 bg-[#071619]/75 p-4" key={test.id}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
+                      <div className="flex min-w-0 flex-1 items-start gap-3">
+                        <InvestigationIcon className="size-10" name="lab" />
+                        <div className="min-w-0">
                         <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/65">{test.testType.replaceAll("_", " ")}</p>
-                        <h4 className="mt-1 text-lg uppercase">{test.sourceName}</h4>
+                        <h4 className="mt-1 break-words text-lg uppercase">{test.sourceName}</h4>
+                        </div>
                       </div>
-                      <span className={`border px-2 py-1 text-xs uppercase tracking-wider ${test.status === "viewed" ? "border-emerald-300/50 text-emerald-200" : test.status === "ready" ? "border-[#e8ac51]/60 text-[#f1c987]" : "border-[#6f9f98]/30 text-[#c8d8d2]/55"}`}>
+                      <span className={`text-xs uppercase tracking-wider ${test.status === "viewed" ? "text-emerald-200" : test.status === "ready" ? "text-[#f1c987]" : "text-[#c8d8d2]/55"}`}>
                         {test.status === "available" ? "Not requested" : test.status}
                       </span>
                     </div>

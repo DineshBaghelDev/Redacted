@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
+import { InvestigationIcon } from "../investigation-icon";
 
 function normalizedTerm(search: string) {
   return search.trim().replace(/\s+/g, " ").toLowerCase();
@@ -62,7 +63,6 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-[#e8ac51]/75">Bureau records terminal</p>
           <h2 className="mt-1 text-2xl uppercase text-[#e4e6d8] sm:text-3xl">Public records</h2>
-          <p className="mt-2 max-w-xl text-sm text-[#c8d8d2]/60">Search addresses, employment, background records, and card payments already stored with this case.</p>
         </div>
         <button
           aria-label="Return to bureau"
@@ -74,7 +74,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
         </button>
       </header>
 
-      <form className="shrink-0 border-b border-[#6f9f98]/25 bg-[#071014]/90 p-4 sm:px-6" onSubmit={submitSearch}>
+      <form className="shrink-0 border-b border-[#6f9f98]/25 bg-[#071014]/75 p-4 sm:px-6" onSubmit={submitSearch}>
         <label className="block text-xs uppercase tracking-[0.18em] text-[#c8d8d2]/60" htmlFor="record-search">Search records</label>
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
           <input
@@ -133,9 +133,12 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
               const isPinned = boardNodes?.some((node) => node.type === "public_record" && node.referenceId === record.id);
               return (
                 <li className="game-dossier p-3 text-[#211d17]" key={record.id}>
-                  <div className="flex items-start justify-between gap-3 border-b border-[#211d17]/30 pb-2">
-                    <h3 className="text-lg uppercase leading-tight">{record.title}</h3>
-                    <span className="shrink-0 border border-red-800 px-2 py-1 text-xs uppercase tracking-wide text-red-800">{record.type}</span>
+                  <div className="flex items-start gap-3 border-b border-[#211d17]/30 pb-2">
+                    <InvestigationIcon className="size-10" name="file" />
+                    <div className="min-w-0">
+                      <span className="text-xs uppercase tracking-wide text-red-800">{record.type}</span>
+                      <h3 className="break-words text-lg uppercase leading-tight">{record.title}</h3>
+                    </div>
                   </div>
                   <p className="mt-3 text-sm leading-relaxed sm:text-base">{record.content}</p>
                   <button
@@ -157,5 +160,5 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
 }
 
 function TerminalMessage({ children, role }: { children: React.ReactNode; role?: "status" }) {
-  return <p className="mx-auto mt-12 max-w-lg border border-[#6f9f98]/35 bg-[#0b1a1c] p-5 text-center text-sm uppercase text-[#c8d8d2]/70" role={role}>{children}</p>;
+  return <p className="mx-auto mt-12 flex max-w-lg items-center gap-3 border-b border-[#6f9f98]/35 bg-[#071619]/70 p-5 text-sm uppercase text-[#c8d8d2]" role={role}><InvestigationIcon className="size-9" name="file" />{children}</p>;
 }

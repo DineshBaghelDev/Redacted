@@ -49,6 +49,21 @@
   .game-icon--lab { background-position: 66.667% 100%; }
   .game-icon--interview { background-position: 100% 100%; }
 
+  .investigation-icon {
+    display: inline-block;
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    background: url('/assets/investigation-icons.png') no-repeat 0 0 / 300% 200%;
+    image-rendering: pixelated;
+  }
+  .investigation-icon--room { background-position: 0 0; }
+  .investigation-icon--search { background-position: 50% 0; }
+  .investigation-icon--evidence { background-position: 100% 0; }
+  .investigation-icon--device { background-position: 0 100%; }
+  .investigation-icon--lab { background-position: 50% 100%; }
+  .investigation-icon--file { background-position: 100% 100%; }
+
   .character-portrait {
     display: block;
     flex: none;

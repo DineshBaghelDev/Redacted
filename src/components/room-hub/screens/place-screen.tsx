@@ -7,6 +7,7 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { CctvScreen } from "./cctv-screen";
 import { GameIcon } from "../game-icon";
+import { InvestigationIcon } from "../investigation-icon";
 
 export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
@@ -91,21 +92,25 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
       </header>
 
       <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(16rem,21rem)_minmax(0,1fr)] lg:overflow-hidden">
-        <nav aria-label="Rooms" className="game-panel border-b border-[#6f9f98]/25 bg-[#102224] p-5 lg:overflow-y-auto lg:border-b-0 lg:border-r">
+        <nav aria-label="Rooms" className="border-b border-[#6f9f98]/25 bg-[#071619]/80 p-5 lg:overflow-y-auto lg:border-b-0 lg:border-r">
           <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Rooms · {place.rooms.length}</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+          <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-1">
             {place.rooms.map((room) => {
               const current = room.id === place.currentRoomId;
               return (
                 <button
-                  className={`min-h-14 border px-3 py-2 text-left transition ${current ? "border-[#e8ac51] bg-[#e8ac51]/10 text-[#f1c987]" : room.adjacent ? "border-[#6f9f98]/40 bg-[#142b2c] hover:border-[#e8ac51]" : "border-[#6f9f98]/15 text-[#c8d8d2]/65"}`}
+                  className={`flex min-h-16 min-w-0 items-center gap-3 border-b border-[#6f9f98]/25 py-2 text-left transition ${current ? "text-[#f1c987]" : room.adjacent ? "hover:text-[#e8ac51]" : "text-[#c8d8d2]/55"}`}
                   disabled={working || Boolean(place.action) || current || !room.adjacent}
                   key={room.id}
                   onClick={() => run(moveToRoom({ roomCode, roomId: room.id }))}
                   type="button"
                 >
-                  <span className="block break-words text-sm uppercase">{room.name}{room.hasCamera ? " · Camera" : ""}</span>
-                  <span className="mt-1 block text-xs text-[#c8d8d2]/55">Floor {room.floor} · {current ? "You are here" : room.adjacent ? "Enter room" : "Move closer first"}{room.searched ? " · Searched" : ""}</span>
+                  <InvestigationIcon className="size-9" name="room" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block break-words text-sm uppercase">{room.name}</span>
+                    <span className="mt-1 block text-xs text-[#c8d8d2]/55">Floor {room.floor} · {current ? "You are here" : room.adjacent ? "Enter room" : "Move closer first"}{room.searched ? " · Searched" : ""}</span>
+                  </span>
+                  {room.hasCamera ? <GameIcon className="size-7" name="cctv" /> : null}
                 </button>
               );
             })}
@@ -115,7 +120,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
         <div className="game-station-main min-h-0 p-4 sm:p-6 lg:overflow-y-auto">
           <div className="mx-auto max-w-3xl">
             <p className="text-xs uppercase tracking-[0.2em] text-[#e8ac51]/70">Current room</p>
-            <h3 className="mt-1 text-2xl uppercase">{currentRoom?.name ?? "Entrance"}</h3>
+            <h3 className="mt-1 flex items-center gap-3 text-2xl uppercase"><InvestigationIcon className="size-11" name="room" /><span className="min-w-0 break-words">{currentRoom?.name ?? "Entrance"}</span></h3>
             {place.action ? (
               <div className="mt-5 border border-[#e8ac51]/45 bg-[#211d15] p-4" role="status">
                 <p className="text-sm uppercase text-[#f1c987]">{actionLabel}</p>
@@ -125,11 +130,11 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
             ) : null}
             {currentRoom?.searchable ? (
               <button
-                className="mt-5 min-h-11 border border-[#e8ac51]/70 bg-[#e8ac51]/10 px-5 text-sm uppercase text-[#f1c987] hover:bg-[#e8ac51]/20 disabled:cursor-default disabled:opacity-45"
+                className="mt-5 flex min-h-12 items-center gap-3 border-b border-[#e8ac51]/70 py-1 pr-4 text-sm uppercase text-[#f1c987] hover:text-white disabled:cursor-default disabled:opacity-45"
                 disabled={working || Boolean(place.action) || currentRoom.searched}
                 onClick={() => run(searchRoom({ roomCode }))}
                 type="button"
-              >{currentRoom.searched ? "Room searched" : "Search room · 15 min"}</button>
+              ><InvestigationIcon className="size-9" name="search" />{currentRoom.searched ? "Room searched" : "Search room · 15 min"}</button>
             ) : <p className="mt-5 text-sm text-[#c8d8d2]/55">There is nothing to search in this room.</p>}
 
             {currentRoom?.hasCamera ? <button className="mt-5 flex min-h-12 items-center gap-3 text-left text-sm uppercase text-[#f1c987] hover:text-white" onClick={() => setCameraOpen(true)} type="button"><GameIcon name="cctv" className="size-10" /><span>Review this room&apos;s camera logs</span></button> : null}
@@ -163,8 +168,8 @@ function ItemCard({ item, busy, pinned, pinnedRecords, onInspect, onRead, onColl
   onPinRecord: (type: "device_file" | "call" | "message", referenceId: string) => void;
 }) {
   return (
-    <article className="border border-[#6f9f98]/25 bg-[#102224] p-4">
-      <h5 className="text-base uppercase text-[#e4e6d8]">{item.name}</h5>
+    <article className="border-b border-[#6f9f98]/35 bg-[#071619]/60 p-4">
+      <h5 className="flex items-center gap-3 text-base uppercase text-[#e4e6d8]"><InvestigationIcon className="size-9" name={item.device ? "device" : "evidence"} /><span className="min-w-0 break-words">{item.name}</span></h5>
       <p className="mt-2 text-sm leading-relaxed text-[#c8d8d2]/65">{item.description ?? "Inspect to learn more."}</p>
       <div className="mt-4 flex flex-wrap gap-2">
         {!item.inspected ? <button className="min-h-10 border border-[#6f9f98]/60 px-3 text-xs uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] disabled:opacity-45" disabled={busy} onClick={onInspect} type="button">Inspect · 2 min</button> : null}

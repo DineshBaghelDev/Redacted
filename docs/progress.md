@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-10 — Investigation surface asset pass
+
+- Added an inspected six-symbol pixel atlas for rooms, search, physical evidence, devices, lab work, and files. The sprites have transparent backgrounds and stay readable at their small in-game sizes.
+- Replaced repeated room-button boxes and the oversized lab frame with quieter, icon-led rows. Evidence records now use a file symbol inside the existing dossier treatment; all actions, states, durations, and location rules remain the same.
+- Improved long generated text handling on clueboard cards, report forms, room names, lab sources, and record titles. Final-report scoring rows use ruled paper lines instead of five heavy boxes.
+
 ## 2026-10-10 — Local camera access and larger map art
 
 - Replaced the city marker squares with larger transparent place icons and kept a clear focus state. Long case titles and generated text wrap inside menus, dossiers, and station panels.
