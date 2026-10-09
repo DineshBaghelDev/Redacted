@@ -5,6 +5,7 @@
 - Replay creation accepts an optional, fixed shared deadline in whole game minutes; omitted input keeps the frozen estimate plus 1,440 minutes. Invalid numeric deadlines are rejected server-side.
 - A submitted final report now blocks new travel, searches, inspections, lab work, records/CCTV review, interviews, and clueboard edits for both players. Reads and grading retry remain available, and already-started timed work may settle. The deadline itself never blocks play or reduces the report score.
 - Focused replay and review-only tests passed, followed by all 139 tests, TypeScript, lint (no errors), production build, and a personal-dev Convex function sync. A signed-in browser check is still unverified; the full 18-case playthrough sweep is intentionally skipped per player direction.
+- A follow-up read-only data check confirmed text CCTV records across all 18 published cases (3,562 rows in the personal dev deployment). An initial partial count was caused by truncated command output, not missing records. No case data was changed.
 
 
 ## 2026-10-09 — Clueboard connection without dragging
@@ -43,7 +44,7 @@
 
 ## 2026-10-09 — Published replay data audit
 
-- A read-only dev audit found 18 published replay cases. Each has a valid frozen estimate, a bureau, a connected 20-place city, NPC scripts for all living people, and the decisive evidence IDs present in runtime tables. The earlier claim that most cases lacked CCTV was incorrect; every case has stored camera records.
+- A read-only dev audit found 18 published replay cases. Each has a valid frozen estimate, a bureau, a connected 20-place city, NPC scripts for all living people, and the decisive evidence IDs present in runtime tables. Every case has stored camera records, confirmed again by a full untruncated count.
 - Nine cases each have one optional, non-decisive lab result without an item or room source, so that result cannot currently be requested. Frozen-data presence does not prove the complete player journey; per-case signed-in playthroughs and a safe repair for these lab links remain open.
 
 ## 2026-10-09 — Reopening a submitted report
