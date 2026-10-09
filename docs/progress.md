@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-09 — All-published-case startup smoke
+
+- On the personal dev deployment, all 18 published cases created a fresh synthetic replay, readied and started a one-player lobby, and returned a public brief, 20-place map, NPC list, 60-camera list, and an available bureau public-record search. The test rooms remain under a synthetic identity. This covers replay boot and initial safe queries, not complete case playthroughs or signed-in browser UX.
+
 ## 2026-10-09 — Clueboard pin placement
 
 - Auto-placed notes and evidence cards now continue into new rows after the sixteenth card instead of wrapping onto the first row and covering earlier pins. The board still has its existing 100-node limit.
