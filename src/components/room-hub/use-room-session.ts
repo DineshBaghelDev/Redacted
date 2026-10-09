@@ -177,12 +177,12 @@ export function useRoomSession(nickname: string) {
     }
   }
 
-  function continueRoom(roomCode: string, status: "waiting" | "playing") {
+  function continueRoom(roomCode: string, status: "waiting" | "playing", reportSubmitted: boolean) {
     setRoomCode(roomCode);
     if (status === "waiting") {
       router.push(`/lobby/${roomCode}`);
     } else {
-      router.push(`/lobby/${roomCode}/bureau`);
+      router.push(`/lobby/${roomCode}/${reportSubmitted ? "case" : "bureau"}`);
     }
   }
 

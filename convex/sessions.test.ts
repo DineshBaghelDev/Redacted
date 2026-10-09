@@ -692,6 +692,32 @@ test("a lobby keeps the selected passed case", async () => {
     expect.objectContaining({ roomCode: replayed.roomCode, caseTitle: "The Selected Case", status: "playing" }),
   ]));
   expect(await user.query(api.sessions.listMine, {})).not.toContainEqual(expect.objectContaining({ roomCode: "OLDCASE" }));
+  expect(await user.query(api.sessions.listMine, {})).toEqual(expect.arrayContaining([
+    expect.objectContaining({ roomCode: created.roomCode, reportSubmitted: false }),
+    expect.objectContaining({ roomCode: replayed.roomCode, reportSubmitted: false }),
+  ]));
+  await t.run(async (ctx) => {
+    const npc = await ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", publishedCaseId)).first();
+    if (!npc) throw new Error("Expected a published person.");
+    await ctx.db.insert("accusations", {
+      sessionId: created.sessionId,
+      submittedByPlayerId: created.playerId,
+      culpritNpcId: npc._id,
+      motiveExplanation: "A test theory.",
+      weaponDescription: "A test weapon.",
+      evidenceIds: ["test evidence"],
+      evidenceExplanation: "A test explanation.",
+      methodExplanation: "A test method.",
+      status: "pending",
+      attempts: 1,
+      createdAt: 1,
+      updatedAt: 1,
+    });
+  });
+  expect(await user.query(api.sessions.listMine, {})).toEqual(expect.arrayContaining([
+    expect.objectContaining({ roomCode: created.roomCode, reportSubmitted: true }),
+    expect.objectContaining({ roomCode: replayed.roomCode, reportSubmitted: false }),
+  ]));
   await t.run(async (ctx) => {
     const cityId = frozen.storedCity!._id;
     const anchor = await ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", cityId)).first();

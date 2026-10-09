@@ -277,6 +277,7 @@ export const listMine = query({
     status: v.union(v.literal("waiting"), v.literal("playing")),
     caseTitle: v.string(),
     playerCount: v.number(),
+    reportSubmitted: v.boolean(),
   })),
   handler: async (ctx) => {
     const authUserId = await requireUserId(ctx);
@@ -292,11 +293,13 @@ export const listMine = query({
       const playableCase = await ctx.db.get(session.caseId);
       if (playableCase?.publicationVersion !== PUBLICATION_VERSION) continue;
       const players = await ctx.db.query("sessionPlayers").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).take(2);
+      const reportSubmitted = session.status === "playing" && Boolean(await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).unique());
       rooms.push({
         roomCode: session.roomCode,
         status: session.status,
         caseTitle: playableCase.title,
         playerCount: players.length,
+        reportSubmitted,
       });
     }
     return rooms;

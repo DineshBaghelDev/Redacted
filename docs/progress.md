@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-09 — Reopening a submitted report
+
+- Continue now distinguishes a room with a submitted final report from an active investigation. It opens the existing case-file result/retry screen for that room, including while grading is in progress, without treating the published case as consumed. A fresh replay remains available from Previous cases.
+
 ## 2026-10-09 — Explore during travel
 
 - Revisiting Explore from browser history while travelling now shows the existing travel notice and map route instead of saying the current place has no rooms. Signed-in browser verification is still open.

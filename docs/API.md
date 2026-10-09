@@ -25,7 +25,7 @@ sessions.getState({ sessionId })
 sessions.getTime({ sessionId })
 ```
 
-`sessions.listMine` returns only the signed-in player's unexpired rooms so the home screen can resume a lobby or active investigation.
+`sessions.listMine` returns only the signed-in player's unexpired published-case rooms, including whether a final report has been submitted so the home screen can open that room's case report.
 
 ### World/navigation
 

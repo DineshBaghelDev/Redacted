@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Submitted rooms on the home screen
+
+- A room with a submitted theory remains accessible to its detectives as a case report; its home entry opens the case-file result/retry screen instead of inviting further investigation. Replaying the same frozen case still starts a fresh room.
+
 ## 2026-10-09 — Travel on an old Explore route
 
 - If browser history opens Explore during an active journey, show the existing travel notice so the player can return to the map; do not describe the destination as an empty place.
