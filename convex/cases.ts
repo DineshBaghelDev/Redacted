@@ -4,7 +4,7 @@ import type { Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { crimeCoreSchema } from "./generation/core/crimes";
 import { castSchema } from "./generation/core/schemas";
-import { getBureauRoomMember, getPlayingRoomMember, getRoomMember, requireInvestigationOpen, requireUserId } from "./lib/auth";
+import { cameraAtAccessPoint, getCameraAccess, getPlayingRoomMember, getRoomMember, requireInvestigationOpen, requireUserId } from "./lib/auth";
 import { ensureCaseCctv } from "./lib/publishCctv";
 import { ensureCaseDevices } from "./lib/publishDevices";
 import { ensureCaseForensics, restoreBodyForensicSources } from "./lib/publishForensics";
@@ -148,18 +148,19 @@ async function ensureCaseSolution(ctx: MutationCtx, caseId: Id<"cases">, generat
 }
 
 async function loadCctv(ctx: QueryCtx, roomCode: string) {
-  const member = await getBureauRoomMember(ctx, roomCode, "cctv");
-  if (!member?.session.caseId) return null;
-  const playableCase = await ctx.db.get(member.session.caseId);
+  const access = await getCameraAccess(ctx, roomCode, "cctv");
+  if (!access?.member.session.caseId) return null;
+  const playableCase = await ctx.db.get(access.member.session.caseId);
   if (!playableCase) return null;
   const cameras = await ctx.db.query("cctvCameras").withIndex("by_caseId", (q) => q.eq("caseId", playableCase._id)).take(128);
-  if (!cameras.length) return null;
+  const available = cameras.filter((camera) => cameraAtAccessPoint(camera, access));
+  if (!available.length) return null;
   return {
-    member,
+    member: access.member,
     caseTitle: playableCase.title,
-    start: Math.min(...cameras.map((camera) => camera.startTime)),
-    end: Math.max(...cameras.map((camera) => camera.endTime)),
-    cameras,
+    start: Math.min(...available.map((camera) => camera.startTime)),
+    end: Math.max(...available.map((camera) => camera.endTime)),
+    cameras: available,
   };
 }
 
@@ -370,18 +371,22 @@ export const startCctvReview = mutation({
     await requireInvestigationOpen(ctx, playing.session._id);
     const now = Date.now();
     const settled = await settleActions(ctx, playing.session, now);
-    const member = await getBureauRoomMember(ctx, roomCode);
-    if (!member) throw new Error("Visit the bureau camera terminal first.");
+    const access = await getCameraAccess(ctx, roomCode);
+    if (!access) throw new Error("Visit this camera's access point first.");
+    const member = access.member;
     const camera = await ctx.db.query("cctvCameras")
       .withIndex("by_caseId_and_sourceId", (q) => q.eq("caseId", member.session.caseId!).eq("sourceId", cameraId))
       .unique();
-    if (!camera || !Number.isInteger(minute) || minute < camera.startTime || minute > camera.endTime) throw new Error("Choose a valid camera time.");
+    if (!camera || !cameraAtAccessPoint(camera, access)) throw new Error("Visit this camera's access point first.");
+    if (!Number.isInteger(minute) || minute < camera.startTime || minute > camera.endTime) throw new Error("Choose a valid camera time.");
     const existing = await ctx.db.query("cctvReviews")
       .withIndex("by_sessionId_and_cameraId_and_minute", (q) => q.eq("sessionId", member.session._id).eq("cameraId", camera._id).eq("minute", minute))
       .unique();
     if (existing) throw new Error("This window is already being reviewed or has been reviewed.");
-    const roomId = await bureauRoomId(ctx, member.session.caseId!, member.player);
-    if (!roomId) throw new Error("The bureau terminal is unavailable.");
+    const roomId = access.place?.kind === "bureau" || !member.player.currentPlaceId
+      ? await bureauRoomId(ctx, member.session.caseId!, member.player)
+      : member.player.currentRoomId;
+    if (!roomId) throw new Error("This camera's access point is unavailable.");
     if (settled.activeCount === 0) await ctx.db.patch(member.session._id, { gameTime: settled.gameTime, clockStartedAt: now });
     const completeGameTime = settled.gameTime + 5;
     const cctvReviewId = await ctx.db.insert("cctvReviews", { sessionId: member.session._id, cameraId: camera._id, minute, completeGameTime });

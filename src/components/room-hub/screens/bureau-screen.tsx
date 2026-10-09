@@ -49,7 +49,7 @@ const stations: Record<Station, { label: string; description: string }> = {
   },
   cctv: {
     label: "CCTV",
-    description: "Review the station and street camera records already in the case file.",
+    description: "Bureau and street camera logs. Building cameras are on site.",
   },
   clueboard: {
     label: "Clueboard",

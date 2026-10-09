@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
+import { GameIcon } from "../game-icon";
 
 function formatTime(minutes: number) {
   const day = Math.floor(minutes / 1440) + 1;
@@ -11,7 +12,7 @@ function formatTime(minutes: number) {
   return `Day ${day} · ${String(Math.floor(withinDay / 60)).padStart(2, "0")}:${String(withinDay % 60).padStart(2, "0")}`;
 }
 
-export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
+export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: { roomCode: string; onBack: () => void; backLabel?: string }) {
   const { isLoaded, isSignedIn } = useAuth();
   const data = useQuery(api.cases.getCctv, isLoaded && isSignedIn ? { roomCode } : "skip");
   const [chosenCameraId, setCameraId] = useState("");
@@ -35,11 +36,10 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
     data && cameraId ? { roomCode, cameraId, minute } : "skip",
   );
 
-  if (data === undefined) return <CctvMessage message="Loading camera records..." onBack={onBack} />;
-  if (!data) return <CctvMessage message="Camera records are not available for this case." onBack={onBack} />;
+  if (data === undefined) return <CctvMessage message="Loading camera records..." onBack={onBack} backLabel={backLabel} />;
+  if (!data) return <CctvMessage message="No camera records are available here." onBack={onBack} backLabel={backLabel} />;
 
   const camera = data.cameras.find((item) => item.id === cameraId)!;
-  const cameraIndex = data.cameras.findIndex((item) => item.id === cameraId);
   const records = visibleWindow?.status === "ready" ? visibleWindow.records : [];
 
   function selectCamera(id: string) {
@@ -79,7 +79,7 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">Camera records</h2>
         </div>
         <button
-          aria-label="Return to bureau"
+          aria-label={backLabel}
           className="border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase text-[#c8d8d2] hover:border-[#e8ac51] hover:text-[#e8ac51] focus-visible:outline-2 focus-visible:outline-[#e8ac51]"
           onClick={onBack}
           type="button"
@@ -91,21 +91,9 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
       <div className="game-station-main min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         <div className="mx-auto grid max-w-6xl items-start gap-6 lg:grid-cols-[minmax(15rem,19rem)_minmax(0,1fr)]">
         <aside className="min-w-0 border-b border-[#6f9f98]/35 pb-5 lg:border-b-0 lg:border-r lg:pr-6">
-          <label className="block text-xs uppercase tracking-[0.18em] text-[#e8ac51]" htmlFor="camera-picker">01 / Choose camera</label>
-          <select
-            className="mt-3 min-h-12 w-full min-w-0 border border-[#6f9f98] bg-[#0b1a1c] px-3 text-sm text-[#e4e6d8]"
-            id="camera-picker"
-            onChange={(event) => selectCamera(event.target.value)}
-            value={cameraId}
-          >
-            {data.cameras.map((item, index) => (
-              <option key={item.id} value={item.id}>{String(index + 1).padStart(2, "0")} · {item.name}{item.faulty ? " (offline)" : ""}</option>
-            ))}
-          </select>
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <button className="min-h-10 border border-[#6f9f98]/60 px-3 text-sm uppercase disabled:opacity-40" disabled={cameraIndex <= 0} onClick={() => selectCamera(data.cameras[cameraIndex - 1].id)} type="button">← Previous</button>
-            <span className="text-xs text-[#b8ccc1]">{cameraIndex + 1} / {data.cameras.length}</span>
-            <button className="min-h-10 border border-[#6f9f98]/60 px-3 text-sm uppercase disabled:opacity-40" disabled={cameraIndex >= data.cameras.length - 1} onClick={() => selectCamera(data.cameras[cameraIndex + 1].id)} type="button">Next →</button>
+          <h3 className="text-xs uppercase tracking-[0.18em] text-[#e8ac51]">01 / Cameras here · {data.cameras.length}</h3>
+          <div className="mt-3 grid gap-1 sm:grid-cols-2 lg:grid-cols-1">
+            {data.cameras.map((item) => <button aria-pressed={item.id === cameraId} className="flex min-h-14 min-w-0 items-center gap-3 border-b border-[#6f9f98]/30 py-2 text-left text-sm uppercase hover:text-[#f1c987] aria-pressed:text-[#f1c987]" key={item.id} onClick={() => selectCamera(item.id)} type="button"><GameIcon className="size-9 shrink-0" name="cctv" /><span className="min-w-0 flex-1 break-words">{item.name}{item.faulty ? <span className="block text-xs text-red-300">Offline</span> : null}</span></button>)}
           </div>
           <p className="mt-4 break-words text-sm leading-relaxed text-[#b8ccc1]">{camera.faulty ? "This camera has no recording for the case period." : "Pick a time, then review its written activity log."}</p>
         </aside>
@@ -203,13 +191,13 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
   );
 }
 
-function CctvMessage({ message, onBack }: { message: string; onBack: () => void }) {
+function CctvMessage({ message, onBack, backLabel }: { message: string; onBack: () => void; backLabel: string }) {
   return (
     <section className="absolute inset-0 z-20 flex items-center justify-center bg-[#071014] p-4 text-[#e4e6d8]">
       <div className="w-full max-w-lg border border-[#6f9f98]/30 bg-[#0b1a1c] p-6 text-center">
         <p className="text-lg uppercase text-[#c8d8d2]">{message}</p>
         <button className="mt-5 border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">
-          Back to bureau
+          {backLabel}
         </button>
       </div>
     </section>

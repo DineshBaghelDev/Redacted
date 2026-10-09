@@ -1,13 +1,20 @@
 # Design Decisions
 
+## 2026-10-10 — Cameras belong to their places
+
+- The bureau security desk lists only street and bureau cameras. A building camera appears as a room action in its own building, with that room marked in the room list. Review, window reads, and pins are location-gated on the server.
+- Camera choices are a short, visible icon list at each access point. The long camera dropdown is removed. Each camera still uses the same text-only time review and five-minute action.
+- Map icons use the generated silhouettes at a larger size without backing squares. Select and focus states use a restrained glow; place names remain readable without clipping case data.
+- Character files combine stable pixel hair, face, skin, clothing, and accessory layers from a person ID. These portraits identify a file visually; the public case description remains the authoritative appearance evidence.
+
 ## 2026-10-10 — City map visual language
 
-- The map background is a blank drafting texture; only stored place coordinates and street connections draw the geography. Place icons communicate kind, marker edge color communicates district, dashed red routes communicate cameras, and selected-route chips show direct travel minutes.
+- The map background is a blank drafting texture; only stored place coordinates and street connections draw the geography. Place icons communicate kind, dashed red routes communicate cameras, and selected-route chips show direct travel minutes.
 - On narrow screens, the named place selector remains the reliable touch path. Marker labels surface on selection or focus; wide screens can show them all. The map preserves its existing travel and pin actions.
 
 ## 2026-10-10 — Camera records as an ordered log
 
-- The CCTV desk presents one camera at a time using a native name picker and adjacent previous/next controls. Time selection, the five-minute review, and the written results appear in order on one scroll surface; there is no visual footage or thumbnail.
+- The CCTV desk presents one accessible camera at a time. Time selection, the five-minute review, and the written results appear in order on one scroll surface; there is no visual footage or thumbnail. Camera access is localized in the newer decision above.
 
 
 ## 2026-10-10 — Physical interface surfaces
@@ -171,7 +178,7 @@
 ## 2026-10-08 — Camera records require a deliberate review
 
 - Choosing a camera and time does not reveal records. A 5-minute review covers 20 minutes either side of that time and is shared after completion.
-- Reopening the exact reviewed window is free. CCTV reference cards still require bureau access and now require the record to fall inside a completed review.
+- Reopening the exact reviewed window is free. CCTV reference cards require access at the camera's location and the record must fall inside a completed review.
 - The terminal keeps its textual timeline; CCTV has no footage, stills, or thumbnails.
 
 ## 2026-10-07 — Lab turnaround on the shared clock
@@ -186,7 +193,7 @@
 - Explore shows the current building's connected rooms; moving across a room edge costs 1 game minute, or 2 across floors. A room can be searched once per shared session for 15 game minutes.
 - Finding an object does not declare it a clue. Its stored description appears only after a 2-minute inspection, and collectible objects enter shared inventory only after a player chooses Collect.
 - Pinning a found object is an explicit player choice; its clueboard card names the object but does not reveal uninspected details or infer a connection.
-- Public-record and CCTV cards require bureau-terminal access when first pinned, matching the underlying records' location gate. Existing shared pins remain readable elsewhere.
+- Public-record cards require bureau-terminal access when first pinned. CCTV cards require the camera's access point. Existing shared pins remain readable elsewhere.
 - The same shared clock runs travel, movement, search, and inspection. Free reading and collecting do not advance it.
 
 ## 2026-10-07 — Investigation time is continuous and action-driven

@@ -168,7 +168,7 @@ cases.getCctvWindow({ roomCode, cameraId, minute })
 cases.startCctvReview({ roomCode, cameraId, minute })
 ```
 
-Starting a review occupies the detective for 5 game minutes. The window query returns `available` or `pending` with no records until the shared action completes, then returns the stored records as `ready`. The selected minute covers 20 minutes on each side; a completed window can be reopened freely by either partner. CCTV review requires bureau-terminal access, and only reviewed records can be pinned. Records are textual/data only and never visual media.
+Starting a review occupies the detective for 5 game minutes. The window query returns `available` or `pending` with no records until the shared action completes, then returns the stored records as `ready`. The selected minute covers 20 minutes on each side; a completed window can be reopened freely by either partner. `getCctv` lists only cameras at the detective's current access point: street and bureau cameras at the bureau, building cameras in their camera room. Window reads, reviews, and record pins enforce the same location rule. Only reviewed records can be pinned. Records are textual/data only and never visual media.
 
 ### Devices and records
 

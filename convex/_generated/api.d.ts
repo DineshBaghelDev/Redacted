@@ -54,6 +54,7 @@ import type * as generation_stages from "../generation/stages.js";
 import type * as generation_workflow from "../generation/workflow.js";
 import type * as investigation from "../investigation.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_cancelRoomAction from "../lib/cancelRoomAction.js";
 import type * as lib_deviceAccess from "../lib/deviceAccess.js";
 import type * as lib_publishCctv from "../lib/publishCctv.js";
 import type * as lib_publishDevices from "../lib/publishDevices.js";
@@ -122,6 +123,7 @@ declare const fullApi: ApiFromModules<{
   "generation/workflow": typeof generation_workflow;
   investigation: typeof investigation;
   "lib/auth": typeof lib_auth;
+  "lib/cancelRoomAction": typeof lib_cancelRoomAction;
   "lib/deviceAccess": typeof lib_deviceAccess;
   "lib/publishCctv": typeof lib_publishCctv;
   "lib/publishDevices": typeof lib_publishDevices;

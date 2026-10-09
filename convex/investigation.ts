@@ -23,7 +23,7 @@ export const getPlace = query({
   returns: v.union(v.null(), v.object({
     placeName: v.string(),
     currentRoomId: v.union(v.null(), v.id("rooms")),
-    rooms: v.array(v.object({ id: v.id("rooms"), name: v.string(), floor: v.number(), searchable: v.boolean(), searched: v.boolean(), adjacent: v.boolean() })),
+    rooms: v.array(v.object({ id: v.id("rooms"), name: v.string(), floor: v.number(), searchable: v.boolean(), searched: v.boolean(), adjacent: v.boolean(), hasCamera: v.boolean() })),
     action: v.union(v.null(), v.object({ kind: v.union(v.literal("move"), v.literal("search"), v.literal("inspect"), v.literal("forensic"), v.literal("cctv"), v.literal("records"), v.literal("device"), v.literal("npc")), roomId: v.id("rooms"), startGameTime: v.number(), completeGameTime: v.number() })),
     items: v.array(v.object({ id: v.id("caseItems"), name: v.string(), description: v.optional(v.string()), roomId: v.id("rooms"), collectible: v.boolean(), collected: v.boolean(), inspected: v.boolean(), device: v.optional(v.object({
       type: v.union(v.literal("phone"), v.literal("laptop")), read: v.boolean(),
@@ -74,7 +74,7 @@ export const getPlace = query({
     return {
       placeName: place.name,
       currentRoomId,
-      rooms: rooms.map((room, index) => ({ id: room._id, name: room.name, floor: floors[index]?.floorNumber ?? 0, searchable: room.searchable, searched: searched.has(room._id), adjacent: adjacent.has(room._id) })),
+      rooms: rooms.map((room, index) => ({ id: room._id, name: room.name, floor: floors[index]?.floorNumber ?? 0, searchable: room.searchable, searched: searched.has(room._id), adjacent: adjacent.has(room._id), hasCamera: room.hasCamera })),
       action: action ? { kind: action.kind, roomId: action.roomId, startGameTime: action.startGameTime, completeGameTime: action.completeGameTime } : null,
       items: knownItems,
       clock: { gameTime: member.session.gameTime ?? 0, clockStartedAt: member.session.clockStartedAt ?? null, minuteMs: GAME_MINUTE_MS },

@@ -144,6 +144,7 @@ CCTV consists of:
 CCTV records have no visual representation at all. Do not add generated video, stills, thumbnails, or visual playback later.
 
 Players choose camera/time windows. The game returns stored matching records.
+Street and bureau cameras are reviewed at the bureau. Building cameras are reviewed in the room where the camera is installed. The player sees only the cameras available at that access point; review and pin actions use the same location gate.
 
 ## Devices
 

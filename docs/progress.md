@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-10 — Local camera access and larger map art
+
+- Replaced the city marker squares with larger transparent place icons and kept a clear focus state. Long case titles and generated text wrap inside menus, dossiers, and station panels.
+- Split CCTV by physical access point: street and bureau cameras at the bureau, building cameras in their actual camera room. The room list marks camera rooms and opens the same written log there. The server now filters the list, reads, reviews, and pins by location; the long dropdown is gone.
+- Added stable pixel upper-body portraits assembled from face, hair, skin, clothing, and accessory variations in the people roster and interview record. Portrait art is illustrative; public descriptions remain the source for investigative appearance details.
+
 ## 2026-10-10 — Player map legibility pass
 
 - Replaced the numbered square markers with generated pixel place icons for homes, workplaces, public buildings, the bureau, and the lab. A restrained generated drafting-paper plate sits behind the live city graph; it contains no invented streets, places, or labels.

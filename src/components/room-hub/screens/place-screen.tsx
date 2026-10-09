@@ -5,6 +5,8 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { CctvScreen } from "./cctv-screen";
+import { GameIcon } from "../game-icon";
 
 export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
@@ -20,6 +22,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   const [working, setWorking] = useState(false);
   const [now, setNow] = useState(0);
   const [error, setError] = useState("");
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   useEffect(() => {
     if (!place?.action || place.clock.clockStartedAt === null) return;
@@ -60,6 +63,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
 
   if (place === undefined) return <PlaceMessage message="Opening this place..." onBack={onBack} />;
   if (!place) return <PlaceMessage message="There are no rooms to explore here right now." onBack={onBack} />;
+  if (cameraOpen) return <CctvScreen roomCode={roomCode} onBack={() => setCameraOpen(false)} backLabel="Back to room" />;
 
   const currentRoom = place.rooms.find((room) => room.id === place.currentRoomId);
   const here = place.items.filter((item) => item.roomId === place.currentRoomId && !item.collected);
@@ -100,7 +104,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
                   onClick={() => run(moveToRoom({ roomCode, roomId: room.id }))}
                   type="button"
                 >
-                  <span className="block text-sm uppercase">{room.name}</span>
+                  <span className="block break-words text-sm uppercase">{room.name}{room.hasCamera ? " · Camera" : ""}</span>
                   <span className="mt-1 block text-xs text-[#c8d8d2]/55">Floor {room.floor} · {current ? "You are here" : room.adjacent ? "Enter room" : "Move closer first"}{room.searched ? " · Searched" : ""}</span>
                 </button>
               );
@@ -127,6 +131,8 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
                 type="button"
               >{currentRoom.searched ? "Room searched" : "Search room · 15 min"}</button>
             ) : <p className="mt-5 text-sm text-[#c8d8d2]/55">There is nothing to search in this room.</p>}
+
+            {currentRoom?.hasCamera ? <button className="mt-5 flex min-h-12 items-center gap-3 text-left text-sm uppercase text-[#f1c987] hover:text-white" onClick={() => setCameraOpen(true)} type="button"><GameIcon name="cctv" className="size-10" /><span>Review this room&apos;s camera logs</span></button> : null}
 
             <h4 className="mt-8 border-t border-[#6f9f98]/25 pt-5 text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Found here</h4>
             {here.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">{here.map((item) => (

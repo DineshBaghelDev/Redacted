@@ -1,5 +1,5 @@
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 
 type AnyCtx = QueryCtx | MutationCtx | ActionCtx;
 type DbCtx = QueryCtx | MutationCtx;
@@ -55,6 +55,24 @@ export async function getBureauRoomMember(ctx: DbCtx, roomCode: string, allowedA
   if (!member.player.currentPlaceId) return member; // Pre-clock rooms began at the bureau.
   const place = await ctx.db.get(member.player.currentPlaceId);
   return place?.kind === "bureau" ? member : null;
+}
+
+/** A building camera is used in its room; street and bureau cameras use the bureau terminal. */
+export async function getCameraAccess(ctx: DbCtx, roomCode: string, allowedActionKind?: "cctv") {
+  const member = await getPlayingRoomMember(ctx, roomCode);
+  if (!member) return null;
+  if (await ctx.db.query("travelActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique()) return null;
+  const action = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique();
+  if (action && action.kind !== allowedActionKind) return null;
+  const place = member.player.currentPlaceId ? await ctx.db.get(member.player.currentPlaceId) : null;
+  return { member, place };
+}
+
+export function cameraAtAccessPoint(camera: Doc<"cctvCameras">, access: NonNullable<Awaited<ReturnType<typeof getCameraAccess>>>) {
+  if (access.place?.kind === "bureau" || !access.member.player.currentPlaceId) {
+    return !camera.placeId || camera.placeId === access.member.player.currentPlaceId;
+  }
+  return camera.placeId === access.member.player.currentPlaceId && camera.roomId === access.member.player.currentRoomId;
 }
 
 /**

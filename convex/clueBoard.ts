@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import { getBureauRoomMember, getPlayingRoomMember, getRoomMember, requireInvestigationOpen } from "./lib/auth";
+import { cameraAtAccessPoint, getBureauRoomMember, getCameraAccess, getPlayingRoomMember, getRoomMember, requireInvestigationOpen } from "./lib/auth";
 import { hasReadDevice } from "./lib/deviceAccess";
 
 const MAX_NODES = 100;
@@ -125,7 +125,7 @@ export const createReferenceNode = mutation({
     if (existing) return existing._id;
     if (nodes.length >= MAX_NODES) throw new Error("This board is full.");
 
-    if ((type === "public_record" || type === "cctv") && !(await getBureauRoomMember(ctx, roomCode))) {
+    if (type === "public_record" && !(await getBureauRoomMember(ctx, roomCode))) {
       throw new Error("Use the bureau terminal to pin this record.");
     }
 
@@ -194,6 +194,8 @@ export const createReferenceNode = mutation({
       if (!record) throw new Error("That camera record is not part of this case.");
       const camera = await ctx.db.get(record.cameraId);
       if (!camera || camera.caseId !== session.caseId) throw new Error("That camera record is unavailable.");
+      const access = await getCameraAccess(ctx, roomCode);
+      if (!access || !cameraAtAccessPoint(camera, access)) throw new Error("Visit this camera's access point to pin its record.");
       let reviewed = false;
       for await (const window of ctx.db.query("cctvReviews")
         .withIndex("by_sessionId_and_cameraId_and_minute", (q) => q.eq("sessionId", session._id).eq("cameraId", camera._id).gte("minute", record.startTime - 20).lte("minute", record.endTime + 20))) {
