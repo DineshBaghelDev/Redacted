@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-09 — Interview and scene-path live check
+
+- In a synthetic dev replay of Keel Street Incident, calling Dina Hartigan at the bureau made her immediately available. Asking what she witnessed completed at shared game minute 3 and exposed her stored statement; no field interview was needed or added.
+- The same detective travelled to 14 Keel Street (minute 26), moved through the hallway to the main bedroom (minute 29), searched it (minute 44), and found Freya Winslow's phone. A separate five-minute read exposed its frozen call and message rows at minute 49. The shared clock paused between actions.
+- A read-only audit of all 18 published cases matched every decisive evidence reference to one frozen runtime row and found no invalid or provably unreachable acquisition route through rooms, lab, CCTV, records, devices, or interviews. This is a static reachability check plus one live path, not 18 full playthroughs or signed-in browser UX verification.
+
 ## 2026-10-09 — All-published-case startup smoke
 
 - On the personal dev deployment, all 18 published cases created a fresh synthetic replay, readied and started a one-player lobby, and returned a public brief, 20-place map, NPC list, 60-camera list, and an available bureau public-record search. The test rooms remain under a synthetic identity. This covers replay boot and initial safe queries, not complete case playthroughs or signed-in browser UX.
