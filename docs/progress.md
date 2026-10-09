@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-09 — Published replay data audit
+
+- A read-only dev audit found 18 published replay cases. Each has a valid frozen estimate, a bureau, a connected 20-place city, NPC scripts for all living people, and the decisive evidence IDs present in runtime tables. The earlier claim that most cases lacked CCTV was incorrect; every case has stored camera records.
+- Nine cases each have one optional, non-decisive lab result without an item or room source, so that result cannot currently be requested. Frozen-data presence does not prove the complete player journey; per-case signed-in playthroughs and a safe repair for these lab links remain open.
+
 ## 2026-10-09 — Reopening a submitted report
 
 - Continue now distinguishes a room with a submitted final report from an active investigation. It opens the existing case-file result/retry screen for that room, including while grading is in progress, without treating the published case as consumed. A fresh replay remains available from Previous cases.
