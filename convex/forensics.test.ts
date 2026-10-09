@@ -61,7 +61,7 @@ test("lab tests need collected evidence and reveal stored results only after sha
   await two.mutation(api.forensics.markViewed, { roomCode, forensicOutputId: ids.outputId });
   expect((await one.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.outputId)).toMatchObject({ status: "viewed", result: "One set of prints." });
   await one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "forensic", referenceId: ids.outputId, x: 0, y: 0 });
-  expect((await two.query(api.clueBoard.getNodes, { roomCode }))[0].text).toBe("fingerprint report\nOne set of prints.");
+  expect((await two.query(api.clueBoard.getNodes, { roomCode }))![0].text).toBe("fingerprint report\nOne set of prints.");
   expect(await one.mutation(api.forensics.request, { roomCode, forensicOutputId: ids.bodyOutputId })).toEqual({ readyAtGameTime: 80 });
   expect((await two.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.bodyOutputId)?.result).toBeUndefined();
   vi.advanceTimersByTime(15_000);

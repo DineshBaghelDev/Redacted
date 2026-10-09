@@ -6,7 +6,6 @@ import { jobStatus } from "../schema";
 import { runAiAttempt } from "./aiStage";
 import { crimeKind, type CrimeCore } from "./core/crimes";
 import { getStage } from "./stages";
-import { ensureCaseForJob } from "../cases";
 
 // Running stages for a generation job, shared by the dev tester (one stage at a time) and the
 // workflow ("Run all"). Drafts hold hidden case data: nothing here is client-callable.
@@ -100,6 +99,7 @@ export const aiStep = internalAction({
 /** Moves a job to a new status; start and finish times are stamped here. */
 export const setStatus = internalMutation({
   args: { jobId: v.id("generationJobs"), status: jobStatus, failedStage: v.optional(v.string()), error: v.optional(v.string()) },
+  returns: v.null(),
   handler: async (ctx, { jobId, status, failedStage, error }) => {
     const done = status !== "queued" && status !== "running";
     await ctx.db.patch(jobId, {
@@ -110,7 +110,27 @@ export const setStatus = internalMutation({
       ...(status === "running" ? { startedAt: Date.now() } : {}),
       ...(done ? { finishedAt: Date.now() } : {}),
     });
-    if (status === "passed") await ensureCaseForJob(ctx, jobId);
+    if (status === "passed") await ctx.scheduler.runAfter(0, internal.generation.jobs.publish, { jobId });
+    return null;
+  },
+});
+
+/** Publication runs in its own transaction so failure cannot roll back the job status. */
+export const publish = internalAction({
+  args: { jobId: v.id("generationJobs") },
+  returns: v.null(),
+  handler: async (ctx, { jobId }) => {
+    try {
+      await ctx.runMutation(internal.cases.publishPassedJob, { jobId });
+    } catch (error) {
+      await ctx.runMutation(internal.generation.jobs.setStatus, {
+        jobId,
+        status: "failed",
+        failedStage: "publish",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+    return null;
   },
 });
 

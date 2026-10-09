@@ -4,6 +4,7 @@ import { requireUserId } from "./lib/auth";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { PUBLICATION_VERSION } from "./cases";
+import { cancelRoomAction } from "./lib/cancelRoomAction";
 import { entranceRoomId, settleActions } from "./world";
 
 const MAX_PLAYERS = 2;
@@ -218,7 +219,10 @@ export const leave = mutation({
     const roomAction = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", player._id)).unique();
     if (journey || roomAction) {
       if (journey) await ctx.db.delete(journey._id);
-      if (roomAction) await ctx.db.delete(roomAction._id);
+      if (roomAction) {
+        await cancelRoomAction(ctx, roomAction);
+        await ctx.db.delete(roomAction._id);
+      }
       if (settled.activeCount === 1) await ctx.db.patch(session._id, { gameTime: settled.gameTime, clockStartedAt: undefined });
     }
     await ctx.db.delete(player._id);

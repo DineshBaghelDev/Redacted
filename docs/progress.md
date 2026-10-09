@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-10-09 — Review corrections
+
+- Clueboard reads return null when the playing room is unavailable; records searches report an active action before the bureau-location error.
+- Publication failures are recorded separately from generation status updates. Leaving cancels owned interview turns, CCTV reviews, and record searches while preserving other shared record access.
+- Replay deadline input validates hours and rounds to whole minutes; API and development-case documentation match published-case replay.
+- Validation: all 158 tests passed across the full-suite run and corrected-fixture rerun; TypeScript and lint passed (existing lint warnings). Convex sync is blocked in this sandbox because the local backend requires a newer glibc.
+
 ## 2026-10-09 — Replay deadline and review-only rooms
 
 - Replay creation accepts an optional, fixed shared deadline in whole game minutes; omitted input keeps the frozen estimate plus 1,440 minutes. Invalid numeric deadlines are rejected server-side.

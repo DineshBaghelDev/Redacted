@@ -292,7 +292,7 @@ export const retryFailed = mutation({
     const conversation = await ctx.db.query("npcConversations").withIndex("by_sessionId_and_npcId", (q) => q.eq("sessionId", member.session._id).eq("npcId", npcId)).unique();
     if (!conversation) throw new Error("Open this interview first.");
     const latest = await ctx.db.query("npcPendingMessages").withIndex("by_conversationId_and_sequence", (q) => q.eq("conversationId", conversation._id)).order("desc").first();
-    if (latest?.status !== "failed") throw new Error("There is no failed answer to retry.");
+    if (latest?.status !== "failed" || latest.canceled) throw new Error("There is no failed answer to retry.");
     await ctx.db.insert("npcPendingMessages", { conversationId: conversation._id, playerId: latest.playerId, sequence: conversation.nextSequence, promptMessageId: latest.promptMessageId, status: "queued", createdAt: Date.now() });
     await ctx.db.patch(conversation._id, { nextSequence: conversation.nextSequence + 1 });
     await ctx.scheduler.runAfter(0, internal.npcConversations.processNext, { conversationId: conversation._id });
@@ -306,7 +306,14 @@ export const claimNext = internalMutation({
   handler: async (ctx, { conversationId }) => {
     const conversation = await ctx.db.get(conversationId);
     if (!conversation || conversation.activeTurnId) return null;
-    const next = await ctx.db.query("npcPendingMessages").withIndex("by_conversationId_and_sequence", (q) => q.eq("conversationId", conversationId).eq("sequence", conversation.nextToProcess)).unique();
+    let nextSequence = conversation.nextToProcess;
+    let next;
+    while (nextSequence < conversation.nextSequence) {
+      next = await ctx.db.query("npcPendingMessages").withIndex("by_conversationId_and_sequence", (q) => q.eq("conversationId", conversationId).eq("sequence", nextSequence)).unique();
+      if (next?.status !== "failed") break;
+      nextSequence += 1;
+    }
+    if (nextSequence !== conversation.nextToProcess) await ctx.db.patch(conversationId, { nextToProcess: nextSequence });
     if (next?.status !== "queued") return null;
     await ctx.db.patch(next._id, { status: "processing" });
     await ctx.db.patch(conversationId, { activeTurnId: next._id });

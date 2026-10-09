@@ -61,7 +61,7 @@ test("partners search, inspect, and collect shared items without revealing hidde
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.items[0]).toMatchObject({ name: "Note", collected: false });
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.items[0]?.description).toBeUndefined();
   await one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "item", referenceId: ids.itemId, x: 0, y: 0 });
-  expect((await two.query(api.clueBoard.getNodes, { roomCode }))[0].text).toBe("Note\nFound object");
+  expect((await two.query(api.clueBoard.getNodes, { roomCode }))![0].text).toBe("Note\nFound object");
   await expect(one.mutation(api.investigation.searchRoom, { roomCode })).rejects.toThrow("already been searched");
   await one.mutation(api.investigation.collectItem, { roomCode, itemId: ids.itemId });
   expect(await two.query(api.investigation.getInventory, { roomCode })).toEqual([{ id: ids.itemId, name: "Note" }]);
@@ -82,7 +82,7 @@ test("partners search, inspect, and collect shared items without revealing hidde
   await two.mutation(api.investigation.finishAction, { roomCode });
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.items.find((item) => item.id === ids.deviceItemId)?.device).toEqual({ type: "laptop", read: true, files: [{ id: "file/laptop/0", title: "Accounts", body: "A hidden payment." }], calls: [], messages: [] });
   await one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "device_file", referenceId: "file/laptop/0", x: 0, y: 0 });
-  expect((await two.query(api.clueBoard.getNodes, { roomCode })).find((node) => node.type === "device_file")?.text).toBe("Accounts\nA hidden payment.");
+  expect((await two.query(api.clueBoard.getNodes, { roomCode }))!.find((node) => node.type === "device_file")?.text).toBe("Accounts\nA hidden payment.");
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.clock).toMatchObject({ gameTime: 23, clockStartedAt: null });
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.items.find((item) => item.id === ids.phoneItemId)?.device).toEqual({ type: "phone", read: false, files: [], calls: [], messages: [] });
   expect(await one.mutation(api.investigation.readDevice, { roomCode, itemId: ids.phoneItemId })).toEqual({ completeGameTime: 28 });
@@ -91,6 +91,6 @@ test("partners search, inspect, and collect shared items without revealing hidde
   expect((await two.query(api.investigation.getPlace, { roomCode }))?.items.find((item) => item.id === ids.phoneItemId)?.device).toMatchObject({ read: true, calls: [{ id: ids.callId, otherParty: "Mara" }], messages: [{ id: ids.messageId, body: "Meet me outside." }] });
   await one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "call", referenceId: ids.callId, x: 0, y: 0 });
   await two.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "message", referenceId: ids.messageId, x: 0, y: 0 });
-  expect((await one.query(api.clueBoard.getNodes, { roomCode })).filter((node) => node.type === "call" || node.type === "message")).toHaveLength(2);
+  expect((await one.query(api.clueBoard.getNodes, { roomCode }))!.filter((node) => node.type === "call" || node.type === "message")).toHaveLength(2);
   await expect(t.withIdentity({ subject: "outsider" }).mutation(api.investigation.readDevice, { roomCode, itemId: ids.deviceItemId })).rejects.toThrow("Start the investigation first");
 }, 15_000);

@@ -148,5 +148,5 @@ test("only a bureau detective can start a shared, timed NPC interview", async ()
   await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "statement", referenceId: "witness/mara/lied", x: 0, y: 0 })).rejects.toThrow("Hear this statement");
   await expect(one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Show this", proofReference: { type: "statement", referenceId: "witness/mara/lied" } })).rejects.toThrow("Hear this statement");
   const statementNode = await two.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "statement", referenceId: "witness/mara/safe", x: 0, y: 0 });
-  expect((await one.query(api.clueBoard.getNodes, { roomCode: "ABC123" })).some(node => node._id === statementNode)).toBe(true);
+  expect((await one.query(api.clueBoard.getNodes, { roomCode: "ABC123" }))!.some(node => node._id === statementNode)).toBe(true);
 }, 30_000);

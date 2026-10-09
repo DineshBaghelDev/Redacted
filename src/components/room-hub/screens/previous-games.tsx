@@ -18,7 +18,9 @@ export function PreviousGamesScreen({ error, isWorking, onBack, onPlay }: Previo
   const { isLoaded, isSignedIn } = useAuth();
   const cases = useQuery(api.cases.listPassed, isLoaded && isSignedIn ? {} : "skip");
   const [deadlineHours, setDeadlineHours] = useState("");
-  const deadlineMinutes = deadlineHours ? Number(deadlineHours) * 60 : undefined;
+  const hours = Number(deadlineHours);
+  const deadlineMinutes = deadlineHours && Number.isFinite(hours) && hours > 0 ? Math.round(hours * 60) : undefined;
+  const invalidDeadline = deadlineHours !== "" && (hours < 1 || !Number.isSafeInteger(deadlineMinutes));
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4">
@@ -51,7 +53,7 @@ export function PreviousGamesScreen({ error, isWorking, onBack, onPlay }: Previo
             <p className="mt-4 break-words text-base leading-snug">{game.description}</p>
             <button
               className="mt-5 h-11 w-full border-2 border-cyan-300 bg-[#06142d] text-lg uppercase text-yellow-200"
-              disabled={isWorking}
+              disabled={isWorking || invalidDeadline}
               onClick={() => onPlay(game, deadlineMinutes)}
               type="button"
             >

@@ -73,6 +73,8 @@ export const performSearch = mutation({
     const term = searchTerm(search);
     const now = Date.now();
     const settled = await settleActions(ctx, playing.session, now);
+    const activeAction = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", playing.player._id)).unique();
+    if (activeAction) throw new Error("Finish your current action first.");
     const member = await getBureauRoomMember(ctx, roomCode);
     if (!member?.session.caseId) throw new Error("Visit the bureau records terminal first.");
     const existing = await ctx.db.query("publicRecordSearches").withIndex("by_sessionId_and_term", (q) => q.eq("sessionId", member.session._id).eq("term", term)).unique();
@@ -82,13 +84,17 @@ export const performSearch = mutation({
     const records = await matchingRecords(ctx, member.session.caseId, term);
     if (settled.activeCount === 0) await ctx.db.patch(member.session._id, { gameTime: settled.gameTime, clockStartedAt: now });
     const completeGameTime = settled.gameTime + 10;
-    await ctx.db.insert("publicRecordSearches", { sessionId: member.session._id, term, completeGameTime, recordIds: records.map((record) => record._id) });
+    const recordSearchId = await ctx.db.insert("publicRecordSearches", { sessionId: member.session._id, term, completeGameTime, recordIds: records.map((record) => record._id) });
     for (const record of records) {
       const access = await ctx.db.query("sessionPublicRecords").withIndex("by_sessionId_and_recordId", (q) => q.eq("sessionId", member.session._id).eq("recordId", record._id)).unique();
-      if (!access) await ctx.db.insert("sessionPublicRecords", { sessionId: member.session._id, recordId: record._id, completeGameTime });
-      else if (access.completeGameTime > completeGameTime) await ctx.db.patch(access._id, { completeGameTime });
+      if (!access) await ctx.db.insert("sessionPublicRecords", { sessionId: member.session._id, recordId: record._id, completeGameTime, sourceSearchId: recordSearchId });
+      else if (access.completeGameTime > completeGameTime) await ctx.db.patch(access._id, {
+        completeGameTime,
+        sourceSearchId: recordSearchId,
+        previousCompleteGameTime: access.sourceSearchId ? access.previousCompleteGameTime : access.completeGameTime,
+      });
     }
-    await ctx.db.insert("roomActions", { sessionId: member.session._id, playerId: member.player._id, kind: "records", roomId, startGameTime: settled.gameTime, completeGameTime, createdAt: now });
+    await ctx.db.insert("roomActions", { sessionId: member.session._id, playerId: member.player._id, kind: "records", roomId, recordSearchId, startGameTime: settled.gameTime, completeGameTime, createdAt: now });
     return { completeGameTime, started: true };
   },
 });

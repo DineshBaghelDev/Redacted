@@ -529,7 +529,7 @@ There is no social-post table in V1.
 
 ### `publicRecordSearches` and `sessionPublicRecords`
 
-`publicRecordSearches` stores a normalized search term, its ten-minute `completeGameTime`, and up to 50 matched record IDs per shared session. `sessionPublicRecords` stores each returned record ID with the earliest game time it becomes available. Both tables are session-scoped; the frozen file text remains only in `publicRecords`.
+`publicRecordSearches` stores a normalized search term, its ten-minute `completeGameTime`, and up to 50 matched record IDs per shared session. `sessionPublicRecords` stores each returned record ID with the earliest game time it becomes available. Both tables are session-scoped; the frozen file text remains only in `publicRecords`. Access rows optionally record `sourceSearchId` and `previousCompleteGameTime` so canceling a pending search preserves another search’s access or restores the prior availability time.
 
 ## Sessions and multiplayer
 
@@ -582,7 +582,7 @@ One active journey per player. Rows store the destination place, starting and co
 
 ### `roomActions`, `searchedRooms`, and `sessionItems`
 
-`roomActions` stores a player's timed move, search, inspection, device read, interview question, lab submission, CCTV review, or public-record search. A player can have only one active travel or room action. A device action refers to either a physical `itemId` or a handed-over `deviceId`. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, collection, and device-read timestamps. Item description is returned to clients only after inspection; device files only after reading; undiscovered items are not returned.
+`roomActions` stores a player's timed move, search, inspection, device read, interview question, lab submission, CCTV review, or public-record search. A player can have only one active travel or room action. Optional `npcTurnId`, `cctvReviewId`, and `recordSearchId` references identify pending work to cancel when its owner leaves. A device action refers to either a physical `itemId` or a handed-over `deviceId`. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, collection, and device-read timestamps. Item description is returned to clients only after inspection; device files only after reading; undiscovered items are not returned.
 Clueboard item references store only the item's ID and a discovery-safe label; creating them requires a matching `sessionItems` row.
 
 ### `sessionState`

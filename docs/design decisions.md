@@ -380,9 +380,13 @@ Generated character IDs are stored as case-scoped `npcs.sourceId` values only to
 
 - Interview proof is selected from shared, already-discovered evidence; detectives do not have to pin it to the clueboard first. Pinning remains an optional deduction/organization action and is still required for the current final-report evidence selector.
 
-- During UI development, a new room opens the completed Union Station Death case as a fixed fixture. Case generation is intentionally bypassed until the gameplay surfaces are ready.
+- Replays create fresh sessions from a selected published `caseId`; the fixed Union Station development fixture is superseded.
 - The game shell is full-screen; account profile controls are not shown during play.
 - The bureau scene owns the full viewport on the signed-in home screen; the shell does not add a second background or scrolling page.
 - Screen navigation is represented by URL paths; the current path is the source of truth for both reload and browser Back/Forward, rather than a separate remembered screen state.
 - Investigation screen URLs are nested under the room code so simultaneous games remain isolated.
-- The case brief is read from Convex's latest passed generation job and exposes only title, summary, and initial facts to the client.
+- The case brief is read from the session’s published case and exposes only title, summary, and initial facts to the client.
+
+- Leaving cancels unfinished interview, CCTV, and record-search actions. Shared record access keeps other searches and any earlier access intact.
+- Publication runs separately after generation passes; publication errors mark the job failed at the publish stage.
+- Replay deadline overrides must be at least one hour and are rounded to whole minutes.

@@ -384,8 +384,8 @@ export const startCctvReview = mutation({
     if (!roomId) throw new Error("The bureau terminal is unavailable.");
     if (settled.activeCount === 0) await ctx.db.patch(member.session._id, { gameTime: settled.gameTime, clockStartedAt: now });
     const completeGameTime = settled.gameTime + 5;
-    await ctx.db.insert("cctvReviews", { sessionId: member.session._id, cameraId: camera._id, minute, completeGameTime });
-    await ctx.db.insert("roomActions", { sessionId: member.session._id, playerId: member.player._id, kind: "cctv", roomId, startGameTime: settled.gameTime, completeGameTime, createdAt: now });
+    const cctvReviewId = await ctx.db.insert("cctvReviews", { sessionId: member.session._id, cameraId: camera._id, minute, completeGameTime });
+    await ctx.db.insert("roomActions", { sessionId: member.session._id, playerId: member.player._id, kind: "cctv", roomId, cctvReviewId, startGameTime: settled.gameTime, completeGameTime, createdAt: now });
     return { completeGameTime };
   },
 });

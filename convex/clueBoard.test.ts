@@ -165,5 +165,30 @@ test("room partners share notes, positions, and colored strings", async () => {
   expect(await player.query(api.clueBoard.getEdges, { roomCode: "ABC123" })).toEqual([]);
 
   const stranger = t.withIdentity({ subject: "player-2" });
-  await expect(stranger.query(api.clueBoard.getNodes, { roomCode: "ABC123" })).rejects.toThrow("Join the room first");
+  expect(await stranger.query(api.clueBoard.getNodes, { roomCode: "ABC123" })).toBeNull();
+  expect(await stranger.query(api.clueBoard.getEdges, { roomCode: "ABC123" })).toBeNull();
+});
+
+
+test("board reads are unavailable for missing, waiting, expired, or left rooms", async () => {
+  const t = convexTest(schema, modules);
+  const player = t.withIdentity({ subject: "one" });
+  const sessionId = await t.run(async (ctx) => {
+    const sessionId = await ctx.db.insert("sessions", { roomCode: "BOARD", status: "waiting", createdAt: 1, expiresAt: Date.now() + 60_000 });
+    await ctx.db.insert("sessionPlayers", { sessionId, authUserId: "one", nickname: "One", joinedAt: 1 });
+    return sessionId;
+  });
+  for (const query of [api.clueBoard.getNodes, api.clueBoard.getEdges]) {
+    expect(await player.query(query, { roomCode: "MISSING" })).toBeNull();
+    expect(await player.query(query, { roomCode: "BOARD" })).toBeNull();
+  }
+  await t.run(async (ctx) => ctx.db.patch(sessionId, { status: "playing" }));
+  expect(await player.query(api.clueBoard.getNodes, { roomCode: "BOARD" })).toEqual([]);
+  expect(await player.query(api.clueBoard.getEdges, { roomCode: "BOARD" })).toEqual([]);
+  await t.run(async (ctx) => ctx.db.patch(sessionId, { expiresAt: 1 }));
+  expect(await player.query(api.clueBoard.getNodes, { roomCode: "BOARD" })).toBeNull();
+  expect(await player.query(api.clueBoard.getEdges, { roomCode: "BOARD" })).toBeNull();
+  await player.mutation(api.sessions.leave, { roomCode: "BOARD" });
+  expect(await player.query(api.clueBoard.getNodes, { roomCode: "BOARD" })).toBeNull();
+  expect(await player.query(api.clueBoard.getEdges, { roomCode: "BOARD" })).toBeNull();
 });

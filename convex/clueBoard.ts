@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import { getBureauRoomMember, getRoomMember, requireInvestigationOpen } from "./lib/auth";
+import { getBureauRoomMember, getPlayingRoomMember, getRoomMember, requireInvestigationOpen } from "./lib/auth";
 import { hasReadDevice } from "./lib/deviceAccess";
 
 const MAX_NODES = 100;
@@ -40,16 +40,18 @@ function coordinate(value: number) {
 
 export const getNodes = query({
   args: { roomCode: v.string() },
-  returns: v.array(v.object({
+  returns: v.union(v.null(), v.array(v.object({
     _id: v.id("clueBoardNodes"),
     type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file"), v.literal("call"), v.literal("message"), v.literal("statement")),
     referenceId: v.optional(v.string()),
     text: v.string(),
     x: v.number(),
     y: v.number(),
-  })),
+  }))),
   handler: async (ctx, { roomCode }) => {
-    const { session } = await requireBoard(ctx, roomCode);
+    const member = await getPlayingRoomMember(ctx, roomCode);
+    if (!member) return null;
+    const { session } = member;
     const nodes = await ctx.db
       .query("clueBoardNodes")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
@@ -60,15 +62,17 @@ export const getNodes = query({
 
 export const getEdges = query({
   args: { roomCode: v.string() },
-  returns: v.array(v.object({
+  returns: v.union(v.null(), v.array(v.object({
     _id: v.id("clueBoardEdges"),
     sourceNodeId: v.id("clueBoardNodes"),
     targetNodeId: v.id("clueBoardNodes"),
     label: v.optional(v.string()),
     color: stringColor,
-  })),
+  }))),
   handler: async (ctx, { roomCode }) => {
-    const { session } = await requireBoard(ctx, roomCode);
+    const member = await getPlayingRoomMember(ctx, roomCode);
+    if (!member) return null;
+    const { session } = member;
     const edges = await ctx.db
       .query("clueBoardEdges")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
