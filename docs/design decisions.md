@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Clueboard placement at larger case sizes
+
+- Automatically pinned cards keep advancing down the board after each row of four; do not cycle back over existing cards after sixteen. Players can still rearrange cards directly.
+
 ## 2026-10-09 — Generation tester visibility
 
 - The allowlisted generation tester remains a local development tool, but its page is not rendered in a production Next build. Player-facing case choice stays limited to frozen previous cases.

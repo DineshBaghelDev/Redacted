@@ -31,7 +31,7 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
       type: "npc",
       referenceId,
       x: 80 + (count % 4) * 220,
-      y: 90 + (Math.floor(count / 4) % 4) * 180,
+      y: 90 + Math.floor(count / 4) * 180,
     }).catch((caught: unknown) => {
       setError(caught instanceof Error ? caught.message : "Could not pin this person.");
     }).finally(() => setPinning(""));
@@ -122,7 +122,7 @@ function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person
 
   function pinRecord(type: "call" | "message" | "statement", referenceId: string) {
     const count = boardNodes?.length ?? 0;
-    run(createReference({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + (Math.floor(count / 4) % 4) * 180 }));
+    run(createReference({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 }));
   }
 
   return <div className="mx-auto max-w-3xl">

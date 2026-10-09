@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-09 — Clueboard pin placement
+
+- Auto-placed notes and evidence cards now continue into new rows after the sixteenth card instead of wrapping onto the first row and covering earlier pins. The board still has its existing 100-node limit.
+
 ## 2026-10-09 — Keep case generation off the player site
 
 - The existing allowlisted generation tester route now returns 404 outside Next development mode, matching the other development-only example route. A local production server returned HTTP 404 for `/dev/generation`. The normal player menu still offers only replays of published cases; dev tester functions retain their separate server allowlist.

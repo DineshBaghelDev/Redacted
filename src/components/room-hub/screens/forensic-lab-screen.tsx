@@ -132,7 +132,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
                         disabled={Boolean(working) || pinned}
                         onClick={() => {
                           const count = boardNodes?.length ?? 0;
-                          run(test.id, createReference({ roomCode, type: "forensic", referenceId: test.id, x: 80 + (count % 4) * 220, y: 90 + (Math.floor(count / 4) % 4) * 180 }));
+                          run(test.id, createReference({ roomCode, type: "forensic", referenceId: test.id, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 }));
                         }}
                         type="button"
                       >{pinned ? "Pinned to clueboard" : "Pin to clueboard"}</button>

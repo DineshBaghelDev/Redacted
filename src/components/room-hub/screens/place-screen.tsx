@@ -50,12 +50,12 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
 
   function pinItem(itemId: Id<"caseItems">) {
     const count = boardNodes?.length ?? 0;
-    run(createReference({ roomCode, type: "item", referenceId: itemId, x: 80 + (count % 4) * 220, y: 90 + (Math.floor(count / 4) % 4) * 180 }));
+    run(createReference({ roomCode, type: "item", referenceId: itemId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 }));
   }
 
   function pinRecord(type: "device_file" | "call" | "message", referenceId: string) {
     const count = boardNodes?.length ?? 0;
-    run(createReference({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + (Math.floor(count / 4) % 4) * 180 }));
+    run(createReference({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 }));
   }
 
   if (place === undefined) return <PlaceMessage message="Opening this place..." onBack={onBack} />;

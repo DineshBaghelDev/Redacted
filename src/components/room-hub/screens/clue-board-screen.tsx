@@ -95,7 +95,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
       roomCode,
       text: "New note",
       x: 80 + (count % 4) * 220,
-      y: 90 + (Math.floor(count / 4) % 4) * 180,
+      y: 90 + Math.floor(count / 4) * 180,
     }).catch(showError);
   }
 

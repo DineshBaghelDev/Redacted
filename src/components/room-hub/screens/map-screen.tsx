@@ -73,7 +73,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
       type: "place",
       referenceId: selected.id,
       x: 80 + (count % 4) * 220,
-      y: 90 + (Math.floor(count / 4) % 4) * 180,
+      y: 90 + Math.floor(count / 4) * 180,
     }).catch((caught: unknown) => {
       setError(caught instanceof Error ? caught.message : "Could not pin this place.");
     }).finally(() => setPinning(""));
