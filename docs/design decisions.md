@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Travel on an old Explore route
+
+- If browser history opens Explore during an active journey, show the existing travel notice so the player can return to the map; do not describe the destination as an empty place.
+
 ## 2026-10-09 — Saved search labels
 
 - The public-records terminal treats case and repeated whitespace as equivalent when labeling recent saved and pending searches, matching the existing server rule. Unknown searches have a neutral button label because an older saved search may also reopen for free; the cost rule stays explained below the field.

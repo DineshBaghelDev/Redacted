@@ -87,7 +87,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   const activeStation = station ? stations[station] : null;
   const bureau = city?.places.find((place) => place.kind === "bureau");
   const away = Boolean(city && (city.activeTravel || city.currentPlaceId !== bureau?.id));
-  const showAwayNotice = away && station !== "map" && station !== "place" && station !== "lab" && station !== "clueboard" && station !== "case" && station !== "interrogate";
+  const showAwayNotice = away && station !== "map" && (station !== "place" || !!city?.activeTravel) && station !== "lab" && station !== "clueboard" && station !== "case" && station !== "interrogate";
   const currentPlace = city?.places.find((place) => place.id === city.currentPlaceId);
   const clock = city?.clock;
   const gameTime = clock ? currentGameMinute(clock, now) : null;

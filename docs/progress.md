@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-09 — Explore during travel
+
+- Revisiting Explore from browser history while travelling now shows the existing travel notice and map route instead of saying the current place has no rooms. Signed-in browser verification is still open.
+
 ## 2026-10-09 — Live final-report check
 
 - A test-only dev replay submitted a pinned camera record and complete five-part theory. Private grading returned a completed five-category star result; outsider and anonymous callers received no result. This verifies one backend case-close path, not the signed-in UI or every published replay.
