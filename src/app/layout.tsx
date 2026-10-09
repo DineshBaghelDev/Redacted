@@ -33,7 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${pixelifySans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full vsc-initialized">
-        <ClerkProvider appearance={{ theme: [shadcn, dark], variables: { colorPrimary: "#e8ac51", colorBackground: "#0b1a1c", borderRadius: "0" } }}>
+        <ClerkProvider appearance={{ theme: [shadcn, dark], variables: { colorPrimary: "#e8ac51", colorBackground: "#0b1a1c", borderRadius: "0" }, elements: { footer: { backgroundColor: "#0b1a1c", color: "#c8d8d2" } } }}>
           <AppConvexProvider>{children}</AppConvexProvider>
         </ClerkProvider>
       </body>

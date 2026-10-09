@@ -1,9 +1,10 @@
 import { SignIn } from "@clerk/nextjs";
+import { AuthScreen } from "@/components/room-hub/auth-screen";
 
 export default function SignInPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <AuthScreen>
       <SignIn />
-    </div>
+    </AuthScreen>
   );
 }

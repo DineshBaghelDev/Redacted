@@ -30,7 +30,7 @@ test.each([["", undefined], ["1", 60], ["1.234", 74]])("passes whole minutes for
   state.deadline = deadline;
   const onPlay = vi.fn();
   const screen = PreviousGamesScreen({ error: "", isWorking: false, onBack: () => {}, onPlay });
-  const section = screen.props.children[3];
+  const section = screen.props.children[4];
   const article = section.props.children[2][0];
   const button = article.props.children[3];
   expect(button.props.disabled).toBe(false);

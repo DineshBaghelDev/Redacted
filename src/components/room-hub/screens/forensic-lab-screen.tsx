@@ -85,12 +85,12 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
           {error ? <p className="mt-4 border border-red-300/60 bg-red-950/70 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
 
           {lab.tests.length ? (
-            <ul className="mt-5 grid gap-3 md:grid-cols-2">
+            <ul className="game-panel mt-5 grid gap-3 p-5 md:grid-cols-2">
               {lab.tests.map((test) => {
                 const remaining = test.readyAtGameTime === undefined ? 0 : Math.max(0, test.readyAtGameTime - gameTime);
                 const pinned = boardNodes?.some((node) => node.type === "forensic" && node.referenceId === test.id) ?? false;
                 return (
-                  <li className="border border-[#6f9f98]/25 bg-[#102224] p-4 sm:p-5" key={test.id}>
+                  <li className="border-b border-[#6f9f98]/35 p-4" key={test.id}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/65">{test.testType.replaceAll("_", " ")}</p>

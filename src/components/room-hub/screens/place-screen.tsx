@@ -77,8 +77,8 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
           : place.action?.kind === "records" ? "Searching public records" : "Inspecting item";
 
   return (
-    <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-[#6f9f98]/30 bg-[#0b1a1c] px-4 py-3 sm:px-6">
+    <section className="game-place-scene absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
+      <header className="game-station-header flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Explore this place</p>
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">{place.placeName}</h2>
@@ -87,7 +87,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
       </header>
 
       <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(16rem,21rem)_minmax(0,1fr)] lg:overflow-hidden">
-        <nav aria-label="Rooms" className="border-b border-[#6f9f98]/25 bg-[#102224] p-4 lg:overflow-y-auto lg:border-b-0 lg:border-r">
+        <nav aria-label="Rooms" className="game-panel border-b border-[#6f9f98]/25 bg-[#102224] p-5 lg:overflow-y-auto lg:border-b-0 lg:border-r">
           <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Rooms · {place.rooms.length}</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
             {place.rooms.map((room) => {
@@ -108,7 +108,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
           </div>
         </nav>
 
-        <div className="min-h-0 p-4 sm:p-6 lg:overflow-y-auto">
+        <div className="game-station-main min-h-0 p-4 sm:p-6 lg:overflow-y-auto">
           <div className="mx-auto max-w-3xl">
             <p className="text-xs uppercase tracking-[0.2em] text-[#e8ac51]/70">Current room</p>
             <h3 className="mt-1 text-2xl uppercase">{currentRoom?.name ?? "Entrance"}</h3>

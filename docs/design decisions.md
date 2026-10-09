@@ -4,7 +4,9 @@
 
 - Use the generated metal frame for major terminal actions and control panels and the paper frame for case files and records. One illustrated environment per station group establishes place; the data remains a real interactive layer above it.
 - Reuse the eight-object pixel atlas for navigation and station headers. Keep environmental plates sparse, with quiet center space and no generated writing, clues, people, or CCTV footage. Use the live graph and actual case data for all information-bearing visuals.
+- Use a blank cork plate under the real shared clueboard nodes. Exploration uses a neutral terminal layout because a fixed room illustration could imply places or objects absent from the generated case.
 - On narrow screens, crop the menu scene to the city and dim it behind controls. Keep large touch targets and visible Back actions on full-screen stations.
+- Authentication remains Clerk-owned; the game supplies the scene, title, Back path, and a dark appearance footer so the existing sign-in and sign-up controls are readable.
 
 
 ## 2026-10-10 — No service worker in V1

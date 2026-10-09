@@ -118,7 +118,7 @@ export function CctvScreen({ roomCode, onBack }: { roomCode: string; onBack: () 
             </p>
           </div>
 
-          <div className="game-panel mt-6 p-2 sm:p-4">
+          <div className="game-panel mt-6 p-5">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <label className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55" htmlFor="cctv-time">
                 Choose a time to review

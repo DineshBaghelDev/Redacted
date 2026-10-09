@@ -18,6 +18,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { GameIcon } from "../game-icon";
 
 type StringColor = "red" | "gold" | "blue" | "green";
 type BoardData = {
@@ -147,6 +148,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
         <button className="clue-board-button" onClick={onBack} type="button">
           <X aria-hidden="true" size={18} /> Back
         </button>
+        <GameIcon name="clueboard" className="size-9" />
         <div className="mr-auto">
           <p className="text-xs uppercase tracking-[0.22em] text-[#c99b63]">Shared case workspace</p>
           <h1 className="text-xl uppercase text-[#fff1c9]">Clueboard</h1>

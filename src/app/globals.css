@@ -86,6 +86,7 @@
   .game-evidence-scene .game-station-header::before { background-position: 100% 0; }
   .game-cctv-scene .game-station-header::before { background-position: 33.333% 0; }
   .game-map-scene .game-station-header::before { background-position: 0 100%; }
+  .game-place-scene .game-station-header::before { background-position: 0 100%; }
 
   .game-station-main {
     background: rgb(5 15 18 / 68%);
@@ -302,12 +303,7 @@
 
 @layer components {
   .clue-board {
-    background-color: #6f4a32;
-    background-image:
-      radial-gradient(circle at 18% 24%, rgb(255 255 255 / 5%) 0 1px, transparent 2px),
-      radial-gradient(circle at 74% 67%, rgb(30 15 8 / 16%) 0 1px, transparent 2px),
-      linear-gradient(115deg, rgb(255 239 194 / 5%), transparent 35%, rgb(39 18 8 / 9%));
-    background-size: 17px 19px, 23px 29px, 100% 100%;
+    background: #704b31 url('/assets/clueboard-cork.png') center / 100% 100% no-repeat;
   }
 
   .clue-board-button {

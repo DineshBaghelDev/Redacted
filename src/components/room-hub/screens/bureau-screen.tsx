@@ -184,7 +184,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
       </div>
 
       {!activeStation ? (
-        <nav aria-label="Investigation stations" className="game-panel absolute inset-x-2 bottom-2 z-20 grid grid-cols-3 gap-1.5 p-2 sm:hidden">
+        <nav aria-label="Investigation stations" className="absolute inset-x-0 bottom-0 z-20 grid grid-cols-3 gap-1.5 border-t-4 border-[#6b7157] bg-[#071014]/95 p-2 sm:hidden">
           <p className="col-span-3 px-1 text-xs uppercase tracking-[0.12em] text-[#b8ccc1]">Bureau stations</p>
           {stationOrder.map((item) => {
             return (

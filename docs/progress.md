@@ -4,7 +4,10 @@
 
 - Generated and inspected a restrained eight-icon pixel atlas, a reusable metal terminal frame, a paper dossier frame, and separate archive, records, lab, interview, and report-desk scenes. All plates are text-free; the CCTV icon is a terminal symbol and no screen includes camera imagery.
 - Integrated framed menu actions, station icons, case archive and interview dossiers, and scene-backed records, CCTV, lab, interview, and report screens. The live city graph remains the map; its frame is decorative.
+- Added a blank generated cork surface behind the editable clueboard and framed the live exploration room list, forensic work area, and case-report paper. Repeated item and test rows stay simple to keep dense cases readable. The illustrations do not depict case-specific rooms, people, or evidence.
 - Kept routes, room actions, timers, queries, and case data untouched. TypeScript and focused TSX lint pass. Local Playwright desktop and mobile signed-out captures were inspected; signed-in station captures still need verification.
+- The sign-in and sign-up routes now use the menu scene and game navigation. A Playwright capture caught a white Clerk footer with unreadable text; the Clerk appearance footer now matches the dark card, verified on desktop sign-in and mobile sign-up.
+- Full suite: 158 tests passed with a 20-second test timeout after updating a brittle archive test index for the new heading. The unrelated generation-publication test exceeded its default 5-second limit twice but passed alone and in the full suite with the higher limit. Production build, TypeScript, and focused lint passed. The generated panel and dossier frames were also rendered at desktop and mobile sizes in a local surface preview; this does not replace an authenticated gameplay capture.
 
 
 ## 2026-10-10 — Missing service-worker request
