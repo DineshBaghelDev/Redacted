@@ -5,6 +5,10 @@ import { useMutation, useQuery } from "convex/react";
 import { useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
 
+function normalizedTerm(search: string) {
+  return search.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const [search, setSearch] = useState("");
@@ -21,6 +25,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
   const createReference = useMutation(api.clueBoard.createReferenceNode);
   const performSearch = useMutation(api.publicRecords.performSearch);
   const records = hasSubmitted && result?.status === "ready" ? result.records : [];
+  const currentTerm = normalizedTerm(search);
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,7 +33,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
     if (startingSearch) return;
     setSubmittedSearch(term);
     setHasSubmitted(true);
-    if (result?.savedTerms.includes(term.toLowerCase())) return;
+    if (result?.savedTerms.includes(currentTerm)) return;
     setStartingSearch(true);
     setError("");
     void performSearch({ roomCode, search: term }).catch((caught: unknown) => {
@@ -84,10 +89,10 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
           />
           <button
             className="min-h-12 border border-yellow-200 px-5 text-sm uppercase text-yellow-200 hover:bg-yellow-200 hover:text-[#020817] focus-visible:outline-2 focus-visible:outline-yellow-200 disabled:cursor-wait disabled:opacity-50"
-            disabled={startingSearch || (result?.status === "pending" && submittedSearch === search.trim())}
+            disabled={startingSearch || (result?.status === "pending" && normalizedTerm(submittedSearch) === currentTerm)}
             type="submit"
           >
-            {startingSearch ? "Starting search..." : result?.savedTerms.includes(search.trim().toLowerCase()) ? "Open saved search" : search.trim() ? "Search · 10 min" : "Browse files · 10 min"}
+            {startingSearch ? "Starting search..." : result?.savedTerms.includes(currentTerm) ? "Open saved search" : search.trim() ? "Search records" : "Browse files"}
           </button>
         </div>
         {result?.savedTerms.length ? (

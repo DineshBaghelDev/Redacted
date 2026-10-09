@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-09 — Saved records-search wording
+
+- The public-records button now recognizes repeated spaces and case changes in a recent saved search. Searches not on the recent list use a neutral label because an older saved search may still reopen for free; the pending state now uses the server's normalization too. Signed-in visual verification remains open.
+- A dev replay camera check hid a frozen record before review, kept it pending during the 5-minute action, then exposed and pinned it to the shared clueboard at minute 11. A non-member could not read the window.
+
 ## 2026-10-09 — Live interview provider repair
 
 - A fresh dev replay of Whitlock Office Murder started at bureau with its frozen deadline and a paused clock. Calling Priya Kaur was immediate, and one question consumed 3 shared minutes, but the configured NVIDIA-hosted Kimi endpoint returned 404 for this account and the streamed reply left the turn stuck in processing.

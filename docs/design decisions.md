@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Saved search labels
+
+- The public-records terminal treats case and repeated whitespace as equivalent when labeling recent saved and pending searches, matching the existing server rule. Unknown searches have a neutral button label because an older saved search may also reopen for free; the cost rule stays explained below the field.
+
 ## 2026-10-09 — Reliable interview replies
 
 - Use the configured Moonshot provider for short live NPC replies because the NVIDIA-hosted model returned 404 for this deployment. Save each reply when complete instead of streaming token deltas; the existing waiting state covers the delay and provider errors can reach the retry action.
