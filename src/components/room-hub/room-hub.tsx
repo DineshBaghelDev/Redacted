@@ -145,7 +145,7 @@ export function RoomHub() {
           error={error}
           isWorking={isWorking}
           onBack={() => { setError(""); setScreen("menu"); }}
-          onPlay={(game) => createOrJoin("create", game)}
+          onPlay={(game, deadlineMinutes) => createOrJoin("create", { ...game, deadlineMinutes })}
         />
       ) : null}
 

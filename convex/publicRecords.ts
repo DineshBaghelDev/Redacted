@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { getBureauRoomMember, getPlayingRoomMember } from "./lib/auth";
+import { getBureauRoomMember, getPlayingRoomMember, requireInvestigationOpen } from "./lib/auth";
 import { bureauRoomId, settleActions } from "./world";
 
 const publicRecord = v.object({
@@ -69,6 +69,7 @@ export const performSearch = mutation({
   handler: async (ctx, { roomCode, search }) => {
     const playing = await getPlayingRoomMember(ctx, roomCode);
     if (!playing?.session.caseId) throw new Error("Start the investigation first.");
+    await requireInvestigationOpen(ctx, playing.session._id);
     const term = searchTerm(search);
     const now = Date.now();
     const settled = await settleActions(ctx, playing.session, now);

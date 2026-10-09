@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { getPlayingRoomMember } from "./lib/auth";
+import { getPlayingRoomMember, requireInvestigationOpen } from "./lib/auth";
 import { entranceRoomId, GAME_MINUTE_MS, settleActions } from "./world";
 
 async function labMember(ctx: QueryCtx | MutationCtx, roomCode: string) {
@@ -83,6 +83,7 @@ export const request = mutation({
   handler: async (ctx, { roomCode, forensicOutputId }) => {
     const member = await labMember(ctx, roomCode);
     if (!member) throw new Error("Visit the forensic lab first.");
+    await requireInvestigationOpen(ctx, member.session._id);
     const now = Date.now();
     const settled = await settleActions(ctx, member.session, now);
     const activeRoom = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique();
@@ -109,6 +110,7 @@ export const markViewed = mutation({
   handler: async (ctx, { roomCode, forensicOutputId }) => {
     const member = await labMember(ctx, roomCode);
     if (!member) throw new Error("Visit the forensic lab first.");
+    await requireInvestigationOpen(ctx, member.session._id);
     const settled = await settleActions(ctx, member.session, Date.now());
     const request = await ctx.db.query("forensicRequests").withIndex("by_sessionId_and_forensicOutputId", (q) => q.eq("sessionId", member.session._id).eq("forensicOutputId", forensicOutputId)).unique();
     if (!request || request.readyAtGameTime > settled.gameTime) throw new Error("This result is not ready yet.");

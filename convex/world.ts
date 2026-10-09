@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
-import { getPlayingRoomMember } from "./lib/auth";
+import { getPlayingRoomMember, requireInvestigationOpen } from "./lib/auth";
 
 const placeKind = v.union(v.literal("home"), v.literal("work"), v.literal("public"), v.literal("bureau"), v.literal("lab"));
 const area = v.union(v.literal("northside"), v.literal("midtown"), v.literal("eastside"));
@@ -237,6 +237,7 @@ export const startTravel = mutation({
   handler: async (ctx, { roomCode, destinationId }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.session.caseId) throw new Error("Start the investigation first.");
+    await requireInvestigationOpen(ctx, member.session._id);
     const now = Date.now();
     const settled = await settleActions(ctx, member.session, now);
     const player = await ctx.db.get(member.player._id);

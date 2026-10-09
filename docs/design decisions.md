@@ -1,5 +1,13 @@
 # Design Decisions
 
+## 2026-10-09 — Replay deadline and submitted-room behavior
+
+- Offer an optional custom shared deadline when creating a replay room. Blank uses the frozen case estimate plus one day. It cannot change after room creation.
+- Once the shared clock passes due, label the time Overdue but keep investigating and do not penalize the five-star report.
+- Submitting the final report makes the room review-only for both detectives. Existing timed work may settle, and the case file and result stay readable. A fresh replay remains available.
+- V1 interviews remain bureau-only: a called NPC arrives immediately, and each question costs three shared minutes.
+
+
 ## 2026-10-09 — Clueboard connection controls
 
 - Keep direct pin-to-pin string dragging, but provide a compact two-card selector for players who cannot drag. Both routes save through the same shared clueboard edge rules and use the currently chosen string color.

@@ -6,7 +6,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { components, internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { npcLanguageModel } from "./generation/llm";
-import { getBureauRoomMember, getPlayingRoomMember } from "./lib/auth";
+import { getBureauRoomMember, getPlayingRoomMember, requireInvestigationOpen } from "./lib/auth";
 import { hasReadDevice } from "./lib/deviceAccess";
 import { bureauRoomId, settleActions } from "./world";
 
@@ -183,6 +183,7 @@ export const callToBureau = mutation({
   handler: async (ctx, { roomCode, npcId }) => {
     const member = await getBureauRoomMember(ctx, roomCode);
     if (!member?.session.caseId) throw new Error("Go to the bureau to arrange an interview.");
+    await requireInvestigationOpen(ctx, member.session._id);
     const npc = await ctx.db.get(npcId);
     if (!npc || npc.caseId !== member.session.caseId || npc.role === "victim") throw new Error("That person cannot be interviewed.");
     if (!(await ctx.db.query("npcScripts").withIndex("by_npcId", (q) => q.eq("npcId", npcId)).unique())) throw new Error("This person has no interview file.");
@@ -206,6 +207,7 @@ export const sendQuestion = mutation({
     if (proofNodeId && proofReference) throw new Error("Show one piece of proof at a time.");
     const playing = await getPlayingRoomMember(ctx, roomCode);
     if (!playing?.session.caseId) throw new Error("Start the investigation first.");
+    await requireInvestigationOpen(ctx, playing.session._id);
     const now = Date.now();
     const settled = await settleActions(ctx, playing.session, now);
     const member = await getBureauRoomMember(ctx, roomCode, "npc");
@@ -258,6 +260,7 @@ export const readPhone = mutation({
   handler: async (ctx, { roomCode, npcId }) => {
     const playing = await getPlayingRoomMember(ctx, roomCode);
     if (!playing?.session.caseId) throw new Error("Start the investigation first.");
+    await requireInvestigationOpen(ctx, playing.session._id);
     const now = Date.now();
     const settled = await settleActions(ctx, playing.session, now);
     const member = await getBureauRoomMember(ctx, roomCode, "npc");
@@ -285,6 +288,7 @@ export const retryFailed = mutation({
   handler: async (ctx, { roomCode, npcId }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member) throw new Error("Join this interview first.");
+    await requireInvestigationOpen(ctx, member.session._id);
     const conversation = await ctx.db.query("npcConversations").withIndex("by_sessionId_and_npcId", (q) => q.eq("sessionId", member.session._id).eq("npcId", npcId)).unique();
     if (!conversation) throw new Error("Open this interview first.");
     const latest = await ctx.db.query("npcPendingMessages").withIndex("by_conversationId_and_sequence", (q) => q.eq("conversationId", conversation._id)).order("desc").first();

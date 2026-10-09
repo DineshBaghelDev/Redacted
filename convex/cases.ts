@@ -4,7 +4,7 @@ import type { Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { crimeCoreSchema } from "./generation/core/crimes";
 import { castSchema } from "./generation/core/schemas";
-import { getBureauRoomMember, getPlayingRoomMember, getRoomMember, requireUserId } from "./lib/auth";
+import { getBureauRoomMember, getPlayingRoomMember, getRoomMember, requireInvestigationOpen, requireUserId } from "./lib/auth";
 import { ensureCaseCctv } from "./lib/publishCctv";
 import { ensureCaseDevices } from "./lib/publishDevices";
 import { ensureCaseForensics, restoreBodyForensicSources } from "./lib/publishForensics";
@@ -367,6 +367,7 @@ export const startCctvReview = mutation({
   handler: async (ctx, { roomCode, cameraId, minute }) => {
     const playing = await getPlayingRoomMember(ctx, roomCode);
     if (!playing?.session.caseId) throw new Error("Start the investigation first.");
+    await requireInvestigationOpen(ctx, playing.session._id);
     const now = Date.now();
     const settled = await settleActions(ctx, playing.session, now);
     const member = await getBureauRoomMember(ctx, roomCode);

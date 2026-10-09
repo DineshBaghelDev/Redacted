@@ -12,4 +12,6 @@ test("shows replay creation errors beside the case choices", () => {
   expect(html).toContain('role="alert"');
   expect(html).toContain("Could not open this case.");
   expect(html).toContain("Back to menu");
+  expect(html).toContain("Optional deadline (hours)");
+  expect(html).toContain("Use case default");
 });

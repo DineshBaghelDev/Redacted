@@ -53,13 +53,16 @@ async function createSession(ctx: MutationCtx, authUserId: string, nickname: str
 }
 
 export const createReplay = mutation({
-  args: { nickname: v.string(), caseId: v.id("cases") },
+  args: { nickname: v.string(), caseId: v.id("cases"), deadlineMinutes: v.optional(v.number()) },
   returns: v.object({ sessionId: v.id("sessions"), playerId: v.id("sessionPlayers"), roomCode: v.string() }),
-  handler: async (ctx, { nickname, caseId }) => {
+  handler: async (ctx, { nickname, caseId, deadlineMinutes }) => {
     const authUserId = await requireUserId(ctx);
     const playableCase = await ctx.db.get(caseId);
     if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not ready to replay.");
-    return await createSession(ctx, authUserId, nickname, caseId, defaultDeadline(playableCase.estimatedOptimalMinutes));
+    if (deadlineMinutes !== undefined && (!Number.isSafeInteger(deadlineMinutes) || deadlineMinutes <= 0)) {
+      throw new Error("Choose a valid deadline in whole minutes.");
+    }
+    return await createSession(ctx, authUserId, nickname, caseId, deadlineMinutes ?? defaultDeadline(playableCase.estimatedOptimalMinutes));
   },
 });
 

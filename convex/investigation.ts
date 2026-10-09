@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
-import { getPlayingRoomMember } from "./lib/auth";
+import { getPlayingRoomMember, requireInvestigationOpen } from "./lib/auth";
 import { GAME_MINUTE_MS, settleActions } from "./world";
 
 async function activeAction(ctx: MutationCtx, playerId: Id<"sessionPlayers">) {
@@ -104,6 +104,7 @@ export const moveToRoom = mutation({
   handler: async (ctx, { roomCode, roomId }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.player.currentPlaceId) throw new Error("Travel to a place first.");
+    await requireInvestigationOpen(ctx, member.session._id);
     const now = Date.now();
     const settled = await settleActions(ctx, member.session, now);
     const player = await ctx.db.get(member.player._id);
@@ -127,6 +128,7 @@ export const searchRoom = mutation({
   handler: async (ctx, { roomCode }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.player.currentPlaceId) throw new Error("Travel to a place first.");
+    await requireInvestigationOpen(ctx, member.session._id);
     const now = Date.now();
     const settled = await settleActions(ctx, member.session, now);
     const player = await ctx.db.get(member.player._id);
@@ -158,6 +160,7 @@ export const inspectItem = mutation({
   handler: async (ctx, { roomCode, itemId }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.session.caseId) throw new Error("Start the investigation first.");
+    await requireInvestigationOpen(ctx, member.session._id);
     const now = Date.now();
     const settled = await settleActions(ctx, member.session, now);
     const player = await ctx.db.get(member.player._id);
@@ -176,6 +179,7 @@ export const readDevice = mutation({
   handler: async (ctx, { roomCode, itemId }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.session.caseId) throw new Error("Start the investigation first.");
+    await requireInvestigationOpen(ctx, member.session._id);
     const now = Date.now();
     const settled = await settleActions(ctx, member.session, now);
     const player = await ctx.db.get(member.player._id);
@@ -199,6 +203,7 @@ export const collectItem = mutation({
   handler: async (ctx, { roomCode, itemId }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.session.caseId) throw new Error("Start the investigation first.");
+    await requireInvestigationOpen(ctx, member.session._id);
     await settleActions(ctx, member.session, Date.now());
     const player = await ctx.db.get(member.player._id);
     if (!player || await activeAction(ctx, player._id)) throw new Error("Finish your current action first.");

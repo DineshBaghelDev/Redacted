@@ -299,6 +299,13 @@ test("a lobby keeps the selected passed case", async () => {
 
   const created = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId });
   expect(await t.run(async (ctx) => ctx.db.get(created.sessionId))).toMatchObject({ gameTime: 0, deadline: 1665, status: "waiting" });
+  const custom = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: 90 });
+  expect(await t.run(async (ctx) => ctx.db.get(custom.sessionId))).toMatchObject({ gameTime: 0, deadline: 90, status: "waiting" });
+  await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: 0 })).rejects.toThrow("valid deadline");
+  await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: 1.5 })).rejects.toThrow("valid deadline");
+  await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: Number.MAX_SAFE_INTEGER + 1 })).rejects.toThrow("valid deadline");
+  await t.run(async (ctx) => ctx.db.patch(custom.sessionId, { status: "playing", gameTime: 91 }));
+  expect(await user.mutation(api.world.startTravel, { roomCode: custom.roomCode, destinationId: "forensic-lab" })).toMatchObject({ completeGameTime: expect.any(Number) });
   await expect(t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: created.sessionId })).rejects.toThrow("no playable case");
   await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId });
   const invalidJobId = await t.run(async (ctx) => {
@@ -738,6 +745,14 @@ test("a lobby keeps the selected passed case", async () => {
     expect.objectContaining({ roomCode: created.roomCode, reportSubmitted: true }),
     expect.objectContaining({ roomCode: replayed.roomCode, reportSubmitted: false }),
   ]));
+  await expect(user.mutation(api.world.startTravel, { roomCode: created.roomCode, destinationId: "forensic-lab" })).rejects.toThrow("review-only");
+  await expect(user.mutation(api.clueBoard.createNoteNode, { roomCode: created.roomCode, text: "Late note", x: 0, y: 0 })).rejects.toThrow("review-only");
+  await expect(user.mutation(api.publicRecords.performSearch, { roomCode: created.roomCode, search: "Address" })).rejects.toThrow("review-only");
+  await expect(user.mutation(api.npcConversations.callToBureau, { roomCode: created.roomCode, npcId: frozen.culprit!._id })).rejects.toThrow("review-only");
+  await expect(t.withIdentity({ subject: "player-2" }).mutation(api.world.startTravel, { roomCode: created.roomCode, destinationId: "forensic-lab" })).rejects.toThrow("review-only");
+  await expect(t.withIdentity({ subject: "player-3" }).mutation(api.world.startTravel, { roomCode: created.roomCode, destinationId: "forensic-lab" })).rejects.toThrow("Start the investigation first");
+  expect(await user.query(api.clueBoard.getNodes, { roomCode: created.roomCode })).toEqual([]);
+  expect(await user.mutation(api.investigation.finishAction, { roomCode: created.roomCode })).toMatchObject({ busy: false });
   await t.run(async (ctx) => {
     const cityId = frozen.storedCity!._id;
     const anchor = await ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", cityId)).first();

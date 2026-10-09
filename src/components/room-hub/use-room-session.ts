@@ -80,7 +80,7 @@ export function useRoomSession(nickname: string) {
     router.push(pathForScreen(nextScreen, joinedRoomCode));
   }
 
-  async function createOrJoin(action: "create" | "join", selection?: { generationJobId: Id<"generationJobs">; caseId: Id<"cases"> }) {
+  async function createOrJoin(action: "create" | "join", selection?: { generationJobId: Id<"generationJobs">; caseId: Id<"cases">; deadlineMinutes?: number }) {
     if (!isLoaded || !isSignedIn) {
       setError("Still signing in. Try again in a moment.");
       return;
@@ -91,7 +91,7 @@ export function useRoomSession(nickname: string) {
     try {
       const result = action === "create"
         ? selection
-          ? await createReplay({ nickname, caseId: selection.caseId })
+          ? await createReplay({ nickname, caseId: selection.caseId, ...(selection.deadlineMinutes === undefined ? {} : { deadlineMinutes: selection.deadlineMinutes }) })
           : { roomCode: "", message: "Choose a case first." }
         : await joinRoom({ roomCode, nickname });
       if (!result.roomCode) {

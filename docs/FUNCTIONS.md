@@ -93,9 +93,9 @@ All time values are integer in-game minutes.
 - New actions start at that derived game time and may overlap actions already in progress.
 - When the last active action completes, persist the derived game time and clear the wall-clock anchor so discussion and review do not consume the deadline.
 - Treat actions and forensic requests as complete when derived game time reaches their recorded completion time; materialize completion during the next authorized server interaction rather than writing per-minute ticks.
-- Preserve state after the deadline is crossed; deadline UX decides which new investigation actions remain available.
+- Preserve state after the deadline is crossed; show Overdue and keep investigation actions available.
 
-The deadline prevents further ordinary investigation actions according to final UX rules, but existing data is not deleted.
+The deadline is informational in V1: crossing it has no action lock or scoring penalty. Submission of a final report, not the deadline, makes the room review-only. Already-started actions may finish.
 
 ### Fixed action costs
 

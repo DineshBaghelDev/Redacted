@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-10-09 — Replay deadline and review-only rooms
+
+- Replay creation accepts an optional, fixed shared deadline in whole game minutes; omitted input keeps the frozen estimate plus 1,440 minutes. Invalid numeric deadlines are rejected server-side.
+- A submitted final report now blocks new travel, searches, inspections, lab work, records/CCTV review, interviews, and clueboard edits for both players. Reads and grading retry remain available, and already-started timed work may settle. The deadline itself never blocks play or reduces the report score.
+- Focused replay and review-only tests passed, followed by all 139 tests, TypeScript, lint (no errors), production build, and a personal-dev Convex function sync. A signed-in browser check is still unverified; the full 18-case playthrough sweep is intentionally skipped per player direction.
+
+
 ## 2026-10-09 — Clueboard connection without dragging
 
 - A detective can tie two selected board cards from the clueboard header using the existing shared edge action and chosen string color. This gives keyboard and touch users a non-drag route while retaining pin-to-pin dragging; the server still rejects invalid or cross-room links.

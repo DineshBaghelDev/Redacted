@@ -1,4 +1,5 @@
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
 
 type AnyCtx = QueryCtx | MutationCtx | ActionCtx;
 type DbCtx = QueryCtx | MutationCtx;
@@ -36,6 +37,12 @@ export async function getRoomMember(ctx: DbCtx, roomCode: string) {
 export async function getPlayingRoomMember(ctx: DbCtx, roomCode: string) {
   const member = await getRoomMember(ctx, roomCode);
   return member?.session.status === "playing" ? member : null;
+}
+
+/** A submitted report freezes new investigation writes, including while grading is pending. */
+export async function requireInvestigationOpen(ctx: MutationCtx, sessionId: Id<"sessions">) {
+  const report = await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId)).unique();
+  if (report) throw new Error("The final report is submitted. This room is review-only.");
 }
 
 /** Bureau terminals are available only to a detective physically at the bureau. */

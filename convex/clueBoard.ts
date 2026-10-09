@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import { getBureauRoomMember, getRoomMember } from "./lib/auth";
+import { getBureauRoomMember, getRoomMember, requireInvestigationOpen } from "./lib/auth";
 import { hasReadDevice } from "./lib/deviceAccess";
 
 const MAX_NODES = 100;
@@ -17,6 +17,12 @@ async function requireBoard(ctx: QueryCtx | MutationCtx, roomCode: string) {
   const member = await getRoomMember(ctx, roomCode);
   if (!member) throw new Error("Join the room first.");
   if (member.session.status !== "playing") throw new Error("Start the investigation first.");
+  return member;
+}
+
+async function requireWritableBoard(ctx: MutationCtx, roomCode: string) {
+  const member = await requireBoard(ctx, roomCode);
+  await requireInvestigationOpen(ctx, member.session._id);
   return member;
 }
 
@@ -75,7 +81,7 @@ export const createNoteNode = mutation({
   args: { roomCode: v.string(), text: v.string(), x: v.number(), y: v.number() },
   returns: v.id("clueBoardNodes"),
   handler: async (ctx, { roomCode, text, x, y }) => {
-    const { session, player } = await requireBoard(ctx, roomCode);
+    const { session, player } = await requireWritableBoard(ctx, roomCode);
     const nodes = await ctx.db
       .query("clueBoardNodes")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
@@ -105,7 +111,7 @@ export const createReferenceNode = mutation({
   },
   returns: v.id("clueBoardNodes"),
   handler: async (ctx, { roomCode, type, referenceId, x, y }) => {
-    const { session, player } = await requireBoard(ctx, roomCode);
+    const { session, player } = await requireWritableBoard(ctx, roomCode);
     if (!session.caseId) throw new Error("This room has no case.");
     const nodes = await ctx.db
       .query("clueBoardNodes")
@@ -221,7 +227,7 @@ export const updateNode = mutation({
     if (!node) throw new Error("Board item not found.");
     const session = await ctx.db.get(node.sessionId);
     if (!session) throw new Error("Room not found.");
-    await requireBoard(ctx, session.roomCode);
+    await requireWritableBoard(ctx, session.roomCode);
     if (text !== undefined && node.type !== "note") throw new Error("Reference cards cannot be edited.");
     await ctx.db.patch(nodeId, {
       ...(text === undefined ? {} : { text: noteText(text) }),
@@ -241,7 +247,7 @@ export const deleteNode = mutation({
     if (!node) return null;
     const session = await ctx.db.get(node.sessionId);
     if (!session) throw new Error("Room not found.");
-    await requireBoard(ctx, session.roomCode);
+    await requireWritableBoard(ctx, session.roomCode);
     const [outgoing, incoming] = await Promise.all([
       ctx.db.query("clueBoardEdges").withIndex("by_sourceNodeId", (q) => q.eq("sourceNodeId", nodeId)).take(MAX_EDGES),
       ctx.db.query("clueBoardEdges").withIndex("by_targetNodeId", (q) => q.eq("targetNodeId", nodeId)).take(MAX_EDGES),
@@ -263,7 +269,7 @@ export const createEdge = mutation({
   returns: v.id("clueBoardEdges"),
   handler: async (ctx, { roomCode, sourceNodeId, targetNodeId, color, label }) => {
     if (sourceNodeId === targetNodeId) throw new Error("Connect two different board items.");
-    const { session, player } = await requireBoard(ctx, roomCode);
+    const { session, player } = await requireWritableBoard(ctx, roomCode);
     const [source, target, edges] = await Promise.all([
       ctx.db.get(sourceNodeId),
       ctx.db.get(targetNodeId),
@@ -310,7 +316,7 @@ export const updateEdge = mutation({
     if (!edge) throw new Error("String not found.");
     const session = await ctx.db.get(edge.sessionId);
     if (!session) throw new Error("Room not found.");
-    await requireBoard(ctx, session.roomCode);
+    await requireWritableBoard(ctx, session.roomCode);
     await ctx.db.patch(edgeId, {
       ...(color === undefined ? {} : { color }),
       ...(label === undefined ? {} : { label: edgeLabel(label) }),
@@ -327,7 +333,7 @@ export const deleteEdge = mutation({
     if (!edge) return null;
     const session = await ctx.db.get(edge.sessionId);
     if (!session) throw new Error("Room not found.");
-    await requireBoard(ctx, session.roomCode);
+    await requireWritableBoard(ctx, session.roomCode);
     await ctx.db.delete(edgeId);
     return null;
   },

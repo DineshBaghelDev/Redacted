@@ -27,6 +27,8 @@ sessions.getTime({ sessionId })
 
 `sessions.listMine` returns only the signed-in player's unexpired published-case rooms, including whether a final report has been submitted so the home screen can open that room's case report.
 
+`sessions.createReplay({ caseId, nickname, deadlineMinutes? })` creates a fresh room for a published case. `deadlineMinutes` is an optional positive safe integer of shared game minutes from zero; when omitted, the frozen estimate plus 1,440 minutes applies. The deadline cannot be changed after room creation.
+
 ### World/navigation
 
 ```ts

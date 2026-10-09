@@ -2,6 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
+import { useState } from "react";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { api } from "../../../../convex/_generated/api";
 import { menuButton } from "../constants";
@@ -10,17 +11,31 @@ type PreviousGamesScreenProps = {
   error: string;
   isWorking: boolean;
   onBack: () => void;
-  onPlay: (game: { generationJobId: Id<"generationJobs">; caseId: Id<"cases"> }) => void;
+  onPlay: (game: { generationJobId: Id<"generationJobs">; caseId: Id<"cases"> }, deadlineMinutes?: number) => void;
 };
 
 export function PreviousGamesScreen({ error, isWorking, onBack, onPlay }: PreviousGamesScreenProps) {
   const { isLoaded, isSignedIn } = useAuth();
   const cases = useQuery(api.cases.listPassed, isLoaded && isSignedIn ? {} : "skip");
+  const [deadlineHours, setDeadlineHours] = useState("");
+  const deadlineMinutes = deadlineHours ? Number(deadlineHours) * 60 : undefined;
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4">
       <button className={`${menuButton} w-fit`} onClick={onBack} type="button">Back to menu</button>
       {error ? <p className="border border-red-300 bg-red-950/90 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
+      <label className="flex w-fit flex-col gap-1 text-sm uppercase text-cyan-100" htmlFor="replay-deadline-hours">
+        Optional deadline (hours)
+        <input
+          className="min-h-11 w-48 border border-cyan-300/50 bg-[#06142d] px-3 text-base text-white"
+          id="replay-deadline-hours"
+          min="1"
+          onChange={(event) => setDeadlineHours(event.target.value)}
+          placeholder="Use case default"
+          type="number"
+          value={deadlineHours}
+        />
+      </label>
       <section className="grid max-h-[50vh] min-w-0 gap-4 overflow-y-auto px-1 pb-4 pr-3 md:grid-cols-3 lg:max-h-[calc(100vh-8rem)]">
         {cases === undefined ? <p className="text-xl uppercase text-cyan-100">Loading cases...</p> : null}
         {cases?.length === 0 ? <p className="text-xl uppercase text-cyan-100">No passed cases yet.</p> : null}
@@ -37,7 +52,7 @@ export function PreviousGamesScreen({ error, isWorking, onBack, onPlay }: Previo
             <button
               className="mt-5 h-11 w-full border-2 border-cyan-300 bg-[#06142d] text-lg uppercase text-yellow-200"
               disabled={isWorking}
-              onClick={() => onPlay(game)}
+              onClick={() => onPlay(game, deadlineMinutes)}
               type="button"
             >
               Play case
