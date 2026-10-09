@@ -343,6 +343,7 @@ Pre-generated truth.
   evidenceId: string,
   sourceItemId?: Id<"caseItems">,
   sourceRoomId?: Id<"rooms">,
+  sourceNpcId?: Id<"npcs">, // victim body source
   testType:
     | "fingerprint"
     | "footprint"

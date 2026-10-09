@@ -187,6 +187,16 @@ test("a lobby keeps the selected passed case", async () => {
             data: { test: "fingerprints", subjectId: "room:keel-14:kitchen", printsOf: [crimeCore.culpritId] },
           },
           {
+            id: "forensic/body/toxicology",
+            type: "forensic",
+            title: "Toxicology",
+            summary: "A frozen body test result.",
+            access: { tool: "lab", subjectId: `body:${crimeCore.victimId}` },
+            aboutIds: [crimeCore.victimId],
+            sourceIds: ["hidden-event-id"],
+            data: { test: "toxicology", subjectId: `body:${crimeCore.victimId}` },
+          },
+          {
             id: "item/ledger",
             type: "item",
             title: "Private ledger",
@@ -478,7 +488,17 @@ test("a lobby keeps the selected passed case", async () => {
       linkedNpcIds: [frozen.culprit?._id],
       turnaroundMinutes: 60,
     }),
+    expect.objectContaining({
+      evidenceId: "forensic/body/toxicology",
+      sourceNpcId: frozen.npcs.find((npc) => npc.role === "victim")?._id,
+      testType: "toxicology",
+      turnaroundMinutes: 240,
+    }),
   ]);
+  await t.run(async (ctx) => ctx.db.patch(frozen.forensics[1]._id, { sourceNpcId: undefined }));
+  expect(await t.mutation(internal.cases.backfillPublishedBodyForensics, { caseId: publishedCaseId })).toBe(1);
+  expect(await t.mutation(internal.cases.backfillPublishedBodyForensics, { caseId: publishedCaseId })).toBe(0);
+  expect((await t.run(async (ctx) => ctx.db.get(frozen.forensics[1]._id)))?.sourceNpcId).toBe(frozen.npcs.find((npc) => npc.role === "victim")?._id);
   expect(frozen.events).toEqual([
     expect.objectContaining({ sourceId: "station-meeting", startTime: 70, endTime: 75, description: "Waited in the kitchen." }),
   ]);

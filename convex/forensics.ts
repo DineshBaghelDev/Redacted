@@ -28,6 +28,10 @@ async function sourceName(ctx: QueryCtx | MutationCtx, sessionId: Id<"sessions">
     ]);
     return room && searched ? room.name : null;
   }
+  if (output.sourceNpcId) {
+    const person = await ctx.db.get(output.sourceNpcId);
+    return person?.caseId === output.caseId && person.role === "victim" ? "Victim" : null;
+  }
   return output.testType === "autopsy" ? "Victim" : null;
 }
 

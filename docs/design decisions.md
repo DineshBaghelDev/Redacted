@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-09 — Body-based forensic tests
+
+- Preserve the generated `body:<victim>` subject as an explicit victim source in frozen forensic rows. Body tests are available at the lab like the autopsy, but their results still require a timed request and deliberate view. Existing published rows may restore only that deterministic source link; never infer a body source from general person associations or invent an item/room.
+
 ## 2026-10-09 — Submitted rooms on the home screen
 
 - A room with a submitted theory remains accessible to its detectives as a case report; its home entry opens the case-file result/retry screen instead of inviting further investigation. Replaying the same frozen case still starts a fresh room.
@@ -118,7 +122,7 @@
 ## 2026-10-07 — Lab turnaround on the shared clock
 
 - A submitted lab test takes 5 minutes of the detective's time, then its frozen turnaround continues on the shared clock. Ready time includes both costs. Concurrent detective actions overlap instead of adding minutes.
-- Tests appear only once their physical source is legitimately available: collected object, searched room, or the source-less autopsy. The result is a deliberate, shared reveal at the lab, not an automatic clue or conclusion.
+- Tests appear only once their source is legitimately available: collected object, searched room, or the known victim body. The result is a deliberate, shared reveal at the lab, not an automatic clue or conclusion.
 - A lab report becomes pin-able only after it has been viewed. Final-report evidence choices accept pinned objects and reports alongside records, while the server resolves each to its frozen case evidence ID for grading.
 - Choosing a collected weapon uses its item identity for exact case-close grading; the free-text weapon field remains for cases whose weapon is not a collected object.
 

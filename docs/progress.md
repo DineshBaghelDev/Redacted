@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-09 — Body-source lab repair
+
+- The nine inaccessible optional lab rows all trace to exact `body:<victim>` subjects in their frozen evidence drafts. Publication and lab access now preserve an explicit victim source for body-based tests, while keeping their results behind the normal request, wait, and view steps. A strict internal repair matches draft evidence ID and victim before patching an older row.
+- The personal dev deployment repaired 27 source links across all 18 published cases (18 autopsy rows and nine additional body tests); a second pass changed zero. In a fresh replay of Keel Street Incident, travel to the lab exposed its toxicology test as available with no result text. Requesting it moved it to pending with the result still hidden, and a non-member saw no lab data. The full timed ready/view path is covered by the fixture test, not a live playthrough.
+
 ## 2026-10-09 — Published replay data audit
 
 - A read-only dev audit found 18 published replay cases. Each has a valid frozen estimate, a bureau, a connected 20-place city, NPC scripts for all living people, and the decisive evidence IDs present in runtime tables. The earlier claim that most cases lacked CCTV was incorrect; every case has stored camera records.

@@ -7,7 +7,7 @@ import { castSchema } from "./generation/core/schemas";
 import { getBureauRoomMember, getPlayingRoomMember, getRoomMember, requireUserId } from "./lib/auth";
 import { ensureCaseCctv } from "./lib/publishCctv";
 import { ensureCaseDevices } from "./lib/publishDevices";
-import { ensureCaseForensics } from "./lib/publishForensics";
+import { ensureCaseForensics, restoreBodyForensicSources } from "./lib/publishForensics";
 import { ensureCaseNarrative } from "./lib/publishNarrative";
 import { ensureCaseItems } from "./lib/publishItems";
 import { ensureCaseRecords } from "./lib/publishRecords";
@@ -259,6 +259,17 @@ export const backfillPublishedStatements = internalMutation({
     if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not published.");
     await ensureCaseStatements(ctx, caseId, playableCase.generationJobId);
     return null;
+  },
+});
+
+/** Restores the victim-body source omitted from older frozen lab rows. */
+export const backfillPublishedBodyForensics = internalMutation({
+  args: { caseId: v.id("cases") },
+  returns: v.number(),
+  handler: async (ctx, { caseId }) => {
+    const playableCase = await ctx.db.get(caseId);
+    if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not published.");
+    return await restoreBodyForensicSources(ctx, caseId, playableCase.generationJobId);
   },
 });
 

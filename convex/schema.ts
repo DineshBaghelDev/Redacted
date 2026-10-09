@@ -135,6 +135,7 @@ export default defineSchema({
     evidenceId: v.string(),
     sourceItemId: v.optional(v.id("caseItems")),
     sourceRoomId: v.optional(v.id("rooms")),
+    sourceNpcId: v.optional(v.id("npcs")),
     testType: v.union(
       v.literal("fingerprint"),
       v.literal("footprint"),
