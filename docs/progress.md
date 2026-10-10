@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Investigation surface asset pass
 
+- An eight-person portrait capture at actual roster size showed the original layers reading as one suit and face. Added distinct long, close-cut, and short hair silhouettes, four upper-body outfits, and three face outlines while keeping the same deterministic ID-based portrait. The new capture reads as varied people without adding small decorative noise.
 - Captured the six-camera written-log screen at 390px and 1440px. Its time controls now sit further inside the illustrated terminal frame on wide screens. Loading, unavailable, and no-camera camera/map states use the same scene and icon language as the active stations; the no-camera state was checked on phone and desktop.
 - Added a second inspected six-symbol city atlas for flats, parks, shops, stations, hotels, and garages. The live map selects these silhouettes by stable V1 place ID and falls back to the existing kind art for other places; routes, coordinates, and travel stay unchanged.
 - A 390px capture found the location panel starting over the map because its grid row could shrink below the wide canvas. The map row now keeps its full height before the panel, and the icon art is larger at phone and desktop sizes. Fresh 390px and 1440px captures show separated panels and clearer symbols.
