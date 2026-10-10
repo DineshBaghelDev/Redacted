@@ -2,6 +2,8 @@
 
 ## 2026-10-10 — Investigation symbols and quieter lists
 
+- Use the dossier art's inner paper area for both the final case-file opening and the scored result. Long opening titles use a smaller phone size; findings, scoring, and submission behavior stay the same.
+- Keep Sentry's tunnel in production, where it avoids ad blockers. In development, send events directly so Next's external rewrite proxy does not emit repeated response-listener warnings.
 - In the case brief, a long generated title takes the full paper width on phones. The room stamp moves below it, and generous top and bottom space keeps text and actions inside the dossier's printed border.
 - Keep the Join room code entry as six direct character cells. At narrow widths, use smaller gaps and type while preserving full-size cells from the small breakpoint upward; use an accessible icon Close action to preserve title space.
 - Use the same deterministic portrait language for connected detectives in the waiting room. Keep player status under each name and give the illustrated terminal frame enough inner vertical space so its metal seams never cross text or controls. Treat Leave room as a secondary action.

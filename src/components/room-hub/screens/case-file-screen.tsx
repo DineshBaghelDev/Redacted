@@ -108,7 +108,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
           {error ? <p className="mb-4 border-2 border-red-800 bg-red-950 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
 
           {closeState?.status === "complete" && closeState.result ? (
-            <section className="game-dossier p-5 sm:p-8" aria-live="polite">
+            <section className="game-dossier px-5 pb-20 pt-20 sm:px-8 sm:pb-16" aria-live="polite">
               <p className="text-xs uppercase tracking-[0.2em] text-red-800">Case closed</p>
               <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#6d5138] pb-5">
                 <h3 className="text-3xl uppercase sm:text-4xl">Your final report</h3>
@@ -129,7 +129,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               </ul>
             </section>
           ) : closeState?.status === "judging" || (closeState?.status === "pending" && !closeState.error) ? (
-            <section className="game-dossier p-8 text-center" aria-live="polite">
+            <section className="game-dossier px-5 pb-20 pt-20 text-center sm:px-8 sm:pb-16" aria-live="polite">
               <p className="text-xs uppercase tracking-[0.2em] text-red-800">Report submitted</p>
               <h3 className="mt-3 text-3xl uppercase">Reviewing your theory...</h3>
               <p className="mt-4 text-sm leading-relaxed text-[#5b4635]">Both detectives will see the result here when the review is complete.</p>
@@ -143,11 +143,11 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               </button>
             </section>
           ) : !closing ? (
-            <section className="game-dossier p-5 sm:p-8">
+            <section className="game-dossier px-5 pb-20 pt-20 sm:px-8 sm:pb-16">
               {brief === undefined ? <p className="uppercase">Loading case file...</p> : !brief ? <p className="uppercase text-red-800">No completed case is available.</p> : (
                 <>
                   <p className="text-xs uppercase tracking-[0.18em] text-red-800">Public brief</p>
-                  <h3 className="mt-2 text-3xl uppercase">{brief.title}</h3>
+                  <h3 className="mt-2 text-2xl uppercase sm:text-3xl">{brief.title}</h3>
                   <p className="mt-4 leading-relaxed">{brief.summary}</p>
                   <ul className="mt-5 list-disc space-y-2 border-t border-[#6d5138]/40 pt-4 pl-5 text-sm leading-relaxed">
                     {brief.initialFacts.map((fact) => <li key={fact}>{fact}</li>)}

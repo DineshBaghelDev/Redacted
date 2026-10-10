@@ -2,6 +2,8 @@
 
 ## 2026-10-10 — Investigation surface asset pass
 
+- The case-file opening and scored-result dossiers now keep their text inside the printed paper border at 320px. The opening title drops one size on phones so long generated names wrap by word.
+- Traced the repeated development `MaxListenersExceededWarning` to Next's external proxy for Sentry's `/monitoring` rewrite. The development tunnel is disabled; the production rewrite remains in the built route manifest. `/sw.js` continues to return its intentional 404 without Clerk middleware errors.
 - A 320px case-brief capture exposed the room badge compressing a long generated title into single letters. The brief now gives the title full width on phones and starts its content inside the illustrated paper border; desktop still keeps the room stamp beside the title.
 - A narrow phone capture exposed the Join room title, Close control, and six code cells colliding with the illustrated frame. The dialog now gives the frame clear inner space, uses a compact icon Close control, and keeps all six code cells readable at 320px.
 - The waiting room now shows both detectives as portrait ID strips, gives the case title a clear reading band, and keeps Ready/Start as the main actions with Leave room quieter below. Long names and titles wrap inside the terminal frame; the room code and copy action remain available.
