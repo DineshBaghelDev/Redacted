@@ -2,6 +2,8 @@
 
 ## 2026-10-10 — Investigation surface asset pass
 
+- Added a second inspected six-symbol city atlas for flats, parks, shops, stations, hotels, and garages. The live map selects these silhouettes by stable V1 place ID and falls back to the existing kind art for other places; routes, coordinates, and travel stay unchanged.
+- A 390px capture found the location panel starting over the map because its grid row could shrink below the wide canvas. The map row now keeps its full height before the panel, and the icon art is larger at phone and desktop sizes. Fresh 390px and 1440px captures show separated panels and clearer symbols.
 - The case-file opening and scored-result dossiers now keep their text inside the printed paper border at 320px. The opening title drops one size on phones so long generated names wrap by word.
 - Traced the repeated development `MaxListenersExceededWarning` to Next's external proxy for Sentry's `/monitoring` rewrite. The development tunnel is disabled; the production rewrite remains in the built route manifest. `/sw.js` continues to return its intentional 404 without Clerk middleware errors.
 - A 320px case-brief capture exposed the room badge compressing a long generated title into single letters. The brief now gives the title full width on phones and starts its content inside the illustrated paper border; desktop still keeps the room stamp beside the title.

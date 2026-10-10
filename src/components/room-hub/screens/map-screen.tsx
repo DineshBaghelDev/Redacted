@@ -14,6 +14,24 @@ const kindLabels = {
   lab: "Forensic lab",
 } as const;
 
+const placeArtwork: Record<string, string> = {
+  "linden-court": "apartment",
+  "carver-towers": "apartment",
+  "calder-park": "park",
+  "quik-stop": "cafe",
+  "ember-cafe": "cafe",
+  "union-station": "station",
+  "meridian-tower": "apartment",
+  "regent-hotel": "hotel",
+  "blue-lantern": "cafe",
+  "route-9-diner": "cafe",
+  "rusk-garage": "garage",
+};
+
+function artworkForPlace(place: { id: string; kind: keyof typeof kindLabels }) {
+  return placeArtwork[place.id] ?? place.kind;
+}
+
 export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
@@ -119,7 +137,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
         </button>
       </header>
 
-      <div className="grid min-h-0 min-w-0 flex-1 grid-rows-[auto_auto] overflow-y-auto lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-1 lg:overflow-hidden">
+      <div className="grid min-h-0 min-w-0 flex-1 grid-rows-[max-content_max-content] overflow-y-auto lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-1 lg:overflow-hidden">
         <div className="min-h-0 min-w-0 overflow-visible p-3 sm:p-5 lg:overflow-auto">
           <label className="mb-3 block text-xs uppercase tracking-[0.18em] text-[#c8d8d2]/65 xl:hidden" htmlFor="mobile-place-picker">
             Find a place
@@ -180,7 +198,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
                   style={{ left: `${place.x}%`, top: `${place.y}%` }}
                   type="button"
                 >
-                  <span aria-hidden="true" className={`map-place-icon map-place-icon--${place.kind}`} />
+                  <span aria-hidden="true" className={`map-place-icon map-place-icon--${artworkForPlace(place)}`} />
                   {current ? <span aria-hidden="true" className="map-marker-current absolute -right-0.5 -top-0.5 block size-3 bg-[#ffd287]" /> : null}
                   <span className={`map-marker-label ${crowded ? "map-marker-label--crowded" : ""} ${place.y > 77 ? "map-marker-label--above" : ""} ${place.x > 82 ? "map-marker-label--right" : ""}`}>{place.name}</span>
                 </button>
@@ -207,7 +225,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
             ) : null}
           </div>
           <p className="text-xs uppercase tracking-[0.2em] text-[#e8ac51]/70">{selected.area}</p>
-          <h3 className="mt-1 flex items-center gap-3 break-words text-2xl uppercase leading-tight"><span aria-hidden="true" className={`map-place-icon map-place-icon--${selected.kind} shrink-0`} /><span className="min-w-0">{selected.name}</span></h3>
+          <h3 className="mt-1 flex items-center gap-3 break-words text-2xl uppercase leading-tight"><span aria-hidden="true" className={`map-place-icon map-place-icon--${artworkForPlace(selected)} shrink-0`} /><span className="min-w-0">{selected.name}</span></h3>
           <p className="mt-2 text-sm uppercase text-[#c8d8d2]/65">{kindLabels[selected.kind]}</p>
           <button
             className="mt-4 min-h-11 w-full border border-[#e8ac51]/70 bg-[#e8ac51]/10 px-3 text-sm uppercase text-[#f1c987] hover:bg-[#e8ac51]/20 disabled:cursor-default disabled:opacity-45"

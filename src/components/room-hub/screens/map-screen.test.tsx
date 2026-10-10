@@ -8,6 +8,7 @@ const city = {
     { id: "near-a", name: "Near A", kind: "home", area: "midtown", x: 40, y: 50, hasInterior: true, travelMinutes: 0 },
     { id: "near-b", name: "Near B", kind: "work", area: "midtown", x: 46, y: 58, hasInterior: true, travelMinutes: 5 },
     { id: "far-c", name: "Far C", kind: "public", area: "eastside", x: 80, y: 80, hasInterior: true, travelMinutes: 12 },
+    { id: "union-station", name: "Union Station", kind: "public", area: "midtown", x: 70, y: 30, hasInterior: true, travelMinutes: 8 },
   ],
   streets: [{ id: "a-b", a: "near-a", b: "near-b", minutes: 5, hasCamera: false }],
   currentPlaceId: "near-a",
@@ -31,4 +32,11 @@ test("marks only nearby map labels as crowded", () => {
   expect(html).toMatch(/map-marker-label--crowded[^\"]*\">Near A<\/span>/);
   expect(html).toMatch(/map-marker-label--crowded[^\"]*\">Near B<\/span>/);
   expect(html).not.toMatch(/map-marker-label--crowded[^\"]*\">Far C<\/span>/);
+});
+
+test("uses a distinct city icon for a known place and a kind fallback elsewhere", () => {
+  query.calls = 0;
+  const html = renderToStaticMarkup(<MapScreen roomCode="ABC123" onBack={() => {}} />);
+  expect(html).toContain("map-place-icon--station");
+  expect(html).toContain("map-place-icon--public");
 });

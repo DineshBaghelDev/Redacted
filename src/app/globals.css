@@ -195,8 +195,8 @@
 
   .map-place-icon {
     display: block;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 3rem;
+    height: 3rem;
     background: url('/assets/map-places.png') no-repeat 0 0 / 300% 200%;
     image-rendering: pixelated;
     filter: drop-shadow(2px 3px 0 #061013);
@@ -207,16 +207,26 @@
   .map-place-icon--bureau { background-position: 0 100%; }
   .map-place-icon--lab { background-position: 50% 100%; }
   .map-place-icon--current { background-position: 100% 100%; }
+  .map-place-icon--apartment, .map-place-icon--park, .map-place-icon--cafe,
+  .map-place-icon--station, .map-place-icon--hotel, .map-place-icon--garage {
+    background-image: url('/assets/map-places-extra.png');
+  }
+  .map-place-icon--apartment { background-position: 0 0; }
+  .map-place-icon--park { background-position: 50% 0; }
+  .map-place-icon--cafe { background-position: 100% 0; }
+  .map-place-icon--station { background-position: 0 100%; }
+  .map-place-icon--hotel { background-position: 50% 100%; }
+  .map-place-icon--garage { background-position: 100% 100%; }
 
   .map-marker {
     border: 0;
     background: transparent;
   }
   @media (min-width: 640px) {
-    .map-marker .map-place-icon { width: 3rem; height: 3rem; }
+    .map-marker .map-place-icon { width: 3.5rem; height: 3.5rem; }
   }
   @media (min-width: 1280px) {
-    .map-marker .map-place-icon { width: 3.5rem; height: 3.5rem; }
+    .map-marker .map-place-icon { width: 4rem; height: 4rem; }
   }
   .map-marker::after {
     content: '';
