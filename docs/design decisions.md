@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Investigation symbols and quieter lists
 
+- The place screen uses its room scene and a room icon for loading/unavailable states, matching the other investigation station fallbacks. Keep the return path to the map.
 - Fallback states for interviews and lab work use their actual room backdrop and the established dossier or terminal frame. Keep one short status line and one return action; no extra decorative UI is needed.
 - Character portraits combine a few strongly different silhouettes at roster size: hair length/cut, face outline, coat/shirt shape, palette, and occasional glasses. Keep each portrait deterministic from its ID and illustrative only; investigative appearance still comes from the written case description.
 - Camera time controls need extra horizontal clearance inside the wide terminal illustration; keep the narrow panel compact. Camera and map loading/empty states should use their station scene, existing icon, and one return action instead of a generic floating box.

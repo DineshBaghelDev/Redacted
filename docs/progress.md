@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Investigation surface asset pass
 
+- Place loading/unavailable states now use the exploration room backdrop, a room symbol, and the established terminal frame with one return route. This completes the plain fallback-box sweep across map, camera, lab, interview, and place screens.
 - Replaced the plain interview and forensic loading/unavailable boxes with their room scenes, station icons, and the existing paper/terminal frames. A 390px capture of both and a desktop interview capture show the messages and return action inside the illustrated safe area.
 - An eight-person portrait capture at actual roster size showed the original layers reading as one suit and face. Added distinct long, close-cut, and short hair silhouettes, four upper-body outfits, and three face outlines while keeping the same deterministic ID-based portrait. The new capture reads as varied people without adding small decorative noise.
 - Captured the six-camera written-log screen at 390px and 1440px. Its time controls now sit further inside the illustrated terminal frame on wide screens. Loading, unavailable, and no-camera camera/map states use the same scene and icon language as the active stations; the no-camera state was checked on phone and desktop.
