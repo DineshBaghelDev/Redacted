@@ -79,7 +79,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
           <input
             autoComplete="off"
-            className="h-12 min-w-0 flex-1 border border-[#6f9f98]/60 bg-[#0b1a1c] px-4 text-base text-[#e4e6d8] outline-none placeholder:text-[#c8d8d2]/65 focus:border-[#e8ac51]"
+            className="h-12 min-w-0 w-full border border-[#6f9f98]/60 bg-[#0b1a1c] px-4 text-base text-[#e4e6d8] outline-none placeholder:text-[#c8d8d2]/65 focus:border-[#e8ac51] sm:w-auto sm:flex-1"
             id="record-search"
             maxLength={80}
             onChange={(event) => setSearch(event.target.value)}
@@ -92,7 +92,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
             disabled={startingSearch || (result?.status === "pending" && normalizedTerm(submittedSearch) === currentTerm)}
             type="submit"
           >
-            {startingSearch ? "Starting search..." : result?.savedTerms.includes(currentTerm) ? "Open saved search" : search.trim() ? "Search records" : "Browse files"}
+            {startingSearch ? "Starting search..." : !search.trim() ? "Browse files" : result?.savedTerms.includes(currentTerm) ? "Open saved search" : "Search records"}
           </button>
         </div>
         {result?.savedTerms.length ? (

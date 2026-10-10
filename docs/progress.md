@@ -11,12 +11,13 @@
 - A font-accurate capture prompted larger desktop map symbols and labels and more inner padding for the illustrated camera time panel.
 - Menu captures found and fixed a detective-name input that extended beyond the metal frame and a mobile scene scrim that dimmed the new detective screen. Settings and case archive layouts were checked at phone and desktop sizes.
 - A nine-room phone capture showed the current room and its building-camera action pushed below the entire room list. Phones now start with a compact room chooser; opening it shows the same rooms, and entering a room returns to the current-room actions. The mobile grid no longer stretches the closed chooser into empty space. Desktop keeps the visible sidebar.
+- Records and case-file reading captures showed the paper layout stays legible with a long title. The records search field had collapsed inside its mobile flex column; it now retains full input height and uses the clearer “Browse files” label for an empty query.
 - Added an inspected six-symbol pixel atlas for rooms, search, physical evidence, devices, lab work, and files. The sprites have transparent backgrounds and stay readable at their small in-game sizes.
 - Replaced repeated room-button boxes and the oversized lab frame with quieter, icon-led rows. Evidence records now use a file symbol inside the existing dossier treatment; all actions, states, durations, and location rules remain the same.
 - Improved long generated text handling on clueboard cards, report forms, room names, lab sources, and record titles. Final-report scoring rows use ruled paper lines instead of five heavy boxes.
 - Checked the player map against all 20 stored fixture places and 25 streets. Increased desktop marker and label size, added small district-color underlines beneath the artwork, and replaced boxed place and route rows with simpler dividers. On phones the map keeps its readable scale and scrolls horizontally; selecting a place centers it.
 - Finished a narrow-width text pass on the lobby, case brief, interview, camera, place, and lab headers. A camera access point with no local cameras now shows a clear empty state instead of trying to open a missing camera.
-- Latest check: 165 tests across 32 files, TypeScript, focused lint, and the production build pass. Map, camera, menu, archive, place, and lab layouts were captured with actual components, fixture data, and production CSS at desktop or phone sizes. Signed-in gameplay screens still need a live visual check.
+- Latest check: 166 tests across 33 files, TypeScript, focused lint, and the production build pass. Map, camera, menu, archive, place, lab, records, and case-file layouts were captured with actual components, fixture data, and production CSS at desktop or phone sizes. Signed-in gameplay screens still need a live visual check.
 
 ## 2026-10-10 — Local camera access and larger map art
 
