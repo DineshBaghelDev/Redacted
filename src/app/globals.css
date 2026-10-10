@@ -195,8 +195,8 @@
 
   .map-place-icon {
     display: block;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.25rem;
+    height: 2.25rem;
     background: url('/assets/map-places.png') no-repeat 0 0 / 300% 200%;
     image-rendering: pixelated;
     filter: drop-shadow(2px 3px 0 #061013);
@@ -212,6 +212,20 @@
     border: 0;
     background: transparent;
   }
+  @media (min-width: 640px) {
+    .map-marker .map-place-icon { width: 3rem; height: 3rem; }
+  }
+  .map-marker::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 1rem;
+    height: 2px;
+    background: var(--district-color);
+  }
+  .map-marker--northside { --district-color: #69b8c0; }
+  .map-marker--midtown { --district-color: #d6ae65; }
+  .map-marker--eastside { --district-color: #ca947c; }
   .map-marker[aria-pressed='true'] .map-place-icon,
   .map-marker:hover .map-place-icon { filter: drop-shadow(0 0 4px #ffd287) drop-shadow(2px 3px 0 #061013); }
   .map-marker:focus-visible { outline: 2px solid #ffd287; outline-offset: 1px; }
@@ -222,9 +236,9 @@
     top: calc(100% + 3px);
     left: 50%;
     width: max-content;
-    max-width: 7rem;
+    max-width: 8rem;
     transform: translateX(-50%);
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
     line-height: 1.15;
     color: #e6e7d8;
     text-shadow: 1px 1px #071014, -1px -1px #071014, 1px -1px #071014, -1px 1px #071014;

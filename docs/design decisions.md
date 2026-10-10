@@ -5,6 +5,7 @@
 - Use one six-cell transparent pixel atlas for common investigation verbs and objects. At small sizes, each symbol has one recognizable silhouette and no written detail. These symbols are navigation cues, never evidence representations.
 - Room navigation and lab examinations use thin dividers and a restrained dark backing instead of a box around every entry. Keep the dossier frame where players need to read long immutable record text.
 - Let long generated names and evidence text wrap inside fixed-width clueboard and report surfaces. The full wording remains available; cards do not truncate case data.
+- Match map marker size to the real 20-place fixture, keeping mobile controls compact and enlarging desktop silhouettes. The mobile map scrolls horizontally instead of compressing all 20 places into a narrow viewport; the named place picker recenters it. Districts are a small colored underline beneath each icon, with no icon backing plate.
 
 ## 2026-10-10 — Cameras belong to their places
 

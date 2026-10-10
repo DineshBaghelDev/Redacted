@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 
 const kindLabels = {
@@ -22,11 +22,22 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
   const createReference = useMutation(api.clueBoard.createReferenceNode);
   const startTravel = useMutation(api.world.startTravel);
   const finishTravel = useMutation(api.world.finishTravel);
-  const [selectedId, setSelectedId] = useState("police-bureau");
+  const [selectedId, setSelectedId] = useState("");
   const [pinning, setPinning] = useState("");
   const [traveling, setTraveling] = useState(false);
   const [now, setNow] = useState(0);
   const [error, setError] = useState("");
+  const mapViewport = useRef<HTMLDivElement>(null);
+  const centeredMap = useRef(false);
+
+  useEffect(() => {
+    if (centeredMap.current || !city || !mapViewport.current) return;
+    centeredMap.current = true;
+    const current = city.places.find((place) => place.id === city.currentPlaceId);
+    if (current) {
+      mapViewport.current.scrollLeft = mapViewport.current.scrollWidth * current.x / 100 - mapViewport.current.clientWidth / 2;
+    }
+  }, [city]);
 
   useEffect(() => {
     if (!city?.activeTravel || city.clock.clockStartedAt === null) return;
@@ -50,7 +61,9 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
   if (city === undefined) return <MapMessage message="Opening city map..." onBack={onBack} />;
   if (!city) return <MapMessage message="The city map is unavailable for this room." onBack={onBack} />;
 
-  const selected = city.places.find((place) => place.id === selectedId) ?? city.places[0];
+  const selected = city.places.find((place) => place.id === selectedId)
+    ?? city.places.find((place) => place.id === city.currentPlaceId)
+    ?? city.places[0];
   const connected = city.streets
     .filter((street) => street.a === selected.id || street.b === selected.id)
     .map((street) => ({
@@ -87,6 +100,13 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
     }).finally(() => setTraveling(false));
   }
 
+  function selectPlace(id: string) {
+    setSelectedId(id);
+    const place = city?.places.find((item) => item.id === id);
+    const viewport = mapViewport.current;
+    if (place && viewport) viewport.scrollTo({ left: viewport.scrollWidth * place.x / 100 - viewport.clientWidth / 2, behavior: "smooth" });
+  }
+
   return (
     <section className="game-map-scene absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
       <header className="game-station-header flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6">
@@ -106,7 +126,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
             <select
               className="mt-2 min-h-11 w-full border border-[#6f9f98]/50 bg-[#0b1a1c] px-3 text-base uppercase text-[#e4e6d8]"
               id="mobile-place-picker"
-              onChange={(event) => setSelectedId(event.target.value)}
+              onChange={(event) => selectPlace(event.target.value)}
               value={selected.id}
             >
               {city.places.map((place, index) => <option key={place.id} value={place.id}>{index + 1}. {place.name}</option>)}
@@ -117,7 +137,9 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
             <span><i aria-hidden="true" className="mr-1 inline-block w-5 border-t-2 border-dashed border-[#d88977] align-middle" />Camera route</span>
             <span><i aria-hidden="true" className="mr-1 inline-block w-5 border-t-2 border-[#e8ac51] align-middle" />Selected routes</span>
           </div>
-          <div className="city-map relative mx-auto aspect-[5/4] h-auto min-h-[18rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden lg:aspect-[16/10] lg:h-full">
+          <p className="mb-2 text-xs uppercase text-[#c8d8d2]/55 sm:hidden">Swipe the map to explore</p>
+          <div className="overflow-x-auto" ref={mapViewport}>
+          <div className="city-map relative mx-auto aspect-[16/10] h-auto min-h-[18rem] min-w-[44rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden sm:min-w-0 lg:h-full">
             <span className="pointer-events-none absolute left-3 top-2 text-xs uppercase tracking-[0.25em] text-[#92c1c7]/70">Northside</span>
             <span className="pointer-events-none absolute left-3 top-[36%] text-xs uppercase tracking-[0.25em] text-[#e4bc75]/70">Midtown</span>
             <span className="pointer-events-none absolute bottom-2 left-3 text-xs uppercase tracking-[0.25em] text-[#d5a18e]/70">Eastside</span>
@@ -166,9 +188,9 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
                 <button
                   aria-label={`Review ${place.name}`}
                   aria-pressed={active}
-                  className={`map-marker absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center transition ${active ? "z-30" : "z-20 hover:z-30 focus-visible:z-30"} map-marker--${place.area}`}
+                  className={`map-marker absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center transition sm:size-14 ${active ? "z-30" : "z-20 hover:z-30 focus-visible:z-30"} map-marker--${place.area}`}
                   key={place.id}
-                  onClick={() => setSelectedId(place.id)}
+                  onClick={() => selectPlace(place.id)}
                   style={{ left: `${place.x}%`, top: `${place.y}%` }}
                   type="button"
                 >
@@ -179,10 +201,11 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
               );
             })}
           </div>
+          </div>
         </div>
 
         <aside className="min-h-0 overflow-visible border-t border-[#6f9f98]/25 bg-[#0b1a1c] p-4 lg:overflow-y-auto lg:border-l lg:border-t-0 lg:p-5">
-          <div className="mb-4 border border-[#6f9f98]/25 bg-[#102224] p-3 text-xs uppercase tracking-wide">
+          <div className="mb-4 border-b border-[#6f9f98]/35 pb-4 text-xs uppercase tracking-wide">
             <p className="text-[#c8d8d2]/55">Your location</p>
             <p className="mt-1 break-words text-base text-[#f1c987]">{city.places.find((place) => place.id === city.currentPlaceId)?.name ?? "Bureau"}</p>
             {city.activeTravel ? (
@@ -198,7 +221,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
             ) : null}
           </div>
           <p className="text-xs uppercase tracking-[0.2em] text-[#e8ac51]/70">{selected.area}</p>
-          <h3 className="mt-1 break-words text-2xl uppercase leading-tight">{selected.name}</h3>
+          <h3 className="mt-1 flex items-center gap-3 break-words text-2xl uppercase leading-tight"><span aria-hidden="true" className={`map-place-icon map-place-icon--${selected.kind} shrink-0`} /><span className="min-w-0">{selected.name}</span></h3>
           <p className="mt-2 text-sm uppercase text-[#c8d8d2]/65">{kindLabels[selected.kind]}</p>
           <button
             className="mt-4 min-h-11 w-full border border-[#e8ac51]/70 bg-[#e8ac51]/10 px-3 text-sm uppercase text-[#f1c987] hover:bg-[#e8ac51]/20 disabled:cursor-default disabled:opacity-45"
@@ -239,8 +262,8 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
           <h4 className="mt-5 border-t border-[#6f9f98]/20 pt-4 text-xs uppercase tracking-[0.18em] text-[#c8d8d2]/55">Direct routes</h4>
           <ul className="mt-2 space-y-2">
             {connected.map((route) => (
-              <li className="flex items-center justify-between gap-3 border border-[#6f9f98]/15 bg-[#102224] px-3 py-2" key={route.id}>
-                <button className="min-h-8 min-w-0 flex-1 break-words text-left text-sm uppercase hover:text-[#e8ac51]" onClick={() => setSelectedId(route.place.id)} type="button">
+              <li className="flex items-center justify-between gap-3 border-b border-[#6f9f98]/20 py-2" key={route.id}>
+                <button className="min-h-8 min-w-0 flex-1 break-words text-left text-sm uppercase hover:text-[#e8ac51]" onClick={() => selectPlace(route.place.id)} type="button">
                   {route.place.name}
                 </button>
                 <span className="shrink-0 font-mono text-xs text-[#e8ac51]">{route.minutes} min{route.hasCamera ? " · CCTV" : ""}</span>
@@ -252,7 +275,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
             <summary className="cursor-pointer text-xs uppercase tracking-[0.18em] text-[#c8d8d2]/55">All places</summary>
             <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-1">
               {city.places.map((place, index) => (
-                <button className="min-h-10 border border-[#6f9f98]/15 px-2 text-left text-xs uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" key={place.id} onClick={() => setSelectedId(place.id)} type="button">
+                <button className="min-h-10 border-b border-[#6f9f98]/20 px-1 text-left text-xs uppercase hover:text-[#e8ac51]" key={place.id} onClick={() => selectPlace(place.id)} type="button">
                   {index + 1}. {place.name}
                 </button>
               ))}
