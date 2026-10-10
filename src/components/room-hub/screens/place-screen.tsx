@@ -144,7 +144,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
             <h4 className="mt-8 border-t border-[#6f9f98]/25 pt-5 text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Found here</h4>
             {here.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">{here.map((item) => (
               <ItemCard key={item.id} item={item} busy={working || Boolean(place.action)} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} pinnedRecords={boardNodes?.filter((node) => node.referenceId).map((node) => `${node.type}:${node.referenceId}`) ?? []} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onRead={() => run(readDevice({ roomCode, itemId: item.id }))} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onPin={() => pinItem(item.id)} onPinRecord={pinRecord} />
-            ))}</div> : <p className="mt-3 text-sm text-[#c8d8d2]/55">{currentRoom?.searched ? "Nothing found here." : "Search this room to see what is here."}</p>}
+            ))}</div> : <p className="mt-3 text-sm text-[#c8d8d2]/55">{currentRoom?.searched || !currentRoom?.searchable ? "Nothing found here." : "Search this room to see what is here."}</p>}
 
             <h4 className="mt-8 border-t border-[#6f9f98]/25 pt-5 text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Shared inventory · {inventory.length}</h4>
             {inventory.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">{inventory.map((item) => (

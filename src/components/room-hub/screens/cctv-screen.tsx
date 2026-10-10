@@ -90,7 +90,8 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: {
       </header>
 
       <div className="game-station-main min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto grid max-w-6xl items-start gap-6 lg:grid-cols-[minmax(15rem,19rem)_minmax(0,1fr)]">
+        <div className={`mx-auto grid max-w-6xl items-start gap-6 ${data.cameras.length > 1 ? "lg:grid-cols-[minmax(15rem,19rem)_minmax(0,1fr)]" : ""}`}>
+        {data.cameras.length > 1 ? (
         <aside className="min-w-0 border-b border-[#6f9f98]/35 pb-5 lg:border-b-0 lg:border-r lg:pr-6">
           <h3 className="text-xs uppercase tracking-[0.18em] text-[#e8ac51]">01 / Cameras here · {data.cameras.length}</h3>
           <div className="mt-3 grid max-h-56 grid-cols-2 gap-x-3 gap-y-1 overflow-y-auto lg:max-h-none lg:grid-cols-1 lg:overflow-visible">
@@ -98,6 +99,7 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: {
           </div>
           {camera.faulty ? <p className="mt-4 break-words text-sm leading-relaxed text-[#b8ccc1]">This camera has no recording for the case period.</p> : null}
         </aside>
+        ) : null}
 
         <main className="min-w-0">
           {error ? <p className="mb-4 border border-red-300 bg-red-950/80 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
@@ -106,7 +108,7 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: {
           <div className="game-panel mt-6 p-8 sm:px-20">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <label className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55" htmlFor="cctv-time">
-                02 / Choose time
+                {data.cameras.length > 1 ? "02" : "01"} / Choose time
               </label>
               <output className="font-mono text-lg text-[#e8ac51]" htmlFor="cctv-time" aria-live="polite">
                 {formatTime(minute)}
@@ -143,7 +145,7 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: {
 
           <div className="mt-5">
             <div className="flex items-center justify-between gap-3">
-              <h4 className="text-sm uppercase tracking-[0.18em] text-[#e8ac51]">03 / Activity log</h4>
+              <h4 className="text-sm uppercase tracking-[0.18em] text-[#e8ac51]">{data.cameras.length > 1 ? "03" : "02"} / Activity log</h4>
               <span className="font-mono text-xs text-[#c8d8d2]/65">{visibleWindow?.status === "ready" ? `${records.length} ${records.length === 1 ? "record" : "records"}` : "Not reviewed"}</span>
             </div>
 

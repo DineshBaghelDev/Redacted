@@ -2,6 +2,8 @@
 
 ## 2026-10-10 — Investigation surface asset pass
 
+- A signed-in local Playwright walkthrough reached an existing case, lobby, bureau, city map, street/bureau camera desk, roster, records, and a building room. The room screen exposed a flat dark backdrop; it now uses a sparse object-free pixel wall behind the existing room controls, preserving generated-case truth. The local walkthrough also confirmed the room's camera action is on site.
+- A room with a single camera now opens directly on that camera's title and time controls, without repeating its name in a one-item chooser. Empty unsearchable rooms say nothing was found instead of asking for an impossible search.
 - Moved the five-finding final theory form, confirmation, and interrupted-review state onto the same illustrated dossier as the opening and scored result. Evidence choices use paper rules instead of separate boxes. A 390px tall-form capture shows the entire form and actions inside the printed border; a desktop capture confirms the top layout.
 - Place loading/unavailable states now use the exploration room backdrop, a room symbol, and the established terminal frame with one return route. This completes the plain fallback-box sweep across map, camera, lab, interview, and place screens.
 - Replaced the plain interview and forensic loading/unavailable boxes with their room scenes, station icons, and the existing paper/terminal frames. A 390px capture of both and a desktop interview capture show the messages and return action inside the illustrated safe area. The lab fallback correctly labels its return to the map.

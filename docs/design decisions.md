@@ -2,6 +2,8 @@
 
 ## 2026-10-10 — Investigation symbols and quieter lists
 
+- Exploration may use an abstract pixel architectural backdrop with no furniture, doors, people, or clues. It adds scene depth without implying a generated room's contents; actual room data and camera access remain in the interactive foreground.
+- Hide the camera picker when a room has only one camera; start its time and activity steps at one and two. Keep the multi-camera bureau list visible.
 - Keep the whole case-close flow on one paper dossier material, including the editable five-finding form and final confirmation. Use ruled evidence rows so a long pinned list remains scannable without a wall of boxes; retain clear input borders for editable fields.
 - The place screen uses its room scene and a room icon for loading/unavailable states, matching the other investigation station fallbacks. Keep the return path to the map.
 - Fallback states for interviews and lab work use their actual room backdrop and the established dossier or terminal frame. Keep one short status line and one return action; interviews return to the bureau and lab work returns to the map.

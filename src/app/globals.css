@@ -93,6 +93,10 @@
     background: #17100d url('/assets/report-desk.png') center / cover no-repeat;
   }
 
+  .game-place-scene {
+    background: #071014 url('/assets/exploration-wall.png') center / cover no-repeat;
+  }
+
   .game-station-header {
     background: linear-gradient(90deg, rgb(7 18 21 / 96%), rgb(17 36 37 / 94%));
     box-shadow: inset 0 -2px #6b7157, 0 4px 0 rgb(0 0 0 / 35%);
