@@ -1,20 +1,63 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
-import { useEffect, useState } from "react";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
+import type { FunctionReturnType } from "convex/server";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { formatGameMinute } from "../../../lib/game-time";
+import { play } from "../../../lib/sound";
 import { CctvScreen } from "./cctv-screen";
 import { GameIcon } from "../game-icon";
 import { InvestigationIcon } from "../investigation-icon";
+import { DeviceViewer } from "./device-viewer";
+
+type Place = NonNullable<FunctionReturnType<typeof api.investigation.getPlace>>;
+type Room = Place["rooms"][number];
+type Item = Place["items"][number];
+
+const CELL_W = 168;
+const CELL_H = 64;
+const GAP_X = 40;
+const GAP_Y = 18;
+
+/** Lays one floor out as columns by distance from its first room, so doors read left to right. */
+function floorLayout(rooms: Room[], connections: Place["connections"]) {
+  const ids = new Set(rooms.map((room) => room.id));
+  const edges = connections.filter((edge) => ids.has(edge.a) && ids.has(edge.b));
+  const start = rooms.find((room) => room.isEntrance) ?? rooms[0];
+  const depth = new Map<string, number>(start ? [[start.id, 0]] : []);
+  const queue = start ? [start.id] : [];
+  while (queue.length) {
+    const current = queue.shift()!;
+    for (const edge of edges) {
+      const next = edge.a === current ? edge.b : edge.b === current ? edge.a : null;
+      if (next && !depth.has(next)) { depth.set(next, depth.get(current)! + 1); queue.push(next); }
+    }
+  }
+  const maxDepth = Math.max(0, ...depth.values());
+  for (const room of rooms) if (!depth.has(room.id)) depth.set(room.id, maxDepth + 1);
+  const rows = new Map<number, number>();
+  const positions = new Map<string, { x: number; y: number }>();
+  for (const room of rooms) {
+    const column = depth.get(room.id)!;
+    const row = rows.get(column) ?? 0;
+    rows.set(column, row + 1);
+    positions.set(room.id, { x: column * (CELL_W + GAP_X), y: row * (CELL_H + GAP_Y) });
+  }
+  const width = Math.max(...[...positions.values()].map((point) => point.x)) + CELL_W;
+  const height = Math.max(...[...positions.values()].map((point) => point.y)) + CELL_H;
+  return { positions, edges, width, height };
+}
 
 export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const place = useQuery(api.investigation.getPlace, isLoaded && isSignedIn ? { roomCode } : "skip");
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
   const moveToRoom = useMutation(api.investigation.moveToRoom);
-  const searchRoom = useMutation(api.investigation.searchRoom);
+  const searchSpot = useMutation(api.investigation.searchSpot);
   const inspectItem = useMutation(api.investigation.inspectItem);
   const readDevice = useMutation(api.investigation.readDevice);
   const collectItem = useMutation(api.investigation.collectItem);
@@ -24,7 +67,18 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   const [now, setNow] = useState(0);
   const [error, setError] = useState("");
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [roomsOpen, setRoomsOpen] = useState(false);
+  const [planOpen, setPlanOpen] = useState(false);
+  const [floor, setFloor] = useState<number | null>(null);
+  const [arrivedAt, setArrivedAt] = useState<string | null>(() => {
+    try {
+      return window.sessionStorage.getItem(`redacted.arrived.${roomCode}`);
+    } catch {
+      return null;
+    }
+  });
+  const [activeDeviceId, setActiveDeviceId] = useState<Id<"caseItems"> | null>(null);
+  const seenItems = useRef<Set<string> | null>(null);
+  const [freshItems, setFreshItems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!place?.action || place.clock.clockStartedAt === null) return;
@@ -41,24 +95,36 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
       });
     };
     update();
-    const interval = window.setInterval(update, 250);
+    const interval = window.setInterval(update, 100);
     return () => window.clearInterval(interval);
   }, [place?.action, place?.clock, finishAction, roomCode]);
+
+  // Newly found objects flip into view once.
+  useEffect(() => {
+    if (!place) return;
+    const ids = new Set(place.items.map((item) => item.id as string));
+    if (seenItems.current) {
+      const fresh = [...ids].filter((id) => !seenItems.current!.has(id));
+      if (fresh.length) setFreshItems(new Set(fresh));
+    }
+    seenItems.current = ids;
+  }, [place]);
+
+  const currentRoomId = place?.currentRoomId;
+  useEffect(() => {
+    if (currentRoomId) play("door");
+  }, [currentRoomId]);
 
   function run(action: Promise<unknown>) {
     setWorking(true);
     setError("");
+    play("click");
     void action.catch((caught: unknown) => {
       setError(caught instanceof Error ? caught.message : "That action could not be completed.");
     }).finally(() => setWorking(false));
   }
 
-  function pinItem(itemId: Id<"caseItems">) {
-    const count = boardNodes?.length ?? 0;
-    run(createReference({ roomCode, type: "item", referenceId: itemId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 }));
-  }
-
-  function pinRecord(type: "device_file" | "call" | "message", referenceId: string) {
+  function pin(type: "item" | "device_file" | "call" | "message", referenceId: string) {
     const count = boardNodes?.length ?? 0;
     run(createReference({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 }));
   }
@@ -66,134 +132,179 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   if (place === undefined) return <PlaceMessage message="Opening this place..." onBack={onBack} />;
   if (!place) return <PlaceMessage message="There are no rooms to explore here right now." onBack={onBack} />;
   if (cameraOpen) return <CctvScreen roomCode={roomCode} onBack={() => setCameraOpen(false)} backLabel="Back to room" />;
+  const activeDevice = place.items.find((item) => item.id === activeDeviceId && item.device?.read);
+  if (activeDevice?.device) return <DeviceViewer title={activeDevice.name} data={activeDevice.device} onBack={() => setActiveDeviceId(null)} onPin={pin} isPinned={(type, id) => boardNodes?.some((node) => node.type === type && node.referenceId === id) ?? false} busy={working || Boolean(place.action)} error={error} />;
 
   const currentRoom = place.rooms.find((room) => room.id === place.currentRoomId);
   const here = place.items.filter((item) => item.roomId === place.currentRoomId && !item.collected);
   const inventory = place.items.filter((item) => item.collected);
+  const busy = working || Boolean(place.action);
   const gameTime = place.clock.gameTime + (place.clock.clockStartedAt === null || now === 0
     ? 0 : Math.max(0, Math.floor((now - place.clock.clockStartedAt) / place.clock.minuteMs)));
-  const remaining = place.action ? Math.max(0, place.action.completeGameTime - gameTime) : 0;
+  const floors = [...new Set(place.rooms.map((room) => room.floor))].sort((a, b) => a - b);
+  const shownFloor = floor ?? currentRoom?.floor ?? floors[0] ?? 0;
+  const floorRooms = place.rooms.filter((room) => room.floor === shownFloor);
+  const layout = floorLayout(floorRooms, place.connections);
+  const stairs = new Set(place.connections.flatMap((edge) => {
+    const a = place.rooms.find((room) => room.id === edge.a);
+    const b = place.rooms.find((room) => room.id === edge.b);
+    return a && b && a.floor !== b.floor ? [a.id, b.id] : [];
+  }));
   const actionRoom = place.rooms.find((room) => room.id === place.action?.roomId);
-  const actionLabel = place.action?.kind === "move" ? `Moving to ${actionRoom?.name ?? "room"}`
-    : place.action?.kind === "search" ? `Searching ${actionRoom?.name ?? "room"}`
+  const actionLabel = place.action?.kind === "move" ? `Walking to ${actionRoom?.name ?? "the room"}`
+    : place.action?.kind === "search" ? `Searching ${currentRoom?.spots.find((spot) => spot.key === place.action?.slot)?.name ?? "the room"}`
       : place.action?.kind === "device" ? "Reading device"
-      : place.action?.kind === "npc" ? "Speaking with a person"
-      : place.action?.kind === "forensic" ? "Submitting lab test"
-        : place.action?.kind === "cctv" ? "Reviewing camera records"
-          : place.action?.kind === "records" ? "Searching public records" : "Inspecting item";
+        : place.action?.kind === "inspect" ? "Inspecting" : "Working";
+  const showArrival = arrivedAt !== place.placeName;
 
   return (
     <section className="game-place-scene absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
       <header className="game-station-header flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Explore this place</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">{currentRoom?.name ?? "Inside"}</p>
           <h2 className="mt-1 break-words text-xl uppercase tracking-wide sm:text-2xl">{place.placeName}</h2>
         </div>
-        <button className="min-h-11 shrink-0 border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">Map</button>
+        <button className="min-h-11 shrink-0 border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">Leave building</button>
       </header>
 
-      <div className="grid min-h-0 flex-1 content-start overflow-y-auto lg:content-normal lg:grid-cols-[minmax(16rem,21rem)_minmax(0,1fr)] lg:overflow-hidden">
-        <nav aria-label="Rooms" className="border-b border-[#6f9f98]/25 bg-[#071619]/80 p-4 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-5">
-          <button aria-controls="place-room-list" aria-expanded={roomsOpen} className="flex min-h-11 w-full items-center gap-3 border-b border-[#6f9f98]/25 text-left text-sm uppercase text-[#f1c987] lg:hidden" onClick={() => setRoomsOpen(!roomsOpen)} type="button"><InvestigationIcon className="size-8" name="room" /><span>Rooms · {place.rooms.length}</span><span className="ml-auto text-xs">{roomsOpen ? "Hide" : "Choose room"}</span></button>
-          <p className="hidden text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55 lg:block">Rooms · {place.rooms.length}</p>
-          <div className={`mt-3 max-h-[50vh] gap-x-3 overflow-y-auto sm:grid-cols-2 lg:max-h-none lg:grid-cols-1 lg:overflow-visible ${roomsOpen ? "grid" : "hidden lg:grid"}`} id="place-room-list">
-            {place.rooms.map((room) => {
-              const current = room.id === place.currentRoomId;
-              return (
-                <button
-                  className={`flex min-h-16 min-w-0 items-center gap-3 border-b border-[#6f9f98]/25 py-2 text-left transition ${current ? "text-[#f1c987]" : room.adjacent ? "hover:text-[#e8ac51]" : "text-[#c8d8d2]/55"}`}
-                  disabled={working || Boolean(place.action) || current || !room.adjacent}
-                  key={room.id}
-                  onClick={() => { setRoomsOpen(false); run(moveToRoom({ roomCode, roomId: room.id })); }}
-                  type="button"
-                >
-                  <InvestigationIcon className="size-9" name="room" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block break-words text-sm uppercase">{room.name}</span>
-                    <span className="mt-1 block text-xs text-[#c8d8d2]/55">Floor {room.floor} · {current ? "You are here" : room.adjacent ? "Enter room" : "Move closer first"}{room.searched ? " · Searched" : ""}</span>
-                  </span>
-                  {room.hasCamera ? <GameIcon className="size-7" name="cctv" /> : null}
-                </button>
-              );
-            })}
+      {showArrival ? (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 p-4 animate-in fade-in duration-500">
+          <div className="game-dossier w-full max-w-lg px-6 py-8 text-center">
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-red-800">{formatGameMinute(gameTime)}</p>
+            <h3 className="mt-2 text-3xl uppercase">{place.placeName}</h3>
+            <p className="mt-4 text-sm leading-relaxed">{place.placeDescription}</p>
+            <button autoFocus className="mt-6 min-h-11 border-2 border-[#573821] px-5 uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={() => {
+              play("door");
+              setArrivedAt(place.placeName);
+              try {
+                window.sessionStorage.setItem(`redacted.arrived.${roomCode}`, place.placeName);
+              } catch {
+                // Arrival cards are a convenience; showing one again is harmless.
+              }
+            }} type="button">Step inside</button>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="grid min-h-0 flex-1 content-start overflow-y-auto lg:content-normal lg:grid-cols-[minmax(0,1.1fr)_minmax(22rem,1fr)] lg:overflow-hidden">
+        <nav aria-label="Floor plan" className="order-2 border-t border-[#6f9f98]/25 bg-[#071619]/80 p-4 lg:order-1 lg:overflow-auto lg:border-r lg:border-t-0 lg:p-5">
+          <button aria-expanded={planOpen} className="flex min-h-11 w-full items-center gap-3 text-left text-sm uppercase text-[#f1c987] lg:hidden" onClick={() => setPlanOpen(!planOpen)} type="button"><InvestigationIcon className="size-8" name="room" /><span>Floor plan · {place.rooms.length} rooms</span><span className="ml-auto text-xs">{planOpen ? "Hide" : "Show"}</span></button>
+          <div className={planOpen ? "block" : "hidden lg:block"}>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="mr-auto text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Floor plan · tap a room to walk there</p>
+              {floors.length > 1 ? floors.map((number) => <button aria-pressed={number === shownFloor} className="min-h-9 border border-[#6f9f98]/50 px-3 text-xs uppercase aria-pressed:border-[#e8ac51] aria-pressed:text-[#f1c987]" key={number} onClick={() => setFloor(number)} type="button">{number === 0 ? "Ground" : `Floor ${number}`}</button>) : null}
+            </div>
+            <div className="mt-4 overflow-x-auto pb-2">
+              <div className="relative" style={{ width: layout.width, height: layout.height }}>
+                <svg aria-hidden="true" className="absolute inset-0" height={layout.height} width={layout.width}>
+                  {layout.edges.map((edge) => {
+                    const a = layout.positions.get(edge.a)!;
+                    const b = layout.positions.get(edge.b)!;
+                    return <line key={`${edge.a}-${edge.b}`} stroke="#6f9f98" strokeDasharray="4 3" strokeOpacity=".6" strokeWidth="2" x1={a.x + CELL_W / 2} x2={b.x + CELL_W / 2} y1={a.y + CELL_H / 2} y2={b.y + CELL_H / 2} />;
+                  })}
+                </svg>
+                {floorRooms.map((room) => {
+                  const point = layout.positions.get(room.id)!;
+                  const current = room.id === place.currentRoomId;
+                  const done = room.spots.length > 0 && room.spots.every((spot) => spot.searched);
+                  const partner = place.partners.find((item) => item.roomId === room.id);
+                  return (
+                    <button
+                      className="plan-room"
+                      data-current={current}
+                      data-done={done}
+                      disabled={busy || current || room.walkMinutes === undefined}
+                      key={room.id}
+                      onClick={() => { setPlanOpen(false); run(moveToRoom({ roomCode, roomId: room.id })); }}
+                      style={{ left: point.x, top: point.y, width: CELL_W, height: CELL_H }}
+                      title={current ? "You are here" : room.walkMinutes !== undefined ? `Walk here · ${room.walkMinutes} min` : "No way through"}
+                      type="button"
+                    >
+                      <span className="line-clamp-2 break-words">{room.name}</span>
+                      <span className="flex items-center gap-1 text-[0.65rem] normal-case text-[#c8d8d2]/70">
+                        {current ? <span className="text-[#f1c987]">● You</span> : room.walkMinutes !== undefined ? `${room.walkMinutes} min` : null}
+                        {partner ? <span className="text-[#9fd1c4]">◆ {partner.name}</span> : null}
+                        {stairs.has(room.id) ? <span>↕</span> : null}
+                        {room.hasCamera ? <span title="Camera">◉</span> : null}
+                        {done ? <span>✓</span> : null}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </nav>
 
-        <div className="game-station-main min-h-0 p-4 sm:p-6 lg:overflow-y-auto">
-          <div className="mx-auto max-w-3xl">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#e8ac51]/70">Current room</p>
-            <h3 className="mt-1 flex items-center gap-3 text-2xl uppercase"><InvestigationIcon className="size-11" name="room" /><span className="min-w-0 break-words">{currentRoom?.name ?? "Entrance"}</span></h3>
-            {place.action ? (
-              <div className="mt-5 border border-[#e8ac51]/45 bg-[#211d15] p-4" role="status">
-                <p className="text-sm uppercase text-[#f1c987]">{actionLabel}</p>
-                <p className="mt-1 text-xs text-[#f1c987]/70">{remaining} game min remaining</p>
-                <progress aria-label={actionLabel} className="mt-3 h-2 w-full accent-[#e8ac51]" max={place.action.completeGameTime - place.action.startGameTime} value={Math.max(0, gameTime - place.action.startGameTime)} />
-              </div>
-            ) : null}
-            {currentRoom?.searchable ? (
-              <button
-                className="mt-5 flex min-h-12 items-center gap-3 border-b border-[#e8ac51]/70 py-1 pr-4 text-sm uppercase text-[#f1c987] hover:text-white disabled:cursor-default disabled:opacity-45"
-                disabled={working || Boolean(place.action) || currentRoom.searched}
-                onClick={() => run(searchRoom({ roomCode }))}
-                type="button"
-              ><InvestigationIcon className="size-9" name="search" />{currentRoom.searched ? "Room searched" : "Search room · 15 min"}</button>
-            ) : <p className="mt-5 text-sm text-[#c8d8d2]/55">There is nothing to search in this room.</p>}
+        <div className="game-station-main order-1 min-h-0 p-4 sm:p-6 lg:order-2 lg:overflow-y-auto">
+          <h3 className="flex items-center gap-3 text-2xl uppercase"><InvestigationIcon className="size-11" name="room" /><span className="min-w-0 break-words">{currentRoom?.name ?? "Entrance"}</span></h3>
+          {place.action ? (
+            <div className="mt-4 border border-[#e8ac51]/45 bg-[#211d15] p-3" role="status">
+              <p className="text-sm uppercase text-[#f1c987]">{actionLabel}</p>
+              <progress aria-label={actionLabel} className="mt-2 h-2 w-full accent-[#e8ac51]" max={place.action.completeGameTime - place.action.startGameTime} value={Math.max(0, gameTime - place.action.startGameTime)} />
+            </div>
+          ) : null}
+          {currentRoom?.hasCamera ? <button className="mt-4 flex min-h-11 items-center gap-3 text-left text-sm uppercase text-[#f1c987] hover:text-white" onClick={() => setCameraOpen(true)} type="button"><GameIcon name="cctv" className="size-9" /><span>Check this room&apos;s camera</span></button> : null}
+          {error ? <p className="mt-4 border border-red-300/60 bg-red-950/70 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
 
-            {currentRoom?.hasCamera ? <button className="mt-5 flex min-h-12 items-center gap-3 text-left text-sm uppercase text-[#f1c987] hover:text-white" onClick={() => setCameraOpen(true)} type="button"><GameIcon name="cctv" className="size-10" /><span>Review this room&apos;s camera logs</span></button> : null}
+          {currentRoom?.spots.length ? (
+            <>
+              <p className="mt-6 text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Where to look · 4 min each</p>
+              <ul className="mt-2 grid gap-3 sm:grid-cols-2">
+                {currentRoom.spots.map((spot) => {
+                  const searching = place.action?.kind === "search" && place.action.slot === spot.key;
+                  const found = here.filter((item) => item.spot === spot.key);
+                  return (
+                    <li className={`border p-3 ${spot.searched ? "border-[#6f9f98]/30 bg-[#071619]/70" : "border-[#e8ac51]/40 bg-[#14140e]/70"}`} key={spot.key}>
+                      <p className="flex items-center gap-2 text-sm uppercase"><InvestigationIcon className="size-7" name="search" />{spot.name}</p>
+                      {!spot.searched ? (
+                        <button className="mt-2 min-h-10 w-full border border-[#e8ac51]/70 text-xs uppercase text-[#f1c987] hover:bg-[#e8ac51]/15 disabled:opacity-45" disabled={busy} onClick={() => run(searchSpot({ roomCode, spot: spot.key }))} type="button">{searching ? "Searching..." : "Search here"}</button>
+                      ) : found.length ? (
+                        <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={() => run(readDevice({ roomCode, itemId: item.id }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />)}</div>
+                      ) : <p className="mt-2 text-sm text-[#c8d8d2]/55">Nothing here.</p>}
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          ) : <p className="mt-6 text-sm text-[#c8d8d2]/60">Nothing to search here. Use the floor plan to move on.</p>}
 
-            <h4 className="mt-8 border-t border-[#6f9f98]/25 pt-5 text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Found here</h4>
-            {here.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">{here.map((item) => (
-              <ItemCard key={item.id} item={item} busy={working || Boolean(place.action)} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} pinnedRecords={boardNodes?.filter((node) => node.referenceId).map((node) => `${node.type}:${node.referenceId}`) ?? []} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onRead={() => run(readDevice({ roomCode, itemId: item.id }))} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onPin={() => pinItem(item.id)} onPinRecord={pinRecord} />
-            ))}</div> : <p className="mt-3 text-sm text-[#c8d8d2]/55">{currentRoom?.searched || !currentRoom?.searchable ? "Nothing found here." : "Search this room to see what is here."}</p>}
-
-            <h4 className="mt-8 border-t border-[#6f9f98]/25 pt-5 text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Shared inventory · {inventory.length}</h4>
-            {inventory.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">{inventory.map((item) => (
-              <ItemCard key={item.id} item={item} busy={working || Boolean(place.action)} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} pinnedRecords={boardNodes?.filter((node) => node.referenceId).map((node) => `${node.type}:${node.referenceId}`) ?? []} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onRead={() => run(readDevice({ roomCode, itemId: item.id }))} onPin={() => pinItem(item.id)} onPinRecord={pinRecord} />
-            ))}</div> : <p className="mt-3 text-sm text-[#c8d8d2]/55">Items you collect will appear here for both investigators.</p>}
-            {error ? <p className="mt-5 border border-red-300/60 bg-red-950/70 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
-          </div>
+          <details className="mt-8 border-t border-[#6f9f98]/25 pt-4">
+            <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/70">Carried evidence · {inventory.length}</summary>
+            {inventory.length ? <div className="mt-3 grid gap-2 sm:grid-cols-2">{inventory.map((item) => (
+              <ItemCard busy={busy} fresh={false} item={item} key={item.id} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={() => run(readDevice({ roomCode, itemId: item.id }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />
+            ))}</div> : <p className="mt-3 text-sm text-[#c8d8d2]/55">Collected objects travel with both of you.</p>}
+          </details>
         </div>
       </div>
     </section>
   );
 }
 
-function ItemCard({ item, busy, pinned, pinnedRecords, onInspect, onRead, onCollect, onPin, onPinRecord }: {
-  item: { id: Id<"caseItems">; name: string; description?: string; collectible: boolean; collected: boolean; inspected: boolean; device?: { type: "phone" | "laptop"; read: boolean; files: { id: string; title: string; body: string }[]; calls: { id: Id<"callLogs">; time: number; direction: "incoming" | "outgoing"; durationSeconds: number; otherParty: string }[]; messages: { id: Id<"messages">; time: number; direction: "incoming" | "outgoing"; body: string; otherParty: string }[] } };
+function ItemCard({ item, busy, pinned, fresh, onInspect, onRead, onOpenDevice, onCollect, onPin }: {
+  item: Item;
   busy: boolean;
   pinned: boolean;
-  pinnedRecords: string[];
+  fresh: boolean;
   onInspect: () => void;
   onRead: () => void;
+  onOpenDevice: () => void;
   onCollect?: () => void;
   onPin: () => void;
-  onPinRecord: (type: "device_file" | "call" | "message", referenceId: string) => void;
 }) {
   return (
-    <article className="border-b border-[#6f9f98]/35 bg-[#071619]/60 p-4">
-      <h5 className="flex items-center gap-3 text-base uppercase text-[#e4e6d8]"><InvestigationIcon className="size-9" name={item.device ? "device" : "evidence"} /><span className="min-w-0 break-words">{item.name}</span></h5>
-      <p className="mt-2 text-sm leading-relaxed text-[#c8d8d2]/65">{item.description ?? "Inspect to learn more."}</p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {!item.inspected ? <button className="min-h-10 border border-[#6f9f98]/60 px-3 text-xs uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] disabled:opacity-45" disabled={busy} onClick={onInspect} type="button">Inspect · 2 min</button> : null}
-        {item.device && !item.device.read ? <button className="min-h-10 border border-[#e8ac51]/70 bg-[#e8ac51]/10 px-3 text-xs uppercase text-[#f1c987] hover:bg-[#e8ac51]/20 disabled:opacity-45" disabled={busy} onClick={onRead} type="button">Read {item.device.type === "phone" ? "phone" : "files"} · 5 min</button> : null}
-        {onCollect && item.collectible && !item.collected ? <button className="min-h-10 border border-[#e8ac51]/70 bg-[#e8ac51]/10 px-3 text-xs uppercase text-[#f1c987] hover:bg-[#e8ac51]/20 disabled:opacity-45" disabled={busy} onClick={onCollect} type="button">Collect</button> : null}
-        <button className="min-h-10 border border-[#6f9f98]/60 px-3 text-xs uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] disabled:opacity-45" disabled={busy || pinned} onClick={onPin} type="button">{pinned ? "Pinned to clueboard" : "Pin to clueboard"}</button>
-        {item.collected ? <span className="self-center text-xs uppercase text-[#e8ac51]/75">In shared inventory</span> : null}
+    <article className={`border-l-2 border-[#e8ac51] bg-[#0b1a1c]/90 p-3 ${fresh ? "reveal-card" : ""}`}>
+      <h5 className="flex items-center gap-2 text-sm uppercase text-[#f1c987]"><InvestigationIcon className="size-8" name={item.device ? "device" : "evidence"} /><span className="min-w-0 break-words">{item.name}</span></h5>
+      <p className="mt-2 text-sm leading-relaxed text-[#c8d8d2]/75">{item.description ?? "Take a closer look to learn more."}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {!item.inspected ? <button className="min-h-9 border border-[#6f9f98]/60 px-2 text-xs uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] disabled:opacity-45" disabled={busy} onClick={onInspect} type="button">Look closer · 2 min</button> : null}
+        {item.device && !item.device.read ? <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={busy} onClick={onRead} type="button">Unlock {item.device.type} · 5 min</button> : null}
+        {item.device?.read ? <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987]" onClick={onOpenDevice} type="button">Open {item.device.type}</button> : null}
+        {onCollect && item.collectible && !item.collected ? <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={busy} onClick={onCollect} type="button">Bag it</button> : null}
+        <button className="min-h-9 border border-[#6f9f98]/60 px-2 text-xs uppercase disabled:opacity-45" disabled={busy || pinned} onClick={onPin} type="button">{pinned ? "Pinned" : "Pin"}</button>
       </div>
-      {item.device?.read ? <div className="mt-4 space-y-3 border-t border-[#6f9f98]/20 pt-4">
-        {item.device.files.map((file) => <div key={file.id} className="border-l-2 border-[#e8ac51]/60 pl-3"><p className="text-xs uppercase tracking-wide text-[#f1c987]">{file.title}</p><p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-[#e4e6d8]/80">{file.body}</p><button className="mt-2 min-h-10 border border-[#6f9f98]/60 px-3 text-xs uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] disabled:opacity-45" disabled={busy || pinnedRecords.includes(`device_file:${file.id}`)} onClick={() => onPinRecord("device_file", file.id)} type="button">{pinnedRecords.includes(`device_file:${file.id}`) ? "Pinned to clueboard" : "Pin file to clueboard"}</button></div>)}
-        {item.device.calls.map((call) => <div key={call.id} className="border-l-2 border-[#e8ac51]/60 pl-3"><p className="text-xs uppercase tracking-wide text-[#f1c987]">{call.direction === "incoming" ? "Call from" : "Call to"} {call.otherParty}</p><p className="mt-1 text-sm text-[#e4e6d8]/80">{formatGameTime(call.time)} · {Math.ceil(call.durationSeconds / 60)} min</p><button className="mt-2 min-h-10 border border-[#6f9f98]/60 px-3 text-xs uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] disabled:opacity-45" disabled={busy || pinnedRecords.includes(`call:${call.id}`)} onClick={() => onPinRecord("call", call.id)} type="button">{pinnedRecords.includes(`call:${call.id}`) ? "Pinned to clueboard" : "Pin call to clueboard"}</button></div>)}
-        {item.device.messages.map((message) => <div key={message.id} className="border-l-2 border-[#e8ac51]/60 pl-3"><p className="text-xs uppercase tracking-wide text-[#f1c987]">{message.direction === "incoming" ? "Message from" : "Message to"} {message.otherParty} · {formatGameTime(message.time)}</p><p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-[#e4e6d8]/80">{message.body}</p><button className="mt-2 min-h-10 border border-[#6f9f98]/60 px-3 text-xs uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] disabled:opacity-45" disabled={busy || pinnedRecords.includes(`message:${message.id}`)} onClick={() => onPinRecord("message", message.id)} type="button">{pinnedRecords.includes(`message:${message.id}`) ? "Pinned to clueboard" : "Pin message to clueboard"}</button></div>)}
-        {!item.device.files.length && !item.device.calls.length && !item.device.messages.length ? <p className="text-sm text-[#c8d8d2]/55">No records on this device.</p> : null}
-      </div> : null}
     </article>
   );
-}
-
-function formatGameTime(minutes: number) {
-  const day = Math.floor(minutes / 1440) + 1;
-  const withinDay = ((minutes % 1440) + 1440) % 1440;
-  return `Day ${day} · ${String(Math.floor(withinDay / 60)).padStart(2, "0")}:${String(withinDay % 60).padStart(2, "0")}`;
 }
 
 function PlaceMessage({ message, onBack }: { message: string; onBack: () => void }) {
@@ -202,7 +313,7 @@ function PlaceMessage({ message, onBack }: { message: string; onBack: () => void
       <div className="game-panel w-full max-w-lg px-7 py-9 text-center sm:px-12">
         <InvestigationIcon className="mx-auto size-12" name="room" />
         <p className="mt-4 text-lg uppercase leading-snug">{message}</p>
-        <button className="mt-6 min-h-11 w-full border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] sm:w-auto" onClick={onBack} type="button">Back to map</button>
+        <button className="mt-6 min-h-11 w-full border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] sm:w-auto" onClick={onBack} type="button">Open the city map</button>
       </div>
     </section>
   );

@@ -1,7 +1,8 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
 import { useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { InvestigationIcon } from "../investigation-icon";
@@ -25,6 +26,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn && roomCode ? { roomCode } : "skip");
   const createReference = useMutation(api.clueBoard.createReferenceNode);
   const performSearch = useMutation(api.publicRecords.performSearch);
+  const people = useQuery(api.npcs.list, isLoaded && isSignedIn && roomCode ? { roomCode } : "skip");
   const records = hasSubmitted && result?.status === "ready" ? result.records : [];
   const currentTerm = normalizedTerm(search);
 
@@ -65,12 +67,12 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
           <h2 className="mt-1 text-2xl uppercase text-[#e4e6d8] sm:text-3xl">Public records</h2>
         </div>
         <button
-          aria-label="Return to bureau"
+          aria-label="Leave the records room"
           className="min-h-11 shrink-0 border border-[#6f9f98] px-4 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] focus-visible:outline-2 focus-visible:outline-[#e8ac51]"
           onClick={onBack}
           type="button"
         >
-          Back
+          Leave the room
         </button>
       </header>
 
@@ -109,6 +111,12 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
                 {term || "General browse"}
               </button>
             ))}
+          </div>
+        ) : null}
+        {people?.length ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2" aria-label="Names you know">
+            <span className="mr-1 text-xs uppercase tracking-[0.16em] text-[#c8d8d2]/65">Names you know</span>
+            {people.map((person) => <button className="min-h-9 border border-[#6f9f98]/25 px-3 text-xs text-[#c8d8d2]/80 hover:border-[#e8ac51] hover:text-[#f1c987]" key={person.id} onClick={() => setSearch(person.name)} type="button">{person.name}</button>)}
           </div>
         ) : null}
         <p className="mt-2 text-xs text-[#c8d8d2]/65">New searches take 10 case minutes. Reopen a saved search for free.</p>

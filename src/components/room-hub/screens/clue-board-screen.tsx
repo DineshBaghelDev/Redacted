@@ -14,7 +14,8 @@ import {
   useNodesState,
 } from "@xyflow/react";
 import { Link2, Maximize2, Plus, Trash2, X } from "lucide-react";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -146,7 +147,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
     <section className="absolute inset-0 z-40 flex flex-col bg-[#15100d] text-[#f4e8c8]" aria-label="Clue board">
       <header className="z-10 flex flex-wrap items-center gap-2 border-b-2 border-[#5e3e29] bg-[#241812] px-3 py-2 shadow-lg sm:gap-3 sm:px-4 sm:py-3">
         <button className="clue-board-button" onClick={onBack} type="button">
-          <X aria-hidden="true" size={18} /> Back
+          <X aria-hidden="true" size={18} /> Step back
         </button>
         <GameIcon name="clueboard" className="size-7 sm:size-9" />
         <div className="mr-auto min-w-0">

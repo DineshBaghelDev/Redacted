@@ -1,10 +1,12 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
+import { go } from "../../../lib/game-nav";
+import { play } from "../../../lib/sound";
 import { GameIcon } from "../game-icon";
 
 const kindLabels = {
@@ -34,12 +36,13 @@ function artworkForPlace(place: { id: string; kind: keyof typeof kindLabels }) {
 }
 
 export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
-  const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
   const city = useQuery(api.world.getMap, isLoaded && isSignedIn ? { roomCode } : "skip");
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
   const createReference = useMutation(api.clueBoard.createReferenceNode);
   const startTravel = useMutation(api.world.startTravel);
+  const coop = useQuery(api.coop.get, isLoaded && isSignedIn ? { roomCode } : "skip");
+  const wasTravelling = useRef<string | null>(null);
   const finishTravel = useMutation(api.world.finishTravel);
   const [selectedId, setSelectedId] = useState("");
   const [pinning, setPinning] = useState("");
@@ -73,16 +76,29 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
       });
     };
     update();
-    const interval = window.setInterval(update, 250);
+    const interval = window.setInterval(update, 100);
     return () => window.clearInterval(interval);
   }, [city?.activeTravel, city?.clock, finishTravel, roomCode]);
+
+  // On arrival, walk straight in: buildings open their floor plan, the lab opens its bench.
+  useEffect(() => {
+    if (!city) return;
+    if (city.activeTravel) { wasTravelling.current = city.activeTravel.destinationId; return; }
+    if (!wasTravelling.current || wasTravelling.current !== city.currentPlaceId) return;
+    wasTravelling.current = null;
+    const arrived = city.places.find((place) => place.id === city.currentPlaceId);
+    play("door");
+    if (arrived?.kind === "bureau") go(`/lobby/${roomCode}/bureau`);
+    else if (arrived?.kind === "lab") go(`/lobby/${roomCode}/lab`);
+    else if (arrived?.hasInterior) go(`/lobby/${roomCode}/place`);
+  }, [city, roomCode]);
 
   if (city === undefined) return <MapMessage message="Opening city map..." onBack={onBack} />;
   if (!city) return <MapMessage message="The city map is unavailable for this room." onBack={onBack} />;
 
-  const selected = city.places.find((place) => place.id === selectedId)
-    ?? city.places.find((place) => place.id === city.currentPlaceId)
-    ?? city.places[0];
+  const here = city.places.find((place) => place.id === city.currentPlaceId);
+  const open = city.places.find((place) => place.id === selectedId) ?? null;
+  const selected = open ?? here ?? city.places[0];
   const connected = city.streets
     .filter((street) => street.a === selected.id || street.b === selected.id)
     .map((street) => ({
@@ -120,10 +136,9 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
   }
 
   function selectPlace(id: string) {
-    setSelectedId(id);
-    const place = city?.places.find((item) => item.id === id);
-    const viewport = mapViewport.current;
-    if (place && viewport) viewport.scrollTo({ left: viewport.scrollWidth * place.x / 100 - viewport.clientWidth / 2, behavior: "smooth" });
+    play("click");
+    setError("");
+    setSelectedId((current) => current === id ? "" : id);
   }
 
   return (
@@ -134,34 +149,16 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">City map</h2>
         </div>
         <button className="border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">
-          Back
+          Put the map away
         </button>
       </header>
 
-      <div className="grid min-h-0 min-w-0 flex-1 grid-rows-[max-content_max-content] overflow-y-auto lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-1 lg:overflow-hidden">
-        <div className="min-h-0 min-w-0 overflow-visible p-3 sm:p-5 lg:overflow-auto">
-          <label className="mb-3 block text-xs uppercase tracking-[0.18em] text-[#c8d8d2]/65 xl:hidden" htmlFor="mobile-place-picker">
-            Find a place
-            <select
-              className="mt-2 min-h-11 w-full border border-[#6f9f98]/50 bg-[#0b1a1c] px-3 text-base uppercase text-[#e4e6d8]"
-              id="mobile-place-picker"
-              onChange={(event) => selectPlace(event.target.value)}
-              value={selected.id}
-            >
-              {city.places.map((place, index) => <option key={place.id} value={place.id}>{index + 1}. {place.name}</option>)}
-            </select>
-          </label>
-          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs uppercase text-[#b9ccc4]">
-            <span className="text-[#e8c486]">Street network</span>
-            <span><i aria-hidden="true" className="mr-1 inline-block w-5 border-t-2 border-dashed border-[#d88977] align-middle" />Camera route</span>
-            <span><i aria-hidden="true" className="mr-1 inline-block w-5 border-t-2 border-[#e8ac51] align-middle" />Selected routes</span>
-          </div>
-          <p className="mb-2 text-xs uppercase text-[#c8d8d2]/55 xl:hidden">Scroll map sideways to explore</p>
-          <div className="w-full max-w-full overflow-x-auto" ref={mapViewport}>
-          <div className="city-map relative mx-auto aspect-[16/10] h-auto min-h-[18rem] min-w-[44rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden md:min-w-[50rem] lg:h-full">
+      <div className="relative min-h-0 flex-1 overflow-auto p-3 sm:p-5" ref={mapViewport}>
+        <div className="city-map relative mx-auto aspect-[16/10] min-w-[44rem] max-w-6xl md:min-w-[50rem]" onClick={(event) => { if (event.target === event.currentTarget) setSelectedId(""); }}>
             <span className="pointer-events-none absolute left-3 top-2 text-xs uppercase tracking-[0.25em] text-[#92c1c7]/70">Northside</span>
             <span className="pointer-events-none absolute left-3 top-[36%] text-xs uppercase tracking-[0.25em] text-[#e4bc75]/70">Midtown</span>
             <span className="pointer-events-none absolute bottom-2 left-3 text-xs uppercase tracking-[0.25em] text-[#d5a18e]/70">Eastside</span>
+            <span className="pointer-events-none absolute bottom-2 right-3 text-xs uppercase text-[#c8d8d2]/60"><i aria-hidden="true" className="mr-1 inline-block w-5 border-t-2 border-dashed border-[#d88977] align-middle" />Street with a camera</span>
 
             <svg aria-hidden="true" className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100">
               {city.streets.map((street) => {
@@ -185,6 +182,18 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
               })}
             </svg>
 
+            {city.activeTravel ? (() => {
+              const from = city.places.find((place) => place.id === city.currentPlaceId);
+              const to = city.places.find((place) => place.id === city.activeTravel!.destinationId);
+              if (!from || !to) return null;
+              const span = Math.max(1, city.activeTravel.completeGameTime - city.activeTravel.startGameTime);
+              const progress = Math.min(1, Math.max(0, (gameTime - city.activeTravel.startGameTime) / span));
+              return <span aria-hidden="true" className="map-traveller absolute z-40 size-4 -translate-x-1/2 -translate-y-1/2 border-2 border-[#071014] bg-[#ffd287] shadow-[0_0_10px_#ffd287]" style={{ left: `${from.x + (to.x - from.x) * progress}%`, top: `${from.y + (to.y - from.y) * progress}%` }} />;
+            })() : null}
+            {coop?.partners.map((partner) => {
+              const at = city.places.find((place) => place.id === partner.placeId);
+              return at ? <span className="pointer-events-none absolute z-40 -translate-x-1/2 translate-y-3 whitespace-nowrap border border-[#9fd1c4] bg-[#071014]/90 px-1 text-[0.65rem] uppercase text-[#9fd1c4]" key={partner.name} style={{ left: `${at.x}%`, top: `${at.y}%` }}>◆ {partner.name}</span> : null;
+            })}
             {city.places.map((place) => {
               const active = place.id === selected.id;
               const current = place.id === city.currentPlaceId;
@@ -205,90 +214,77 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
                 </button>
               );
             })}
-          </div>
-          </div>
+            {open ? <PlaceCard
+              busy={traveling || city.busy}
+              error={error}
+              here={open.id === city.currentPlaceId && !city.activeTravel}
+              onClose={() => setSelectedId("")}
+              onEnter={() => go(`/lobby/${roomCode}/${open.kind === "bureau" ? "bureau" : open.kind === "lab" ? "lab" : "place"}`)}
+              onPin={pinPlace}
+              onTravel={travelToSelected}
+              pinned={Boolean(isPinned)}
+              pinning={pinning === open.id}
+              place={open}
+              travelling={Boolean(city.activeTravel)}
+            /> : null}
         </div>
-
-        <aside className="min-h-0 min-w-0 overflow-visible border-t border-[#6f9f98]/25 bg-[#0b1a1c] p-4 lg:overflow-y-auto lg:border-l lg:border-t-0 lg:p-5">
-          <div className="mb-4 border-b border-[#6f9f98]/35 pb-4 text-xs uppercase tracking-wide">
-            <p className="text-[#c8d8d2]/55">Your location</p>
-            <p className="mt-1 break-words text-base text-[#f1c987]">{city.places.find((place) => place.id === city.currentPlaceId)?.name ?? "Bureau"}</p>
-            {city.activeTravel ? (
-              <div className="mt-2 text-[#c8d8d2]">
-                <p>Travelling to {city.activeTravel.destinationName} · {travelRemaining} game min</p>
-                <progress
-                  aria-label={`Journey to ${city.activeTravel.destinationName}`}
-                  className="mt-2 h-2 w-full accent-[#e8ac51]"
-                  max={city.activeTravel.completeGameTime - city.activeTravel.startGameTime}
-                  value={Math.max(0, gameTime - city.activeTravel.startGameTime)}
-                />
-              </div>
-            ) : null}
-          </div>
-          <p className="text-xs uppercase tracking-[0.2em] text-[#e8ac51]/70">{selected.area}</p>
-          <h3 className="mt-1 flex items-center gap-3 break-words text-2xl uppercase leading-tight"><span aria-hidden="true" className={`map-place-icon map-place-icon--${artworkForPlace(selected)} shrink-0`} /><span className="min-w-0">{selected.name}</span></h3>
-          <p className="mt-2 text-sm uppercase text-[#c8d8d2]/65">{kindLabels[selected.kind]}</p>
-          <button
-            className="mt-4 min-h-11 w-full border border-[#e8ac51]/70 bg-[#e8ac51]/10 px-3 text-sm uppercase text-[#f1c987] hover:bg-[#e8ac51]/20 disabled:cursor-default disabled:opacity-45"
-            disabled={traveling || city.busy || city.currentPlaceId === selected.id || selected.travelMinutes === undefined}
-            onClick={travelToSelected}
-            type="button"
-          >
-            {traveling
-              ? "Starting journey..."
-              : city.activeTravel
-                ? "Journey in progress"
-                : city.currentPlaceId === selected.id
-                  ? "You are here"
-                  : selected.travelMinutes === undefined
-                    ? "No route available"
-                    : `Travel · ${selected.travelMinutes} min`}
-          </button>
-          {city.places.find((place) => place.id === city.currentPlaceId)?.hasInterior && !city.activeTravel ? (
-            <button className="mt-2 min-h-11 w-full border border-[#6f9f98]/60 bg-[#6f9f98]/10 px-3 text-sm uppercase text-[#e4e6d8] hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={() => router.push(`/lobby/${roomCode}/place`)} type="button">
-              Explore your location
-            </button>
-          ) : null}
-          {city.places.find((place) => place.id === city.currentPlaceId)?.kind === "lab" && !city.activeTravel ? (
-            <button className="mt-2 min-h-11 w-full border border-[#e8ac51]/70 bg-[#e8ac51]/10 px-3 text-sm uppercase text-[#f1c987] hover:bg-[#e8ac51]/20" onClick={() => router.push(`/lobby/${roomCode}/lab`)} type="button">
-              Use forensic lab
-            </button>
-          ) : null}
-          <button
-            className="mt-4 min-h-11 w-full border border-[#6f9f98]/60 px-3 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] disabled:cursor-default disabled:opacity-55"
-            disabled={pinning === selected.id || isPinned}
-            onClick={pinPlace}
-            type="button"
-          >
-            {pinning === selected.id ? "Pinning..." : isPinned ? "Pinned to clueboard" : "Pin place to clueboard"}
-          </button>
-          {error ? <p className="mt-3 border border-red-300/60 bg-red-950/70 p-2 text-sm text-red-100" role="alert">{error}</p> : null}
-
-          <h4 className="mt-5 border-t border-[#6f9f98]/20 pt-4 text-xs uppercase tracking-[0.18em] text-[#c8d8d2]/55">Direct routes</h4>
-          <ul className="mt-2 space-y-2">
-            {connected.map((route) => (
-              <li className="flex items-center justify-between gap-3 border-b border-[#6f9f98]/20 py-2" key={route.id}>
-                <button className="min-h-8 min-w-0 flex-1 break-words text-left text-sm uppercase hover:text-[#e8ac51]" onClick={() => selectPlace(route.place.id)} type="button">
-                  {route.place.name}
-                </button>
-                <span className="shrink-0 font-mono text-xs text-[#e8ac51]">{route.minutes} min{route.hasCamera ? " · CCTV" : ""}</span>
-              </li>
-            ))}
-          </ul>
-
-          <details className="mt-5 border-t border-[#6f9f98]/20 pt-4">
-            <summary className="cursor-pointer text-xs uppercase tracking-[0.18em] text-[#c8d8d2]/55">All places</summary>
-            <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-1">
-              {city.places.map((place, index) => (
-                <button className="min-h-10 border-b border-[#6f9f98]/20 px-1 text-left text-xs uppercase hover:text-[#e8ac51]" key={place.id} onClick={() => selectPlace(place.id)} type="button">
-                  {index + 1}. {place.name}
-                </button>
-              ))}
-            </div>
-          </details>
-        </aside>
+        <div className="pointer-events-none sticky bottom-0 left-0 mt-2 flex justify-center">
+          <p className="pointer-events-auto border border-[#45635d] bg-[#071014]/95 px-3 py-2 text-xs uppercase tracking-wide text-[#c8d8d2]" role="status">
+            {city.activeTravel
+              ? <>On the way to <span className="text-[#f1c987]">{city.activeTravel.destinationName}</span> · {travelRemaining} min</>
+              : <>You are at <span className="text-[#f1c987]">{here?.name ?? "the bureau"}</span> · tap a place</>}
+          </p>
+        </div>
       </div>
     </section>
+  );
+}
+
+/** The actions for one place, floating above its marker. */
+function PlaceCard({ place, here, travelling, busy, pinned, pinning, error, onTravel, onEnter, onPin, onClose }: {
+  place: { id: string; name: string; kind: keyof typeof kindLabels; area: string; x: number; y: number; hasInterior: boolean; travelMinutes?: number };
+  here: boolean;
+  travelling: boolean;
+  busy: boolean;
+  pinned: boolean;
+  pinning: boolean;
+  error: string;
+  onTravel: () => void;
+  onEnter: () => void;
+  onPin: () => void;
+  onClose: () => void;
+}) {
+  const below = place.y < 30;
+  const canEnter = place.hasInterior || place.kind === "lab" || place.kind === "bureau";
+  return (
+    <div
+      className={`absolute z-50 w-60 -translate-x-1/2 border-2 border-[#e8ac51]/70 bg-[#071014]/97 p-3 text-left shadow-[4px_4px_0_rgb(0_0_0/50%)] animate-in fade-in zoom-in-95 ${below ? "mt-9" : "-translate-y-full -mt-9"}`}
+      onClick={(event) => event.stopPropagation()}
+      role="dialog"
+      aria-label={place.name}
+      style={{ left: `${Math.min(84, Math.max(16, place.x))}%`, top: `${place.y}%` }}
+    >
+      <div className="flex items-start gap-2">
+        <span aria-hidden="true" className={`map-place-icon map-place-icon--${artworkForPlace(place)} shrink-0`} />
+        <div className="min-w-0 flex-1">
+          <p className="break-words text-sm uppercase leading-tight text-[#f1c987]">{place.name}</p>
+          <p className="mt-0.5 text-[0.65rem] uppercase text-[#c8d8d2]/60">{kindLabels[place.kind]} · {place.area}</p>
+        </div>
+        <button aria-label="Close" className="-mr-1 -mt-1 size-7 text-[#c8d8d2]/70 hover:text-[#e8ac51]" onClick={onClose} type="button">✕</button>
+      </div>
+      <div className="mt-3 grid gap-2">
+        {here ? (
+          canEnter ? <button className="min-h-10 border border-[#e8ac51] bg-[#e8ac51]/15 text-xs uppercase text-[#f1c987] hover:bg-[#e8ac51]/25" onClick={onEnter} type="button">{place.kind === "lab" ? "Use the lab" : place.kind === "bureau" ? "Go inside the bureau" : "Go inside"}</button>
+            : <p className="text-xs uppercase text-[#c8d8d2]/60">You are here</p>
+        ) : (
+          <button className="min-h-10 border border-[#e8ac51] bg-[#e8ac51]/15 text-xs uppercase text-[#f1c987] hover:bg-[#e8ac51]/25 disabled:opacity-45" disabled={busy || travelling || place.travelMinutes === undefined} onClick={onTravel} type="button">
+            {travelling ? "Already on the road" : place.travelMinutes === undefined ? "No route" : `Travel · ${place.travelMinutes} min`}
+          </button>
+        )}
+        <button className="min-h-9 border border-[#6f9f98]/50 text-xs uppercase text-[#c8d8d2] hover:border-[#e8ac51] disabled:opacity-50" disabled={pinned || pinning} onClick={onPin} type="button">{pinned ? "Pinned" : pinning ? "Pinning..." : "Pin to clueboard"}</button>
+      </div>
+      {error ? <p className="mt-2 text-xs text-red-200" role="alert">{error}</p> : null}
+    </div>
   );
 }
 

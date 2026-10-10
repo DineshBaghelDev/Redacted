@@ -1,8 +1,9 @@
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import { cameraAtAccessPoint, getBureauRoomMember, getCameraAccess, getPlayingRoomMember, getRoomMember, requireInvestigationOpen } from "./lib/auth";
+import { getPlayingRoomMember, getRoomMember, requireInvestigationOpen } from "./lib/auth";
 import { hasReadDevice } from "./lib/deviceAccess";
+import { CCTV_HALF_WINDOW, knownPeople } from "./lib/discoveries";
 
 const MAX_NODES = 100;
 const MAX_EDGES = 200;
@@ -125,10 +126,6 @@ export const createReferenceNode = mutation({
     if (existing) return existing._id;
     if (nodes.length >= MAX_NODES) throw new Error("This board is full.");
 
-    if (type === "public_record" && !(await getBureauRoomMember(ctx, roomCode))) {
-      throw new Error("Use the bureau terminal to pin this record.");
-    }
-
     let text: string;
     if (type === "forensic") {
       const outputId = ctx.db.normalizeId("forensicOutputs", referenceId);
@@ -164,7 +161,8 @@ export const createReferenceNode = mutation({
       const npcId = ctx.db.normalizeId("npcs", referenceId);
       const person = npcId ? await ctx.db.get(npcId) : null;
       if (!person || person.caseId !== session.caseId) throw new Error("That person is not part of this case.");
-      text = `${person.name}\n${person.role}${person.occupation ? ` · ${person.occupation}` : ""}`;
+      if (!(await knownPeople(ctx, session)).has(person._id)) throw new Error("You have not come across this person yet.");
+      text = `${person.name}\n${person.role === "victim" ? "Victim" : person.occupation ?? "Person"}`;
     } else if (type === "place") {
       const playableCase = await ctx.db.get(session.caseId);
       const place = playableCase?.cityId
@@ -194,11 +192,9 @@ export const createReferenceNode = mutation({
       if (!record) throw new Error("That camera record is not part of this case.");
       const camera = await ctx.db.get(record.cameraId);
       if (!camera || camera.caseId !== session.caseId) throw new Error("That camera record is unavailable.");
-      const access = await getCameraAccess(ctx, roomCode);
-      if (!access || !cameraAtAccessPoint(camera, access)) throw new Error("Visit this camera's access point to pin its record.");
       let reviewed = false;
       for await (const window of ctx.db.query("cctvReviews")
-        .withIndex("by_sessionId_and_cameraId_and_minute", (q) => q.eq("sessionId", session._id).eq("cameraId", camera._id).gte("minute", record.startTime - 20).lte("minute", record.endTime + 20))) {
+        .withIndex("by_sessionId_and_cameraId_and_minute", (q) => q.eq("sessionId", session._id).eq("cameraId", camera._id).gte("minute", record.startTime - CCTV_HALF_WINDOW).lte("minute", record.endTime + CCTV_HALF_WINDOW))) {
         if (window.completeGameTime <= (session.gameTime ?? 0)) { reviewed = true; break; }
       }
       if (!reviewed) throw new Error("Review this camera record before pinning it.");

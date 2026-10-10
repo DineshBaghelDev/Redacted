@@ -43,6 +43,7 @@ export async function getPlayingRoomMember(ctx: DbCtx, roomCode: string) {
 export async function requireInvestigationOpen(ctx: MutationCtx, sessionId: Id<"sessions">) {
   const report = await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId)).unique();
   if (report) throw new Error("The final report is submitted. This room is review-only.");
+  if ((await ctx.db.get(sessionId))?.gaveUpAt !== undefined) throw new Error("This case was given up. The room is review-only.");
 }
 
 /** Bureau terminals are available only to a detective physically at the bureau. */

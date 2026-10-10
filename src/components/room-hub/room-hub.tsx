@@ -1,7 +1,8 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useState, useSyncExternalStore } from "react";
+import { go } from "../../lib/game-nav";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRoomSession } from "./use-room-session";
 import { JoinModal } from "./screens/join-modal";
 import { MainMenuScreen } from "./screens/main-menu";
@@ -10,7 +11,7 @@ import { PreviousGamesScreen } from "./screens/previous-games";
 import { RoomLobbyModal } from "./screens/room-lobby-modal";
 import { SettingsPanel } from "./screens/settings-panel";
 import { CaseBriefScreen } from "./screens/status-screens";
-import { BureauScreen } from "./screens/bureau-screen";
+import { BureauScreen, preloadStations } from "./screens/bureau-screen";
 
 const DETECTIVE_NAME_KEY = "redacted.detectiveName";
 const subscribeToNothing = () => () => {};
@@ -60,6 +61,11 @@ export function RoomHub() {
     continueRoom,
   } = useRoomSession(nickname);
 
+  // While the detectives read the brief, fetch the game screens so "Begin investigation" opens instantly.
+  useEffect(() => {
+    if (screen === "brief") preloadStations();
+  }, [screen]);
+
   if (!isMounted) {
     return null;
   }
@@ -89,7 +95,8 @@ export function RoomHub() {
     return (
       <CaseBriefScreen
         error={error}
-        onBegin={() => setScreen("bureau")}
+        // Cold open: the case starts at the crime scene, not at a menu of stations.
+        onBegin={() => go(`/lobby/${joinedRoomCode}/place`)}
         onLeave={leaveRoom}
         roomCode={joinedRoomCode}
       />

@@ -4,7 +4,7 @@
 
 ### Case brief
 
-Player starts with only legitimate initial information:
+Player starts at the crime-scene room, on the story's clock (the discovery minute), with only legitimate initial information:
 
 - where,
 - when,
@@ -13,6 +13,10 @@ Player starts with only legitimate initial information:
 - minimal necessary known facts.
 
 No automatic suspect ranking, clue list, deductions, or hints.
+
+### People are discovered
+
+The People file starts with the victim and anyone the brief names. A person is added when their name appears in something the team has uncovered (an inspected object, a read device, a heard statement, a returned record, a viewed lab report, a reviewed camera log) or when they have been called in. Each entry shows where they were first seen. Roles other than "Victim" are never shown. Only known people can be called in, pinned, or named as culprit. Evidence itself never becomes a lead, pin, or conclusion.
 
 ### Investigation
 
@@ -113,10 +117,12 @@ Do not make every corridor a database room. Represent most corridors as graph ed
 
 Search is deterministic reveal of generated content.
 
+Rooms are searched one spot at a time. A room's spots are its template slots plus any generated item slot naming a new spot; names are normalized ("On the body" and "The body" are one spot). Detectives walk by floor plan to any reachable room; the cost is the shortest path.
+
 Rules:
 
 - player must be at the room/location,
-- search costs game time,
+- searching a spot costs game time and reveals only that spot's items; the first searched spot marks the room as examined for lab sampling,
 - results already exist in `caseItems`,
 - hidden items may become discovered,
 - collectible items may enter inventory through explicit player action,
@@ -143,7 +149,7 @@ CCTV consists of:
 
 CCTV records have no visual representation at all. Do not add generated video, stills, thumbnails, or visual playback later.
 
-Players choose camera/time windows. The game returns stored matching records.
+At a camera's access point the whole tape is visible: players scrub a timeline, see stored sightings as marks, and read what is in frame at the playhead. Watching is instant and free; hours scrubbed through are recorded so their sightings join the notebook and can be pinned or shown. Calls and messages link to the street cameras at their time. Matching written descriptions to people's public descriptions is the intended deduction.
 Street and bureau cameras are reviewed at the bureau. Building cameras are reviewed in the room where the camera is installed. The player sees only the cameras available at that access point; review and pin actions use the same location gate.
 
 ## Devices
@@ -193,7 +199,7 @@ Player workflow:
 
 ```text
 discover source/item
-  -> request valid test
+  -> choose any test from the full menu (fingerprints, footprints, DNA, blood, toxicology, fibres, ballistics, autopsy)
   -> spend submission time
   -> wait in game time
   -> result becomes ready
@@ -215,6 +221,8 @@ Supported base test types:
 - extensible `other`.
 
 Forensic output is separate from `caseItems`.
+
+Sources are collected objects, searched rooms, and the victim's body. The lab never shows which tests will find something. A test with no stored output still costs its submission time and returns "No usable result" after 30 minutes.
 
 ## Interrogation/NPC system
 
@@ -294,7 +302,7 @@ No Liveblocks in V1.
 
 The case has a shared deadline and deterministic action durations.
 
-The replay creator may set a custom shared deadline before creating the room; otherwise the frozen case estimate plus 1,440 minutes is used. Once set, it is fixed for both players. Passing it shows Overdue without stopping play or changing the five-star score. Submitting the final report ends new investigation actions, while existing case data and the report remain readable.
+The replay creator may set a custom shared deadline before creating the room; otherwise the frozen case estimate plus 50% after the discovery minute is used. Once set, it is fixed for both players. Passing it shows Overdue; play continues and the five-star score is unchanged. At any time before filing a report, the detectives may give up from the case file: the room becomes review-only for both and the solution is shown. Submitting the final report ends new investigation actions, while existing case data and the report remain readable.
 
 V1 uses a continuous action-driven clock. Time advances only while at least one timed action is active, and concurrent player actions overlap on the same shared timeline. When the final active action ends, the clock pauses automatically. The server derives elapsed game time from timestamp anchors instead of writing a database update every minute. This preserves free discussion and evidence review while rewarding partners who split investigative work.
 
@@ -306,10 +314,12 @@ V1 fixed costs:
 |---|---:|
 | Move between rooms | 1 |
 | Move between floors | 2 |
-| Search room | 15 |
+| Search one spot in a room | 4 |
+| Walk to a room | 1 per door, 2 across floors (shortest path) |
 | Inspect discovered item | 2 |
 | Ask NPC one question | 3 |
-| Inspect one CCTV time window | 5 |
+| Scrub CCTV tape | 0 |
+| Lab test with nothing to find | 5 + 30 turnaround |
 | Read a device | 5 |
 | Search public records | 10 |
 | Submit forensic test | 5 |
@@ -322,9 +332,9 @@ Travel between city places uses the graph edge's generated deterministic `travel
 Deadline:
 
 ```text
-starting game time
+discovery minute
 + code-estimated optimal investigation minutes
-+ 1440 minutes
++ 50% of that estimate
 ```
 
 The optimal estimate is generated once during case generation. Users may override the default deadline. Runtime costs remain deterministic.

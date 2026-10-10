@@ -6,14 +6,10 @@ import { getPlayingRoomMember, requireInvestigationOpen } from "./lib/auth";
 
 const placeKind = v.union(v.literal("home"), v.literal("work"), v.literal("public"), v.literal("bureau"), v.literal("lab"));
 const area = v.union(v.literal("northside"), v.literal("midtown"), v.literal("eastside"));
-export const GAME_MINUTE_MS = 1_000;
+import { currentGameTime, GAME_MINUTE_MS } from "./lib/clock";
+import { spotKey } from "./lib/spots";
 
-export function currentGameTime(session: Pick<Doc<"sessions">, "gameTime" | "clockStartedAt">, now = Date.now()) {
-  const baseline = session.gameTime ?? 0;
-  return session.clockStartedAt === undefined
-    ? baseline
-    : baseline + Math.max(0, Math.floor((now - session.clockStartedAt) / GAME_MINUTE_MS));
-}
+export { currentGameTime, GAME_MINUTE_MS };
 
 function travelDistances(originId: Id<"places">, streets: Doc<"placeConnections">[]) {
   const distances = new Map<string, number>([[originId, 0]]);
@@ -109,10 +105,16 @@ export async function settleActions(ctx: MutationCtx, session: Doc<"sessions">, 
       const known = await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", action.itemId!)).unique();
       if (known && action.kind === "inspect" && known.inspectedAt === undefined) await ctx.db.patch(known._id, { inspectedAt: now });
       if (known && action.kind === "device" && known.readAt === undefined) await ctx.db.patch(known._id, { readAt: now });
-    } else if (action.kind === "search" && !(await ctx.db.query("searchedRooms").withIndex("by_sessionId_and_roomId", (q) => q.eq("sessionId", session._id).eq("roomId", action.roomId)).unique())) {
-      await ctx.db.insert("searchedRooms", { sessionId: session._id, roomId: action.roomId, searchedAt: now });
+    } else if (action.kind === "search") {
+      // A searched spot reveals only its own items; the first spot also marks the room as examined for lab sources.
+      if (action.slot && !(await ctx.db.query("searchedSpots").withIndex("by_sessionId_and_roomId_and_spot", (q) => q.eq("sessionId", session._id).eq("roomId", action.roomId).eq("spot", action.slot!)).unique())) {
+        await ctx.db.insert("searchedSpots", { sessionId: session._id, roomId: action.roomId, spot: action.slot, searchedAt: now });
+      }
+      if (!(await ctx.db.query("searchedRooms").withIndex("by_sessionId_and_roomId", (q) => q.eq("sessionId", session._id).eq("roomId", action.roomId)).unique())) {
+        await ctx.db.insert("searchedRooms", { sessionId: session._id, roomId: action.roomId, searchedAt: now });
+      }
       for await (const item of ctx.db.query("caseItems").withIndex("by_roomId", (q) => q.eq("roomId", action.roomId))) {
-        if (item.caseId !== session.caseId || !item.discoverableBySearch) continue;
+        if (item.caseId !== session.caseId || !item.discoverableBySearch || (action.slot && spotKey(item.slot) !== action.slot)) continue;
         if (!(await ctx.db.query("sessionItems").withIndex("by_sessionId_and_itemId", (q) => q.eq("sessionId", session._id).eq("itemId", item._id)).unique())) {
           await ctx.db.insert("sessionItems", { sessionId: session._id, itemId: item._id, discoveredAt: now });
         }

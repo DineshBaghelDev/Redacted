@@ -5,6 +5,7 @@ import { internalMutation, mutation, query, type MutationCtx, type QueryCtx } fr
 import { crimeCoreSchema } from "./generation/core/crimes";
 import { castSchema } from "./generation/core/schemas";
 import { cameraAtAccessPoint, getCameraAccess, getPlayingRoomMember, getRoomMember, requireInvestigationOpen, requireUserId } from "./lib/auth";
+import { CCTV_HALF_WINDOW } from "./lib/discoveries";
 import { ensureCaseCctv } from "./lib/publishCctv";
 import { ensureCaseDevices } from "./lib/publishDevices";
 import { ensureCaseForensics, restoreBodyForensicSources } from "./lib/publishForensics";
@@ -13,7 +14,7 @@ import { ensureCaseItems } from "./lib/publishItems";
 import { ensureCaseRecords } from "./lib/publishRecords";
 import { ensureCaseStatements } from "./lib/publishStatements";
 import { ensureCaseWorld } from "./lib/publishWorld";
-import { bureauRoomId, settleActions } from "./world";
+import { settleActions } from "./world";
 
 type Brief = {
   title?: unknown;
@@ -81,6 +82,23 @@ async function ensureCaseEstimate(ctx: MutationCtx, caseId: Id<"cases">, generat
   const estimate = estimateSchema.safeParse(draft?.output);
   if (!estimate.success) throw new Error("This case has no valid time estimate.");
   await ctx.db.patch(caseId, { estimatedOptimalMinutes: estimate.data.estimatedOptimalMinutes });
+}
+
+/** Copies the discovery minute and crime-scene room into the frozen case, once. */
+export async function ensureCaseOpening(ctx: MutationCtx, caseId: Id<"cases">) {
+  const playableCase = await ctx.db.get(caseId);
+  if (!playableCase || playableCase.discoveryMinute !== undefined || !playableCase.cityId) return;
+  const crime = (await getDraft(ctx, playableCase.generationJobId, "crime"))?.output as { discovery?: { time?: unknown }; sceneRoomId?: unknown } | undefined;
+  const discoveryMinute = typeof crime?.discovery?.time === "number" && Number.isSafeInteger(crime.discovery.time) ? crime.discovery.time : 0;
+  let sceneRoomId: Id<"rooms"> | undefined;
+  if (typeof crime?.sceneRoomId === "string") {
+    for await (const place of ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) {
+      if (!place.buildingId) continue;
+      const room = await ctx.db.query("rooms").withIndex("by_buildingId_and_sourceId", (q) => q.eq("buildingId", place.buildingId!).eq("sourceId", crime.sceneRoomId as string)).unique();
+      if (room) { sceneRoomId = room._id; break; }
+    }
+  }
+  await ctx.db.patch(caseId, { discoveryMinute, ...(sceneRoomId ? { sceneRoomId } : {}) });
 }
 
 async function ensureCaseSolution(ctx: MutationCtx, caseId: Id<"cases">, generationJobId: Id<"generationJobs">) {
@@ -173,6 +191,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
   if (existing?.publicationVersion === PUBLICATION_VERSION) {
     await ensureCaseEstimate(ctx, existing._id, generationJobId);
     await ensureCaseStatements(ctx, existing._id, generationJobId);
+    await ensureCaseOpening(ctx, existing._id);
     return existing._id;
   }
 
@@ -190,6 +209,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
     await ensureCaseNarrative(ctx, existing._id, generationJobId);
     await ensureCaseStatements(ctx, existing._id, generationJobId);
     await ensureCaseEstimate(ctx, existing._id, generationJobId);
+    await ensureCaseOpening(ctx, existing._id);
     await ctx.db.patch(existing._id, { publicationVersion: PUBLICATION_VERSION });
     return existing._id;
   }
@@ -217,6 +237,7 @@ export async function ensureCaseForJob(ctx: MutationCtx, generationJobId: Id<"ge
   await ensureCaseNarrative(ctx, caseId, generationJobId);
   await ensureCaseStatements(ctx, caseId, generationJobId);
   await ensureCaseEstimate(ctx, caseId, generationJobId);
+  await ensureCaseOpening(ctx, caseId);
   await ctx.db.patch(caseId, { publicationVersion: PUBLICATION_VERSION });
   return caseId;
 }
@@ -327,6 +348,30 @@ export const getCctv = query({
   },
 });
 
+/** Everything already watched on one camera's tape: which hours are loaded and the sightings in them. */
+export const getCctvTape = query({
+  args: { roomCode: v.string(), cameraId: v.string() },
+  returns: v.union(v.null(), v.object({
+    reviews: v.array(v.object({ minute: v.number(), ready: v.boolean() })),
+    records: v.array(cctvRecord),
+  })),
+  handler: async (ctx, { roomCode, cameraId }) => {
+    const cctv = await loadCctv(ctx, roomCode);
+    const camera = cctv?.cameras.find((item) => item.sourceId === cameraId);
+    if (!cctv || !camera) return null;
+    const gameTime = cctv.member.session.gameTime ?? 0;
+    const reviews = await ctx.db.query("cctvReviews")
+      .withIndex("by_sessionId_and_cameraId_and_minute", (q) => q.eq("sessionId", cctv.member.session._id).eq("cameraId", camera._id))
+      .take(200);
+    // At the terminal the whole tape is visible; scrubbing is free and instant.
+    const records = await ctx.db.query("cctvRecords").withIndex("by_cameraId_and_startTime", (q) => q.eq("cameraId", camera._id)).take(500);
+    return {
+      reviews: reviews.map((review) => ({ minute: review.minute, ready: review.completeGameTime <= gameTime })),
+      records: records.map((record) => ({ id: record.evidenceId, cameraId, start: record.startTime, end: record.endTime, summary: record.description, kind: record.kind })),
+    };
+  },
+});
+
 export const getCctvWindow = query({
   args: { roomCode: v.string(), cameraId: v.string(), minute: v.number() },
   returns: v.union(v.null(), v.object({
@@ -348,8 +393,8 @@ export const getCctvWindow = query({
     const records = [];
     for await (const record of ctx.db
       .query("cctvRecords")
-      .withIndex("by_cameraId_and_startTime", (q) => q.eq("cameraId", camera._id).lte("startTime", minute + 20))) {
-      if (record.endTime >= minute - 20) records.push(record);
+      .withIndex("by_cameraId_and_startTime", (q) => q.eq("cameraId", camera._id).lte("startTime", minute + CCTV_HALF_WINDOW))) {
+      if (record.endTime >= minute - CCTV_HALF_WINDOW) records.push(record);
     }
     return { status: "ready" as const, records: records.map((record) => ({
         id: record.evidenceId,
@@ -382,15 +427,9 @@ export const startCctvReview = mutation({
     const existing = await ctx.db.query("cctvReviews")
       .withIndex("by_sessionId_and_cameraId_and_minute", (q) => q.eq("sessionId", member.session._id).eq("cameraId", camera._id).eq("minute", minute))
       .unique();
-    if (existing) throw new Error("This window is already being reviewed or has been reviewed.");
-    const roomId = access.place?.kind === "bureau" || !member.player.currentPlaceId
-      ? await bureauRoomId(ctx, member.session.caseId!, member.player)
-      : member.player.currentRoomId;
-    if (!roomId) throw new Error("This camera's access point is unavailable.");
-    if (settled.activeCount === 0) await ctx.db.patch(member.session._id, { gameTime: settled.gameTime, clockStartedAt: now });
-    const completeGameTime = settled.gameTime + 5;
-    const cctvReviewId = await ctx.db.insert("cctvReviews", { sessionId: member.session._id, cameraId: camera._id, minute, completeGameTime });
-    await ctx.db.insert("roomActions", { sessionId: member.session._id, playerId: member.player._id, kind: "cctv", roomId, cctvReviewId, startGameTime: settled.gameTime, completeGameTime, createdAt: now });
+    // Watching tape is instant and free: scrubbing only records which hours the team has seen.
+    const completeGameTime = (await ctx.db.get(member.session._id))?.gameTime ?? settled.gameTime;
+    if (!existing) await ctx.db.insert("cctvReviews", { sessionId: member.session._id, cameraId: camera._id, minute, completeGameTime });
     return { completeGameTime };
   },
 });

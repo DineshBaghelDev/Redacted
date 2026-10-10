@@ -1,196 +1,301 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
+import type { FunctionReturnType } from "convex/server";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
+import { play } from "../../../lib/sound";
+import { CharacterPortrait } from "../character-portrait";
 import { GameIcon } from "../game-icon";
 
-function formatTime(minutes: number) {
-  const day = Math.floor(minutes / 1440) + 1;
-  const withinDay = minutes % 1440;
-  return `Day ${day} · ${String(Math.floor(withinDay / 60)).padStart(2, "0")}:${String(withinDay % 60).padStart(2, "0")}`;
+type Camera = NonNullable<FunctionReturnType<typeof api.cases.getCctv>>["cameras"][number];
+
+/** Pixels of tape per game minute: an hour is a comfortable swipe. */
+const PX_PER_MINUTE = 4;
+
+function clock(minutes: number) {
+  const withinDay = ((minutes % 1440) + 1440) % 1440;
+  return `${String(Math.floor(withinDay / 60)).padStart(2, "0")}:${String(withinDay % 60).padStart(2, "0")}`;
 }
 
-export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: { roomCode: string; onBack: () => void; backLabel?: string }) {
+function day(minutes: number) {
+  return Math.floor(minutes / 1440) + 1;
+}
+
+/** The server reviews an hour as ±30 minutes around its middle minute; every client derives the same key. */
+function hourKey(minute: number, camera: Camera) {
+  return Math.min(camera.end, Math.max(camera.start, Math.floor(minute / 60) * 60 + 30));
+}
+
+export function CctvScreen({ roomCode, onBack, backLabel = "Step away from the terminal" }: { roomCode: string; onBack: () => void; backLabel?: string }) {
   const { isLoaded, isSignedIn } = useAuth();
+  const presetTime = Number(useSearchParams().get("t"));
   const data = useQuery(api.cases.getCctv, isLoaded && isSignedIn ? { roomCode } : "skip");
+  const people = useQuery(api.npcs.list, isLoaded && isSignedIn ? { roomCode } : "skip");
   const [chosenCameraId, setCameraId] = useState("");
-  const [chosenMinute, setMinute] = useState<number | null>(null);
-  const [pinning, setPinning] = useState("");
-  const [reviewing, setReviewing] = useState(false);
-  const [error, setError] = useState("");
-  const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
-  const createReference = useMutation(api.clueBoard.createReferenceNode);
-  const startReview = useMutation(api.cases.startCctvReview);
+  const [compareOpen, setCompareOpen] = useState(false);
 
-  const cameraId = data?.cameras.some((camera) => camera.id === chosenCameraId)
-    ? chosenCameraId
-    : data?.cameras[0]?.id ?? "";
-  const chosenCamera = data?.cameras.find((item) => item.id === cameraId);
-  const minute = chosenCamera && chosenMinute !== null && chosenMinute >= chosenCamera.start && chosenMinute <= chosenCamera.end
-    ? chosenMinute
-    : chosenCamera ? Math.min(chosenCamera.end, Math.max(chosenCamera.start, Math.round((chosenCamera.start + chosenCamera.end) / 10) * 5)) : 0;
-  const visibleWindow = useQuery(
-    api.cases.getCctvWindow,
-    data && cameraId ? { roomCode, cameraId, minute } : "skip",
+  const [wallOpen, setWallOpen] = useState(true);
+  const camera = data?.cameras.find((item) => item.id === chosenCameraId) ?? data?.cameras[0];
+  if (data === undefined) return <CctvMessage message="Powering up the terminal..." onBack={onBack} backLabel={backLabel} />;
+  if (!data || !camera) return <CctvMessage message="There are no cameras to review here." onBack={onBack} backLabel={backLabel} />;
+
+  return (
+    <section className="game-cctv-scene game-records-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#e4e6d8]">
+      <header className="game-station-header flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:flex-nowrap sm:px-6">
+        <div className="min-w-0 basis-full sm:basis-auto">
+          <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Security terminal</p>
+          <h2 className="mt-1 text-lg uppercase tracking-wide sm:text-2xl">Camera tapes</h2>
+        </div>
+        <button className="shrink-0 border border-[#6f9f98]/70 px-3 py-2 text-xs uppercase text-[#c8d8d2] hover:border-[#e8ac51] hover:text-[#e8ac51] sm:text-sm" onClick={() => setCompareOpen(!compareOpen)} type="button">{compareOpen ? "Hide people" : <>Compare<span className="hidden sm:inline"> with people</span></>}</button>
+        <button className="shrink-0 border border-[#6f9f98]/70 px-3 py-2 text-xs uppercase text-[#c8d8d2] hover:border-[#e8ac51] hover:text-[#e8ac51] sm:text-sm" onClick={onBack} type="button">{backLabel}</button>
+      </header>
+      <div className="game-station-main relative flex min-h-0 flex-1">
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto max-w-5xl">
+            {data.cameras.length > 1 && wallOpen ? (
+              <MonitorWall cameras={data.cameras} selectedId={chosenCameraId} onPick={(id) => { play("click"); setCameraId(id); setWallOpen(false); }} />
+            ) : (
+              <>
+                {data.cameras.length > 1 ? (
+                  <button className="mb-3 flex min-h-10 items-center gap-2 border border-[#6f9f98]/50 px-3 text-xs uppercase text-[#c8d8d2] hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={() => setWallOpen(true)} type="button">
+                    <GameIcon className="size-6" name="cctv" />◀ Change camera
+                  </button>
+                ) : null}
+                <TapeScrubber camera={camera} key={camera.id} presetTime={Number.isFinite(presetTime) && presetTime > 0 ? presetTime : null} roomCode={roomCode} />
+              </>
+            )}
+          </div>
+        </div>
+        {compareOpen ? (
+          <aside aria-label="People to compare" className="game-dossier w-full max-w-xs shrink-0 overflow-y-auto px-5 pb-8 pt-10 animate-in slide-in-from-right max-sm:absolute max-sm:inset-y-0 max-sm:right-0 max-sm:z-10">
+            <p className="text-xs uppercase tracking-[0.2em] text-red-800">What they look like</p>
+            <ul className="mt-3 space-y-3">
+              {(people ?? []).map((person) => (
+                <li className="flex gap-2 border-b border-[#8b7355]/50 pb-3" key={person.id}>
+                  <CharacterPortrait age={person.age} className="w-12" description={person.publicDescription} gender={person.gender} id={person.id} />
+                  <div className="min-w-0"><p className="text-sm uppercase">{person.name}</p><p className="text-xs leading-relaxed">{person.publicDescription}</p></div>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        ) : null}
+      </div>
+    </section>
   );
+}
 
-  if (data === undefined) return <CctvMessage message="Loading camera records..." onBack={onBack} backLabel={backLabel} />;
-  if (!data) return <CctvMessage message="No camera records are available here." onBack={onBack} backLabel={backLabel} />;
-  if (data.cameras.length === 0) return <CctvMessage message="There are no cameras to review here." onBack={onBack} backLabel={backLabel} />;
+/** "Street camera · Linden Court - Carver Towers" → group "Street camera", label "Linden Court – Carver Towers". */
+function splitName(name: string) {
+  const at = name.indexOf(" · ");
+  return at === -1 ? { group: "Cameras", label: name } : { group: name.slice(0, at), label: name.slice(at + 3).replace(" - ", " – ") };
+}
 
-  const camera = data.cameras.find((item) => item.id === cameraId)!;
-  const records = visibleWindow?.status === "ready" ? visibleWindow.records : [];
+/** A security-desk wall of screens, grouped by where the cameras are. */
+function MonitorWall({ cameras, selectedId, onPick }: { cameras: Camera[]; selectedId: string; onPick: (id: string) => void }) {
+  const groups = new Map<string, Camera[]>();
+  for (const item of cameras) groups.set(splitName(item.name).group, [...(groups.get(splitName(item.name).group) ?? []), item]);
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-[#c8d8d2]/80">Pick a screen to watch its tape.</p>
+      {[...groups].map(([group, items]) => (
+        <section key={group}>
+          <h3 className="text-xs uppercase tracking-[0.2em] text-[#e8ac51]">{group === "Street camera" ? "Streets" : group} · {items.length}</h3>
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {items.map((item) => (
+              <button
+                aria-pressed={item.id === selectedId}
+                className={`cctv-monitor relative flex min-h-24 flex-col justify-between overflow-hidden border-2 bg-[#020807] p-3 text-left font-mono transition hover:border-[#e8ac51] aria-pressed:border-[#e8ac51] ${item.faulty ? "border-[#3a2a2a] opacity-60" : "border-[#2f4a47]"}`}
+                key={item.id}
+                onClick={() => onPick(item.id)}
+                type="button"
+              >
+                <span className={`text-[0.65rem] uppercase tracking-[0.15em] ${item.faulty ? "text-red-300" : "text-[#7fd1ae]"}`}>{item.faulty ? "No signal" : "● Rec"}</span>
+                <span className="text-sm leading-snug text-[#c9f2dd]">{splitName(item.name).label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
 
-  function selectCamera(id: string) {
-    setCameraId(id);
-    setMinute(null);
-    setError("");
-  }
+function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; camera: Camera; presetTime: number | null }) {
+  const tape = useQuery(api.cases.getCctvTape, { roomCode, cameraId: camera.id });
+  const boardNodes = useQuery(api.clueBoard.getNodes, { roomCode });
+  const startReview = useMutation(api.cases.startCctvReview);
+  const createReference = useMutation(api.clueBoard.createReferenceNode);
+  const scroller = useRef<HTMLDivElement>(null);
+  const requested = useRef(new Set<number>());
+  const startMinute = presetTime !== null && presetTime >= camera.start && presetTime <= camera.end ? presetTime : camera.start;
+  const [minute, setMinute] = useState(startMinute);
+  const [error, setError] = useState("");
+  const [pinning, setPinning] = useState("");
+  const length = camera.end - camera.start;
+  const key = hourKey(minute, camera);
+  const review = tape?.reviews.find((row) => row.minute === key);
+  const onScreen = (tape?.records ?? []).filter((record) => minute >= record.start - 1 && minute <= record.end + 1);
+  const thisHour = (tape?.records ?? []).filter((record) => record.end >= key - 30 && record.start <= key + 30);
 
-  function reviewWindow() {
-    setReviewing(true);
-    setError("");
-    void startReview({ roomCode, cameraId, minute }).catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "Could not review this camera window.");
-    }).finally(() => setReviewing(false));
+  // Start at the preset time (from a call or message) or the beginning of the tape.
+  useEffect(() => {
+    if (scroller.current) scroller.current.scrollLeft = (startMinute - camera.start) * PX_PER_MINUTE;
+  }, [camera.start, startMinute]);
+
+  // Mouse wheel and click-drag scrub the tape like a jog wheel; touch uses native sideways scrolling.
+  useEffect(() => {
+    const element = scroller.current;
+    if (!element) return;
+    const onWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      event.preventDefault();
+      element.scrollLeft += event.deltaY;
+    };
+    let dragX: number | null = null;
+    const onDown = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse" || (event.target as HTMLElement).tagName === "BUTTON") return;
+      dragX = event.clientX;
+      element.setPointerCapture(event.pointerId);
+    };
+    const onMove = (event: PointerEvent) => {
+      if (dragX === null) return;
+      element.scrollLeft -= event.clientX - dragX;
+      dragX = event.clientX;
+    };
+    const onUp = () => { dragX = null; };
+    element.addEventListener("wheel", onWheel, { passive: false });
+    element.addEventListener("pointerdown", onDown);
+    element.addEventListener("pointermove", onMove);
+    element.addEventListener("pointerup", onUp);
+    return () => {
+      element.removeEventListener("wheel", onWheel);
+      element.removeEventListener("pointerdown", onDown);
+      element.removeEventListener("pointermove", onMove);
+      element.removeEventListener("pointerup", onUp);
+    };
+  }, []);
+
+  // Hours you scrub through are logged in the background so their sightings reach the notebook. No waiting.
+  useEffect(() => {
+    if (camera.faulty || !tape || review || requested.current.has(key)) return;
+    const timer = window.setTimeout(() => {
+      requested.current.add(key);
+      void startReview({ roomCode, cameraId: camera.id, minute: key }).catch(() => requested.current.delete(key));
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [camera, key, review, roomCode, startReview, tape]);
+
+  useEffect(() => {
+    if (onScreen.length) play("type");
+  }, [onScreen.length]);
+
+  function seek(target: number) {
+    const clamped = Math.min(camera.end, Math.max(camera.start, target));
+    scroller.current?.scrollTo({ left: (clamped - camera.start) * PX_PER_MINUTE, behavior: "smooth" });
   }
 
   function pinRecord(referenceId: string) {
     const count = boardNodes?.length ?? 0;
     setPinning(referenceId);
-    setError("");
-    void createReference({
-      roomCode,
-      type: "cctv",
-      referenceId,
-      x: 80 + (count % 4) * 220,
-      y: 90 + Math.floor(count / 4) * 180,
-    }).catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "Could not pin this camera record.");
-    }).finally(() => setPinning(""));
+    void createReference({ roomCode, type: "cctv", referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 })
+      .catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Could not pin this sighting."))
+      .finally(() => setPinning(""));
   }
 
+  const hours = [];
+  for (let hour = Math.ceil(camera.start / 60) * 60; hour <= camera.end; hour += 60) hours.push(hour);
+  const sightings = tape?.records ?? [];
+  const previous = [...sightings].reverse().find((record) => record.start < minute - 1);
+  const next = sightings.find((record) => record.start > minute + 1);
+
   return (
-    <section className="game-cctv-scene game-records-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#e4e6d8]">
-      <header className="game-station-header flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Security desk</p>
-          <h2 className="mt-1 text-lg uppercase tracking-wide sm:text-2xl">Camera records</h2>
+    <div>
+      <div className="cctv-monitor relative overflow-hidden border-2 border-[#2f4a47] bg-[#020807] p-4 font-mono sm:p-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs uppercase tracking-[0.18em] text-[#7fd1ae]">
+          <span>{camera.name}</span>
+          <span className="text-[#7fd1ae]">{camera.faulty ? "No signal" : "▶ Play"}</span>
         </div>
-        <button
-          aria-label={backLabel}
-          className="shrink-0 border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase text-[#c8d8d2] hover:border-[#e8ac51] hover:text-[#e8ac51] focus-visible:outline-2 focus-visible:outline-[#e8ac51]"
-          onClick={onBack}
-          type="button"
-        >
-          Back
-        </button>
-      </header>
-
-      <div className="game-station-main min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-        <div className={`mx-auto grid max-w-6xl items-start gap-6 ${data.cameras.length > 1 ? "lg:grid-cols-[minmax(15rem,19rem)_minmax(0,1fr)]" : ""}`}>
-        {data.cameras.length > 1 ? (
-        <aside className="min-w-0 border-b border-[#6f9f98]/35 pb-5 lg:border-b-0 lg:border-r lg:pr-6">
-          <h3 className="text-xs uppercase tracking-[0.18em] text-[#e8ac51]">01 / Cameras here · {data.cameras.length}</h3>
-          <div className="mt-3 grid max-h-56 grid-cols-2 gap-x-3 gap-y-1 overflow-y-auto lg:max-h-none lg:grid-cols-1 lg:overflow-visible">
-            {data.cameras.map((item) => <button aria-pressed={item.id === cameraId} className="flex min-h-14 min-w-0 items-center gap-3 border-b border-[#6f9f98]/30 py-2 text-left text-sm uppercase hover:text-[#f1c987] aria-pressed:text-[#f1c987]" key={item.id} onClick={() => selectCamera(item.id)} type="button"><GameIcon className="size-9 shrink-0" name="cctv" /><span className="min-w-0 flex-1 break-words">{item.name}{item.faulty ? <span className="block text-xs text-red-300">Offline</span> : null}</span></button>)}
-          </div>
-          {camera.faulty ? <p className="mt-4 break-words text-sm leading-relaxed text-[#b8ccc1]">This camera has no recording for the case period.</p> : null}
-        </aside>
-        ) : null}
-
-        <main className="min-w-0">
-          {error ? <p className="mb-4 border border-red-300 bg-red-950/80 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
-          <h3 className="break-words text-2xl uppercase leading-tight text-[#e4e6d8] sm:text-3xl">{camera.name}</h3>
-
-          <div className="game-panel mt-6 p-8 sm:px-20">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <label className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55" htmlFor="cctv-time">
-                {data.cameras.length > 1 ? "02" : "01"} / Choose time
-              </label>
-              <output className="font-mono text-lg text-[#e8ac51]" htmlFor="cctv-time" aria-live="polite">
-                {formatTime(minute)}
-              </output>
-            </div>
-
-            <div className="mt-7">
-              <input
-                aria-valuetext={formatTime(minute)}
-                className="relative z-10 h-2 w-full cursor-ew-resize appearance-none bg-[#102224] accent-[#d69943]"
-                disabled={camera.faulty}
-                id="cctv-time"
-                max={camera.end}
-                min={camera.start}
-                onChange={(event) => setMinute(Number(event.target.value))}
-                step={1}
-                type="range"
-                value={minute}
-              />
-              <div className="mt-2 flex justify-between gap-3 font-mono text-xs text-[#c8d8d2]/65">
-                <span>{formatTime(camera.start)}</span>
-                <span className="text-right">{formatTime(camera.end)}</span>
-              </div>
-            </div>
-            <p className="mt-3 text-sm leading-relaxed text-[#c8d8d2]">20 minutes before and after this time · 5 minutes to review.</p>
-            {!camera.faulty && visibleWindow?.status === "available" ? (
-              <button className="mt-4 min-h-11 border border-[#e8ac51] px-4 text-sm uppercase text-[#e8ac51] hover:bg-[#e8ac51] hover:text-[#071014] disabled:opacity-50" disabled={reviewing} onClick={reviewWindow} type="button">
-                {reviewing ? "Starting review..." : "Review this time · 5 min"}
-              </button>
-            ) : null}
-            {visibleWindow?.status === "pending" ? <p className="mt-4 text-sm uppercase text-[#e8ac51]" role="status">Review in progress. Records will appear when it finishes.</p> : null}
-            {visibleWindow?.status === "ready" ? <p className="mt-4 text-sm text-[#a9d1b7]" role="status">This time has been reviewed. Its log is below.</p> : null}
-          </div>
-
-          <div className="mt-5">
-            <div className="flex items-center justify-between gap-3">
-              <h4 className="text-sm uppercase tracking-[0.18em] text-[#e8ac51]">{data.cameras.length > 1 ? "03" : "02"} / Activity log</h4>
-              <span className="font-mono text-xs text-[#c8d8d2]/65">{visibleWindow?.status === "ready" ? `${records.length} ${records.length === 1 ? "record" : "records"}` : "Not reviewed"}</span>
-            </div>
-
-            {camera.faulty ? (
-              <div className="mt-3 border border-red-400/30 bg-red-950/20 p-5 text-red-100">
-                <p className="uppercase">No signal</p>
-                <p className="mt-2 text-sm text-red-100/60">This camera was not recording during the case window.</p>
-              </div>
-            ) : visibleWindow === undefined ? (
-              <div className="mt-3 border border-[#6f9f98]/20 p-6 text-center text-sm uppercase text-[#c8d8d2]/65">
-                Checking this time window...
-              </div>
-            ) : visibleWindow?.status === "available" || visibleWindow?.status === "pending" ? (
-              <div className="mt-3 border border-[#6f9f98]/20 p-6 text-center text-sm uppercase text-[#c8d8d2]/65">
-                {visibleWindow.status === "pending" ? "Review in progress." : "Review this time window to see its records."}
-              </div>
-            ) : records.length ? (
-              <ul className="mt-3 space-y-2">
-                {records.map((record) => (
-                  <li className={`border-l-2 bg-[#0b1a1c]/85 p-4 ${record.kind === "offline" ? "border-red-400 text-red-100" : "border-[#6f9f98]"}`} key={record.id}>
-                    <p className="font-mono text-xs text-[#e8ac51]">{formatTime(record.start)}–{formatTime(record.end).split(" · ")[1]}</p>
-                    <p className="mt-2 break-words text-base leading-relaxed text-[#e4e6d8]">{record.summary}</p>
-                    <button
-                      className="mt-4 min-h-11 border border-[#6f9f98]/60 px-3 text-xs uppercase text-[#c8d8d2] hover:border-[#e8ac51] hover:text-[#e8ac51] disabled:cursor-default disabled:opacity-50"
-                      disabled={pinning === record.id || boardNodes?.some((node) => node.type === "cctv" && node.referenceId === record.id)}
-                      onClick={() => pinRecord(record.id)}
-                      type="button"
-                    >
-                      {pinning === record.id ? "Pinning..." : boardNodes?.some((node) => node.type === "cctv" && node.referenceId === record.id) ? "Pinned to clueboard" : "Pin to clueboard"}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="mt-3 border border-dashed border-[#6f9f98]/20 p-6 text-center text-sm text-[#c8d8d2]/65">
-                No one was recorded near this time.
-              </div>
-            )}
-          </div>
-
-          <p className="pb-4 pt-6 text-xs uppercase tracking-[0.14em] text-[#c8d8d2]/65">Written descriptions only · identities are not provided</p>
-        </main>
+        <p className="mt-3 text-3xl tabular-nums text-[#c9f2dd] sm:text-5xl">Day {day(minute)} · {clock(minute)}</p>
+        <div className="mt-4 min-h-24 border-t border-[#2f4a47] pt-3 text-sm leading-relaxed sm:text-base">
+          {camera.faulty ? <p className="text-red-300">This camera recorded nothing during the case.</p>
+            : onScreen.length ? onScreen.map((record) => (
+                <p className={`terminal-line ${record.kind === "offline" ? "text-red-300" : "text-[#f1c987]"}`} key={record.id}>
+                  <span className="text-[#7fd1ae]">[{clock(record.start)}–{clock(record.end)}]</span> {record.summary}
+                </p>
+              )) : <p className="text-[#7fd1ae]/50">Empty frame. Nobody in view.</p>}
         </div>
+        {error ? <p className="mt-2 text-xs text-[#e5a18e]" role="status">{error}</p> : null}
       </div>
-    </section>
+
+      {!camera.faulty ? (
+        <>
+          <div className="relative mt-3 border-2 border-[#2f4a47] bg-[#061210]">
+            <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-1/2 z-10 w-0.5 -translate-x-1/2 bg-[#e8ac51] shadow-[0_0_8px_#e8ac51]" />
+            <div
+              aria-label="Camera tape. Scroll sideways to move through time."
+              className="cctv-tape overflow-x-auto overflow-y-hidden"
+              onScroll={(event) => setMinute(Math.round(camera.start + event.currentTarget.scrollLeft / PX_PER_MINUTE))}
+              ref={scroller}
+              tabIndex={0}
+            >
+              {/* Half-screen padding at both ends lets the first and last minute reach the playhead. */}
+              <div className="h-24" style={{ width: length * PX_PER_MINUTE, boxSizing: "content-box", paddingInline: "50%" }}>
+                <div className="relative h-full" style={{ width: length * PX_PER_MINUTE }}>
+                  {(tape?.reviews ?? []).filter((row) => row.ready).map((row) => (
+                    <span aria-hidden="true" className="absolute inset-y-0 bg-[#7fd1ae]/10" key={row.minute} style={{ left: (row.minute - 30 - camera.start) * PX_PER_MINUTE, width: 60 * PX_PER_MINUTE }} />
+                  ))}
+                  {hours.map((hour) => (
+                    <span className="absolute bottom-0 top-0 border-l border-[#2f4a47] pl-1 pt-1 font-mono text-[0.65rem] text-[#7fd1ae]/70" key={hour} style={{ left: (hour - camera.start) * PX_PER_MINUTE }}>
+                      {hour % 1440 === 0 ? `Day ${day(hour)}` : clock(hour)}
+                    </span>
+                  ))}
+                  {sightings.map((record) => (
+                    <button
+                      aria-label={`Sighting at ${clock(record.start)}`}
+                      className={`absolute bottom-3 h-8 min-w-1.5 ${record.kind === "offline" ? "bg-red-400/70" : "bg-[#e8ac51]"} hover:brightness-125`}
+                      key={record.id}
+                      onClick={() => seek(record.start)}
+                      style={{ left: (record.start - camera.start) * PX_PER_MINUTE, width: Math.max(1, record.end - record.start) * PX_PER_MINUTE }}
+                      type="button"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs uppercase">
+            <button className="min-h-10 border border-[#2f4a47] px-3 text-[#9fe0c2] hover:border-[#7fd1ae] disabled:opacity-40" disabled={!previous} onClick={() => previous && seek(previous.start)} type="button">◀◀ Last sighting</button>
+            <button className="min-h-10 border border-[#2f4a47] px-3 text-[#9fe0c2] hover:border-[#7fd1ae]" onClick={() => seek(minute - 10)} type="button">−10 min</button>
+            <button className="min-h-10 border border-[#2f4a47] px-3 text-[#9fe0c2] hover:border-[#7fd1ae]" onClick={() => seek(minute + 10)} type="button">+10 min</button>
+            <button className="min-h-10 border border-[#2f4a47] px-3 text-[#9fe0c2] hover:border-[#7fd1ae] disabled:opacity-40" disabled={!next} onClick={() => next && seek(next.start)} type="button">Next sighting ▶▶</button>
+            <span className="ml-auto normal-case tracking-normal text-[#c8d8d2]/60">Drag or scroll the tape. Orange marks are people passing.</span>
+          </div>
+
+          {tape ? (
+            <section className="mt-5">
+              <h3 className="text-xs uppercase tracking-[0.18em] text-[#e8ac51]">This hour · {clock(key - 30)}–{clock(key + 30)}</h3>
+              {thisHour.length ? (
+                <ul className="mt-2 divide-y divide-[#2f4a47] border-y border-[#2f4a47] font-mono text-sm">
+                  {thisHour.map((record) => {
+                    const pinned = boardNodes?.some((node) => node.type === "cctv" && node.referenceId === record.id);
+                    return (
+                      <li className="flex flex-wrap items-start gap-2 py-2" key={record.id}>
+                        <button className="text-left text-[#c9f2dd] hover:text-[#f1c987]" onClick={() => seek(record.start)} type="button"><span className="text-[#e8ac51]">[{clock(record.start)}]</span> {record.summary}</button>
+                        <button className="ml-auto border-b border-[#7fd1ae]/50 text-xs uppercase text-[#7fd1ae] hover:text-[#e8ac51] disabled:opacity-50" disabled={pinning === record.id || pinned} onClick={() => pinRecord(record.id)} type="button">{pinned ? "Pinned" : "Pin"}</button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : <p className="mt-2 font-mono text-sm text-[#7fd1ae]/50">Nobody passed this camera in this hour.</p>}
+            </section>
+          ) : null}
+        </>
+      ) : null}
+    </div>
   );
 }
 

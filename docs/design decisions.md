@@ -1,5 +1,22 @@
 # Design Decisions
 
+## 2026-10-10 — Game feel over app feel
+
+- Evidence stays unlinked: the game never turns a find into a lead, map pin, or conclusion. The one exception is the People file, which grows when a person's name appears in something the team has uncovered. This replaces the full roster at minute zero.
+- Role labels are hidden. Only "Victim" is shown; everyone else is a name, a description, and where they were first seen.
+- The case starts at the crime scene, on the story's own clock. Actions resolve fast. Passing the deadline shows Overdue but never stops play (player decision). Instead, the case file offers "Give up and see the solution", which ends the room for both detectives and shows the epilogue.
+- Rooms are searched spot by spot so choosing where to look is the decision. Walking is by floor plan, never by repeated door hopping.
+- CCTV is a scrubbable tape: drag or scroll a timeline under a fixed playhead and read what is in frame. Watching costs no time and never waits (player asked to remove the rewind button and loading delay). Matching written descriptions to people is the intended deduction.
+- The lab offers the full test menu for every legitimate source; it never reveals which tests will find something.
+- Notebook entries are facts the team found, logged automatically for both detectives. The clueboard remains the only place for reasoning, and pinning stays a deliberate choice. Once something is discovered it can be pinned from anywhere; location gates apply to discovering, not to pinning.
+- Cameras are chosen from a security-desk wall of screens grouped by area, not a long list of names.
+- A typed request for someone's phone is treated as the handover request. The NPC reply is told whether a handover actually happened so dialogue never contradicts game state.
+- Found objects are all baggable; a missing action must never be the tell for what matters.
+- The city map is the whole screen. Place actions live in a card above the tapped marker; there is no side panel or place list.
+- Interview topic chips come only from the team's own discoveries. They are a typing shortcut, not a hint system.
+- Navigation and terminal chrome: no app tab bar, no plain "Back". Exits are named in-world; Leave and sound live in the Esc menu.
+- After the report is scored or the team gives up, "What really happened" shows the canonical account and timeline. This is the only release of hidden truth and happens only once nothing can change the result.
+
 ## 2026-10-10 — Archive and case opening
 
 - Portraits stay decorative but should reflect known written appearance: use the frozen cast's gender, public clothing and build where available, then deterministic ID-based variation for unspecified details. Do not derive gender from a name or expose private cast data.

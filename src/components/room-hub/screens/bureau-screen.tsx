@@ -1,12 +1,16 @@
 import { useAuth } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { go, replaceTo } from "../../../lib/game-nav";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
-import { currentGameMinute, formatGameMinute } from "../../../lib/game-time";
+import { currentGameMinute, formatGameMinute, formatDuration, partOfDay } from "../../../lib/game-time";
+import { isMuted, play, setMuted, startRain } from "../../../lib/sound";
 import { GameIcon } from "../game-icon";
+import { NotebookOverlay } from "../notebook-overlay";
 
 const ClueBoardScreen = dynamic(() =>
   import("./clue-board-screen").then((module) => module.ClueBoardScreen),
@@ -40,68 +44,99 @@ const CaseFileScreen = dynamic(() =>
   import("./case-file-screen").then((module) => module.CaseFileScreen),
 );
 
-type Station = "interrogate" | "cctv" | "clueboard" | "evidence" | "map" | "place" | "lab" | "case";
+/** Fetch every station's code in the background so the first visit to each one doesn't wait on a download. */
+export function preloadStations() {
+  void import("./clue-board-screen");
+  void import("./cctv-screen");
+  void import("./map-screen");
+  void import("./place-screen");
+  void import("./forensic-lab-screen");
+  void import("./interrogation-screen");
+  void import("./evidence-screen");
+  void import("./case-file-screen");
+}
 
-const stations: Record<Station, { label: string; description: string }> = {
-  interrogate: {
-    label: "People",
-    description: "Review the people connected to this case and pin them to the clueboard.",
-  },
-  cctv: {
-    label: "CCTV",
-    description: "Bureau and street camera logs. Building cameras are on site.",
-  },
-  clueboard: {
-    label: "Clueboard",
-    description: "Lay out the facts you have found and connect your own deductions.",
-  },
-  evidence: {
-    label: "Public records",
-    description: "Search addresses, employment records, background checks, and card payments.",
-  },
-  map: {
-    label: "City map",
-    description: "Plan where to go next and review the places connected to this case.",
-  },
-  place: { label: "Explore", description: "Move through rooms and examine what you find." },
-  lab: { label: "Forensic lab", description: "Request tests for evidence your team has found." },
-  case: {
-    label: "Case file",
-    description: "Review the briefing and submit the final report when your theory is ready.",
-  },
+type Station = "interrogate" | "cctv" | "clueboard" | "evidence" | "map" | "place" | "lab" | "case";
+type Toast = { id: string; text: string };
+
+const stations: Record<Station, string> = {
+  interrogate: "Interview room",
+  cctv: "Security desk",
+  clueboard: "Clueboard",
+  evidence: "Records room",
+  map: "City map",
+  place: "Explore",
+  lab: "Forensic lab",
+  case: "Case file",
 };
 
-const stationOrder: Station[] = ["interrogate", "cctv", "clueboard", "evidence", "map", "case"];
-const stationIcons: Record<Station, Parameters<typeof GameIcon>[0]["name"]> = { interrogate: "interview", cctv: "cctv", clueboard: "clueboard", evidence: "records", map: "map", place: "map", lab: "lab", case: "case" };
+const hotspots: { station: Station; label: string; icon: Parameters<typeof GameIcon>[0]["name"]; className: string }[] = [
+  { station: "interrogate", label: "Interview room", icon: "interview", className: "left-[2%] top-[23%] h-[43%] w-[15%]" },
+  { station: "cctv", label: "Security desk", icon: "cctv", className: "left-[19%] top-[34%] h-[33%] w-[18%]" },
+  { station: "clueboard", label: "Clueboard", icon: "clueboard", className: "left-[38%] top-[23%] h-[34%] w-[23%]" },
+  { station: "evidence", label: "Records", icon: "records", className: "left-[63%] top-[34%] h-[33%] w-[16%]" },
+  { station: "map", label: "City map", icon: "map", className: "left-[80%] top-[23%] h-[34%] w-[19%]" },
+  { station: "case", label: "Case file", icon: "case", className: "left-[39%] top-[76%] h-[22%] w-[23%]" },
+];
 
 export function BureauScreen({ error, onLeave }: { error: string; onLeave: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const pathname = usePathname();
-  const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
-  const leaveDialogRef = useRef<HTMLDialogElement>(null);
+  const [notebookOpen, setNotebookOpen] = useState(false);
+  const [muted, setMutedState] = useState(() => typeof window !== "undefined" && isMuted());
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const menuRef = useRef<HTMLDialogElement>(null);
+  const panoramaRef = useRef<HTMLDivElement>(null);
+  const seenEntries = useRef<Set<string> | null>(null);
+  const seenPings = useRef<Set<string> | null>(null);
   const [clockError, setClockError] = useState(false);
   const [now, setNow] = useState(0);
   const pathParts = pathname.split("/");
   const roomCode = pathParts[2] ?? "";
-  const city = useQuery(api.world.getMap, roomCode && isLoaded && isSignedIn ? { roomCode } : "skip");
+  const ready = roomCode && isLoaded && isSignedIn;
+  const city = useQuery(api.world.getMap, ready ? { roomCode } : "skip");
+  const coop = useQuery(api.coop.get, ready ? { roomCode } : "skip");
+  const notebook = useQuery(api.notebook.get, ready ? { roomCode } : "skip");
   const settleClock = useMutation(api.world.finishTravel);
   const station = (pathParts[3] === "bureau" ? pathParts[4] : pathParts[3]) as Station | undefined;
   const activeStation = station ? stations[station] : null;
   const bureau = city?.places.find((place) => place.kind === "bureau");
-  const away = Boolean(city && (city.activeTravel || city.currentPlaceId !== bureau?.id));
-  const showAwayNotice = away && station !== "map" && (station !== "place" || !!city?.activeTravel) && station !== "lab" && station !== "clueboard" && station !== "case" && station !== "interrogate";
-  const showBureauControls = !activeStation && !showAwayNotice;
   const currentPlace = city?.places.find((place) => place.id === city.currentPlaceId);
+  const away = Boolean(city && (city.activeTravel || city.currentPlaceId !== bureau?.id));
+  const bureauOnly = station === "cctv" || station === "evidence";
+  const showAwayNotice = away && (bureauOnly || (!station && (Boolean(city?.activeTravel) || !currentPlace?.hasInterior) && currentPlace?.kind !== "lab"));
+  const showBureauHub = !activeStation && !away;
   const clock = city?.clock;
   const gameTime = clock ? currentGameMinute(clock, now) : null;
-  const overdue = gameTime !== null && city?.deadline != null && gameTime > city.deadline;
+
+  function openStation(nextStation: Station) {
+    play("door");
+    const path = nextStation === "map" || nextStation === "place" || nextStation === "lab" || nextStation === "case"
+      ? `/lobby/${roomCode}/${nextStation}`
+      : `/lobby/${roomCode}/bureau/${nextStation}`;
+    go(path);
+  }
+
+  function toast(text: string) {
+    const id = `${Date.now()}-${Math.random()}`;
+    setToasts((current) => [...current.slice(-3), { id, text }]);
+    window.setTimeout(() => setToasts((current) => current.filter((item) => item.id !== id)), 5000);
+  }
+
+  // Away from the bureau with no station open: go straight into the place instead of a "you are away" card.
+  useEffect(() => {
+    if (activeStation || !city || city.activeTravel || !away) return;
+    if (currentPlace?.kind === "lab") replaceTo(`/lobby/${roomCode}/lab`);
+    else if (currentPlace?.hasInterior) replaceTo(`/lobby/${roomCode}/place`);
+  }, [activeStation, away, city, currentPlace, roomCode]);
 
   useEffect(() => {
     if (!clock || clock.clockStartedAt === null) return;
     const update = () => setNow(Date.now());
     update();
-    const interval = window.setInterval(update, 1000);
+    const interval = window.setInterval(update, 200);
     return () => window.clearInterval(interval);
   }, [clock]);
 
@@ -120,119 +155,160 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
     return () => { cancelled = true; window.clearTimeout(timeout); };
   }, [city, roomCode, settleClock]);
 
+  // New notebook entries and partner pings surface as brief notices.
   useEffect(() => {
-    if (!confirmLeave || activeStation) return;
-    const dialog = leaveDialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
-    return () => { if (dialog?.open) dialog.close(); };
-  }, [confirmLeave, activeStation]);
+    if (!notebook) return;
+    const keys = new Set(notebook.map((entry) => `${entry.type}:${entry.referenceId}`));
+    if (seenEntries.current) {
+      const fresh = notebook.filter((entry) => !seenEntries.current!.has(`${entry.type}:${entry.referenceId}`));
+      if (fresh.length) {
+        play("reveal");
+        toast(fresh.length === 1 ? `Added to notebook: ${fresh[0].title}` : `${fresh.length} new entries in the notebook`);
+      }
+    }
+    seenEntries.current = keys;
+  }, [notebook]);
 
-  function openStation(nextStation: Station) {
-    const path = nextStation === "map" || nextStation === "place" || nextStation === "lab" || nextStation === "case"
-      ? `/lobby/${roomCode}/${nextStation}`
-      : `/lobby/${roomCode}/bureau/${nextStation}`;
-    router.push(path);
-  }
+  useEffect(() => {
+    if (!coop) return;
+    const ids = new Set(coop.pings.map((ping) => ping.id));
+    if (seenPings.current) {
+      for (const ping of coop.pings) if (!seenPings.current.has(ping.id)) { play("ping"); toast(`${ping.from}: ${ping.text}`); }
+    }
+    seenPings.current = ids;
+  }, [coop]);
+
+  useEffect(() => {
+    const idle = window.setTimeout(preloadStations, 300);
+    return () => window.clearTimeout(idle);
+  }, []);
+
+  useEffect(() => {
+    const begin = () => startRain();
+    window.addEventListener("pointerdown", begin, { once: true });
+    return () => window.removeEventListener("pointerdown", begin);
+  }, []);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable)) return;
+      const key = event.key.toLowerCase();
+      if (key === "escape") {
+        if (notebookOpen) setNotebookOpen(false);
+        else setMenuOpen((open) => !open);
+      } else if (key === "n") setNotebookOpen((open) => !open);
+      else if (key === "m") openStation("map");
+      else if (key === "b") openStation("clueboard");
+      else if (key === "c") openStation("case");
+      else return;
+      event.preventDefault();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  useEffect(() => {
+    const dialog = menuRef.current;
+    if (menuOpen && dialog && !dialog.open) dialog.showModal();
+    if (!menuOpen && dialog?.open) dialog.close();
+  }, [menuOpen]);
+
+  useEffect(() => {
+    const panorama = panoramaRef.current;
+    if (panorama && showBureauHub) panorama.scrollLeft = (panorama.scrollWidth - panorama.clientWidth) / 2;
+  }, [showBureauHub]);
+
+  const partner = coop?.partners[0];
+  const left = gameTime !== null && city?.deadline != null ? city.deadline - gameTime : null;
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#071014]">
-      <div className="absolute inset-x-0 top-0 z-30 flex h-10 items-center justify-center gap-3 border-b border-[#45635d] bg-[#071014]/95 px-2 text-xs uppercase tracking-[0.08em] text-[#e8ac51] sm:gap-5 sm:text-xs sm:tracking-[0.15em]">
-        <span>Case time · {gameTime === null ? "Syncing..." : formatGameMinute(gameTime)}</span>
-        {city?.deadline != null ? <span className={overdue ? "text-[#e5a18e]" : "text-[#b8ccc1]"}>{overdue ? "Overdue" : `Due · ${formatGameMinute(city.deadline)}`}</span> : null}
-      </div>
+      <header className="absolute inset-x-0 top-0 z-30 flex h-10 items-center gap-2 border-b border-[#45635d] bg-[#071014]/95 px-2 text-xs uppercase tracking-[0.08em] text-[#e8ac51] sm:gap-4 sm:px-4">
+        <span className="flex shrink-0 items-center gap-2" title="Case time">
+          <span aria-hidden="true" className="hud-watch" />
+          <span className="whitespace-nowrap">{gameTime === null ? "Syncing..." : formatGameMinute(gameTime)}</span>
+          {gameTime !== null ? <span className="hidden text-[#b8ccc1] md:inline">· {partOfDay(gameTime)}</span> : null}
+        </span>
+        {left !== null ? <span className={`whitespace-nowrap ${left <= 0 ? "text-[#e5a18e]" : left < 120 ? "text-[#f1c987]" : "text-[#b8ccc1]"}`}>{left <= 0 ? "Overdue" : <>{formatDuration(left)}<span className="hidden sm:inline"> left</span></>}</span> : null}
+        {partner ? <span className="ml-auto hidden min-w-0 truncate normal-case tracking-normal text-[#c8d8d2] sm:inline" title="Your partner">{partner.name} · {partner.place} · {partner.activity}</span> : <span className="ml-auto" />}
+        <button className="min-h-8 shrink-0 border border-[#e8ac51]/60 px-2 hover:bg-[#e8ac51]/15" onClick={() => setNotebookOpen(true)} type="button">Notebook<span className="hidden text-[#b8ccc1] lg:inline"> · N</span></button>
+        <button aria-label="Pause menu" className="min-h-8 shrink-0 border border-[#6f9f98]/60 px-2 text-[#c8d8d2] hover:border-[#e8ac51]" onClick={() => setMenuOpen(true)} type="button">Menu<span className="hidden lg:inline"> · Esc</span></button>
+      </header>
       {clockError ? <p className="absolute inset-x-3 top-11 z-50 mx-auto w-fit border border-red-300/60 bg-red-950/95 px-3 py-2 text-sm text-red-100" role="status">Clock sync delayed. Retrying...</p> : null}
-      {showBureauControls ? (
-        <div className="absolute right-4 top-12 z-30 flex flex-col items-end gap-2">
-          {confirmLeave ? (
-            <dialog aria-labelledby="leave-game-title" className="fixed right-4 top-12 m-0 ml-auto w-64 border border-red-300 bg-[#13070a]/95 p-3 text-red-50 shadow-[0_0_20px_rgba(248,113,113,0.3)] backdrop:bg-black/70" onCancel={(event) => { event.preventDefault(); setConfirmLeave(false); }} ref={leaveDialogRef} role="alertdialog">
-              <p className="text-sm uppercase" id="leave-game-title">Leave this investigation?</p>
-              <p className="mt-2 text-xs leading-relaxed text-red-100/75">You cannot rejoin after leaving a started room.</p>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button autoFocus className="min-h-10 border border-[#6f9f98]/60 text-xs uppercase text-[#c8d8d2] hover:border-[#c8d8d2]" onClick={() => setConfirmLeave(false)} type="button">Stay</button>
-                <button className="min-h-10 border border-red-400 bg-red-950 text-xs uppercase hover:border-red-200" onClick={onLeave} type="button">Leave</button>
-              </div>
-              {error ? <p className="mt-3 text-sm text-red-200" role="alert">{error}</p> : null}
-            </dialog>
-          ) : (
-            <button
-              className="border border-red-400 bg-red-950/90 px-4 py-2 text-sm uppercase text-red-100 shadow-[0_0_16px_rgba(248,113,113,0.25)] hover:border-red-200"
-              onClick={() => setConfirmLeave(true)}
-              type="button"
-            >
-              Leave game
-            </button>
-          )}
-          {error && !confirmLeave ? <p className="max-w-xs bg-[#071014]/90 px-3 py-2 text-sm text-red-200" role="alert">{error}</p> : null}
+
+      <div className={`game-panorama relative h-full w-full overflow-x-auto overflow-y-hidden bg-black transition-[filter] duration-1000 lg:overflow-hidden ${gameTime !== null && partOfDay(gameTime) === "Night" ? "brightness-[.7] saturate-[.8]" : ""}`} ref={panoramaRef}>
+        <div className="relative h-full w-[260vh] min-w-full lg:w-full">
+          <Image alt="The investigation bureau" className="object-cover" fill priority sizes="260vh" src="/assets/bureau-noir.png" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#071014]/15 via-transparent to-[#071014]/20" />
+          {showBureauHub ? hotspots.map((spot) => <Hotspot key={spot.station} {...spot} onClick={() => openStation(spot.station)} />) : null}
         </div>
-      ) : null}
-      <div className="relative h-full w-full bg-black">
-        <Image
-          alt="The investigation bureau"
-          className="object-cover"
-          fill
-          priority
-          src="/assets/bureau-noir.png"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#071014]/15 via-transparent to-[#071014]/20" />
-
-        {showBureauControls ? <>
-          <Hotspot label="People" icon="interview" className="left-[2%] top-[23%] h-[43%] w-[15%]" onClick={() => openStation("interrogate")} />
-          <Hotspot label="CCTV" icon="cctv" className="left-[19%] top-[34%] h-[33%] w-[18%]" onClick={() => openStation("cctv")} />
-          <Hotspot label="Clueboard" icon="clueboard" className="left-[38%] top-[23%] h-[34%] w-[23%]" onClick={() => openStation("clueboard")} />
-          <Hotspot label="Public records" icon="records" className="left-[63%] top-[34%] h-[33%] w-[16%]" onClick={() => openStation("evidence")} />
-          <Hotspot label="Map" icon="map" className="left-[80%] top-[23%] h-[34%] w-[19%]" onClick={() => openStation("map")} />
-          <Hotspot label="Case" icon="case" className="left-[39%] top-[76%] h-[22%] w-[23%]" onClick={() => openStation("case")} />
-        </> : null}
-
       </div>
-
-      {showBureauControls ? (
-        <nav aria-label="Investigation stations" className="absolute inset-x-0 bottom-0 z-20 grid grid-cols-3 gap-1.5 border-t-4 border-[#6b7157] bg-[#071014]/95 p-2 lg:hidden">
-          <p className="col-span-3 px-1 text-xs uppercase tracking-[0.12em] text-[#b8ccc1]">Bureau stations</p>
-          {stationOrder.map((item) => {
-            return (
-              <button
-                className="flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs uppercase text-[#e4e6d8] hover:text-[#e8ac51] active:text-[#e8ac51]"
-                key={item}
-                onClick={() => openStation(item)}
-                type="button"
-              >
-                <GameIcon name={stationIcons[item]} className="size-7" />
-                {stations[item].label}
-              </button>
-            );
-          })}
-        </nav>
-      ) : null}
+      {showBureauHub ? <p className="pointer-events-none absolute inset-x-0 bottom-3 z-20 text-center text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/70 lg:hidden">Swipe to look around the bureau</p> : null}
 
       {activeStation || showAwayNotice ? (
-        <div className="absolute inset-x-0 bottom-0 top-10 z-20">
-          {station === "clueboard" ? <ClueBoardScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
-          {station === "cctv" ? <CctvScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
-          {station === "map" ? <MapScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
-          {station === "place" ? <PlaceScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/map`)} /> : null}
-          {station === "lab" ? <ForensicLabScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/map`)} /> : null}
-          {station === "interrogate" ? <InterrogationScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
-          {station === "evidence" ? <EvidenceScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
-          {station === "case" ? <CaseFileScreen roomCode={roomCode} onBack={() => router.push(`/lobby/${roomCode}/bureau`)} /> : null}
+        <div className="absolute inset-x-0 bottom-0 top-10 z-20 animate-in fade-in duration-300" key={station ?? "away"}>
+          {station === "clueboard" ? <ClueBoardScreen roomCode={roomCode} onBack={() => go(`/lobby/${roomCode}/bureau`)} /> : null}
+          {station === "cctv" && !showAwayNotice ? <CctvScreen roomCode={roomCode} onBack={() => go(`/lobby/${roomCode}/bureau`)} /> : null}
+          {station === "map" ? <MapScreen roomCode={roomCode} onBack={() => go(`/lobby/${roomCode}/bureau`)} /> : null}
+          {station === "place" ? <PlaceScreen roomCode={roomCode} onBack={() => go(`/lobby/${roomCode}/map`)} /> : null}
+          {station === "lab" ? <ForensicLabScreen roomCode={roomCode} onBack={() => go(`/lobby/${roomCode}/map`)} /> : null}
+          {station === "interrogate" ? <InterrogationScreen roomCode={roomCode} onBack={() => go(`/lobby/${roomCode}/bureau`)} /> : null}
+          {station === "evidence" && !showAwayNotice ? <EvidenceScreen roomCode={roomCode} onBack={() => go(`/lobby/${roomCode}/bureau`)} /> : null}
+          {station === "case" ? <CaseFileScreen roomCode={roomCode} onBack={() => go(`/lobby/${roomCode}/bureau`)} /> : null}
           {showAwayNotice ? (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#071014]/95 p-4 text-[#e4e6d8]">
+            <div className="game-place-scene absolute inset-0 z-20 flex items-center justify-center p-4 text-[#e4e6d8]">
               <div className="game-panel w-full max-w-lg p-6 text-center">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Current location</p>
-                <h2 className="mt-2 text-2xl uppercase text-[#f1c987]">{city?.activeTravel ? `On the way to ${city.activeTravel.destinationName}` : currentPlace?.name ?? "Away from bureau"}</h2>
-                <p className="mt-3 text-sm text-[#c8d8d2]/70">Bureau terminals are available when you return. You can still review your case and clueboard.</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">{city?.activeTravel ? "On the road" : "You are not at the bureau"}</p>
+                <h2 className="mt-2 text-2xl uppercase text-[#f1c987]">{city?.activeTravel ? `Heading to ${city.activeTravel.destinationName}` : currentPlace?.name ?? "Out in the city"}</h2>
+                <p className="mt-3 text-sm text-[#c8d8d2]/70">{bureauOnly ? "This terminal is at the bureau. Travel back to use it." : "Your notebook and the clueboard go everywhere with you."}</p>
                 <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                  <button className="min-h-11 border border-[#e8ac51]/70 px-3 text-sm uppercase text-[#f1c987]" onClick={() => openStation("map")} type="button">City map</button>
-                  {!city?.activeTravel && currentPlace?.hasInterior ? <button className="min-h-11 border border-[#e8ac51]/70 px-3 text-sm uppercase text-[#f1c987]" onClick={() => openStation("place")} type="button">Explore this place</button> : null}
-                  {!city?.activeTravel && currentPlace?.kind === "lab" ? <button className="min-h-11 border border-[#e8ac51]/70 px-3 text-sm uppercase text-[#f1c987]" onClick={() => openStation("lab")} type="button">Forensic lab</button> : null}
-                  <button className="min-h-11 border border-[#6f9f98]/50 px-3 text-sm uppercase" onClick={() => openStation("clueboard")} type="button">Clueboard</button>
-                  <button className="min-h-11 border border-[#6f9f98]/50 px-3 text-sm uppercase" onClick={() => openStation("case")} type="button">Case file</button>
+                  <button className="min-h-11 border border-[#e8ac51]/70 px-3 text-sm uppercase text-[#f1c987]" onClick={() => openStation("map")} type="button">Open the city map</button>
+                  {!city?.activeTravel && currentPlace?.hasInterior ? <button className="min-h-11 border border-[#e8ac51]/70 px-3 text-sm uppercase text-[#f1c987]" onClick={() => openStation("place")} type="button">Back inside</button> : null}
+                  <button className="min-h-11 border border-[#6f9f98]/50 px-3 text-sm uppercase" onClick={() => setNotebookOpen(true)} type="button">Notebook</button>
                 </div>
               </div>
             </div>
           ) : null}
         </div>
       ) : null}
+
+      <div aria-live="polite" className="pointer-events-none absolute bottom-4 right-4 z-[70] flex w-[min(22rem,calc(100%-2rem))] flex-col gap-2">
+        {toasts.map((item) => <p className="game-toast animate-in slide-in-from-right fade-in" key={item.id}>{item.text}</p>)}
+      </div>
+
+      {notebookOpen ? <NotebookOverlay roomCode={roomCode} onClose={() => setNotebookOpen(false)} /> : null}
+
+      <dialog aria-labelledby="pause-title" className="m-auto w-[min(26rem,calc(100%-2rem))] bg-transparent p-0 backdrop:bg-black/75" onCancel={(event) => { event.preventDefault(); setMenuOpen(false); setConfirmLeave(false); }} ref={menuRef}>
+        <div className="game-panel px-10 py-10 text-[#e4e6d8]">
+          <h2 className="game-title text-2xl uppercase" id="pause-title">Paused</h2>
+          <p className="mt-1 text-xs text-[#c8d8d2]/70">The case clock only runs while someone is busy.</p>
+          {confirmLeave ? (
+            <div className="mt-4 border border-red-400/70 p-3">
+              <p className="text-sm uppercase text-red-100">Leave this investigation?</p>
+              <p className="mt-2 text-xs text-red-100/75">You cannot rejoin after leaving a started room.</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button autoFocus className="min-h-10 border border-[#6f9f98]/60 text-xs uppercase" onClick={() => setConfirmLeave(false)} type="button">Stay</button>
+                <button className="min-h-10 border border-red-400 bg-red-950 text-xs uppercase text-red-50" onClick={onLeave} type="button">Leave</button>
+              </div>
+              {error ? <p className="mt-3 text-sm text-red-200" role="alert">{error}</p> : null}
+            </div>
+          ) : (
+            <div className="mt-4 grid gap-2">
+              <button autoFocus className="min-h-11 border border-[#e8ac51] text-sm uppercase text-[#f1c987] hover:bg-[#e8ac51]/15" onClick={() => setMenuOpen(false)} type="button">Resume</button>
+              <button className="min-h-11 border border-[#6f9f98]/60 text-sm uppercase" onClick={() => { const next = !muted; setMuted(next); setMutedState(next); }} type="button">Sound · {muted ? "Off" : "On"}</button>
+              <button className="min-h-11 border border-red-400/70 text-sm uppercase text-red-100" onClick={() => setConfirmLeave(true)} type="button">Leave case</button>
+            </div>
+          )}
+          <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-[#c8d8d2]/75">
+            <dt className="font-mono text-[#e8ac51]">N</dt><dd>Notebook</dd>
+            <dt className="font-mono text-[#e8ac51]">M</dt><dd>City map</dd>
+            <dt className="font-mono text-[#e8ac51]">B</dt><dd>Clueboard</dd>
+            <dt className="font-mono text-[#e8ac51]">C</dt><dd>Case file</dd>
+            <dt className="font-mono text-[#e8ac51]">Esc</dt><dd>Pause / close</dd>
+          </dl>
+        </div>
+      </dialog>
     </section>
   );
 }
@@ -251,12 +327,12 @@ function Hotspot({
   return (
     <button
       aria-label={label}
-      className={`group absolute hidden border border-transparent transition hover:bg-[#e8ac51]/5 focus-visible:bg-[#e8ac51]/10 lg:block ${className}`}
+      className={`group absolute border border-transparent transition hover:bg-[#e8ac51]/5 focus-visible:bg-[#e8ac51]/10 ${className}`}
       onClick={onClick}
       type="button"
     >
-      <span aria-hidden="true" className="absolute bottom-2 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-center text-sm uppercase leading-tight text-[#f5d18f] drop-shadow-[0_2px_2px_#000] transition-transform group-hover:-translate-y-1 group-focus-visible:-translate-y-1">
-        <GameIcon name={icon} className="size-14 drop-shadow-[0_2px_3px_#000]" />
+      <span aria-hidden="true" className="absolute bottom-2 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-center text-sm uppercase leading-tight text-[#f5d18f] opacity-80 drop-shadow-[0_2px_2px_#000] transition group-hover:-translate-y-1 group-hover:opacity-100 group-focus-visible:-translate-y-1 group-focus-visible:opacity-100 lg:opacity-50">
+        <GameIcon name={icon} className="size-12 drop-shadow-[0_2px_3px_#000]" />
         <span>{label}</span>
       </span>
     </button>

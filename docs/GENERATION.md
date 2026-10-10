@@ -142,7 +142,7 @@ Implemented rules (`convex/generation/core/evidence/`):
 - Records: address and employment for everyone, plus each character's `records` (insurance, debts, complaints, companies...).
 - Witness statements: for each public story event, other people in it and anyone at the same place at the time (never the victim).
 - Devices: laptops/tablets are ordinary story items of kind `device` (only present when the story puts one somewhere). Their `contents` (files, notes) become evidence readable after the device is found.
-- Background clutter: everyday objects (bills, magazines, gym bags...) placed by seed in rooms that matter to the case (story rooms, cast homes and work rooms): easy 2, normal 3, hard 5 per place. They prove nothing.
+- Background clutter: everyday objects (bills, magazines, gym bags...) placed by seed in rooms that matter to the case (story rooms, cast homes and work rooms): easy 2, normal 3, hard 5 per place. They prove nothing, and players can bag them like any other object.
 - Weapon-specific lab tests: toxicology (poison), ballistics (firearm), ligature marks (strangulation); a fall is shown by the autopsy.
 - Footprints: shoe prints at any side door the killer used at the scene building, described by the killer's `appearance.shoes`.
 - Camera switched off (`disable-camera` cover-up): the crime names the camera and time window (`disabledCamera`); its records in that window are dropped and a "switched off" record is added. Checked: camera exists, times make sense, and the killer or accomplice is at that camera's place when it goes off.

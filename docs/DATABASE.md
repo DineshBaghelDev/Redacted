@@ -801,6 +801,16 @@ Player claims must remain claims, not canonical facts.
 }
 ```
 
+## 2026-10-10 additions
+
+- `cases.discoveryMinute`, `cases.sceneRoomId`: frozen from the crime draft; a replay's clock starts at the discovery minute and both detectives start in the scene room.
+- `sessions.gaveUpAt`: set by give-up; the room becomes review-only and the epilogue unlocks.
+- `roomActions.slot`: the spot key for a spot search.
+- `searchedSpots` (`by_sessionId_and_roomId_and_spot`): spots searched this session. The first spot also inserts `searchedRooms` so the room can be swabbed at the lab.
+- `forensicRequests.forensicOutputId` is optional; `sourceKey` and `testType` record menu requests, including tests with nothing stored (`by_sessionId_and_sourceKey_and_testType`).
+- `pings` (`by_sessionId`): partner "look at this" notices.
+- `caseItems.collectible` is no longer used as a gate; every found object can be collected.
+
 ## LLM telemetry
 
 ### `llmCalls`

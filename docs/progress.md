@@ -1,5 +1,26 @@
 # Progress
 
+## 2026-10-10 — From app to game: loop, time, and discovery pass
+
+- Cold open: Begin investigation now places both detectives in the crime-scene room (frozen `sceneRoomId`) with an arrival card instead of the bureau menu. The case clock starts at the story's discovery minute, so the clock, CCTV, calls, and messages share one calendar.
+- Time: one game minute is now 100 ms (was 1 s); a spot search resolves in under half a second. The default deadline is the best-route estimate plus 50% after discovery. At the deadline all new timed work stops server-side and the bureau asks for the report; reading, the notebook, the clueboard, and the report stay available.
+- People: the roster lists only people the team has come across: the victim, people named in the brief, anyone called in, and anyone named in uncovered evidence. Each shows "First seen in". Role labels (suspect/witness) are gone everywhere, including clueboard cards. Calling someone in, pinning them, and naming them as culprit all require that they are known.
+- Buildings: a clickable floor plan replaces room lists. Walking to any reachable room costs the shortest path (1 per door, 2 across floors). Rooms are searched spot by spot (4 min each); template and generated spot names are normalized, which removed duplicate spots like "On the body" / "The body". Found objects flip in as reveal cards.
+- CCTV: hour-of-tape blocks replace the minute slider (each review covers the full hour). The log prints line by line in a terminal. "Compare with people" opens known descriptions beside the log, and calls and messages link to "Check street cameras at this time".
+- Interviews: portrait-led layout, topic chips from the team's own discoveries, "Show evidence" from anything discovered (not just pins), and a stamped "Contradiction" with a sting when proof breaks a lie. Quick asks read as spoken lines.
+- Lab: detectives choose any test for any collected object, searched room, or the victim. Tests with nothing stored return "No usable result" after a 30-minute turnaround. The lab no longer reveals which tests apply.
+- Shell: corner clock with part of day and time left, partner location and activity, a shared notebook overlay (N), an Esc pause menu holding sound and Leave, M/B/C shortcuts, notices for new discoveries and partner pings, synthesized sound (no audio files), a night tint, a swipeable bureau panorama on phones instead of the tab bar, and in-world exit labels.
+- Co-op: partner markers on the map and floor plan, and "Show partner" pings from the notebook. Travel shows a moving marker and walks straight into the destination on arrival.
+- Ending: after scoring, the case file shows "What really happened" with the culprit, motive, method, explanation, and the frozen event timeline.
+- Checks: 168 tests, TypeScript, and lint pass. Signed-in Playwright playthroughs at 1440×900 and 390×844 covered brief → scene → spot search → notebook → pause → map travel → bureau → people → CCTV → interview → case file, with no console errors.
+- Follow-up the same day: CCTV is now a scrubbable tape (drag, wheel, or swipe under a fixed playhead; sighting marks; last/next sighting), and watching is instant and free. The deadline no longer stops play; it shows Overdue. A "Give up and see the solution" action in the case file ends the room for both detectives and shows the epilogue.
+- Camera choice is a wall of monitor tiles grouped by area (Streets, Police Bureau…) with short names and "No signal" tiles; picking one opens its tape, "Change camera" returns to the wall.
+- Bug fix: asking for a phone in your own words ("can I see your phone?") now triggers the same handover as the quick button, so the read/open phone actions appear. People with no phone in the case say so instead of pretending to hand one over.
+- Speed: in-game screen changes use the native history API instead of `router.push`, removing a server round trip per move (≈1 s → 0.1–0.3 s measured). Live queries go through `convex-helpers`' query cache, so returning to a screen is instant, and station code is preloaded while the brief is open. A full page reload still spends ≈1.2 s on page start and sign-in and ≈1.3 s on the live-data connection handshake, measured on a production build.
+- Every found object can be bagged, including everyday clutter, so "Bag it" no longer marks the real evidence.
+- The map's side panel is gone. Tapping a place opens a small card above it with Travel / Go inside / Pin, and a status line under the map shows where you are or the journey in progress.
+- Not done: a lab-ready notice while away from the lab, and a "time saved by splitting up" summary.
+
 ## 2026-10-10 — Player flow refinements
 
 - Case roster portraits now read the stored cast's public gender and written build/clothing to guide hair, face, and outfit layers. The person ID still chooses stable palette and unused details. Existing published cases get the same metadata from their frozen cast draft; no live evidence or portrait generation is added.

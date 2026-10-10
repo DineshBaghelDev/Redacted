@@ -64,6 +64,16 @@
   .investigation-icon--lab { background-position: 50% 100%; }
   .investigation-icon--file { background-position: 100% 100%; }
 
+  .device-app-icon {
+    display: inline-block;
+    width: 3.5rem;
+    height: 3.5rem;
+    background: url('/assets/device-app-icons.png') no-repeat 0 0 / 300% 100%;
+    image-rendering: pixelated;
+  }
+  .device-app-icon--calls { background-position: 50% 0; }
+  .device-app-icon--files { background-position: 100% 0; }
+
   .character-portrait {
     display: block;
     flex: none;
@@ -431,4 +441,102 @@
     background: #2b1d16;
     color: #f4e8c8;
   }
+}
+
+@layer components {
+  /* Heads-up clock: a small pixel watch face beside the case time. */
+  .hud-watch {
+    display: inline-block;
+    flex: none;
+    width: 0.9rem;
+    height: 0.9rem;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    background: linear-gradient(currentColor, currentColor) 50% 15% / 2px 40% no-repeat,
+      linear-gradient(currentColor, currentColor) 70% 50% / 35% 2px no-repeat;
+  }
+
+  .game-toast {
+    border-left: 3px solid #e8ac51;
+    background: rgb(7 16 20 / 95%);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: #e4e6d8;
+    box-shadow: 4px 4px 0 rgb(0 0 0 / 45%);
+  }
+
+  .game-panorama { scrollbar-width: none; }
+  .game-panorama::-webkit-scrollbar { display: none; }
+
+  /* Rubber stamp that lands when proof breaks a lie. */
+  .contradiction-stamp {
+    border: 4px double #b91c1c;
+    color: #b91c1c;
+    font-family: var(--font-pixelify-sans), sans-serif;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transform: rotate(-8deg);
+    animation: stamp-in 380ms cubic-bezier(.2, 1.6, .4, 1) both;
+    background: rgb(244 234 210 / 92%);
+  }
+  @keyframes stamp-in {
+    from { transform: rotate(-8deg) scale(2.4); opacity: 0; }
+    to { transform: rotate(-8deg) scale(1); opacity: 1; }
+  }
+
+  /* Camera logs print line by line like a terminal. */
+  .terminal-line {
+    animation: terminal-in 260ms steps(6) both;
+  }
+  @keyframes terminal-in {
+    from { clip-path: inset(0 100% 0 0); }
+    to { clip-path: inset(0 0 0 0); }
+  }
+
+  /* Something found: the card flips into view. */
+  .reveal-card {
+    animation: reveal-in 420ms ease-out both;
+  }
+  @keyframes reveal-in {
+    from { transform: perspective(600px) rotateX(70deg); opacity: 0; }
+    to { transform: perspective(600px) rotateX(0); opacity: 1; }
+  }
+
+  /* Building floor plan tiles. */
+  .plan-room {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    border: 2px solid rgb(111 159 152 / 55%);
+    background: rgb(11 26 28 / 92%);
+    padding: 4px 8px;
+    text-align: left;
+    font-size: 0.72rem;
+    line-height: 1.15;
+    text-transform: uppercase;
+    color: #e4e6d8;
+  }
+  .plan-room:hover:not(:disabled), .plan-room:focus-visible { border-color: #e8ac51; color: #f1c987; }
+  .plan-room[data-current="true"] { border-color: #e8ac51; background: rgb(56 42 20 / 92%); color: #f1c987; }
+  .plan-room[data-done="true"] { background-image: repeating-linear-gradient(135deg, transparent 0 6px, rgb(111 159 152 / 12%) 6px 8px); }
+}
+
+@layer components {
+  /* CCTV monitor: faint scanlines over the text-only feed. */
+  .cctv-monitor::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgb(127 209 174 / 4%) 0 1px, transparent 1px 3px);
+  }
+  .cctv-static { animation: cctv-flicker 600ms steps(3) infinite; }
+  @keyframes cctv-flicker {
+    0%, 100% { opacity: .55; }
+    50% { opacity: .9; }
+  }
+  .cctv-tape { cursor: ew-resize; scrollbar-width: thin; scrollbar-color: #2f4a47 transparent; }
 }

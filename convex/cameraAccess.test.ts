@@ -43,14 +43,13 @@ test("building cameras are reviewed in their room while street cameras stay at t
   expect(await detective.query(api.cases.getCctvWindow, { roomCode: "CAMERA", cameraId: "street", minute: 10 })).toBeNull();
   await expect(detective.mutation(api.cases.startCctvReview, { roomCode: "CAMERA", cameraId: "street", minute: 10 })).rejects.toThrow("access point");
   await detective.mutation(api.cases.startCctvReview, { roomCode: "CAMERA", cameraId: "station", minute: 10 });
-  expect((await detective.query(api.cases.getCctvWindow, { roomCode: "CAMERA", cameraId: "station", minute: 10 }))?.status).toBe("pending");
+  expect((await detective.query(api.cases.getCctvWindow, { roomCode: "CAMERA", cameraId: "station", minute: 10 }))?.status).toBe("ready");
   await t.run(async (ctx) => {
     await ctx.db.patch(ids.sessionId, { gameTime: 5, clockStartedAt: undefined });
     const action = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", ids.playerId)).unique();
     if (action) await ctx.db.delete(action._id);
     await ctx.db.patch(ids.playerId, { currentPlaceId: ids.bureau.placeId, currentRoomId: ids.bureau.roomId });
   });
-  await expect(detective.mutation(api.clueBoard.createReferenceNode, { roomCode: "CAMERA", type: "cctv", referenceId: "station/record", x: 0, y: 0 })).rejects.toThrow("access point");
-  await t.run(async (ctx) => ctx.db.patch(ids.playerId, { currentPlaceId: ids.site.placeId, currentRoomId: ids.cameraRoomId }));
+  // A reviewed record is shared evidence: it can be pinned from anywhere, like the notebook.
   await expect(detective.mutation(api.clueBoard.createReferenceNode, { roomCode: "CAMERA", type: "cctv", referenceId: "station/record", x: 0, y: 0 })).resolves.toBeTruthy();
 });

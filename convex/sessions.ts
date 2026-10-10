@@ -3,18 +3,19 @@ import { v } from "convex/values";
 import { requireUserId } from "./lib/auth";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
-import { PUBLICATION_VERSION } from "./cases";
+import { ensureCaseOpening, PUBLICATION_VERSION } from "./cases";
 import { cancelRoomAction } from "./lib/cancelRoomAction";
 import { entranceRoomId, settleActions } from "./world";
 
 const MAX_PLAYERS = 2;
 const ROOM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-function defaultDeadline(estimate: number | undefined) {
-  if (estimate === undefined || !Number.isSafeInteger(estimate) || estimate <= 0 || !Number.isSafeInteger(estimate + 1440)) {
+/** Time allowed after the discovery: the best-route estimate plus half again, so the clock matters. */
+function defaultDuration(estimate: number | undefined) {
+  if (estimate === undefined || !Number.isSafeInteger(estimate) || estimate <= 0) {
     throw new Error("This case has no valid time estimate.");
   }
-  return estimate + 1440;
+  return Math.ceil(estimate * 1.5);
 }
 
 /**
@@ -26,7 +27,7 @@ function makeRoomCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
-async function createSession(ctx: MutationCtx, authUserId: string, nickname: string, caseId: Id<"cases">, deadline: number) {
+async function createSession(ctx: MutationCtx, authUserId: string, nickname: string, caseId: Id<"cases">, startMinute: number, deadline: number) {
   const now = Date.now();
   let roomCode = makeRoomCode();
 
@@ -38,7 +39,7 @@ async function createSession(ctx: MutationCtx, authUserId: string, nickname: str
     caseId,
     roomCode,
     status: "waiting",
-    gameTime: 0,
+    gameTime: startMinute,
     deadline,
     createdAt: now,
     expiresAt: now + ROOM_TTL_MS,
@@ -58,12 +59,14 @@ export const createReplay = mutation({
   returns: v.object({ sessionId: v.id("sessions"), playerId: v.id("sessionPlayers"), roomCode: v.string() }),
   handler: async (ctx, { nickname, caseId, deadlineMinutes }) => {
     const authUserId = await requireUserId(ctx);
+    await ensureCaseOpening(ctx, caseId);
     const playableCase = await ctx.db.get(caseId);
     if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not ready to replay.");
     if (deadlineMinutes !== undefined && (!Number.isSafeInteger(deadlineMinutes) || deadlineMinutes <= 0)) {
       throw new Error("Choose a valid deadline in whole minutes.");
     }
-    return await createSession(ctx, authUserId, nickname, caseId, deadlineMinutes ?? defaultDeadline(playableCase.estimatedOptimalMinutes));
+    const startMinute = playableCase.discoveryMinute ?? 0;
+    return await createSession(ctx, authUserId, nickname, caseId, startMinute, startMinute + (deadlineMinutes ?? defaultDuration(playableCase.estimatedOptimalMinutes)));
   },
 });
 
@@ -77,7 +80,7 @@ export const backfillPlayingDeadline = internalMutation({
     const playableCase = await ctx.db.get(session.caseId);
     if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not published.");
     if (session.deadline !== undefined) return session.deadline;
-    const deadline = defaultDeadline(playableCase.estimatedOptimalMinutes);
+    const deadline = (playableCase.discoveryMinute ?? 0) + defaultDuration(playableCase.estimatedOptimalMinutes);
     await ctx.db.patch(sessionId, { deadline });
     return deadline;
   },
@@ -180,12 +183,22 @@ export const start = mutation({
       throw new Error("Everyone must be ready first.");
     }
 
+    if (session.caseId) await ensureCaseOpening(ctx, session.caseId);
     const playableCase = session.caseId ? await ctx.db.get(session.caseId) : null;
     const bureau = playableCase?.cityId
       ? (await ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!)).collect()).find((place) => place.kind === "bureau")
       : null;
-    await Promise.all(players.map(async (player) => await ctx.db.patch(player._id, { currentPlaceId: bureau?._id, currentRoomId: bureau ? await entranceRoomId(ctx, bureau._id) : undefined })));
-    await ctx.db.patch(session._id, { status: "playing", gameTime: 0, clockStartedAt: undefined, deadline: session.deadline ?? defaultDeadline(playableCase?.estimatedOptimalMinutes) });
+    // Cold open: both detectives arrive at the crime scene room when it is known.
+    const scene = playableCase?.sceneRoomId ? await ctx.db.get(playableCase.sceneRoomId) : null;
+    const sceneBuilding = scene ? await ctx.db.get(scene.buildingId) : null;
+    const startPlaceId = sceneBuilding?.placeId ?? bureau?._id;
+    const startRoomId = scene && sceneBuilding ? scene._id : bureau ? await entranceRoomId(ctx, bureau._id) : undefined;
+    await Promise.all(players.map(async (player) => await ctx.db.patch(player._id, { currentPlaceId: startPlaceId, currentRoomId: startRoomId })));
+    const startMinute = playableCase?.discoveryMinute ?? 0;
+    await ctx.db.patch(session._id, { status: "playing", gameTime: startMinute, clockStartedAt: undefined, deadline: session.deadline !== undefined
+      // Rooms created before story-time clocks counted from minute zero; keep their allowance.
+      ? session.deadline + startMinute - (session.gameTime ?? 0)
+      : startMinute + defaultDuration(playableCase?.estimatedOptimalMinutes) });
     return { roomCode: session.roomCode };
   },
 });
@@ -300,7 +313,7 @@ export const listMine = query({
       const playableCase = await ctx.db.get(session.caseId);
       if (playableCase?.publicationVersion !== PUBLICATION_VERSION) continue;
       const players = await ctx.db.query("sessionPlayers").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).take(2);
-      const reportSubmitted = session.status === "playing" && Boolean(await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).unique());
+      const reportSubmitted = session.status === "playing" && (session.gaveUpAt !== undefined || Boolean(await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).unique()));
       rooms.push({
         roomCode: session.roomCode,
         status: session.status,

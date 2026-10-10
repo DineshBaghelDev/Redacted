@@ -47,7 +47,7 @@ This repository's technical decisions are split across the files below. Agents s
 ## Agent implementation rules
 
 - Do not invent new game concepts such as phases, suspicion meters, clue-reveal actions, relationship scores, locked locations, or hint systems.
-- Do not expose `caseSolutions`, private `caseEvents`, or `npcScripts` through client-callable functions.
+- Do not expose `caseSolutions`, private `caseEvents`, or `npcScripts` through client-callable functions. Only exception: the post-score epilogue described in `docs/SECURITY.md`.
 - Do not put hidden case data into client documents and rely on UI filtering.
 - Do not let NPC LLM output mutate game state except its own persisted reply and derived session memory.
 - Do not generate evidence during gameplay.

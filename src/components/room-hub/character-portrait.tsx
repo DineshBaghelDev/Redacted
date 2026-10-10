@@ -1,8 +1,8 @@
 const skinColors = ["#d6a175", "#a96f51", "#70513f", "#e5bd94", "#8f6651"];
-const hairColors = ["#1d2829", "#513a2c", "#a06e3d", "#a6aba1", "#683b36"];
+const hairColors = ["#1d2829", "#513a2c", "#a06e3d", "#a6aba1", "#683b36", "#dcdcd2"];
 const coatColors = ["#294047", "#403b38", "#41534a", "#39495a"];
 
-type PortraitAppearance = { gender?: "male" | "female" | "nonbinary"; description?: string };
+type PortraitAppearance = { gender?: "male" | "female" | "nonbinary"; description?: string; age?: number };
 
 export function portraitTraits(id: string, appearance: PortraitAppearance = {}) {
   let seed = 2166136261;
@@ -20,7 +20,9 @@ export function portraitTraits(id: string, appearance: PortraitAppearance = {}) 
     : /\b(slim|thin|lean|petite|frail)\b/.test(description) ? 1 : (seed >>> 25) % 3;
   return {
     skin: seed % skinColors.length,
-    hair: (seed >>> 4) % hairColors.length,
+    // Older people go grey, then white; younger hair never draws the grey swatch.
+    hair: (appearance.age ?? 0) >= 70 ? 5 : (appearance.age ?? 0) >= 55 ? 3 : [0, 1, 2, 4][(seed >>> 4) % 4],
+    lined: (appearance.age ?? 0) >= 55,
     coat: (seed >>> 9) % coatColors.length,
     hairstyle: hairChoices[(seed >>> 13) % hairChoices.length],
     glasses: ((seed >>> 18) & 3) === 0,
@@ -29,8 +31,8 @@ export function portraitTraits(id: string, appearance: PortraitAppearance = {}) 
   };
 }
 
-export function CharacterPortrait({ id, className = "", gender, description }: { id: string; className?: string } & PortraitAppearance) {
-  const traits = portraitTraits(id, { gender, description });
+export function CharacterPortrait({ id, className = "", gender, description, age }: { id: string; className?: string } & PortraitAppearance) {
+  const traits = portraitTraits(id, { gender, description, age });
   const skin = skinColors[traits.skin];
   const hair = hairColors[traits.hair];
   const coat = coatColors[traits.coat];
@@ -76,6 +78,7 @@ export function CharacterPortrait({ id, className = "", gender, description }: {
       <path d="M26 38h3v3h-3zM37 38h3v3h-3z" fill="#172329" />
       <path d="M31 40h2v4h-2z" fill="#704635" />
       <path d="M28 47h8v2h-8z" fill="#5c392f" />
+      {traits.lined ? <path d="M24 42h2v2h-2zM38 42h2v2h-2zM26 32h4v1h-4zM34 32h4v1h-4z" fill="#42302a" opacity=".45" /> : null}
       {traits.glasses ? <path d="M23 36h9v8h-9zM34 36h9v8h-9zM31 38h4v2h-4z" fill="none" stroke="#27343a" strokeWidth="2" /> : null}
       <path d="M8 71h48v2H8z" fill="#d0a567" />
     </svg>

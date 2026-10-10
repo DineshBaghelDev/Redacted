@@ -3,6 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
+import { ConvexQueryCacheProvider } from "convex-helpers/react/cache";
 import { useMemo, type ReactNode } from "react";
 
 /**
@@ -25,7 +26,8 @@ export function AppConvexProvider({ children }: { children: ReactNode }) {
 
   return (
     <ConvexProviderWithClerk client={client} useAuth={useAuth}>
-      {children}
+      {/* Keeps a screen's live queries subscribed for a few minutes after it closes, so returning is instant. */}
+      <ConvexQueryCacheProvider>{children}</ConvexQueryCacheProvider>
     </ConvexProviderWithClerk>
   );
 }

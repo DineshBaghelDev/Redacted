@@ -16,6 +16,8 @@ Never expose through client-callable queries/actions:
 
 Do not send these documents to the client and filter fields client-side.
 
+Single exception: `caseClose.getEpilogue` returns the culprit's name, motive, method, canonical explanation, and event timeline only after that room's report has been scored (`accusations.status === "complete"`) or its detectives gave up (`sessions.gaveUpAt`). Investigation writes are already closed then, so nothing can change the result. It never returns `npcScripts`.
+
 ## NPC isolation
 
 The NPC LLM must never receive the full case solution.

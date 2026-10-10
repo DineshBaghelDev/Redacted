@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
 import { useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
+import { formatGameMinute } from "../../../lib/game-time";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 const MAX_EVIDENCE = 12;
@@ -23,6 +25,9 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
   const boardNodes = useQuery(api.clueBoard.getNodes, ready ? { roomCode } : "skip");
   const inventory = useQuery(api.investigation.getInventory, ready ? { roomCode } : "skip");
   const closeState = useQuery(api.caseClose.getResult, ready ? { roomCode } : "skip");
+  const epilogue = useQuery(api.caseClose.getEpilogue, ready ? { roomCode } : "skip");
+  const giveUp = useMutation(api.caseClose.giveUp);
+  const [confirmGiveUp, setConfirmGiveUp] = useState(false);
   const submitCase = useMutation(api.caseClose.submit);
   const retryJudge = useMutation(api.caseClose.retry);
   const [closing, setClosing] = useState(false);
@@ -100,7 +105,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
           <p className="text-xs uppercase tracking-[0.24em] text-red-900/70">Final investigation file</p>
           <h2 className="mt-1 text-xl uppercase sm:text-2xl">Case file</h2>
         </div>
-        <button className="min-h-11 border-2 border-[#573821] px-4 text-sm uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">Back</button>
+        <button className="min-h-11 border-2 border-[#573821] px-4 text-sm uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">Close the file</button>
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto bg-[#160f0b]/60 p-4 sm:p-6 lg:p-8">
@@ -127,6 +132,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   );
                 })}
               </ul>
+              {epilogue ? <Epilogue epilogue={epilogue} /> : null}
             </section>
           ) : closeState?.status === "judging" || (closeState?.status === "pending" && !closeState.error) ? (
             <section className="game-dossier px-5 pb-20 pt-20 text-center sm:px-8 sm:pb-16" aria-live="polite">
@@ -142,6 +148,12 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                 {submitting ? "Retrying..." : "Retry review"}
               </button>
             </section>
+          ) : epilogue ? (
+            <section className="game-dossier px-5 pb-20 pt-24 sm:px-8 sm:pb-16" aria-live="polite">
+              <p className="text-xs uppercase tracking-[0.2em] text-red-800">Case given up</p>
+              <h3 className="mt-2 text-3xl uppercase">No report was filed</h3>
+              <Epilogue epilogue={epilogue} />
+            </section>
           ) : !closing ? (
             <section className="game-dossier px-5 pb-20 pt-20 sm:px-8 sm:pb-16">
               {brief === undefined ? <p className="uppercase">Loading case file...</p> : !brief ? <p className="uppercase text-red-800">No completed case is available.</p> : (
@@ -156,6 +168,17 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                     Close this case
                   </button>
                   {!evidence.length ? <p className="mt-3 text-sm text-red-900">Pin at least one piece of evidence to the clueboard before closing the case.</p> : null}
+                  <div className="mt-8 border-t border-[#6d5138]/40 pt-4">
+                    {confirmGiveUp ? (
+                      <div>
+                        <p className="text-sm">Give up and see what really happened? The case ends for both detectives and no report can be filed.</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button className="min-h-11 border-2 border-[#573821] px-4 text-sm uppercase" onClick={() => setConfirmGiveUp(false)} type="button">Keep investigating</button>
+                          <button className="min-h-11 border-2 border-red-900 px-4 text-sm uppercase text-red-900 hover:bg-red-900 hover:text-red-50" onClick={() => { setError(""); void giveUp({ roomCode }).catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Could not give up.")); }} type="button">Give up</button>
+                        </div>
+                      </div>
+                    ) : <button className="min-h-10 text-sm uppercase text-[#5b4635] underline-offset-4 hover:text-red-900 hover:underline" onClick={() => setConfirmGiveUp(true)} type="button">Give up and see the solution</button>}
+                  </div>
                 </>
               )}
             </section>
@@ -178,7 +201,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
           ) : (
             <form className="game-dossier space-y-5 px-5 pb-20 pt-20 sm:px-8 sm:pb-16" onSubmit={review}>
               <div className="border-b-2 border-[#6d5138] pb-4"><p className="text-xs uppercase tracking-[0.2em] text-red-800">Five findings · five stars</p><h3 className="mt-2 text-3xl uppercase">Your final theory</h3></div>
-              <label className="block"><span className="case-close-label">1 · Who did it?</span><select className="case-close-input" onChange={(event) => setCulpritNpcId(event.target.value)} required value={culpritNpcId}><option value="">Choose a person</option>{people?.filter((person) => person.role !== "victim").map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
+              <label className="block"><span className="case-close-label">1 · Who did it?</span><select className="case-close-input" onChange={(event) => setCulpritNpcId(event.target.value)} required value={culpritNpcId}><option value="">Choose a person</option>{people?.filter((person) => !person.isVictim).map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
               <label className="block"><span className="case-close-label">2 · Why did they do it?</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setMotiveExplanation(event.target.value)} required value={motiveExplanation} /></label>
               <div>
                 <p className="case-close-label">3 · What was the weapon?</p>
@@ -208,5 +231,28 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
         </div>
       </main>
     </section>
+  );
+}
+
+type EpilogueData = { culprit: string; motive: string; method: string; explanation: string; events: { time: number; place: string; text: string }[] };
+
+function Epilogue({ epilogue }: { epilogue: EpilogueData }) {
+  return (
+    <div className="mt-10 border-t-2 border-[#6d5138] pt-6">
+      <p className="text-xs uppercase tracking-[0.2em] text-red-800">What really happened</p>
+      <h3 className="mt-2 text-2xl uppercase">{epilogue.culprit}</h3>
+      <p className="mt-3 text-sm leading-relaxed"><span className="uppercase text-red-900">Why · </span>{epilogue.motive}</p>
+      <p className="mt-2 text-sm leading-relaxed"><span className="uppercase text-red-900">How · </span>{epilogue.method}</p>
+      <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed">{epilogue.explanation}</p>
+      <ol className="mt-6 border-l-2 border-red-900/60 pl-4">
+        {epilogue.events.map((event, index) => (
+          <li className="reveal-card relative mb-4" key={`${event.time}-${index}`} style={{ animationDelay: `${Math.min(index, 20) * 120}ms` }}>
+            <span aria-hidden="true" className="absolute -left-[1.4rem] top-1 size-2 bg-red-900" />
+            <p className="font-mono text-xs text-[#5b4635]">{formatGameMinute(event.time)} · {event.place}</p>
+            <p className="text-sm leading-relaxed">{event.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }

@@ -150,13 +150,15 @@ investigation.finishAction({ roomCode })
 ### Search and inventory
 
 ```ts
-investigation.searchRoom({ roomCode })
+investigation.getPlace({ roomCode })            // rooms with spots, walk minutes, connections, partners
+investigation.moveToRoom({ roomCode, roomId })    // any reachable room; shortest-path cost
+investigation.searchSpot({ roomCode, spot })      // spot = normalized key from getPlace
 investigation.inspectItem({ roomCode, itemId })
 investigation.collectItem({ roomCode, itemId })
 investigation.getInventory({ roomCode })
 ```
 
-Search takes 15 game minutes and only reveals pre-existing case items in the player's current room. Inspection takes 2 game minutes and reveals the item's stored description. Collection requires physical access to a discovered collectible item; collected items are shared with both players. The player decides whether an item matters to the case.
+Searching one spot takes 4 game minutes and reveals only that spot's pre-existing items in the player's current room. Every found object can be collected. Inspection takes 2 game minutes and reveals the item's stored description. Collection requires physical access to a discovered collectible item; collected items are shared with both players. The player decides whether an item matters to the case.
 Discovered objects may be pinned through `clueBoard.createReferenceNode({ roomCode, type: "item", referenceId: itemId, x, y })`; undiscovered IDs are refused.
 Final-report weapon item IDs must come from the shared collected inventory; text remains available for weapons that are not physical case items.
 
@@ -164,11 +166,12 @@ Final-report weapon item IDs must come from the shared collected inventory; text
 
 ```ts
 cases.getCctv({ roomCode })
+cases.getCctvTape({ roomCode, cameraId })         // whole tape at the access point + watched hours
 cases.getCctvWindow({ roomCode, cameraId, minute })
 cases.startCctvReview({ roomCode, cameraId, minute })
 ```
 
-Starting a review occupies the detective for 5 game minutes. The window query returns `available` or `pending` with no records until the shared action completes, then returns the stored records as `ready`. The selected minute covers 20 minutes on each side; a completed window can be reopened freely by either partner. `getCctv` lists only cameras at the detective's current access point: street and bureau cameras at the bureau, building cameras in their camera room. Window reads, reviews, and record pins enforce the same location rule. Only reviewed records can be pinned. Records are textual/data only and never visual media.
+Watching tape is free and instant. `startCctvReview` only records that an hour (30 minutes either side of `minute`) was watched, which makes its sightings part of the notebook and pinnable. `getCctv` lists only cameras at the detective's current access point: street and bureau cameras at the bureau, building cameras in their camera room. Window reads, reviews, and record pins enforce the same location rule. Only watched records can be pinned; once watched they can be pinned from anywhere. Records are textual/data only and never visual media.
 
 ### Devices and records
 
@@ -186,11 +189,11 @@ Device inspection requires physical access to the discovered device. Public-reco
 ### Forensics
 
 ```ts
-forensics.request({ roomCode, forensicOutputId })
-forensics.markViewed({ roomCode, forensicOutputId })
+forensics.request({ roomCode, sourceKey, testType })   // sourceKey: "victim" | "item:<id>" | "room:<id>"
+forensics.markViewed({ roomCode, requestId })
 ```
 
-`request` records `readyAtGameTime` after 5 minutes of submission plus the frozen turnaround; it does not call an LLM. `getLab` lists only tests backed by collected items, searched rooms, or the case autopsy. Results are omitted until ready and explicitly viewed. Requests and result viewing require visiting the forensic lab.
+`request` records `readyAtGameTime` after 5 minutes of submission plus the frozen turnaround, or 30 minutes when the test has nothing stored ("No usable result"); it does not call an LLM. `getLab` lists sources (collected objects, searched rooms, the victim) and the full test menu without revealing which tests will find something. Results are omitted until ready and explicitly viewed. Requests and result viewing require visiting the forensic lab.
 
 ### NPC messages
 
@@ -247,6 +250,19 @@ caseClose.retry({ roomCode })
 ```
 
 Submission stores the report and schedules private grading. If grading fails, the room can retry the same report without submitting a replacement.
+
+### Notebook, people, co-op, and endings (2026-10-10)
+
+```ts
+notebook.get({ roomCode })                 // everything the session has uncovered, as readable entries
+npcs.list({ roomCode })                    // only people the team has come across; isVictim + firstSeenIn, no roles
+coop.get({ roomCode })                     // partner place/activity + recent pings
+coop.ping({ roomCode, text })              // "look at this" to the partner
+caseClose.giveUp({ roomCode })             // ends the room for both, reveals the epilogue
+caseClose.getEpilogue({ roomCode })        // canonical account + timeline, only after scoring or giving up
+```
+
+`npcConversations.sendQuestion` treats a typed request for someone's phone as the handover request. `npcConversations.callToBureau`, npc pins, and the final-report culprit require a known person.
 
 ## Public actions
 

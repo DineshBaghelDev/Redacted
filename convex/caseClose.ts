@@ -5,6 +5,7 @@ import { internalAction, internalMutation, internalQuery, mutation, query } from
 import { generateJson, modelsFor } from "./generation/llm";
 import { getPlayingRoomMember } from "./lib/auth";
 import { hasReadDevice } from "./lib/deviceAccess";
+import { knownPeople } from "./lib/discoveries";
 
 const MAX_EXPLANATION = 2_000;
 const MAX_EVIDENCE = 12;
@@ -64,9 +65,11 @@ export const submit = mutation({
       .withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id))
       .first();
     if (existing) throw new Error("This case has already been submitted.");
+    if (member.session.gaveUpAt !== undefined) throw new Error("This case was given up.");
 
     const culprit = await ctx.db.get(args.culpritNpcId);
     if (!culprit || culprit.caseId !== member.session.caseId) throw new Error("Choose a person from this case.");
+    if (!(await knownPeople(ctx, member.session)).has(culprit._id)) throw new Error("Choose someone your investigation has come across.");
     const evidenceIds = [...new Set(args.evidenceIds.map((id) => id.trim()).filter(Boolean))];
     if (evidenceIds.length === 0) throw new Error("Choose at least one piece of evidence from the clueboard.");
     if (evidenceIds.length > MAX_EVIDENCE) throw new Error(`Choose no more than ${MAX_EVIDENCE} pieces of evidence.`);
@@ -175,6 +178,50 @@ export const getResult = query({
       .withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id))
       .unique();
     return accusation ? { status: accusation.status, result: accusation.result, error: accusation.error } : null;
+  },
+});
+
+/**
+ * "What really happened": the canonical account and timeline. Hidden truth is released only after
+ * this room's report has been scored or the detectives gave up, when nothing can change the result.
+ */
+export const getEpilogue = query({
+  args: { roomCode: v.string() },
+  returns: v.union(v.null(), v.object({
+    culprit: v.string(),
+    motive: v.string(),
+    method: v.string(),
+    explanation: v.string(),
+    events: v.array(v.object({ time: v.number(), place: v.string(), text: v.string() })),
+  })),
+  handler: async (ctx, { roomCode }) => {
+    const member = await getPlayingRoomMember(ctx, roomCode);
+    if (!member?.session.caseId) return null;
+    const accusation = await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id)).unique();
+    if (accusation?.status !== "complete" && member.session.gaveUpAt === undefined) return null;
+    const solution = await ctx.db.query("caseSolutions").withIndex("by_caseId", (q) => q.eq("caseId", member.session.caseId!)).unique();
+    if (!solution) return null;
+    const culprit = await ctx.db.get(solution.culpritNpcId);
+    const events = [];
+    for await (const event of ctx.db.query("caseEvents").withIndex("by_caseId", (q) => q.eq("caseId", member.session.caseId!))) {
+      const place = await ctx.db.get(event.placeId);
+      events.push({ time: event.startTime, place: place?.name ?? "", text: event.description });
+    }
+    events.sort((a, b) => a.time - b.time);
+    return { culprit: culprit?.name ?? "Unknown", motive: solution.motive, method: solution.method, explanation: solution.canonicalExplanation, events: events.slice(0, 200) };
+  },
+});
+
+/** Give up: end the investigation for both detectives and reveal the solution. Cannot be undone. */
+export const giveUp = mutation({
+  args: { roomCode: v.string() },
+  returns: v.null(),
+  handler: async (ctx, { roomCode }) => {
+    const member = await getPlayingRoomMember(ctx, roomCode);
+    if (!member?.session.caseId) throw new Error("Start the investigation first.");
+    if (await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id)).unique()) throw new Error("The report is already filed.");
+    if (member.session.gaveUpAt === undefined) await ctx.db.patch(member.session._id, { gaveUpAt: Date.now() });
+    return null;
   },
 });
 

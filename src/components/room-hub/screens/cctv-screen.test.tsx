@@ -7,6 +7,7 @@ vi.mock("convex/react", () => ({
   useMutation: () => async () => null,
   useQuery: () => ({ caseTitle: "Empty district", start: 0, end: 60, cameras: [] }),
 }));
+vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams() }));
 
 test("shows a way back when no cameras are accessible here", () => {
   const html = renderToStaticMarkup(<CctvScreen roomCode="ABC123" onBack={() => {}} backLabel="Back to room" />);

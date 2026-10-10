@@ -298,9 +298,9 @@ test("a lobby keeps the selected passed case", async () => {
   }]);
 
   const created = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId });
-  expect(await t.run(async (ctx) => ctx.db.get(created.sessionId))).toMatchObject({ gameTime: 0, deadline: 1665, status: "waiting" });
+  expect(await t.run(async (ctx) => ctx.db.get(created.sessionId))).toMatchObject({ gameTime: 3375, deadline: 3713, status: "waiting" });
   const custom = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: 90 });
-  expect(await t.run(async (ctx) => ctx.db.get(custom.sessionId))).toMatchObject({ gameTime: 0, deadline: 90, status: "waiting" });
+  expect(await t.run(async (ctx) => ctx.db.get(custom.sessionId))).toMatchObject({ gameTime: 3375, deadline: 3465, status: "waiting" });
   await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: 0 })).rejects.toThrow("valid deadline");
   await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: 1.5 })).rejects.toThrow("valid deadline");
   await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: Number.MAX_SAFE_INTEGER + 1 })).rejects.toThrow("valid deadline");
@@ -546,14 +546,19 @@ test("a lobby keeps the selected passed case", async () => {
   expect(JSON.stringify(await user.query(api.cases.getBrief, { roomCode: created.roomCode }))).not.toContain(crimeCore.method);
   expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toBeNull();
   await t.run(async (ctx) => ctx.db.patch(created.sessionId, { status: "playing" }));
+  // Only the victim is known at first; anyone else appears once their name turns up.
+  expect((await user.query(api.npcs.list, { roomCode: created.roomCode }))?.map((person) => person.isVictim)).toEqual([true]);
+  await t.run(async (ctx) => ctx.db.patch(frozen.storedCase!._id, { summary: `A specific mystery involving ${frozen.culprit!.name}.` }));
   const publicPeople = await user.query(api.npcs.list, { roomCode: created.roomCode });
-  expect(publicPeople).toHaveLength(cast.characters.length);
+  expect(publicPeople).toHaveLength(2);
   expect(publicPeople?.find((person) => person.id === frozen.culprit?._id)).toMatchObject({
     name: frozen.culprit?.name,
-    role: "suspect",
+    isVictim: false,
+    firstSeenIn: "Case brief",
     gender: cast.characters.find((character) => character.id === crimeCore.culpritId)?.gender,
   });
   expect(JSON.stringify(publicPeople)).not.toContain("sourceId");
+  expect(JSON.stringify(publicPeople)).not.toContain("suspect");
   await t.run(async (ctx) => {
     for (let index = 0; index < 33; index += 1) {
       await ctx.db.insert("npcs", {
@@ -565,7 +570,8 @@ test("a lobby keeps the selected passed case", async () => {
       });
     }
   });
-  expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toHaveLength(cast.characters.length + 33);
+  expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toHaveLength(2);
+  await t.run(async (ctx) => ctx.db.patch(frozen.storedCase!._id, { summary: "A specific mystery." }));
   expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" })).toEqual({ status: "available", records: [], savedTerms: [] });
   await user.mutation(api.publicRecords.performSearch, { roomCode: created.roomCode, search: "Keel" });
   await t.run(async (ctx) => {
@@ -603,13 +609,13 @@ test("a lobby keeps the selected passed case", async () => {
     minute: 120,
   })).toEqual({ status: "available", records: [] });
   await user.mutation(api.cases.startCctvReview, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 });
-  expect(await user.query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).toMatchObject({ status: "pending", records: [] });
+  expect(await user.query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).toMatchObject({ status: "ready" });
   await t.run(async (ctx) => ctx.db.patch(created.sessionId, { clockStartedAt: Date.now() - 6_000 }));
   await user.mutation(api.investigation.finishAction, { roomCode: created.roomCode });
   expect(await t.run(async (ctx) => {
     const session = await ctx.db.get(created.sessionId);
     return { gameTime: session?.gameTime, clockStartedAt: session?.clockStartedAt };
-  })).toEqual({ gameTime: 15, clockStartedAt: undefined });
+  })).toEqual({ gameTime: 3385, clockStartedAt: undefined });
   expect(await user.query(api.cases.getCctvWindow, {
     roomCode: created.roomCode,
     cameraId: "cam:station",
@@ -694,10 +700,10 @@ test("a lobby keeps the selected passed case", async () => {
   await partner.mutation(api.sessions.setReady, { roomCode: replayed.roomCode, isReady: true });
   await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { deadline: undefined }));
   await user.mutation(api.sessions.start, { roomCode: replayed.roomCode });
-  expect((await t.run(async (ctx) => ctx.db.get(replayed.sessionId)))?.deadline).toBe(1665);
+  expect((await t.run(async (ctx) => ctx.db.get(replayed.sessionId)))?.deadline).toBe(3713);
   await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { deadline: undefined }));
-  expect(await t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).toBe(1665);
-  expect(await t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).toBe(1665);
+  expect(await t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).toBe(3713);
+  expect(await t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).toBe(3713);
   expect(await user.query(api.sessions.get, { roomCode: replayed.roomCode })).toMatchObject({ status: "playing" });
   const unpublishedCaseId = await t.run(async (ctx) => ctx.db.insert("cases", {
     generationJobId: invalidJobId,

@@ -13,6 +13,10 @@ export default defineSchema({
     summary: v.string(),
     initialFacts: v.array(v.string()),
     estimatedOptimalMinutes: v.optional(v.number()),
+    /** Story minute the crime was discovered; a replay's clock starts here. */
+    discoveryMinute: v.optional(v.number()),
+    /** Room where the detectives arrive at the start of a replay. */
+    sceneRoomId: v.optional(v.id("rooms")),
     publicationVersion: v.optional(v.number()),
     createdAt: v.number(),
   })
@@ -371,6 +375,8 @@ export default defineSchema({
     gameTime: v.optional(v.number()),
     clockStartedAt: v.optional(v.number()),
     deadline: v.optional(v.number()),
+    /** Set when the detectives give up and ask to see the solution; the room becomes review-only. */
+    gaveUpAt: v.optional(v.number()),
     createdAt: v.number(),
     expiresAt: v.number(),
   })
@@ -408,6 +414,7 @@ export default defineSchema({
     npcTurnId: v.optional(v.id("npcPendingMessages")),
     cctvReviewId: v.optional(v.id("cctvReviews")),
     recordSearchId: v.optional(v.id("publicRecordSearches")),
+    slot: v.optional(v.string()),
     startGameTime: v.number(),
     completeGameTime: v.number(),
     createdAt: v.number(),
@@ -445,15 +452,28 @@ export default defineSchema({
     searchedAt: v.number(),
   })
     .index("by_sessionId_and_roomId", ["sessionId", "roomId"]),
+  /** One searched spot (normalized slot key) in a room. */
+  searchedSpots: defineTable({
+    sessionId: v.id("sessions"),
+    roomId: v.id("rooms"),
+    spot: v.string(),
+    searchedAt: v.number(),
+  })
+    .index("by_sessionId_and_roomId_and_spot", ["sessionId", "roomId", "spot"]),
   forensicRequests: defineTable({
     sessionId: v.id("sessions"),
-    forensicOutputId: v.id("forensicOutputs"),
+    /** Absent when the chosen test has nothing to find on that source. */
+    forensicOutputId: v.optional(v.id("forensicOutputs")),
+    /** "item:<id>", "room:<id>" or "victim"; set on requests made from the test menu. */
+    sourceKey: v.optional(v.string()),
+    testType: v.optional(v.string()),
     requestedAtGameTime: v.number(),
     readyAtGameTime: v.number(),
     viewedAt: v.optional(v.number()),
   })
     .index("by_sessionId", ["sessionId"])
-    .index("by_sessionId_and_forensicOutputId", ["sessionId", "forensicOutputId"]),
+    .index("by_sessionId_and_forensicOutputId", ["sessionId", "forensicOutputId"])
+    .index("by_sessionId_and_sourceKey_and_testType", ["sessionId", "sourceKey", "testType"]),
   cctvReviews: defineTable({
     sessionId: v.id("sessions"),
     cameraId: v.id("cctvCameras"),
@@ -475,6 +495,13 @@ export default defineSchema({
     sourceSearchId: v.optional(v.id("publicRecordSearches")),
     previousCompleteGameTime: v.optional(v.number()),
   }).index("by_sessionId_and_recordId", ["sessionId", "recordId"]),
+  /** A detective pointing their partner at something. */
+  pings: defineTable({
+    sessionId: v.id("sessions"),
+    fromPlayerId: v.id("sessionPlayers"),
+    text: v.string(),
+    createdAt: v.number(),
+  }).index("by_sessionId", ["sessionId"]),
   clueBoardNodes: defineTable({
     sessionId: v.id("sessions"),
     type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file"), v.literal("call"), v.literal("message"), v.literal("statement")),
