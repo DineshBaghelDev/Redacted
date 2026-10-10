@@ -9,7 +9,7 @@
 - First-time tips on the bureau, place, map, interview, camera, lab, and notebook screens, plus "Show tips again" and a volume slider in the pause menu. Animations honor the system reduce-motion setting.
 - A notice tells the team when a lab result is ready while they are elsewhere. Arrival cards add building size, time-of-day atmosphere, and where the partner is.
 - Exploring the bureau as a building returns to the bureau scene. A full reload shows a branded loading screen instead of a blank page. The map has a "Find a place" list for phones.
-- The clueboard's cork shows again (React Flow's dark pane was covering it), and an empty board explains how to pin from the notebook. Person cards no longer repeat "Person".
+- An empty clueboard explains how to pin from the notebook. The dark grid board stays (the cork plate was tried and reverted at the player's request). Person cards no longer repeat "Person".
 - The laptop is now a laptop: bezel and webcam, a Files window with the list beside the open document on paper, and a keyboard deck.
 - Checked with a two-browser Playwright session: partner status and floor-plan markers, notebook "Show partner" pings, the map finder, streaming replies, the clueboard, and tips. 169 tests, TypeScript, and lint pass.
 

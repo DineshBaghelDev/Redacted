@@ -418,11 +418,6 @@
   .clue-board {
     background: #704b31 url('/assets/clueboard-cork.png') center / 100% 100% no-repeat;
   }
-  /* React Flow's dark mode paints its own pane; let the cork show through. */
-  .clue-board .react-flow {
-    --xy-background-color: transparent;
-    background: transparent;
-  }
 
   .clue-board-button {
     @apply flex items-center gap-2 border border-[#a97a4f] bg-[#332219] px-3 py-2 text-sm uppercase text-[#f4e8c8] shadow-[2px_2px_0_#080605] hover:border-[#e8c98e] focus-visible:outline-2 focus-visible:outline-[#fff1c9];
