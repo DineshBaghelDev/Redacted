@@ -24,6 +24,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   const [now, setNow] = useState(0);
   const [error, setError] = useState("");
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [roomsOpen, setRoomsOpen] = useState(false);
 
   useEffect(() => {
     if (!place?.action || place.clock.clockStartedAt === null) return;
@@ -91,10 +92,11 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
         <button className="min-h-11 shrink-0 border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">Map</button>
       </header>
 
-      <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(16rem,21rem)_minmax(0,1fr)] lg:overflow-hidden">
-        <nav aria-label="Rooms" className="border-b border-[#6f9f98]/25 bg-[#071619]/80 p-5 lg:overflow-y-auto lg:border-b-0 lg:border-r">
-          <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Rooms · {place.rooms.length}</p>
-          <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-1">
+      <div className="grid min-h-0 flex-1 content-start overflow-y-auto lg:content-normal lg:grid-cols-[minmax(16rem,21rem)_minmax(0,1fr)] lg:overflow-hidden">
+        <nav aria-label="Rooms" className="border-b border-[#6f9f98]/25 bg-[#071619]/80 p-4 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-5">
+          <button aria-controls="place-room-list" aria-expanded={roomsOpen} className="flex min-h-11 w-full items-center gap-3 border-b border-[#6f9f98]/25 text-left text-sm uppercase text-[#f1c987] lg:hidden" onClick={() => setRoomsOpen(!roomsOpen)} type="button"><InvestigationIcon className="size-8" name="room" /><span>Rooms · {place.rooms.length}</span><span className="ml-auto text-xs">{roomsOpen ? "Hide" : "Choose room"}</span></button>
+          <p className="hidden text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55 lg:block">Rooms · {place.rooms.length}</p>
+          <div className={`mt-3 max-h-[50vh] gap-x-3 overflow-y-auto sm:grid-cols-2 lg:max-h-none lg:grid-cols-1 lg:overflow-visible ${roomsOpen ? "grid" : "hidden lg:grid"}`} id="place-room-list">
             {place.rooms.map((room) => {
               const current = room.id === place.currentRoomId;
               return (
@@ -102,7 +104,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
                   className={`flex min-h-16 min-w-0 items-center gap-3 border-b border-[#6f9f98]/25 py-2 text-left transition ${current ? "text-[#f1c987]" : room.adjacent ? "hover:text-[#e8ac51]" : "text-[#c8d8d2]/55"}`}
                   disabled={working || Boolean(place.action) || current || !room.adjacent}
                   key={room.id}
-                  onClick={() => run(moveToRoom({ roomCode, roomId: room.id }))}
+                  onClick={() => { setRoomsOpen(false); run(moveToRoom({ roomCode, roomId: room.id })); }}
                   type="button"
                 >
                   <InvestigationIcon className="size-9" name="room" />

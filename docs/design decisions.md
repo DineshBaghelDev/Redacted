@@ -11,6 +11,7 @@
 - The scrollable map must not enlarge its parent grid; let its viewport contain the wide canvas. Show names for uncrowded markers on large screens, while crowded names appear on selection, hover, or focus. Keep travel minutes in the direct-routes list so place names stay clear.
 - At wide desktop sizes, enlarge map symbols and place names enough for the pixel font to remain legible at normal viewing distance. Leave enough inner space inside the illustrated camera time frame for controls and instructions.
 - On narrow camera screens, use a compact two-column local camera list with its own short scroll area so the written-log time control remains in reach.
+- In a building on phones, show the current room and its actions first. Keep all rooms in an explicit chooser above it and close that chooser after movement; retain the always-visible sidebar on desktop.
 - Let room titles, player names, and case brief titles wrap within their flex rows so generated text remains readable at narrow widths.
 - A camera access point can have zero cameras after location filtering; show an empty state with a way back to the previous location.
 
