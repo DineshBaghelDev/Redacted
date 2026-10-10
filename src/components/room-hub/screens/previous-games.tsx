@@ -23,23 +23,27 @@ export function PreviousGamesScreen({ error, isWorking, onBack, onPlay }: Previo
   const invalidDeadline = deadlineHours !== "" && (hours < 1 || !Number.isSafeInteger(deadlineMinutes));
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-4">
       <button className={`${menuButton} w-fit`} onClick={onBack} type="button">Back to menu</button>
       <h1 className="game-title text-3xl uppercase sm:text-5xl">Case archive</h1>
       {error ? <p className="border border-red-300 bg-red-950/90 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
-      <label className="flex w-fit flex-col gap-1 text-sm uppercase text-[#c8d8d2]" htmlFor="replay-deadline-hours">
-        Optional deadline (hours)
-        <input
-          className="min-h-11 w-48 border border-[#6f9f98]/50 bg-[#0b1a1c] px-3 text-base text-[#e4e6d8]"
-          id="replay-deadline-hours"
-          min="1"
-          onChange={(event) => setDeadlineHours(event.target.value)}
-          placeholder="Use case default"
-          type="number"
-          value={deadlineHours}
-        />
-      </label>
-      <section aria-label="Case archive" className="grid min-h-0 min-w-0 flex-1 content-start gap-3 overflow-y-auto px-1 pb-4 pr-3 md:grid-cols-2">
+      <details className="max-w-md border-l-2 border-[#e8ac51]/60 pl-3 text-sm text-[#c8d8d2]">
+        <summary className="cursor-pointer uppercase text-[#e8ac51]">Set a custom deadline</summary>
+        <p className="mt-2 leading-relaxed">The case default gives your team its suggested time plus one day. A custom limit is shared by both detectives. Going past it marks the clock overdue; you can keep playing and your score is unchanged.</p>
+        <label className="mt-3 flex w-fit flex-col gap-1 uppercase" htmlFor="replay-deadline-hours">
+          Game hours from the start
+          <input
+            className="min-h-11 w-48 border border-[#6f9f98]/50 bg-[#0b1a1c] px-3 text-base text-[#e4e6d8]"
+            id="replay-deadline-hours"
+            min="1"
+            onChange={(event) => setDeadlineHours(event.target.value)}
+            placeholder="Use case default"
+            type="number"
+            value={deadlineHours}
+          />
+        </label>
+      </details>
+      <section aria-label="Case archive" className="grid min-w-0 content-start gap-3 px-1 pb-4 md:grid-cols-2">
         {cases === undefined ? <p className="text-xl uppercase text-[#c8d8d2]">Loading cases...</p> : null}
         {cases?.length === 0 ? <p className="text-xl uppercase text-[#c8d8d2]">No passed cases yet.</p> : null}
         {cases?.map((game) => (

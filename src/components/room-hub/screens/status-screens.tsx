@@ -19,12 +19,12 @@ export function CaseBriefScreen({
   const brief = useQuery(api.cases.getBrief, isLoaded && isSignedIn && roomCode ? { roomCode } : "skip");
 
   return (
-    <section className="flex h-screen w-full items-center justify-center overflow-y-auto bg-[#071014]/92 p-4 text-[#211d17] sm:p-8">
-      <div className="game-dossier my-auto w-full max-w-3xl px-5 pb-20 pt-24 sm:px-8">
+    <section className="flex h-screen w-full items-center justify-center overflow-y-auto bg-[#071014]/92 p-3 text-[#211d17] sm:p-6">
+      <div className="game-dossier my-auto w-full max-w-2xl px-4 pb-12 pt-14 sm:px-7 sm:pb-14 sm:pt-16">
         <div className="flex flex-col items-start gap-4 border-b-2 border-[#211d17] pb-4 sm:flex-row sm:justify-between">
           <div className="min-w-0 flex-1">
             <p className="text-xs uppercase tracking-[0.2em] text-red-800">Bureau case file</p>
-            <h1 className="mt-2 break-words text-2xl uppercase leading-tight sm:text-5xl">{brief?.title ?? "Case brief"}</h1>
+            <h1 className="mt-2 break-words text-2xl uppercase leading-tight sm:text-3xl">{brief?.title ?? "Case brief"}</h1>
           </div>
           <span className="shrink-0 border-2 border-red-800 px-3 py-1 text-sm uppercase text-red-800">Room {roomCode}</span>
         </div>
@@ -32,14 +32,14 @@ export function CaseBriefScreen({
         {brief === undefined ? <p className="py-12 text-center text-xl uppercase">Opening the file...</p> : null}
         {brief === null ? <p className="py-12 text-center text-xl uppercase text-red-800">This case file is unavailable.</p> : null}
         {brief ? (
-          <div className="py-6">
-            <p className="text-lg leading-relaxed sm:text-xl">{brief.summary}</p>
-            <div className="mt-6 border-l-4 border-red-800 bg-[#ad9e80]/55 p-4">
-              <h2 className="text-sm uppercase tracking-[0.18em] text-red-800">Known before the investigation</h2>
-              <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed sm:text-lg">
+          <div className="py-4">
+            <p className="text-base leading-relaxed sm:text-lg">{brief.summary}</p>
+            <details className="mt-4 border-l-4 border-red-800 bg-[#ad9e80]/55 p-3 sm:p-4">
+              <summary className="cursor-pointer text-sm uppercase tracking-[0.12em] text-red-800">Known details · {brief.initialFacts.length}</summary>
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm leading-relaxed sm:text-base">
                 {brief.initialFacts.map((fact) => <li key={fact}>{fact}</li>)}
               </ul>
-            </div>
+            </details>
           </div>
         ) : null}
 

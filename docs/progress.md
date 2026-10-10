@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-10 — Player flow refinements
+
+- The case archive uses one full-screen scroll area, including its header and case cards. A signed-in 390px Playwright check scrolled from the header into later cases. The custom shared game-time deadline is a disclosed option with an explanation of the default and Overdue behavior.
+- The initial case brief is narrower and uses smaller reading type and padding. Its repeated initial-facts list is available under “Known details,” leaving the case summary and Begin investigation action in the first phone viewport.
+
 ## 2026-10-10 — Investigation surface asset pass
 
 - A signed-in local Playwright walkthrough reached an existing case, lobby, bureau, city map, street/bureau camera desk, roster, records, and a building room. The room screen exposed a flat dark backdrop; it now uses a sparse object-free pixel wall behind the existing room controls, preserving generated-case truth. The local walkthrough also confirmed the room's camera action is on site.

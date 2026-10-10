@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-10 — Archive and case opening
+
+- Let the whole archive screen scroll so touch, mouse wheel, and keyboard users can reach every case from any starting point. Keep the custom deadline behind a disclosure because most replays use the frozen default.
+- The opening case file leads with the public summary and a visible Begin investigation action. The initial facts remain available on demand when they repeat the summary.
+
 ## 2026-10-10 — Investigation symbols and quieter lists
 
 - Exploration may use an abstract pixel architectural backdrop with no furniture, doors, people, or clues. It adds scene depth without implying a generated room's contents; actual room data and camera access remain in the interactive foreground.
