@@ -5,7 +5,7 @@ import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
 import { useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
-import { formatGameMinute } from "../../../lib/game-time";
+import { formatDuration, formatGameMinute } from "../../../lib/game-time";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 const MAX_EVIDENCE = 12;
@@ -121,6 +121,12 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   {"★".repeat(closeState.result.totalStars)}{"☆".repeat(5 - closeState.result.totalStars)}
                 </p>
               </div>
+              {closeState.tookMinutes !== undefined ? (
+                <p className="mt-3 font-mono text-sm text-[#5b4635]">
+                  Case time {formatDuration(closeState.tookMinutes)}
+                  {closeState.deadlineDelta !== undefined ? ` · ${formatDuration(Math.abs(closeState.deadlineDelta))} ${closeState.deadlineDelta <= 0 ? "before" : "after"} the deadline` : ""}
+                </p>
+              ) : null}
               <ul className="mt-5 grid gap-3 sm:grid-cols-2">
                 {fields.map(([key, label]) => {
                   const category = closeState.result![key];

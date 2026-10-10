@@ -495,6 +495,12 @@ export default defineSchema({
     sourceSearchId: v.optional(v.id("publicRecordSearches")),
     previousCompleteGameTime: v.optional(v.number()),
   }).index("by_sessionId_and_recordId", ["sessionId", "recordId"]),
+  /** People named aloud in an interview; they join the People file. */
+  sessionKnownPeople: defineTable({
+    sessionId: v.id("sessions"),
+    npcId: v.id("npcs"),
+    firstSeenIn: v.string(),
+  }).index("by_sessionId_and_npcId", ["sessionId", "npcId"]),
   /** A detective pointing their partner at something. */
   pings: defineTable({
     sessionId: v.id("sessions"),
@@ -536,6 +542,8 @@ export default defineSchema({
     evidenceExplanation: v.string(),
     methodExplanation: v.string(),
     status: v.union(v.literal("pending"), v.literal("judging"), v.literal("complete")),
+    /** Shared case time when the report was filed. */
+    submittedGameTime: v.optional(v.number()),
     result: v.optional(v.object({
       killer: v.object({ star: v.boolean() }),
       motive: v.object({ star: v.boolean(), feedback: v.optional(v.string()) }),

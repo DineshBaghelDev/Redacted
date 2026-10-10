@@ -1,4 +1,5 @@
 import { useAuth } from "@clerk/nextjs";
+import { FirstTimeTip, resetTips } from "../first-time-tip";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
 import Image from "next/image";
@@ -8,7 +9,7 @@ import { go, replaceTo } from "../../../lib/game-nav";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { currentGameMinute, formatGameMinute, formatDuration, partOfDay } from "../../../lib/game-time";
-import { isMuted, play, setMuted, startRain } from "../../../lib/sound";
+import { getVolume, isMuted, play, setMuted, setVolume, startRain } from "../../../lib/sound";
 import { GameIcon } from "../game-icon";
 import { NotebookOverlay } from "../notebook-overlay";
 
@@ -99,6 +100,8 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   const city = useQuery(api.world.getMap, ready ? { roomCode } : "skip");
   const coop = useQuery(api.coop.get, ready ? { roomCode } : "skip");
   const notebook = useQuery(api.notebook.get, ready ? { roomCode } : "skip");
+  const labReady = useQuery(api.forensics.readyCount, ready ? { roomCode } : "skip");
+  const seenLabReady = useRef<number | null>(null);
   const settleClock = useMutation(api.world.finishTravel);
   const station = (pathParts[3] === "bureau" ? pathParts[4] : pathParts[3]) as Station | undefined;
   const activeStation = station ? stations[station] : null;
@@ -124,6 +127,11 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
     setToasts((current) => [...current.slice(-3), { id, text }]);
     window.setTimeout(() => setToasts((current) => current.filter((item) => item.id !== id)), 5000);
   }
+
+  // The bureau's own rooms are its stations; exploring it as a building would only duplicate them.
+  useEffect(() => {
+    if (station === "place" && city && !city.activeTravel && currentPlace?.kind === "bureau") replaceTo(`/lobby/${roomCode}/bureau`);
+  }, [city, currentPlace, roomCode, station]);
 
   // Away from the bureau with no station open: go straight into the place instead of a "you are away" card.
   useEffect(() => {
@@ -168,6 +176,15 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
     }
     seenEntries.current = keys;
   }, [notebook]);
+
+  useEffect(() => {
+    if (labReady === undefined) return;
+    if (seenLabReady.current !== null && labReady > seenLabReady.current) {
+      play("ping");
+      toast("The lab called: a result is ready to read at the forensic lab.");
+    }
+    seenLabReady.current = labReady;
+  }, [labReady]);
 
   useEffect(() => {
     if (!coop) return;
@@ -244,6 +261,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
           {showBureauHub ? hotspots.map((spot) => <Hotspot key={spot.station} {...spot} onClick={() => openStation(spot.station)} />) : null}
         </div>
       </div>
+      {showBureauHub ? <FirstTimeTip className="absolute bottom-12 left-4 z-30 lg:bottom-6" id="bureau" title="The bureau">Click around the room: interview room, security desk, clueboard, records, city map, and the case file. Esc pauses; N opens the notebook.</FirstTimeTip> : null}
       {showBureauHub ? <p className="pointer-events-none absolute inset-x-0 bottom-3 z-20 text-center text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/70 lg:hidden">Swipe to look around the bureau</p> : null}
 
       {activeStation || showAwayNotice ? (
@@ -297,6 +315,8 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
             <div className="mt-4 grid gap-2">
               <button autoFocus className="min-h-11 border border-[#e8ac51] text-sm uppercase text-[#f1c987] hover:bg-[#e8ac51]/15" onClick={() => setMenuOpen(false)} type="button">Resume</button>
               <button className="min-h-11 border border-[#6f9f98]/60 text-sm uppercase" onClick={() => { const next = !muted; setMuted(next); setMutedState(next); }} type="button">Sound · {muted ? "Off" : "On"}</button>
+              {!muted ? <label className="flex items-center gap-3 text-xs uppercase text-[#c8d8d2]">Volume<input aria-label="Volume" className="flex-1 accent-[#e8ac51]" defaultValue={Math.round(getVolume() * 100)} max={100} min={0} onChange={(event) => setVolume(Number(event.target.value) / 100)} type="range" /></label> : null}
+              <button className="min-h-11 border border-[#6f9f98]/60 text-sm uppercase" onClick={() => { resetTips(); setMenuOpen(false); }} type="button">Show tips again</button>
               <button className="min-h-11 border border-red-400/70 text-sm uppercase text-red-100" onClick={() => setConfirmLeave(true)} type="button">Leave case</button>
             </div>
           )}

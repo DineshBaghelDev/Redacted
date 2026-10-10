@@ -5,6 +5,7 @@ import { internalAction, internalMutation, internalQuery, mutation, query } from
 import { generateJson, modelsFor } from "./generation/llm";
 import { getPlayingRoomMember } from "./lib/auth";
 import { hasReadDevice } from "./lib/deviceAccess";
+import { currentGameTime } from "./lib/clock";
 import { knownPeople } from "./lib/discoveries";
 
 const MAX_EXPLANATION = 2_000;
@@ -133,6 +134,7 @@ export const submit = mutation({
       ...(weaponItemId ? { weaponItemId } : {}),
       ...(weaponDescription ? { weaponDescription } : {}),
       evidenceIds: [...new Set(canonicalEvidenceIds)],
+      submittedGameTime: currentGameTime(member.session, now),
       evidenceExplanation: explanation(args.evidenceExplanation, "Evidence explanation"),
       methodExplanation: explanation(args.methodExplanation, "Method"),
       status: "pending",
@@ -169,6 +171,9 @@ export const getResult = query({
     status: v.union(v.literal("pending"), v.literal("judging"), v.literal("complete")),
     result: v.optional(resultValidator),
     error: v.optional(v.string()),
+    /** Case time from the discovery to filing, and how far that was from the deadline (negative = early). */
+    tookMinutes: v.optional(v.number()),
+    deadlineDelta: v.optional(v.number()),
   })),
   handler: async (ctx, { roomCode }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
@@ -177,7 +182,16 @@ export const getResult = query({
       .query("accusations")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id))
       .unique();
-    return accusation ? { status: accusation.status, result: accusation.result, error: accusation.error } : null;
+    if (!accusation) return null;
+    const playableCase = member.session.caseId ? await ctx.db.get(member.session.caseId) : null;
+    const filedAt = accusation.submittedGameTime ?? member.session.gameTime ?? 0;
+    return {
+      status: accusation.status,
+      result: accusation.result,
+      error: accusation.error,
+      tookMinutes: Math.max(0, filedAt - (playableCase?.discoveryMinute ?? 0)),
+      ...(member.session.deadline !== undefined ? { deadlineDelta: filedAt - member.session.deadline } : {}),
+    };
   },
 });
 

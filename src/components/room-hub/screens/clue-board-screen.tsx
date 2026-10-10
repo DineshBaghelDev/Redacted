@@ -233,6 +233,14 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
           <Background color="#8a6246" gap={28} size={1} />
           <Controls position="bottom-right" showInteractive={false} />
         </ReactFlow>
+        {savedNodes?.length === 0 ? (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
+            <div className="max-w-sm rotate-[-1.5deg] bg-[#f3e6c4] p-5 text-center text-[#2b1d16] shadow-[4px_6px_0_rgb(0_0_0/45%)]">
+              <p className="text-xs uppercase tracking-[0.2em] text-red-800">The board is empty</p>
+              <p className="mt-2 text-sm leading-relaxed">Open the notebook (N) and pin the people and evidence that matter. Then tie strings between them to build your theory.</p>
+            </div>
+          </div>
+        ) : null}
         <p className="pointer-events-none absolute bottom-2 left-2 max-w-[15rem] border border-[#69452e] bg-[#1b120e]/90 px-2 py-1 text-xs text-[#e3c997] shadow-md sm:bottom-4 sm:left-4 sm:max-w-xs sm:px-3 sm:py-2">
           Drag notes to move them. Connect pins to tie a string.
         </p>

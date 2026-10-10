@@ -4,7 +4,7 @@ import type { Rng } from "../rng";
 import type { Evidence } from "./types";
 
 // Everyday objects that make searches feel real. They prove nothing.
-const POOL: Partial<Record<RoomKind, [string, string][]>> = {
+export const POOL: Partial<Record<RoomKind, [string, string][]>> = {
   living: [
     ["TV remote", "A remote with a sticky volume button."],
     ["Stack of magazines", "Old home and garden magazines."],

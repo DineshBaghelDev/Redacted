@@ -7,6 +7,7 @@ import { castSchema } from "./generation/core/schemas";
 import { cameraAtAccessPoint, getCameraAccess, getPlayingRoomMember, getRoomMember, requireInvestigationOpen, requireUserId } from "./lib/auth";
 import { CCTV_HALF_WINDOW } from "./lib/discoveries";
 import { ensureCaseCctv } from "./lib/publishCctv";
+import { ensureCaseClutter } from "./lib/publishClutter";
 import { ensureCaseDevices } from "./lib/publishDevices";
 import { ensureCaseForensics, restoreBodyForensicSources } from "./lib/publishForensics";
 import { ensureCaseNarrative } from "./lib/publishNarrative";
@@ -86,6 +87,7 @@ async function ensureCaseEstimate(ctx: MutationCtx, caseId: Id<"cases">, generat
 
 /** Copies the discovery minute and crime-scene room into the frozen case, once. */
 export async function ensureCaseOpening(ctx: MutationCtx, caseId: Id<"cases">) {
+  await ensureCaseClutter(ctx, caseId);
   const playableCase = await ctx.db.get(caseId);
   if (!playableCase || playableCase.discoveryMinute !== undefined || !playableCase.cityId) return;
   const crime = (await getDraft(ctx, playableCase.generationJobId, "crime"))?.output as { discovery?: { time?: unknown }; sceneRoomId?: unknown } | undefined;

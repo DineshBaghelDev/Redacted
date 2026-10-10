@@ -60,6 +60,7 @@ import type * as lib_clock from "../lib/clock.js";
 import type * as lib_deviceAccess from "../lib/deviceAccess.js";
 import type * as lib_discoveries from "../lib/discoveries.js";
 import type * as lib_publishCctv from "../lib/publishCctv.js";
+import type * as lib_publishClutter from "../lib/publishClutter.js";
 import type * as lib_publishDevices from "../lib/publishDevices.js";
 import type * as lib_publishForensics from "../lib/publishForensics.js";
 import type * as lib_publishItems from "../lib/publishItems.js";
@@ -134,6 +135,7 @@ declare const fullApi: ApiFromModules<{
   "lib/deviceAccess": typeof lib_deviceAccess;
   "lib/discoveries": typeof lib_discoveries;
   "lib/publishCctv": typeof lib_publishCctv;
+  "lib/publishClutter": typeof lib_publishClutter;
   "lib/publishDevices": typeof lib_publishDevices;
   "lib/publishForensics": typeof lib_publishForensics;
   "lib/publishItems": typeof lib_publishItems;

@@ -1,5 +1,6 @@
 "use client";
 
+import { FirstTimeTip } from "../first-time-tip";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
@@ -7,7 +8,7 @@ import type { FunctionReturnType } from "convex/server";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
-import { formatGameMinute } from "../../../lib/game-time";
+import { formatGameMinute, partOfDay } from "../../../lib/game-time";
 import { play } from "../../../lib/sound";
 import { CctvScreen } from "./cctv-screen";
 import { GameIcon } from "../game-icon";
@@ -17,6 +18,13 @@ import { DeviceViewer } from "./device-viewer";
 type Place = NonNullable<FunctionReturnType<typeof api.investigation.getPlace>>;
 type Room = Place["rooms"][number];
 type Item = Place["items"][number];
+
+const atmosphere = {
+  Morning: "Grey morning light falls through the windows.",
+  Afternoon: "The afternoon is quiet; somewhere a radio is playing.",
+  Evening: "The lights are coming on. Rain ticks against the glass.",
+  Night: "It is dark and still. Your torch picks out the doorway.",
+} as const;
 
 const CELL_W = 168;
 const CELL_H = 64;
@@ -173,6 +181,8 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-red-800">{formatGameMinute(gameTime)}</p>
             <h3 className="mt-2 text-3xl uppercase">{place.placeName}</h3>
             <p className="mt-4 text-sm leading-relaxed">{place.placeDescription}</p>
+            <p className="mt-3 text-sm italic leading-relaxed text-[#5d4d3d]">{atmosphere[partOfDay(gameTime)]} {place.rooms.length} rooms{floors.length > 1 ? ` over ${floors.length} floors` : ""}.</p>
+            {place.partners.length ? <p className="mt-2 text-xs uppercase text-red-800">{place.partners[0].name} is already inside · {place.rooms.find((room) => room.id === place.partners[0].roomId)?.name}</p> : null}
             <button autoFocus className="mt-6 min-h-11 border-2 border-[#573821] px-5 uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={() => {
               play("door");
               setArrivedAt(place.placeName);
@@ -238,6 +248,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
 
         <div className="game-station-main order-1 min-h-0 p-4 sm:p-6 lg:order-2 lg:overflow-y-auto">
           <h3 className="flex items-center gap-3 text-2xl uppercase"><InvestigationIcon className="size-11" name="room" /><span className="min-w-0 break-words">{currentRoom?.name ?? "Entrance"}</span></h3>
+          <FirstTimeTip className="mt-3" id="place" title="Searching a place">Pick a spot to search it (4 min). Anything there flips up as a card: look closer, bag it, or pin it. Tap a room on the floor plan to walk there. Press N any time for the notebook.</FirstTimeTip>
           {place.action ? (
             <div className="mt-4 border border-[#e8ac51]/45 bg-[#211d15] p-3" role="status">
               <p className="text-sm uppercase text-[#f1c987]">{actionLabel}</p>

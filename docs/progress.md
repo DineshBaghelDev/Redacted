@@ -1,5 +1,18 @@
 # Progress
 
+## 2026-10-11 — Audit follow-ups
+
+- Everyday objects are scattered through every searchable room in the city (seeded code, no generation) when a case is published or replayed, so finding something no longer means a room matters. Existing cases get the scatter on their next replay.
+- The scored result shows case time from discovery to filing and how far that was from the deadline. No penalty.
+- People named aloud in an interview join the People file ("First seen in: Interview with …").
+- Interview replies stream word by word; if streaming fails the reply falls back to a whole message.
+- First-time tips on the bureau, place, map, interview, camera, lab, and notebook screens, plus "Show tips again" and a volume slider in the pause menu. Animations honor the system reduce-motion setting.
+- A notice tells the team when a lab result is ready while they are elsewhere. Arrival cards add building size, time-of-day atmosphere, and where the partner is.
+- Exploring the bureau as a building returns to the bureau scene. A full reload shows a branded loading screen instead of a blank page. The map has a "Find a place" list for phones.
+- The clueboard's cork shows again (React Flow's dark pane was covering it), and an empty board explains how to pin from the notebook. Person cards no longer repeat "Person".
+- The laptop is now a laptop: bezel and webcam, a Files window with the list beside the open document on paper, and a keyboard deck.
+- Checked with a two-browser Playwright session: partner status and floor-plan markers, notebook "Show partner" pings, the map finder, streaming replies, the clueboard, and tips. 169 tests, TypeScript, and lint pass.
+
 ## 2026-10-10 — From app to game: loop, time, and discovery pass
 
 - Cold open: Begin investigation now places both detectives in the crime-scene room (frozen `sceneRoomId`) with an arrival card instead of the bureau menu. The case clock starts at the story's discovery minute, so the clock, CCTV, calls, and messages share one calendar.

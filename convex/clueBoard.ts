@@ -162,7 +162,8 @@ export const createReferenceNode = mutation({
       const person = npcId ? await ctx.db.get(npcId) : null;
       if (!person || person.caseId !== session.caseId) throw new Error("That person is not part of this case.");
       if (!(await knownPeople(ctx, session)).has(person._id)) throw new Error("You have not come across this person yet.");
-      text = `${person.name}\n${person.role === "victim" ? "Victim" : person.occupation ?? "Person"}`;
+      const detail = person.role === "victim" ? "Victim" : person.occupation;
+      text = detail ? `${person.name}\n${detail}` : person.name;
     } else if (type === "place") {
       const playableCase = await ctx.db.get(session.caseId);
       const place = playableCase?.cityId

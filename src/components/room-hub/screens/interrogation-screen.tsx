@@ -1,5 +1,6 @@
 "use client";
 
+import { FirstTimeTip } from "../first-time-tip";
 import { useAuth } from "@clerk/nextjs";
 import { useUIMessages } from "@convex-dev/agent/react";
 import { useMutation } from "convex/react";
@@ -176,6 +177,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
       </aside>
 
       <section aria-label={`Interview with ${person.name}`} className="flex min-h-0 flex-col border border-[#6f9f98]/30 bg-[#09191c]/95 text-[#e4e6d8]">
+        <FirstTimeTip className="m-3" id="interview" title="Questioning">Ask anything in your own words; each question takes 3 minutes. Tap a name or object to ask about it. Use Show evidence to confront someone: only real proof breaks a lie.</FirstTimeTip>
         {interview?.threadId ? <ConversationMessages name={person.name} roomCode={roomCode} threadId={interview.threadId} /> : <div className="flex min-h-0 flex-1 items-center justify-center p-4 text-center text-sm text-[#c8d8d2]/60">{present ? `${person.name} is shown in and sits down.` : "The chair across the table is empty."}</div>}
         {waiting ? <p className="px-4 py-2 text-sm italic text-[#e8ac51]" role="status">{person.name} is thinking<span className="animate-pulse">...</span></p> : null}
         {interview?.turns.at(-1)?.status === "failed" ? <div className="px-4 py-2 text-sm text-red-200" role="alert"><p>That answer was lost. Asking again costs no time.</p><button className="mt-2 min-h-10 border border-red-400 px-3 text-xs uppercase disabled:opacity-50" disabled={working} onClick={() => run(retryFailed({ roomCode, npcId: person.id }))} type="button">Ask again</button></div> : null}

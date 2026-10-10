@@ -2,7 +2,9 @@
 type Cue = "click" | "reveal" | "stamp" | "door" | "ping" | "sting" | "type";
 
 const MUTE_KEY = "redacted.muted";
+const VOLUME_KEY = "redacted.volume";
 let context: AudioContext | null = null;
+let master: GainNode | null = null;
 let rain: { source: AudioBufferSourceNode; gain: GainNode } | null = null;
 
 export function isMuted() {
@@ -23,11 +25,38 @@ export function setMuted(muted: boolean) {
   else startRain();
 }
 
+export function getVolume() {
+  try {
+    const stored = Number(window.localStorage.getItem(VOLUME_KEY));
+    return Number.isFinite(stored) && window.localStorage.getItem(VOLUME_KEY) !== null ? Math.min(1, Math.max(0, stored)) : 0.7;
+  } catch {
+    return 0.7;
+  }
+}
+
+export function setVolume(volume: number) {
+  try {
+    window.localStorage.setItem(VOLUME_KEY, String(volume));
+  } catch {
+    // Volume is a convenience; keep the current level if storage is blocked.
+  }
+  if (master) master.gain.value = volume;
+}
+
 function audio() {
   if (typeof window === "undefined" || isMuted()) return null;
-  context ??= new AudioContext();
+  if (!context) {
+    context = new AudioContext();
+    master = context.createGain();
+    master.gain.value = getVolume();
+    master.connect(context.destination);
+  }
   if (context.state === "suspended") void context.resume();
   return context;
+}
+
+function out(ctx: AudioContext) {
+  return master ?? ctx.destination;
 }
 
 function tone(ctx: AudioContext, frequency: number, start: number, duration: number, type: OscillatorType, volume: number, endFrequency = frequency) {
@@ -38,7 +67,7 @@ function tone(ctx: AudioContext, frequency: number, start: number, duration: num
   oscillator.frequency.exponentialRampToValueAtTime(endFrequency, ctx.currentTime + start + duration);
   gain.gain.setValueAtTime(volume, ctx.currentTime + start);
   gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + duration);
-  oscillator.connect(gain).connect(ctx.destination);
+  oscillator.connect(gain).connect(out(ctx));
   oscillator.start(ctx.currentTime + start);
   oscillator.stop(ctx.currentTime + start + duration + 0.02);
 }
@@ -59,7 +88,7 @@ function burst(ctx: AudioContext, duration: number, frequency: number, volume: n
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(volume, ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-  source.connect(filter).connect(gain).connect(ctx.destination);
+  source.connect(filter).connect(gain).connect(out(ctx));
   source.start();
 }
 
@@ -87,7 +116,7 @@ export function startRain() {
   filter.frequency.value = 900;
   const gain = ctx.createGain();
   gain.gain.value = 0.025;
-  source.connect(filter).connect(gain).connect(ctx.destination);
+  source.connect(filter).connect(gain).connect(out(ctx));
   source.start();
   rain = { source, gain };
 }

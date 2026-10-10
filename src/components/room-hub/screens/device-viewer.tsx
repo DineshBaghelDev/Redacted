@@ -45,11 +45,12 @@ export function DeviceViewer({ title, data, onBack, onPin, isPinned, busy, error
 
   return <section aria-label={`${title} records`} className="game-records-scene absolute inset-0 z-40 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
     <header className="game-station-header flex shrink-0 items-center gap-3 px-4 py-3 sm:px-6">
-      <InvestigationIcon className="size-10" name="device" />
+      <InvestigationIcon className="size-10" name={data.type === "laptop" ? "file" : "device"} />
       <div className="min-w-0 flex-1"><p className="text-xs uppercase tracking-widest text-[#a5c6bb]">Recovered {data.type}</p><h2 className="break-words text-lg uppercase sm:text-2xl">{title}</h2></div>
       <button className="min-h-11 shrink-0 border border-[#6f9f98] px-3 text-xs uppercase" onClick={onBack} type="button">Put it down</button>
     </header>
     {error ? <p className="mx-3 mt-3 border border-red-400 bg-red-950 p-3 text-sm text-red-50" role="alert">{error}</p> : null}
+    {data.type === "laptop" ? <Laptop busy={busy} files={data.files} isPinned={(id) => isPinned("device_file", id)} onPin={(id) => onPin("device_file", id)} title={title} /> : (
     <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-6">
       <div className={`mx-auto flex min-h-[30rem] flex-col border-[10px] border-[#20383a] bg-[#09191b] shadow-[8px_10px_0_#0008] ${data.type === "phone" ? "max-w-[25rem] rounded-[1.5rem]" : "max-w-4xl"}`}>
         {data.type === "phone" ? <div aria-hidden="true" className="mx-auto mt-2 h-1 w-14 rounded-full bg-[#446269]" /> : null}
@@ -80,7 +81,54 @@ export function DeviceViewer({ title, data, onBack, onPin, isPinned, busy, error
         </div>
         {data.type === "phone" ? <div aria-hidden="true" className="mx-auto mb-3 h-1 w-20 bg-[#446269]" /> : null}
       </div>
-      {data.type === "laptop" ? <div aria-hidden="true" className="mx-auto h-3 max-w-[calc(56rem+4rem)] border-x-[2rem] border-t-8 border-[#446269] bg-[#16292c]" /> : null}
     </div>
+    )}
   </section>;
+}
+
+/** A recovered laptop: bezel and webcam, a file window with the list beside the open document, and a keyboard deck. */
+function Laptop({ title, files, busy, isPinned, onPin }: { title: string; files: DeviceData["files"]; busy: boolean; isPinned: (id: string) => boolean; onPin: (id: string) => void }) {
+  const [openId, setOpenId] = useState(files[0]?.id ?? null);
+  const file = files.find((row) => row.id === openId);
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-8">
+      <div className="mx-auto max-w-5xl">
+        <div className="relative rounded-t-xl border-[14px] border-b-[18px] border-[#1a2729] bg-[#0b1a1c] shadow-[8px_10px_0_#0008] sm:border-[18px] sm:border-b-[22px]">
+          <span aria-hidden="true" className="absolute -top-[11px] left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-[#3c5a5c] sm:-top-[13px]" />
+          <div className="laptop-desktop flex min-h-[26rem] flex-col">
+            <div className="flex items-center gap-2 border-b border-[#2c4446] bg-[#13282a] px-3 py-2 text-xs">
+              <span aria-hidden="true" className="flex gap-1.5"><i className="size-2.5 rounded-full bg-[#b85c4c]" /><i className="size-2.5 rounded-full bg-[#d0a35a]" /><i className="size-2.5 rounded-full bg-[#5f9a7c]" /></span>
+              <span className="ml-2 truncate font-mono text-[#a5c6bb]">Files — {title}</span>
+              <span className="ml-auto font-mono text-[#a5c6bb]/60">{files.length} {files.length === 1 ? "item" : "items"}</span>
+            </div>
+            <div className="grid min-h-0 flex-1 sm:grid-cols-[14rem_minmax(0,1fr)]">
+              <ul className="border-b border-[#2c4446] bg-[#0e2022] p-2 sm:border-b-0 sm:border-r" aria-label="Files">
+                {files.map((row) => (
+                  <li key={row.id}>
+                    <button aria-pressed={row.id === openId} className="flex min-h-10 w-full items-center gap-2 px-2 text-left font-mono text-xs text-[#c8d8d2] hover:bg-[#1c3436] aria-pressed:bg-[#e8ac51]/15 aria-pressed:text-[#f1c987]" onClick={() => setOpenId(row.id)} type="button">
+                      <span aria-hidden="true" className="h-4 w-3 shrink-0 border border-current [clip-path:polygon(0_0,70%_0,100%_25%,100%_100%,0_100%)]" />
+                      <span className="min-w-0 break-words">{row.title}</span>
+                    </button>
+                  </li>
+                ))}
+                {!files.length ? <li className="p-2 font-mono text-xs text-[#a5c6bb]/70">This folder is empty.</li> : null}
+              </ul>
+              <article className="min-w-0 p-4 sm:p-6">
+                {file ? (
+                  <>
+                    <h3 className="break-words font-mono text-sm uppercase tracking-wide text-[#f1c987]">{file.title}</h3>
+                    <p className="mt-4 whitespace-pre-wrap break-words bg-[#e9e2cf] p-4 font-mono text-sm leading-relaxed text-[#211d17] shadow-[3px_3px_0_#0006]">{file.body}</p>
+                    <button className="mt-5 min-h-10 border border-[#e8ac51] px-4 text-xs uppercase text-[#e8ac51] disabled:opacity-50" disabled={busy || isPinned(file.id)} onClick={() => onPin(file.id)} type="button">{isPinned(file.id) ? "Pinned to clueboard" : "Pin to clueboard"}</button>
+                  </>
+                ) : <p className="font-mono text-sm text-[#a5c6bb]/70">Open a file from the list.</p>}
+              </article>
+            </div>
+          </div>
+        </div>
+        <div aria-hidden="true" className="mx-auto h-5 w-[calc(100%+3rem)] -translate-x-6 bg-[#2a3b3d] [clip-path:polygon(2%_0,98%_0,100%_100%,0_100%)]">
+          <span className="mx-auto block h-1.5 w-24 translate-y-1 rounded-b bg-[#1a2729]" />
+        </div>
+      </div>
+    </div>
+  );
 }

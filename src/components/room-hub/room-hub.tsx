@@ -67,7 +67,12 @@ export function RoomHub() {
   }, [screen]);
 
   if (!isMounted) {
-    return null;
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-[#071014]">
+        <p className="game-title animate-pulse text-4xl">REDACTED</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-[#c8d8d2]/60">Opening the case files...</p>
+      </div>
+    );
   }
 
   function saveDetectiveName() {

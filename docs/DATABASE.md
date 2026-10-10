@@ -809,6 +809,9 @@ Player claims must remain claims, not canonical facts.
 - `searchedSpots` (`by_sessionId_and_roomId_and_spot`): spots searched this session. The first spot also inserts `searchedRooms` so the room can be swabbed at the lab.
 - `forensicRequests.forensicOutputId` is optional; `sourceKey` and `testType` record menu requests, including tests with nothing stored (`by_sessionId_and_sourceKey_and_testType`).
 - `pings` (`by_sessionId`): partner "look at this" notices.
+- `sessionKnownPeople` (`by_sessionId_and_npcId`): people named in interview replies, with where they were first heard of.
+- `accusations.submittedGameTime`: case time when the report was filed, used for the result's time taken.
+- `caseItems` with `scatter/` evidence IDs: everyday objects placed by seeded code in every searchable room.
 - `caseItems.collectible` is no longer used as a gate; every found object can be collected.
 
 ## LLM telemetry

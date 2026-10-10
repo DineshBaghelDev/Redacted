@@ -16,7 +16,7 @@ No automatic suspect ranking, clue list, deductions, or hints.
 
 ### People are discovered
 
-The People file starts with the victim and anyone the brief names. A person is added when their name appears in something the team has uncovered (an inspected object, a read device, a heard statement, a returned record, a viewed lab report, a reviewed camera log) or when they have been called in. Each entry shows where they were first seen. Roles other than "Victim" are never shown. Only known people can be called in, pinned, or named as culprit. Evidence itself never becomes a lead, pin, or conclusion.
+The People file starts with the victim and anyone the brief names. A person is added when their name appears in something the team has uncovered (an inspected object, a read device, a heard statement, a returned record, a viewed lab report, a reviewed camera log) or when they have been called in. Each entry shows where they were first seen. Someone named aloud in an interview reply also joins People; the reply itself still never becomes evidence. Roles other than "Victim" are never shown. Only known people can be called in, pinned, or named as culprit. Evidence itself never becomes a lead, pin, or conclusion.
 
 ### Investigation
 

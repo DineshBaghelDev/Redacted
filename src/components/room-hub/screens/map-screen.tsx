@@ -1,5 +1,6 @@
 "use client";
 
+import { FirstTimeTip } from "../first-time-tip";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
@@ -45,6 +46,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
   const wasTravelling = useRef<string | null>(null);
   const finishTravel = useMutation(api.world.finishTravel);
   const [selectedId, setSelectedId] = useState("");
+  const [findOpen, setFindOpen] = useState(false);
   const [pinning, setPinning] = useState("");
   const [traveling, setTraveling] = useState(false);
   const [now, setNow] = useState(0);
@@ -135,6 +137,15 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
     }).finally(() => setTraveling(false));
   }
 
+  /** Open a place from the list and scroll the map so its card is in view (phones scroll the map sideways). */
+  function findPlace(id: string) {
+    setFindOpen(false);
+    setSelectedId(id);
+    const place = city?.places.find((item) => item.id === id);
+    const viewport = mapViewport.current;
+    if (place && viewport) viewport.scrollTo({ left: viewport.scrollWidth * place.x / 100 - viewport.clientWidth / 2, top: viewport.scrollHeight * place.y / 100 - viewport.clientHeight / 2, behavior: "smooth" });
+  }
+
   function selectPlace(id: string) {
     play("click");
     setError("");
@@ -154,6 +165,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
       </header>
 
       <div className="relative min-h-0 flex-1 overflow-auto p-3 sm:p-5" ref={mapViewport}>
+        <FirstTimeTip className="mx-auto mb-3" id="map" title="City map">Tap a place to travel there or go inside. Your partner shows as ◆. Dashed red streets have cameras; their tapes are at the bureau security desk.</FirstTimeTip>
         <div className="city-map relative mx-auto aspect-[16/10] min-w-[44rem] max-w-6xl md:min-w-[50rem]" onClick={(event) => { if (event.target === event.currentTarget) setSelectedId(""); }}>
             <span className="pointer-events-none absolute left-3 top-2 text-xs uppercase tracking-[0.25em] text-[#92c1c7]/70">Northside</span>
             <span className="pointer-events-none absolute left-3 top-[36%] text-xs uppercase tracking-[0.25em] text-[#e4bc75]/70">Midtown</span>
@@ -234,7 +246,19 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
               ? <>On the way to <span className="text-[#f1c987]">{city.activeTravel.destinationName}</span> · {travelRemaining} min</>
               : <>You are at <span className="text-[#f1c987]">{here?.name ?? "the bureau"}</span> · tap a place</>}
           </p>
+          <button className="pointer-events-auto ml-2 border border-[#e8ac51]/70 bg-[#071014]/95 px-3 py-2 text-xs uppercase text-[#f1c987]" onClick={() => setFindOpen(!findOpen)} type="button">Find a place</button>
         </div>
+        {findOpen ? (
+          <div className="fixed inset-x-3 bottom-16 z-50 max-h-[50vh] overflow-y-auto border-2 border-[#e8ac51]/60 bg-[#071014]/97 p-2 sm:left-auto sm:right-6 sm:w-72" role="dialog" aria-label="Find a place">
+            {[...city.places].sort((a, b) => a.name.localeCompare(b.name)).map((place) => (
+              <button className="flex min-h-10 w-full items-center gap-2 border-b border-[#45635d]/60 px-2 text-left text-sm uppercase hover:text-[#e8ac51]" key={place.id} onClick={() => findPlace(place.id)} type="button">
+                <span aria-hidden="true" className={`map-place-icon map-place-icon--${artworkForPlace(place)} size-6 shrink-0`} />
+                <span className="min-w-0 flex-1 break-words">{place.name}</span>
+                {place.id === city.currentPlaceId ? <span className="text-xs text-[#f1c987]">here</span> : place.travelMinutes !== undefined ? <span className="font-mono text-xs text-[#c8d8d2]/60">{place.travelMinutes} min</span> : null}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
     </section>
   );

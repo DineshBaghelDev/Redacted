@@ -76,6 +76,25 @@ function mentions(text: string, word: string) {
   return new RegExp(`(^|[^a-z])${word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z]|$)`).test(text.toLowerCase());
 }
 
+/** Matches a person's full name, or a first or last name that is unique in the cast. */
+export function namesPerson(people: Doc<"npcs">[]) {
+  const firstNames = new Map<string, number>();
+  const lastNames = new Map<string, number>();
+  for (const person of people) {
+    const parts = person.name.trim().split(/\s+/);
+    firstNames.set(parts[0].toLowerCase(), (firstNames.get(parts[0].toLowerCase()) ?? 0) + 1);
+    if (parts.length > 1) lastNames.set(parts.at(-1)!.toLowerCase(), (lastNames.get(parts.at(-1)!.toLowerCase()) ?? 0) + 1);
+  }
+  return (person: Doc<"npcs">, text: string) => {
+    const parts = person.name.trim().split(/\s+/);
+    const first = parts[0];
+    const last = parts.length > 1 ? parts.at(-1)! : "";
+    return mentions(text, person.name)
+      || (firstNames.get(first.toLowerCase()) === 1 && first.length >= 3 && mentions(text, first))
+      || (Boolean(last) && lastNames.get(last.toLowerCase()) === 1 && last.length >= 3 && mentions(text, last));
+  };
+}
+
 /**
  * People the detectives know about: the victim, anyone the brief names, anyone named in something
  * they have uncovered, and anyone already called in. Returns where each was first seen.
@@ -86,27 +105,16 @@ export async function knownPeople(ctx: QueryCtx, session: Doc<"sessions">, disco
   const playableCase = await ctx.db.get(session.caseId);
   if (!playableCase) return known;
   const people = await ctx.db.query("npcs").withIndex("by_caseId", q => q.eq("caseId", session.caseId!)).take(200);
-  const firstNames = new Map<string, number>();
-  const lastNames = new Map<string, number>();
-  for (const person of people) {
-    const parts = person.name.trim().split(/\s+/);
-    firstNames.set(parts[0].toLowerCase(), (firstNames.get(parts[0].toLowerCase()) ?? 0) + 1);
-    if (parts.length > 1) lastNames.set(parts.at(-1)!.toLowerCase(), (lastNames.get(parts.at(-1)!.toLowerCase()) ?? 0) + 1);
-  }
-  const named = (person: Doc<"npcs">, text: string) => {
-    const parts = person.name.trim().split(/\s+/);
-    const first = parts[0];
-    const last = parts.length > 1 ? parts.at(-1)! : "";
-    return mentions(text, person.name)
-      || (firstNames.get(first.toLowerCase()) === 1 && first.length >= 3 && mentions(text, first))
-      || (last && lastNames.get(last.toLowerCase()) === 1 && last.length >= 3 && mentions(text, last));
-  };
+  const named = namesPerson(people);
   const brief = [playableCase.summary, ...playableCase.initialFacts].join("\n");
   for (const person of people) {
     if (person.role === "victim" || named(person, brief)) known.set(person._id, "Case brief");
   }
   for await (const conversation of ctx.db.query("npcConversations").withIndex("by_sessionId_and_npcId", q => q.eq("sessionId", session._id))) {
     if (!known.has(conversation.npcId)) known.set(conversation.npcId, "Interview");
+  }
+  for await (const row of ctx.db.query("sessionKnownPeople").withIndex("by_sessionId_and_npcId", q => q.eq("sessionId", session._id))) {
+    if (!known.has(row.npcId)) known.set(row.npcId, row.firstSeenIn);
   }
   for (const entry of discoveries ?? await collectDiscoveries(ctx, session)) {
     const text = `${entry.title}\n${entry.body}`;

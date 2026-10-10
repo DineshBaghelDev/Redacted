@@ -137,3 +137,18 @@ export const markViewed = mutation({
     return null;
   },
 });
+
+/** How many lab results are ready but unread, from anywhere, so the team hears when the lab calls. */
+export const readyCount = query({
+  args: { roomCode: v.string() },
+  returns: v.number(),
+  handler: async (ctx, { roomCode }) => {
+    const member = await getPlayingRoomMember(ctx, roomCode);
+    if (!member) return 0;
+    let ready = 0;
+    for await (const request of ctx.db.query("forensicRequests").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id))) {
+      if (request.viewedAt === undefined && request.readyAtGameTime <= (member.session.gameTime ?? 0)) ready += 1;
+    }
+    return ready;
+  },
+});
