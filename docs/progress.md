@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Investigation surface asset pass
 
+- Moved the five-finding final theory form, confirmation, and interrupted-review state onto the same illustrated dossier as the opening and scored result. Evidence choices use paper rules instead of separate boxes. A 390px tall-form capture shows the entire form and actions inside the printed border; a desktop capture confirms the top layout.
 - Place loading/unavailable states now use the exploration room backdrop, a room symbol, and the established terminal frame with one return route. This completes the plain fallback-box sweep across map, camera, lab, interview, and place screens.
 - Replaced the plain interview and forensic loading/unavailable boxes with their room scenes, station icons, and the existing paper/terminal frames. A 390px capture of both and a desktop interview capture show the messages and return action inside the illustrated safe area.
 - An eight-person portrait capture at actual roster size showed the original layers reading as one suit and face. Added distinct long, close-cut, and short hair silhouettes, four upper-body outfits, and three face outlines while keeping the same deterministic ID-based portrait. The new capture reads as varied people without adding small decorative noise.

@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Investigation symbols and quieter lists
 
+- Keep the whole case-close flow on one paper dossier material, including the editable five-finding form and final confirmation. Use ruled evidence rows so a long pinned list remains scannable without a wall of boxes; retain clear input borders for editable fields.
 - The place screen uses its room scene and a room icon for loading/unavailable states, matching the other investigation station fallbacks. Keep the return path to the map.
 - Fallback states for interviews and lab work use their actual room backdrop and the established dossier or terminal frame. Keep one short status line and one return action; no extra decorative UI is needed.
 - Character portraits combine a few strongly different silhouettes at roster size: hair length/cut, face outline, coat/shirt shape, palette, and occasional glasses. Keep each portrait deterministic from its ID and illustrative only; investigative appearance still comes from the written case description.

@@ -135,7 +135,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               <p className="mt-4 text-sm leading-relaxed text-[#5b4635]">Both detectives will see the result here when the review is complete.</p>
             </section>
           ) : closeState?.error ? (
-            <section className="border-2 border-red-900 bg-[#cbbd9d] p-6 text-center">
+            <section className="game-dossier px-5 pb-20 pt-20 text-center sm:px-8 sm:pb-16">
               <h3 className="text-2xl uppercase">Review interrupted</h3>
               <p className="mt-3 text-sm">{closeState.error}</p>
               <button className="mt-5 min-h-11 border-2 border-red-900 px-5 uppercase hover:bg-red-900 hover:text-white disabled:opacity-50" disabled={submitting} onClick={retry} type="button">
@@ -160,7 +160,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               )}
             </section>
           ) : reviewing ? (
-            <section className="border-2 border-red-900 bg-[#cbbd9d] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] [overflow-wrap:anywhere] sm:p-8">
+            <section className="game-dossier px-5 pb-20 pt-20 sm:px-8 sm:pb-16">
               <p className="text-xs uppercase tracking-[0.2em] text-red-800">Final check</p>
               <h3 className="mt-2 text-3xl uppercase">Submit this theory?</h3>
               <p className="mt-4 text-sm leading-relaxed text-[#5b4635]">This closes the case for both detectives. Your report cannot be replaced after submission.</p>
@@ -176,7 +176,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               </div>
             </section>
           ) : (
-            <form className="space-y-5 border-2 border-[#6d5138] bg-[#cbbd9d] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] [overflow-wrap:anywhere] sm:p-8" onSubmit={review}>
+            <form className="game-dossier space-y-5 px-5 pb-20 pt-20 sm:px-8 sm:pb-16" onSubmit={review}>
               <div className="border-b-2 border-[#6d5138] pb-4"><p className="text-xs uppercase tracking-[0.2em] text-red-800">Five findings · five stars</p><h3 className="mt-2 text-3xl uppercase">Your final theory</h3></div>
               <label className="block"><span className="case-close-label">1 · Who did it?</span><select className="case-close-input" onChange={(event) => setCulpritNpcId(event.target.value)} required value={culpritNpcId}><option value="">Choose a person</option>{people?.filter((person) => person.role !== "victim").map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
               <label className="block"><span className="case-close-label">2 · Why did they do it?</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setMotiveExplanation(event.target.value)} required value={motiveExplanation} /></label>
@@ -192,7 +192,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   {evidence.map((item) => {
                     const selected = evidenceIds.includes(item.referenceId);
                     return (
-                      <label className={`flex min-h-12 items-start gap-3 border border-[#6d5138]/50 p-3 text-sm ${!selected && evidenceIds.length >= MAX_EVIDENCE ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`} key={`${item.type}:${item.referenceId}`}>
+                      <label className={`flex min-h-12 items-start gap-3 border-b border-[#6d5138]/40 py-3 pr-2 text-sm ${!selected && evidenceIds.length >= MAX_EVIDENCE ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`} key={`${item.type}:${item.referenceId}`}>
                         <input checked={selected} className="mt-1 size-4 accent-red-900" disabled={!selected && evidenceIds.length >= MAX_EVIDENCE} onChange={() => toggleEvidence(item.referenceId)} type="checkbox" />
                         <span className="min-w-0"><strong className="block uppercase text-red-800">{item.type === "cctv" ? "Camera record" : item.type === "public_record" ? "Public record" : item.type === "forensic" ? "Lab report" : item.type === "device_file" ? "Device file" : item.type === "call" ? "Call" : item.type === "message" ? "Message" : item.type === "statement" ? "Statement" : "Found object"}</strong>{item.text.split("\n")[0]}</span>
                       </label>
