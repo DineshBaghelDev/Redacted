@@ -84,11 +84,11 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   return (
     <section className="game-place-scene absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
       <header className="game-station-header flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Explore this place</p>
-          <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">{place.placeName}</h2>
+          <h2 className="mt-1 break-words text-xl uppercase tracking-wide sm:text-2xl">{place.placeName}</h2>
         </div>
-        <button className="min-h-11 border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">Map</button>
+        <button className="min-h-11 shrink-0 border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">Map</button>
       </header>
 
       <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(16rem,21rem)_minmax(0,1fr)] lg:overflow-hidden">
