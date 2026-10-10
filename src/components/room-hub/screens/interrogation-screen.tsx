@@ -45,11 +45,11 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
   return (
     <section className="game-interview-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#e4e6d8]">
       <header className="game-station-header flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.25em] text-[#e8ac51]">Bureau interview desk</p>
-          <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">{selected ? selected.name : "People in this case"}</h2>
+          <h2 className="mt-1 break-words text-xl uppercase tracking-wide sm:text-2xl">{selected ? selected.name : "People in this case"}</h2>
         </div>
-        <button className="min-h-11 border border-[#6f9f98] px-3 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">
+        <button className="min-h-11 shrink-0 border border-[#6f9f98] px-3 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">
           Back
         </button>
       </header>

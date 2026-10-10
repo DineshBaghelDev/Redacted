@@ -7,6 +7,7 @@
 - Let long generated names and evidence text wrap inside fixed-width clueboard and report surfaces. The full wording remains available; cards do not truncate case data.
 - Match map marker size to the real 20-place fixture, keeping mobile controls compact and enlarging desktop silhouettes. The mobile map scrolls horizontally instead of compressing all 20 places into a narrow viewport; the named place picker recenters it. Districts are a small colored underline beneath each icon, with no icon backing plate.
 - Let room titles, player names, and case brief titles wrap within their flex rows so generated text remains readable at narrow widths.
+- A camera access point can have zero cameras after location filtering; show an empty state with a way back to the previous location.
 
 ## 2026-10-10 — Cameras belong to their places
 

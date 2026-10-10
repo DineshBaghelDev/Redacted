@@ -38,6 +38,7 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: {
 
   if (data === undefined) return <CctvMessage message="Loading camera records..." onBack={onBack} backLabel={backLabel} />;
   if (!data) return <CctvMessage message="No camera records are available here." onBack={onBack} backLabel={backLabel} />;
+  if (data.cameras.length === 0) return <CctvMessage message="There are no cameras to review here." onBack={onBack} backLabel={backLabel} />;
 
   const camera = data.cameras.find((item) => item.id === cameraId)!;
   const records = visibleWindow?.status === "ready" ? visibleWindow.records : [];
@@ -74,13 +75,13 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: {
   return (
     <section className="game-cctv-scene game-records-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#e4e6d8]">
       <header className="game-station-header flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">{data.caseTitle} · security records</p>
+        <div className="min-w-0">
+          <p className="break-words text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">{data.caseTitle} · security records</p>
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">Camera records</h2>
         </div>
         <button
           aria-label={backLabel}
-          className="border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase text-[#c8d8d2] hover:border-[#e8ac51] hover:text-[#e8ac51] focus-visible:outline-2 focus-visible:outline-[#e8ac51]"
+          className="shrink-0 border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase text-[#c8d8d2] hover:border-[#e8ac51] hover:text-[#e8ac51] focus-visible:outline-2 focus-visible:outline-[#e8ac51]"
           onClick={onBack}
           type="button"
         >

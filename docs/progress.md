@@ -6,6 +6,7 @@
 - Replaced repeated room-button boxes and the oversized lab frame with quieter, icon-led rows. Evidence records now use a file symbol inside the existing dossier treatment; all actions, states, durations, and location rules remain the same.
 - Improved long generated text handling on clueboard cards, report forms, room names, lab sources, and record titles. Final-report scoring rows use ruled paper lines instead of five heavy boxes.
 - Checked the player map against all 20 stored fixture places and 25 streets. Increased desktop marker and label size, added small district-color underlines beneath the artwork, and replaced boxed place and route rows with simpler dividers. On phones the map keeps its readable scale and scrolls horizontally; selecting a place centers it.
+- Finished a narrow-width text pass on the lobby, case brief, interview header, and camera header. A camera access point with no local cameras now shows a clear empty state instead of trying to open a missing camera.
 
 ## 2026-10-10 — Local camera access and larger map art
 
