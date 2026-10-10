@@ -4,7 +4,7 @@
 
 - Keep the whole case-close flow on one paper dossier material, including the editable five-finding form and final confirmation. Use ruled evidence rows so a long pinned list remains scannable without a wall of boxes; retain clear input borders for editable fields.
 - The place screen uses its room scene and a room icon for loading/unavailable states, matching the other investigation station fallbacks. Keep the return path to the map.
-- Fallback states for interviews and lab work use their actual room backdrop and the established dossier or terminal frame. Keep one short status line and one return action; no extra decorative UI is needed.
+- Fallback states for interviews and lab work use their actual room backdrop and the established dossier or terminal frame. Keep one short status line and one return action; interviews return to the bureau and lab work returns to the map.
 - Character portraits combine a few strongly different silhouettes at roster size: hair length/cut, face outline, coat/shirt shape, palette, and occasional glasses. Keep each portrait deterministic from its ID and illustrative only; investigative appearance still comes from the written case description.
 - Camera time controls need extra horizontal clearance inside the wide terminal illustration; keep the narrow panel compact. Camera and map loading/empty states should use their station scene, existing icon, and one return action instead of a generic floating box.
 - Give stable V1 places recognizable pixel silhouettes beyond the five broad place kinds. Use a six-cell transparent companion atlas for flats, park, cafe, station, hotel, and garage; unknown place IDs retain a kind-based symbol. Keep the marker background transparent and names readable on selection or focus.

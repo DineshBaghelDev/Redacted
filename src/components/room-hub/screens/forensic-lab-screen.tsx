@@ -161,7 +161,7 @@ function LabMessage({ message, onBack }: { message: string; onBack: () => void }
       <div className="game-panel w-full max-w-lg px-7 py-9 text-center sm:px-12">
         <GameIcon className="mx-auto size-12" name="lab" />
         <p className="mt-4 text-lg uppercase leading-snug">{message}</p>
-        <button className="mt-6 min-h-11 w-full border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] sm:w-auto" onClick={onBack} type="button">Back to bureau</button>
+        <button className="mt-6 min-h-11 w-full border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] sm:w-auto" onClick={onBack} type="button">Back to map</button>
       </div>
     </section>
   );
