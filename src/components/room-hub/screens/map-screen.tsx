@@ -121,7 +121,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
 
       <div className="grid min-h-0 flex-1 grid-rows-[auto_auto] overflow-y-auto lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-1 lg:overflow-hidden">
         <div className="min-h-0 overflow-visible p-3 sm:p-5 lg:overflow-auto">
-          <label className="mb-3 block text-xs uppercase tracking-[0.18em] text-[#c8d8d2]/65 sm:hidden" htmlFor="mobile-place-picker">
+          <label className="mb-3 block text-xs uppercase tracking-[0.18em] text-[#c8d8d2]/65 xl:hidden" htmlFor="mobile-place-picker">
             Find a place
             <select
               className="mt-2 min-h-11 w-full border border-[#6f9f98]/50 bg-[#0b1a1c] px-3 text-base uppercase text-[#e4e6d8]"
@@ -137,9 +137,9 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
             <span><i aria-hidden="true" className="mr-1 inline-block w-5 border-t-2 border-dashed border-[#d88977] align-middle" />Camera route</span>
             <span><i aria-hidden="true" className="mr-1 inline-block w-5 border-t-2 border-[#e8ac51] align-middle" />Selected routes</span>
           </div>
-          <p className="mb-2 text-xs uppercase text-[#c8d8d2]/55 sm:hidden">Swipe the map to explore</p>
+          <p className="mb-2 text-xs uppercase text-[#c8d8d2]/55 xl:hidden">Scroll map sideways to explore</p>
           <div className="overflow-x-auto" ref={mapViewport}>
-          <div className="city-map relative mx-auto aspect-[16/10] h-auto min-h-[18rem] min-w-[44rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden sm:min-w-0 lg:h-full">
+          <div className="city-map relative mx-auto aspect-[16/10] h-auto min-h-[18rem] min-w-[44rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden md:min-w-[50rem] lg:h-full">
             <span className="pointer-events-none absolute left-3 top-2 text-xs uppercase tracking-[0.25em] text-[#92c1c7]/70">Northside</span>
             <span className="pointer-events-none absolute left-3 top-[36%] text-xs uppercase tracking-[0.25em] text-[#e4bc75]/70">Midtown</span>
             <span className="pointer-events-none absolute bottom-2 left-3 text-xs uppercase tracking-[0.25em] text-[#d5a18e]/70">Eastside</span>
