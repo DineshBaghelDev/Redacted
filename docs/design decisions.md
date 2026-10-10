@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Investigation symbols and quieter lists
 
+- Use the same deterministic portrait language for connected detectives in the waiting room. Keep player status under each name and give the illustrated terminal frame enough inner vertical space so its metal seams never cross text or controls. Treat Leave room as a secondary action.
 - On phones, keep the clueboard's navigation and note action in the first toolbar row, with string colors below. Keep the board hint short so it does not cover the working canvas. In an interview file, reserve the portrait row for identity and let the public description span the dossier width.
 - Show the bureau's station icons and names directly on the room art, with no enclosing icon tiles. Keep broad hotspots for pointer use and the icon menu at narrow/tablet widths.
 - Use one six-cell transparent pixel atlas for common investigation verbs and objects. At small sizes, each symbol has one recognizable silhouette and no written detail. These symbols are navigation cues, never evidence representations.

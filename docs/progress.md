@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Investigation surface asset pass
 
+- The waiting room now shows both detectives as portrait ID strips, gives the case title a clear reading band, and keeps Ready/Start as the main actions with Leave room quieter below. Long names and titles wrap inside the terminal frame; the room code and copy action remain available.
 - Tightened the clueboard's phone toolbar so Back, title, and Add note sit above the string colors, and shortened the help overlay. Interview detail now places the public description beneath the portrait and name, giving long case text the full dossier width.
 - Bureau stations now have visible pixel icon labels over their corresponding room objects on desktop. The compact station menu remains available through tablet widths, where the scene crops too much for reliable hotspot placement.
 - Station hotspots leave the focus order while a station or the away notice covers the bureau scene.
