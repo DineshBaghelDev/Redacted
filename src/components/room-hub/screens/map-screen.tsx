@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
+import { GameIcon } from "../game-icon";
 
 const kindLabels = {
   home: "Residence",
@@ -293,10 +294,11 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
 
 function MapMessage({ message, onBack }: { message: string; onBack: () => void }) {
   return (
-    <section className="absolute inset-0 z-20 flex items-center justify-center bg-[#071014] p-4 text-[#e4e6d8]">
-      <div className="w-full max-w-lg border border-[#6f9f98]/30 bg-[#0b1a1c] p-6 text-center">
-        <p className="text-lg uppercase">{message}</p>
-        <button className="mt-5 border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">Back to bureau</button>
+    <section className="game-map-scene absolute inset-0 z-20 flex items-center justify-center bg-[#071014] p-4 text-[#e4e6d8]">
+      <div className="game-panel w-full max-w-lg px-7 py-9 text-center sm:px-12">
+        <GameIcon className="mx-auto size-12" name="map" />
+        <p className="mt-4 text-lg uppercase leading-snug">{message}</p>
+        <button className="mt-6 min-h-11 w-full border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] sm:w-auto" onClick={onBack} type="button">Back to bureau</button>
       </div>
     </section>
   );

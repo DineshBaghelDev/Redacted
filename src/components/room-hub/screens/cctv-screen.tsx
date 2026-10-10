@@ -103,7 +103,7 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: {
           {error ? <p className="mb-4 border border-red-300 bg-red-950/80 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
           <h3 className="break-words text-2xl uppercase leading-tight text-[#e4e6d8] sm:text-3xl">{camera.name}</h3>
 
-          <div className="game-panel mt-6 p-8">
+          <div className="game-panel mt-6 p-8 sm:px-20">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <label className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55" htmlFor="cctv-time">
                 02 / Choose time
@@ -194,10 +194,11 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: {
 
 function CctvMessage({ message, onBack, backLabel }: { message: string; onBack: () => void; backLabel: string }) {
   return (
-    <section className="absolute inset-0 z-20 flex items-center justify-center bg-[#071014] p-4 text-[#e4e6d8]">
-      <div className="w-full max-w-lg border border-[#6f9f98]/30 bg-[#0b1a1c] p-6 text-center">
-        <p className="text-lg uppercase text-[#c8d8d2]">{message}</p>
-        <button className="mt-5 border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">
+    <section className="game-cctv-scene game-records-scene absolute inset-0 z-20 flex items-center justify-center p-4 text-[#e4e6d8]">
+      <div className="game-panel w-full max-w-lg px-7 py-9 text-center sm:px-12">
+        <GameIcon className="mx-auto size-12" name="cctv" />
+        <p className="mt-4 text-lg uppercase leading-snug text-[#c8d8d2]">{message}</p>
+        <button className="mt-6 min-h-11 w-full border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] sm:w-auto" onClick={onBack} type="button">
           {backLabel}
         </button>
       </div>

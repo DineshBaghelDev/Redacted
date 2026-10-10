@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Investigation symbols and quieter lists
 
+- Camera time controls need extra horizontal clearance inside the wide terminal illustration; keep the narrow panel compact. Camera and map loading/empty states should use their station scene, existing icon, and one return action instead of a generic floating box.
 - Give stable V1 places recognizable pixel silhouettes beyond the five broad place kinds. Use a six-cell transparent companion atlas for flats, park, cafe, station, hotel, and garage; unknown place IDs retain a kind-based symbol. Keep the marker background transparent and names readable on selection or focus.
 - The phone map and place panel occupy content-sized grid rows. The map canvas may scroll sideways, but it must finish before the panel begins; enlarging its symbols must not collapse that vertical space.
 - Use the dossier art's inner paper area for both the final case-file opening and the scored result. Long opening titles use a smaller phone size; findings, scoring, and submission behavior stay the same.
