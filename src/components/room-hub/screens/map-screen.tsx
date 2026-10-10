@@ -119,8 +119,8 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
         </button>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-rows-[auto_auto] overflow-y-auto lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-1 lg:overflow-hidden">
-        <div className="min-h-0 overflow-visible p-3 sm:p-5 lg:overflow-auto">
+      <div className="grid min-h-0 min-w-0 flex-1 grid-rows-[auto_auto] overflow-y-auto lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-1 lg:overflow-hidden">
+        <div className="min-h-0 min-w-0 overflow-visible p-3 sm:p-5 lg:overflow-auto">
           <label className="mb-3 block text-xs uppercase tracking-[0.18em] text-[#c8d8d2]/65 xl:hidden" htmlFor="mobile-place-picker">
             Find a place
             <select
@@ -138,7 +138,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
             <span><i aria-hidden="true" className="mr-1 inline-block w-5 border-t-2 border-[#e8ac51] align-middle" />Selected routes</span>
           </div>
           <p className="mb-2 text-xs uppercase text-[#c8d8d2]/55 xl:hidden">Scroll map sideways to explore</p>
-          <div className="overflow-x-auto" ref={mapViewport}>
+          <div className="w-full max-w-full overflow-x-auto" ref={mapViewport}>
           <div className="city-map relative mx-auto aspect-[16/10] h-auto min-h-[18rem] min-w-[44rem] max-h-[calc(100vh-7rem)] w-full max-w-5xl overflow-hidden md:min-w-[50rem] lg:h-full">
             <span className="pointer-events-none absolute left-3 top-2 text-xs uppercase tracking-[0.25em] text-[#92c1c7]/70">Northside</span>
             <span className="pointer-events-none absolute left-3 top-[36%] text-xs uppercase tracking-[0.25em] text-[#e4bc75]/70">Midtown</span>
@@ -166,24 +166,10 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
               })}
             </svg>
 
-            {city.streets.filter((street) => activeStreetIds.has(street.id)).map((street) => {
-              const a = city.places.find((place) => place.id === street.a)!;
-              const b = city.places.find((place) => place.id === street.b)!;
-              return (
-                <span
-                  aria-hidden="true"
-                  className="map-route-time pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2"
-                  key={street.id}
-                  style={{ left: `${(a.x + b.x) / 2}%`, top: `${(a.y + b.y) / 2}%` }}
-                >
-                  {street.minutes}m{street.hasCamera ? " · CAM" : ""}
-                </span>
-              );
-            })}
-
             {city.places.map((place) => {
               const active = place.id === selected.id;
               const current = place.id === city.currentPlaceId;
+              const crowded = city.places.some((other) => other.id !== place.id && Math.abs(other.x - place.x) < 10 && Math.abs(other.y - place.y) < 13);
               return (
                 <button
                   aria-label={`Review ${place.name}`}
@@ -196,7 +182,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
                 >
                   <span aria-hidden="true" className={`map-place-icon map-place-icon--${place.kind}`} />
                   {current ? <span aria-hidden="true" className="map-marker-current absolute -right-0.5 -top-0.5 block size-3 bg-[#ffd287]" /> : null}
-                  <span className={`map-marker-label ${place.y > 77 ? "map-marker-label--above" : ""} ${place.x > 82 ? "map-marker-label--right" : ""}`}>{place.name}</span>
+                  <span className={`map-marker-label ${crowded ? "map-marker-label--crowded" : ""} ${place.y > 77 ? "map-marker-label--above" : ""} ${place.x > 82 ? "map-marker-label--right" : ""}`}>{place.name}</span>
                 </button>
               );
             })}
@@ -204,7 +190,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
           </div>
         </div>
 
-        <aside className="min-h-0 overflow-visible border-t border-[#6f9f98]/25 bg-[#0b1a1c] p-4 lg:overflow-y-auto lg:border-l lg:border-t-0 lg:p-5">
+        <aside className="min-h-0 min-w-0 overflow-visible border-t border-[#6f9f98]/25 bg-[#0b1a1c] p-4 lg:overflow-y-auto lg:border-l lg:border-t-0 lg:p-5">
           <div className="mb-4 border-b border-[#6f9f98]/35 pb-4 text-xs uppercase tracking-wide">
             <p className="text-[#c8d8d2]/55">Your location</p>
             <p className="mt-1 break-words text-base text-[#f1c987]">{city.places.find((place) => place.id === city.currentPlaceId)?.name ?? "Bureau"}</p>

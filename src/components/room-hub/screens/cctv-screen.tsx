@@ -76,8 +76,8 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: {
     <section className="game-cctv-scene game-records-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#e4e6d8]">
       <header className="game-station-header flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="min-w-0">
-          <p className="break-words text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">{data.caseTitle} · security records</p>
-          <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">Camera records</h2>
+          <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Security desk</p>
+          <h2 className="mt-1 text-lg uppercase tracking-wide sm:text-2xl">Camera records</h2>
         </div>
         <button
           aria-label={backLabel}
@@ -93,17 +93,17 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: {
         <div className="mx-auto grid max-w-6xl items-start gap-6 lg:grid-cols-[minmax(15rem,19rem)_minmax(0,1fr)]">
         <aside className="min-w-0 border-b border-[#6f9f98]/35 pb-5 lg:border-b-0 lg:border-r lg:pr-6">
           <h3 className="text-xs uppercase tracking-[0.18em] text-[#e8ac51]">01 / Cameras here · {data.cameras.length}</h3>
-          <div className="mt-3 grid gap-1 sm:grid-cols-2 lg:grid-cols-1">
+          <div className="mt-3 grid max-h-56 grid-cols-2 gap-x-3 gap-y-1 overflow-y-auto lg:max-h-none lg:grid-cols-1 lg:overflow-visible">
             {data.cameras.map((item) => <button aria-pressed={item.id === cameraId} className="flex min-h-14 min-w-0 items-center gap-3 border-b border-[#6f9f98]/30 py-2 text-left text-sm uppercase hover:text-[#f1c987] aria-pressed:text-[#f1c987]" key={item.id} onClick={() => selectCamera(item.id)} type="button"><GameIcon className="size-9 shrink-0" name="cctv" /><span className="min-w-0 flex-1 break-words">{item.name}{item.faulty ? <span className="block text-xs text-red-300">Offline</span> : null}</span></button>)}
           </div>
-          <p className="mt-4 break-words text-sm leading-relaxed text-[#b8ccc1]">{camera.faulty ? "This camera has no recording for the case period." : "Pick a time, then review its written activity log."}</p>
+          {camera.faulty ? <p className="mt-4 break-words text-sm leading-relaxed text-[#b8ccc1]">This camera has no recording for the case period.</p> : null}
         </aside>
 
         <main className="min-w-0">
           {error ? <p className="mb-4 border border-red-300 bg-red-950/80 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
           <h3 className="break-words text-2xl uppercase leading-tight text-[#e4e6d8] sm:text-3xl">{camera.name}</h3>
 
-          <div className="game-panel mt-6 p-5">
+          <div className="game-panel mt-6 p-8">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <label className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55" htmlFor="cctv-time">
                 02 / Choose time
@@ -131,7 +131,7 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Back to bureau" }: {
                 <span className="text-right">{formatTime(camera.end)}</span>
               </div>
             </div>
-            <p className="mt-3 text-sm leading-relaxed text-[#c8d8d2]">Review written records from 20 minutes before to 20 minutes after this time. It takes 5 game minutes.</p>
+            <p className="mt-3 text-sm leading-relaxed text-[#c8d8d2]">20 minutes before and after this time · 5 minutes to review.</p>
             {!camera.faulty && visibleWindow?.status === "available" ? (
               <button className="mt-4 min-h-11 border border-[#e8ac51] px-4 text-sm uppercase text-[#e8ac51] hover:bg-[#e8ac51] hover:text-[#071014] disabled:opacity-50" disabled={reviewing} onClick={reviewWindow} type="button">
                 {reviewing ? "Starting review..." : "Review this time · 5 min"}

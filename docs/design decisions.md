@@ -8,6 +8,9 @@
 - Let long generated names and evidence text wrap inside fixed-width clueboard and report surfaces. The full wording remains available; cards do not truncate case data.
 - Match map marker size to the real 20-place fixture, keeping mobile controls compact and enlarging desktop silhouettes. The mobile map scrolls horizontally instead of compressing all 20 places into a narrow viewport; the named place picker recenters it. Districts are a small colored underline beneath each icon, with no icon backing plate.
 - Keep the map canvas at least 44rem on phones and 50rem from tablet size upward. Small desktop windows can scroll the map while the route list and place picker still provide direct selection.
+- The scrollable map must not enlarge its parent grid; let its viewport contain the wide canvas. Show names for uncrowded markers on large screens, while crowded names appear on selection, hover, or focus. Keep travel minutes in the direct-routes list so place names stay clear.
+- At wide desktop sizes, enlarge map symbols and place names enough for the pixel font to remain legible at normal viewing distance. Leave enough inner space inside the illustrated camera time frame for controls and instructions.
+- On narrow camera screens, use a compact two-column local camera list with its own short scroll area so the written-log time control remains in reach.
 - Let room titles, player names, and case brief titles wrap within their flex rows so generated text remains readable at narrow widths.
 - A camera access point can have zero cameras after location filtering; show an empty state with a way back to the previous location.
 
@@ -22,7 +25,7 @@
 
 ## 2026-10-10 — City map visual language
 
-- The map background is a blank drafting texture; only stored place coordinates and street connections draw the geography. Place icons communicate kind, dashed red routes communicate cameras, and selected-route chips show direct travel minutes.
+- The map background is a blank drafting texture; only stored place coordinates and street connections draw the geography. Place icons communicate kind, dashed red routes communicate cameras, and selected streets remain highlighted. Travel minutes appear in the direct-routes list.
 - On narrow screens, the named place selector remains the reliable touch path. Marker labels surface on selection or focus; wide screens can show them all. The map preserves its existing travel and pin actions.
 
 ## 2026-10-10 — Camera records as an ordered log

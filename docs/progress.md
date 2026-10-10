@@ -6,12 +6,15 @@
 - Station hotspots leave the focus order while a station or the away notice covers the bureau scene.
 - Kept the 20-place map at a readable minimum width through tablet and small desktop sizes; the place picker stays available while the map needs horizontal scrolling.
 - The detective name and profile screens now show the same deterministic layered upper-body portrait language used by the case roster, with one small portrait beside the name field.
+- Styled fixture captures exposed a phone map overflow, clustered Midtown labels, and a camera list that pushed the time control below the first phone viewport. The map now contains its own sideways scroll, hides only crowded labels until focus or selection, and shows travel minutes in the direct-routes list instead of over place names. The camera list is two columns and height-limited on phones, with a shorter station header.
+- Removed repeated camera instructions and shortened the time-window explanation; the 20-minute range on either side and 5-minute action are unchanged.
+- A font-accurate capture prompted larger desktop map symbols and labels and more inner padding for the illustrated camera time panel.
 - Added an inspected six-symbol pixel atlas for rooms, search, physical evidence, devices, lab work, and files. The sprites have transparent backgrounds and stay readable at their small in-game sizes.
 - Replaced repeated room-button boxes and the oversized lab frame with quieter, icon-led rows. Evidence records now use a file symbol inside the existing dossier treatment; all actions, states, durations, and location rules remain the same.
 - Improved long generated text handling on clueboard cards, report forms, room names, lab sources, and record titles. Final-report scoring rows use ruled paper lines instead of five heavy boxes.
 - Checked the player map against all 20 stored fixture places and 25 streets. Increased desktop marker and label size, added small district-color underlines beneath the artwork, and replaced boxed place and route rows with simpler dividers. On phones the map keeps its readable scale and scrolls horizontally; selecting a place centers it.
 - Finished a narrow-width text pass on the lobby, case brief, interview, camera, place, and lab headers. A camera access point with no local cameras now shows a clear empty state instead of trying to open a missing camera.
-- Latest check: 163 tests across 30 files, TypeScript, focused lint, and the production build pass. Signed-in gameplay screens still need a live visual check.
+- Latest check: 164 tests across 31 files, TypeScript, focused lint, and the production build pass. The map and camera layouts were captured with actual components, fixture data, and production CSS at desktop and phone sizes. Signed-in gameplay screens still need a live visual check.
 
 ## 2026-10-10 — Local camera access and larger map art
 
@@ -23,7 +26,7 @@
 ## 2026-10-10 — Player map legibility pass
 
 - Replaced the numbered square markers with generated pixel place icons for homes, workplaces, public buildings, the bureau, and the lab. A restrained generated drafting-paper plate sits behind the live city graph; it contains no invented streets, places, or labels.
-- Brought the useful tester-map cues into play: district-colored markers, visible names on wide screens, selected street travel times, and dashed camera streets with a compact legend. The SVG now scales on the same percentage coordinates as the clickable markers, so route lines meet their destinations.
+- Brought the useful tester-map cues into play: district-colored markers, visible names on wide screens, direct-route travel times, and dashed camera streets with a compact legend. The SVG now scales on the same percentage coordinates as the clickable markers, so route lines meet their destinations.
 - Kept the actual case graph, travel action, location gating, and mobile place selector unchanged.
 
 ## 2026-10-10 — Initial camera log navigation (superseded by local access above)

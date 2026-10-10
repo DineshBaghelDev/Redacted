@@ -215,6 +215,9 @@
   @media (min-width: 640px) {
     .map-marker .map-place-icon { width: 3rem; height: 3rem; }
   }
+  @media (min-width: 1280px) {
+    .map-marker .map-place-icon { width: 3.5rem; height: 3.5rem; }
+  }
   .map-marker::after {
     content: '';
     position: absolute;
@@ -236,9 +239,9 @@
     top: calc(100% + 3px);
     left: 50%;
     width: max-content;
-    max-width: 8rem;
+    max-width: 9rem;
     transform: translateX(-50%);
-    font-size: 0.6875rem;
+    font-size: 0.875rem;
     line-height: 1.15;
     color: #e6e7d8;
     text-shadow: 1px 1px #071014, -1px -1px #071014, 1px -1px #071014, -1px 1px #071014;
@@ -249,15 +252,7 @@
   .map-marker[aria-pressed='true'] .map-marker-label,
   .map-marker:focus-visible .map-marker-label,
   .map-marker:hover .map-marker-label { display: block; }
-  @media (min-width: 1280px) { .map-marker-label { display: block; } }
-  .map-route-time {
-    padding: 1px 3px;
-    background: rgb(6 19 22 / 90%);
-    color: #e8c486;
-    font: 10px var(--font-geist-mono), monospace;
-    white-space: nowrap;
-  }
-
+  @media (min-width: 1280px) { .map-marker-label:not(.map-marker-label--crowded) { display: block; } }
   .case-close-label {
     @apply text-xs uppercase tracking-[0.16em] text-red-800;
   }
