@@ -73,7 +73,7 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
               {people.map((person) => (
                 <li className="game-dossier min-w-0 p-4 text-[#211d17]" key={person.id}>
                   <div className="flex min-w-0 gap-4">
-                    <CharacterPortrait className="w-20" id={person.id} />
+                    <CharacterPortrait className="w-20" id={person.id} gender={person.gender} description={person.publicDescription} />
                     <div className="min-w-0 flex-1">
                       <p className="text-xs uppercase tracking-[0.12em] text-red-800">{roleLabels[person.role]}</p>
                       <h3 className="mt-2 break-words text-xl uppercase leading-tight">{person.name}</h3>
@@ -108,7 +108,7 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
   );
 }
 
-function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person: { id: Id<"npcs">; name: string; publicDescription: string }; onBack: () => void }) {
+function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person: { id: Id<"npcs">; name: string; publicDescription: string; gender?: "male" | "female" | "nonbinary" }; onBack: () => void }) {
   const interview = useQuery(api.npcConversations.getInterview, { roomCode, npcId: person.id });
   const availableProof = useQuery(api.npcConversations.listAvailableProof, { roomCode });
   const boardNodes = useQuery(api.clueBoard.getNodes, { roomCode });
@@ -137,7 +137,7 @@ function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person
     <button className="min-h-11 border-2 border-[#573821] px-4 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">← All people</button>
     <div className="game-dossier mt-4 p-4 text-[#211d17] [overflow-wrap:anywhere] sm:p-6">
       <div className="flex min-w-0 items-start gap-4">
-        <CharacterPortrait className="w-24" id={person.id} />
+        <CharacterPortrait className="w-24" id={person.id} gender={person.gender} description={person.publicDescription} />
         <div className="min-w-0 flex-1">
           <p className="text-xs uppercase tracking-[0.2em] text-red-800">Interview record</p>
           <h3 className="mt-2 break-words text-2xl uppercase">{person.name}</h3>

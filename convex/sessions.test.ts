@@ -551,6 +551,7 @@ test("a lobby keeps the selected passed case", async () => {
   expect(publicPeople?.find((person) => person.id === frozen.culprit?._id)).toMatchObject({
     name: frozen.culprit?.name,
     role: "suspect",
+    gender: cast.characters.find((character) => character.id === crimeCore.culpritId)?.gender,
   });
   expect(JSON.stringify(publicPeople)).not.toContain("sourceId");
   await t.run(async (ctx) => {

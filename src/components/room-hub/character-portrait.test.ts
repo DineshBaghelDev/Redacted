@@ -14,3 +14,12 @@ test("case portrait traits are stable for a person and stay within the layer ran
   expect(typeof portrait.glasses).toBe("boolean");
   expect(portraitTraits("person-18")).not.toEqual(portrait);
 });
+
+test("written clothing and build guide stable portrait layers", () => {
+  const description = "5'7, slim, wearing navy scrubs and a fleece jacket.";
+  const traits = portraitTraits("person-17", { gender: "female", description });
+  expect(traits).toEqual(portraitTraits("person-17", { gender: "female", description }));
+  expect(traits.outfit).toBe(2);
+  expect(traits.face).toBe(1);
+  expect(portraitTraits("person-17", { gender: "male", description }).hairstyle).not.toBe(traits.hairstyle);
+});

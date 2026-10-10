@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Player flow refinements
 
+- Case roster portraits now read the stored cast's public gender and written build/clothing to guide hair, face, and outfit layers. The person ID still chooses stable palette and unused details. Existing published cases get the same metadata from their frozen cast draft; no live evidence or portrait generation is added.
 - The case archive uses one full-screen scroll area, including its header and case cards. A signed-in 390px Playwright check scrolled from the header into later cases. The custom shared game-time deadline is a disclosed option with an explanation of the default and Overdue behavior.
 - The initial case brief is narrower and uses smaller reading type and padding. Its repeated initial-facts list is available under “Known details,” leaving the case summary and Begin investigation action in the first phone viewport.
 

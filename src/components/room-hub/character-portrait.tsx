@@ -2,23 +2,35 @@ const skinColors = ["#d6a175", "#a96f51", "#70513f", "#e5bd94", "#8f6651"];
 const hairColors = ["#1d2829", "#513a2c", "#a06e3d", "#a6aba1", "#683b36"];
 const coatColors = ["#294047", "#403b38", "#41534a", "#39495a"];
 
-export function portraitTraits(id: string) {
+type PortraitAppearance = { gender?: "male" | "female" | "nonbinary"; description?: string };
+
+export function portraitTraits(id: string, appearance: PortraitAppearance = {}) {
   let seed = 2166136261;
   for (const character of id) seed = Math.imul(seed ^ character.charCodeAt(0), 16777619);
   seed >>>= 0;
+  const description = appearance.description?.toLowerCase() ?? "";
+  const outfit = /\b(suit|tie|blazer)\b/.test(description) ? 0
+    : /\b(uniform|security jacket|overalls|workwear)\b/.test(description) ? 1
+    : /\b(scrubs|lab coat|pharmacist.s coat)\b/.test(description) ? 2
+    : /\b(cardigan|dress|blouse|apron)\b/.test(description) ? 3
+    : (seed >>> 20) % 4;
+  const hairChoices = appearance.gender === "male" ? [0, 3, 4, 1, 2, 5]
+    : appearance.gender === "female" ? [1, 2, 5, 0, 3, 4] : [0, 1, 2, 3, 4, 5];
+  const face = /\b(broad|heavy-set|stout)\b/.test(description) ? 2
+    : /\b(slim|thin|lean|petite|frail)\b/.test(description) ? 1 : (seed >>> 25) % 3;
   return {
     skin: seed % skinColors.length,
     hair: (seed >>> 4) % hairColors.length,
     coat: (seed >>> 9) % coatColors.length,
-    hairstyle: (seed >>> 13) % 6,
+    hairstyle: hairChoices[(seed >>> 13) % hairChoices.length],
     glasses: ((seed >>> 18) & 3) === 0,
-    outfit: (seed >>> 20) % 4,
-    face: (seed >>> 25) % 3,
+    outfit,
+    face,
   };
 }
 
-export function CharacterPortrait({ id, className = "" }: { id: string; className?: string }) {
-  const traits = portraitTraits(id);
+export function CharacterPortrait({ id, className = "", gender, description }: { id: string; className?: string } & PortraitAppearance) {
+  const traits = portraitTraits(id, { gender, description });
   const skin = skinColors[traits.skin];
   const hair = hairColors[traits.hair];
   const coat = coatColors[traits.coat];

@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Archive and case opening
 
+- Portraits stay decorative but should reflect known written appearance: use the frozen cast's gender, public clothing and build where available, then deterministic ID-based variation for unspecified details. Do not derive gender from a name or expose private cast data.
 - Let the whole archive screen scroll so touch, mouse wheel, and keyboard users can reach every case from any starting point. Keep the custom deadline behind a disclosure because most replays use the frozen default.
 - The opening case file leads with the public summary and a visible Begin investigation action. The initial facts remain available on demand when they repeat the summary.
 
