@@ -91,6 +91,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   const bureau = city?.places.find((place) => place.kind === "bureau");
   const away = Boolean(city && (city.activeTravel || city.currentPlaceId !== bureau?.id));
   const showAwayNotice = away && station !== "map" && (station !== "place" || !!city?.activeTravel) && station !== "lab" && station !== "clueboard" && station !== "case" && station !== "interrogate";
+  const showBureauControls = !activeStation && !showAwayNotice;
   const currentPlace = city?.places.find((place) => place.id === city.currentPlaceId);
   const clock = city?.clock;
   const gameTime = clock ? currentGameMinute(clock, now) : null;
@@ -140,7 +141,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         {city?.deadline != null ? <span className={overdue ? "text-[#e5a18e]" : "text-[#b8ccc1]"}>{overdue ? "Overdue" : `Due · ${formatGameMinute(city.deadline)}`}</span> : null}
       </div>
       {clockError ? <p className="absolute inset-x-3 top-11 z-50 mx-auto w-fit border border-red-300/60 bg-red-950/95 px-3 py-2 text-sm text-red-100" role="status">Clock sync delayed. Retrying...</p> : null}
-      {!activeStation ? (
+      {showBureauControls ? (
         <div className="absolute right-4 top-12 z-30 flex flex-col items-end gap-2">
           {confirmLeave ? (
             <dialog aria-labelledby="leave-game-title" className="fixed right-4 top-12 m-0 ml-auto w-64 border border-red-300 bg-[#13070a]/95 p-3 text-red-50 shadow-[0_0_20px_rgba(248,113,113,0.3)] backdrop:bg-black/70" onCancel={(event) => { event.preventDefault(); setConfirmLeave(false); }} ref={leaveDialogRef} role="alertdialog">
@@ -174,16 +175,18 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#071014]/15 via-transparent to-[#071014]/20" />
 
-        <Hotspot label="People" icon="interview" className="left-[2%] top-[23%] h-[43%] w-[15%]" onClick={() => openStation("interrogate")} />
-        <Hotspot label="CCTV" icon="cctv" className="left-[19%] top-[34%] h-[33%] w-[18%]" onClick={() => openStation("cctv")} />
-        <Hotspot label="Clueboard" icon="clueboard" className="left-[38%] top-[23%] h-[34%] w-[23%]" onClick={() => openStation("clueboard")} />
-        <Hotspot label="Public records" icon="records" className="left-[63%] top-[34%] h-[33%] w-[16%]" onClick={() => openStation("evidence")} />
-        <Hotspot label="Map" icon="map" className="left-[80%] top-[23%] h-[34%] w-[19%]" onClick={() => openStation("map")} />
-        <Hotspot label="Case" icon="case" className="left-[39%] top-[76%] h-[22%] w-[23%]" onClick={() => openStation("case")} />
+        {showBureauControls ? <>
+          <Hotspot label="People" icon="interview" className="left-[2%] top-[23%] h-[43%] w-[15%]" onClick={() => openStation("interrogate")} />
+          <Hotspot label="CCTV" icon="cctv" className="left-[19%] top-[34%] h-[33%] w-[18%]" onClick={() => openStation("cctv")} />
+          <Hotspot label="Clueboard" icon="clueboard" className="left-[38%] top-[23%] h-[34%] w-[23%]" onClick={() => openStation("clueboard")} />
+          <Hotspot label="Public records" icon="records" className="left-[63%] top-[34%] h-[33%] w-[16%]" onClick={() => openStation("evidence")} />
+          <Hotspot label="Map" icon="map" className="left-[80%] top-[23%] h-[34%] w-[19%]" onClick={() => openStation("map")} />
+          <Hotspot label="Case" icon="case" className="left-[39%] top-[76%] h-[22%] w-[23%]" onClick={() => openStation("case")} />
+        </> : null}
 
       </div>
 
-      {!activeStation ? (
+      {showBureauControls ? (
         <nav aria-label="Investigation stations" className="absolute inset-x-0 bottom-0 z-20 grid grid-cols-3 gap-1.5 border-t-4 border-[#6b7157] bg-[#071014]/95 p-2 lg:hidden">
           <p className="col-span-3 px-1 text-xs uppercase tracking-[0.12em] text-[#b8ccc1]">Bureau stations</p>
           {stationOrder.map((item) => {

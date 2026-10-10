@@ -42,3 +42,12 @@ test("shows visible station cues on the bureau scene", () => {
   expect(html).toContain('aria-label="Public records"');
   expect(html).toContain('game-icon--records');
 });
+
+test("hides covered station controls while away from the bureau", () => {
+  city.currentPlaceId = "elsewhere";
+  const html = renderToStaticMarkup(<BureauScreen error="" onLeave={() => {}} />);
+  expect(html).toContain("Bureau terminals are available when you return.");
+  expect(html).not.toContain('aria-label="People"');
+  expect(html).not.toContain('aria-label="Investigation stations"');
+  city.currentPlaceId = "bureau";
+});
