@@ -134,15 +134,15 @@ function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person
 
   return <div className="mx-auto max-w-3xl">
     <button className="min-h-11 border-2 border-[#573821] px-4 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">← All people</button>
-    <div className="game-dossier mt-4 p-4 text-[#211d17] sm:p-6">
+    <div className="game-dossier mt-4 p-4 text-[#211d17] [overflow-wrap:anywhere] sm:p-6">
       <div className="flex min-w-0 items-start gap-4">
         <CharacterPortrait className="w-24" id={person.id} />
         <div className="min-w-0 flex-1">
           <p className="text-xs uppercase tracking-[0.2em] text-red-800">Interview record</p>
           <h3 className="mt-2 break-words text-2xl uppercase">{person.name}</h3>
-          <p className="mt-2 break-words text-sm leading-relaxed text-[#4b3b2d]">{person.publicDescription}</p>
         </div>
       </div>
+      <p className="mt-4 border-t border-[#8b7355] pt-3 text-sm leading-relaxed text-[#4b3b2d]">{person.publicDescription}</p>
       {!interview?.bureauPresent ? <div className="mt-5 border-t border-[#8b7355] pt-4"><p className="text-sm">Bring this person to the bureau before asking questions.</p><button className="mt-3 min-h-11 border-2 border-red-900 bg-red-950 px-4 text-xs uppercase text-red-50 hover:bg-red-900 disabled:opacity-50" disabled={working || !interview?.canTalkHere} onClick={() => run(callToBureau({ roomCode, npcId: person.id }))} type="button">Call to bureau</button>{interview && !interview.canTalkHere ? <p className="mt-2 text-sm text-red-800">Return to the bureau to make the call.</p> : null}</div> : null}
       {interview?.threadId ? <ConversationMessages roomCode={roomCode} threadId={interview.threadId} /> : null}
       {interview?.bureauPresent ? <div className="mt-5 border-t border-[#8b7355] pt-4">

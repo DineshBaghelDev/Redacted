@@ -144,19 +144,19 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
 
   return (
     <section className="absolute inset-0 z-40 flex flex-col bg-[#15100d] text-[#f4e8c8]" aria-label="Clue board">
-      <header className="z-10 flex flex-wrap items-center gap-3 border-b-2 border-[#5e3e29] bg-[#241812] px-4 py-3 shadow-lg">
+      <header className="z-10 flex flex-wrap items-center gap-2 border-b-2 border-[#5e3e29] bg-[#241812] px-3 py-2 shadow-lg sm:gap-3 sm:px-4 sm:py-3">
         <button className="clue-board-button" onClick={onBack} type="button">
           <X aria-hidden="true" size={18} /> Back
         </button>
-        <GameIcon name="clueboard" className="size-9" />
-        <div className="mr-auto">
-          <p className="text-xs uppercase tracking-[0.22em] text-[#c99b63]">Shared case workspace</p>
-          <h1 className="text-xl uppercase text-[#fff1c9]">Clueboard</h1>
+        <GameIcon name="clueboard" className="size-7 sm:size-9" />
+        <div className="mr-auto min-w-0">
+          <p className="hidden text-xs uppercase tracking-[0.22em] text-[#c99b63] sm:block">Shared case workspace</p>
+          <h1 className="text-lg uppercase text-[#fff1c9] sm:text-xl">Clueboard</h1>
         </div>
-        <button className="clue-board-button" onClick={addNote} type="button">
-          <Plus aria-hidden="true" size={18} /> Add note
+        <button aria-label="Add note" className="clue-board-button ml-auto sm:ml-0" onClick={addNote} type="button">
+          <Plus aria-hidden="true" size={18} /> <span className="hidden sm:inline">Add note</span>
         </button>
-        <div className="flex items-center gap-2" aria-label="String color" role="group">
+        <div className="flex w-full items-center justify-end gap-2 border-t border-[#5e3e29] pt-2 sm:w-auto sm:border-0 sm:pt-0" aria-label="String color" role="group">
           <Link2 aria-hidden="true" size={17} />
           {Object.entries(colors).map(([name, color]) => (
             <button
@@ -232,8 +232,8 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
           <Background color="#8a6246" gap={28} size={1} />
           <Controls position="bottom-right" showInteractive={false} />
         </ReactFlow>
-        <p className="pointer-events-none absolute bottom-4 left-4 max-w-xs border border-[#69452e] bg-[#1b120e]/90 px-3 py-2 text-xs text-[#e3c997] shadow-md">
-          Drag notes to arrange them. Drag between pins or use Tie string above to connect cards.
+        <p className="pointer-events-none absolute bottom-2 left-2 max-w-[15rem] border border-[#69452e] bg-[#1b120e]/90 px-2 py-1 text-xs text-[#e3c997] shadow-md sm:bottom-4 sm:left-4 sm:max-w-xs sm:px-3 sm:py-2">
+          Drag notes to move them. Connect pins to tie a string.
         </p>
         {error ? (
           <p className="absolute left-1/2 top-4 -translate-x-1/2 border border-red-300 bg-red-950/95 px-4 py-2 text-sm text-red-100 shadow-lg" role="alert">

@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Investigation surface asset pass
 
+- Tightened the clueboard's phone toolbar so Back, title, and Add note sit above the string colors, and shortened the help overlay. Interview detail now places the public description beneath the portrait and name, giving long case text the full dossier width.
 - Bureau stations now have visible pixel icon labels over their corresponding room objects on desktop. The compact station menu remains available through tablet widths, where the scene crops too much for reliable hotspot placement.
 - Station hotspots leave the focus order while a station or the away notice covers the bureau scene.
 - Kept the 20-place map at a readable minimum width through tablet and small desktop sizes; the place picker stays available while the map needs horizontal scrolling.
