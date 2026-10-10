@@ -17,7 +17,7 @@ export function NameEntryScreen({
   canSubmit,
 }: NameEntryScreenProps) {
   return (
-    <div className="flex w-full max-w-sm flex-col gap-8 px-5 sm:px-0">
+    <div className="relative z-10 flex w-full max-w-sm flex-col gap-8 px-5 sm:px-0">
       <h1 className="game-title text-5xl leading-none sm:text-7xl">
         REDACTED
       </h1>
@@ -34,7 +34,7 @@ export function NameEntryScreen({
         </div>
         <input
           autoFocus
-          className={input}
+          className={`${input} w-full`}
           id="detective-name"
           onChange={(event) => onChange(event.target.value)}
           placeholder={fallbackName}
