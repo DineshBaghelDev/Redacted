@@ -7,6 +7,7 @@ import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { CharacterPortrait } from "../character-portrait";
+import { GameIcon } from "../game-icon";
 
 const roleLabels = {
   victim: "Victim",
@@ -197,10 +198,11 @@ function ConversationMessages({ roomCode, threadId }: { roomCode: string; thread
 
 function Message({ message, onBack }: { message: string; onBack: () => void }) {
   return (
-    <section className="absolute inset-0 z-20 flex items-center justify-center bg-[#090807] p-4 text-[#211d17]">
-      <div className="w-full max-w-lg border-4 border-[#8b5b38] bg-[#c8b99b] p-6 text-center shadow-[8px_8px_0_rgba(0,0,0,0.45)]">
-        <p className="text-lg uppercase">{message}</p>
-        <button className="mt-5 border-2 border-[#573821] px-4 py-2 uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">Back to bureau</button>
+    <section className="game-interview-scene absolute inset-0 z-20 flex items-center justify-center p-4 text-[#211d17]">
+      <div className="game-dossier w-full max-w-lg px-6 pb-20 pt-20 text-center sm:px-10">
+        <GameIcon className="mx-auto size-12" name="interview" />
+        <p className="mt-4 text-lg uppercase leading-snug">{message}</p>
+        <button className="mt-6 min-h-11 w-full border-2 border-[#573821] px-4 py-2 uppercase hover:bg-[#573821] hover:text-[#f4ead2] sm:w-auto" onClick={onBack} type="button">Back to bureau</button>
       </div>
     </section>
   );
