@@ -248,7 +248,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
 
         <div className="game-station-main order-1 min-h-0 p-4 sm:p-6 lg:order-2 lg:overflow-y-auto">
           <h3 className="flex items-center gap-3 text-2xl uppercase"><InvestigationIcon className="size-11" name="room" /><span className="min-w-0 break-words">{currentRoom?.name ?? "Entrance"}</span></h3>
-          <FirstTimeTip className="mt-3" id="place" title="Searching a place">Pick a spot to search it (4 min). Anything there flips up as a card: look closer, bag it, or pin it. Tap a room on the floor plan to walk there. Press N any time for the notebook.</FirstTimeTip>
+          <FirstTimeTip id="place" title="Searching a place">Pick a spot to search it (4 min). Anything there flips up as a card: look closer, bag it, or pin it. Tap a room on the floor plan to walk there. Press N any time for the notebook.</FirstTimeTip>
           {place.action ? (
             <div className="mt-4 border border-[#e8ac51]/45 bg-[#211d15] p-3" role="status">
               <p className="text-sm uppercase text-[#f1c987]">{actionLabel}</p>

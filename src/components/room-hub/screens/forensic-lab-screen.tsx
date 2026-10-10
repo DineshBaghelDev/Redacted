@@ -100,7 +100,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
             <p className="mt-3 text-xs leading-relaxed text-[#c8d8d2]/60">Collected objects and searched rooms appear here. Bag evidence at a scene to bring it in.</p>
           </aside>
           <div>
-            <FirstTimeTip className="mb-3" id="lab" title="Forensic lab">Pick something you bagged, a searched room, or the victim, then request any test. Results take time, and not every test finds something.</FirstTimeTip>
+            <FirstTimeTip id="lab" title="Forensic lab">Pick something you bagged, a searched room, or the victim, then request any test. Results take time, and not every test finds something.</FirstTimeTip>
             <p className="font-mono text-sm text-[#e8ac51]">{formatGameMinute(gameTime)}</p>
             <h3 className="mt-1 text-2xl uppercase">{source?.name}</h3>
             <p className="mt-1 text-sm text-[#c8d8d2]/70">Choose an examination. Submitting takes 5 minutes; results come back later. Not every test finds something.</p>

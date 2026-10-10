@@ -165,7 +165,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
       </header>
 
       <div className="relative min-h-0 flex-1 overflow-auto p-3 sm:p-5" ref={mapViewport}>
-        <FirstTimeTip className="mx-auto mb-3" id="map" title="City map">Tap a place to travel there or go inside. Your partner shows as ◆. Dashed red streets have cameras; their tapes are at the bureau security desk.</FirstTimeTip>
+        <FirstTimeTip id="map" title="City map">Tap a place to travel there or go inside. Your partner shows as ◆. Dashed red streets have cameras; their tapes are at the bureau security desk.</FirstTimeTip>
         <div className="city-map relative mx-auto aspect-[16/10] min-w-[44rem] max-w-6xl md:min-w-[50rem]" onClick={(event) => { if (event.target === event.currentTarget) setSelectedId(""); }}>
             <span className="pointer-events-none absolute left-3 top-2 text-xs uppercase tracking-[0.25em] text-[#92c1c7]/70">Northside</span>
             <span className="pointer-events-none absolute left-3 top-[36%] text-xs uppercase tracking-[0.25em] text-[#e4bc75]/70">Midtown</span>

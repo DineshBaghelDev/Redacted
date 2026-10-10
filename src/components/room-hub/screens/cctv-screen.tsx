@@ -215,7 +215,7 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
 
   return (
     <div>
-      <FirstTimeTip className="mb-3" id="cctv" title="Camera tapes">Drag the tape left and right. Orange marks are people passing. Logs never name anyone, so compare the descriptions with what people look like.</FirstTimeTip>
+      <FirstTimeTip id="cctv" title="Camera tapes">Drag the tape left and right. Orange marks are people passing. Logs never name anyone, so compare the descriptions with what people look like.</FirstTimeTip>
       <div className="cctv-monitor relative overflow-hidden border-2 border-[#2f4a47] bg-[#020807] p-4 font-mono sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs uppercase tracking-[0.18em] text-[#7fd1ae]">
           <span>{camera.name}</span>

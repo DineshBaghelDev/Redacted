@@ -66,7 +66,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
           ))}
         </div>
         {message ? <p className="mt-2 text-sm text-red-900" role="status">{message}</p> : null}
-        <FirstTimeTip className="mt-3" id="notebook" title="Shared notebook">Everything either of you uncovers lands here on its own. Pin what matters to the clueboard; Show partner points your partner at it.</FirstTimeTip>
+        <FirstTimeTip id="notebook" title="Shared notebook">Everything either of you uncovers lands here on its own. Pin what matters to the clueboard; Show partner points your partner at it.</FirstTimeTip>
         <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
           {tab === "people" ? (
             people === undefined ? <p className="uppercase">Opening files...</p> : (

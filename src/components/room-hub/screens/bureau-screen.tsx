@@ -261,7 +261,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
           {showBureauHub ? hotspots.map((spot) => <Hotspot key={spot.station} {...spot} onClick={() => openStation(spot.station)} />) : null}
         </div>
       </div>
-      {showBureauHub ? <FirstTimeTip className="absolute bottom-12 left-4 z-30 lg:bottom-6" id="bureau" title="The bureau">Click around the room: interview room, security desk, clueboard, records, city map, and the case file. Esc pauses; N opens the notebook.</FirstTimeTip> : null}
+      {showBureauHub ? <FirstTimeTip id="bureau" title="The bureau">Click around the room: interview room, security desk, clueboard, records, city map, and the case file. Esc pauses; N opens the notebook.</FirstTimeTip> : null}
       {showBureauHub ? <p className="pointer-events-none absolute inset-x-0 bottom-3 z-20 text-center text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/70 lg:hidden">Swipe to look around the bureau</p> : null}
 
       {activeStation || showAwayNotice ? (
