@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Investigation symbols and quieter lists
 
+- Show the bureau's station icons and names directly on the room art, with no enclosing icon tiles. Keep broad hotspots for pointer use and the icon menu at narrow/tablet widths.
 - Use one six-cell transparent pixel atlas for common investigation verbs and objects. At small sizes, each symbol has one recognizable silhouette and no written detail. These symbols are navigation cues, never evidence representations.
 - Room navigation and lab examinations use thin dividers and a restrained dark backing instead of a box around every entry. Keep the dossier frame where players need to read long immutable record text.
 - Let long generated names and evidence text wrap inside fixed-width clueboard and report surfaces. The full wording remains available; cards do not truncate case data.

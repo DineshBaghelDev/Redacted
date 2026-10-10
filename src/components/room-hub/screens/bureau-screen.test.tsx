@@ -34,3 +34,11 @@ test("shows overdue after the shared game clock passes the deadline", () => {
   expect(html).not.toContain("Due · Day 2 · 06:00");
   city.clock.gameTime = 65;
 });
+
+test("shows visible station cues on the bureau scene", () => {
+  const html = renderToStaticMarkup(<BureauScreen error="" onLeave={() => {}} />);
+  expect(html).toContain('aria-label="People"');
+  expect(html).toContain('game-icon--interview');
+  expect(html).toContain('aria-label="Public records"');
+  expect(html).toContain('game-icon--records');
+});

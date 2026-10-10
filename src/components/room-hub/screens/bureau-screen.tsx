@@ -174,17 +174,17 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#071014]/15 via-transparent to-[#071014]/20" />
 
-        <Hotspot label="People" className="left-[2%] top-[23%] h-[43%] w-[15%]" onClick={() => openStation("interrogate")} />
-        <Hotspot label="CCTV" className="left-[19%] top-[34%] h-[33%] w-[18%]" onClick={() => openStation("cctv")} />
-        <Hotspot label="Clueboard" className="left-[38%] top-[23%] h-[34%] w-[23%]" onClick={() => openStation("clueboard")} />
-        <Hotspot label="Public records" className="left-[63%] top-[34%] h-[33%] w-[16%]" onClick={() => openStation("evidence")} />
-        <Hotspot label="Map" className="left-[80%] top-[23%] h-[34%] w-[19%]" onClick={() => openStation("map")} />
-        <Hotspot label="Case" className="left-[39%] top-[76%] h-[22%] w-[23%]" onClick={() => openStation("case")} />
+        <Hotspot label="People" icon="interview" className="left-[2%] top-[23%] h-[43%] w-[15%]" onClick={() => openStation("interrogate")} />
+        <Hotspot label="CCTV" icon="cctv" className="left-[19%] top-[34%] h-[33%] w-[18%]" onClick={() => openStation("cctv")} />
+        <Hotspot label="Clueboard" icon="clueboard" className="left-[38%] top-[23%] h-[34%] w-[23%]" onClick={() => openStation("clueboard")} />
+        <Hotspot label="Public records" icon="records" className="left-[63%] top-[34%] h-[33%] w-[16%]" onClick={() => openStation("evidence")} />
+        <Hotspot label="Map" icon="map" className="left-[80%] top-[23%] h-[34%] w-[19%]" onClick={() => openStation("map")} />
+        <Hotspot label="Case" icon="case" className="left-[39%] top-[76%] h-[22%] w-[23%]" onClick={() => openStation("case")} />
 
       </div>
 
       {!activeStation ? (
-        <nav aria-label="Investigation stations" className="absolute inset-x-0 bottom-0 z-20 grid grid-cols-3 gap-1.5 border-t-4 border-[#6b7157] bg-[#071014]/95 p-2 sm:hidden">
+        <nav aria-label="Investigation stations" className="absolute inset-x-0 bottom-0 z-20 grid grid-cols-3 gap-1.5 border-t-4 border-[#6b7157] bg-[#071014]/95 p-2 lg:hidden">
           <p className="col-span-3 px-1 text-xs uppercase tracking-[0.12em] text-[#b8ccc1]">Bureau stations</p>
           {stationOrder.map((item) => {
             return (
@@ -236,22 +236,25 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
 
 function Hotspot({
   label,
+  icon,
   className,
   onClick,
 }: {
   label: string;
+  icon: Parameters<typeof GameIcon>[0]["name"];
   className: string;
   onClick: () => void;
 }) {
   return (
     <button
       aria-label={label}
-      className={`group absolute hidden border border-transparent transition hover:border-[#e8ac51]/80 hover:bg-[#e8ac51]/10 focus-visible:border-[#e8ac51] focus-visible:bg-[#e8ac51]/10 sm:block ${className}`}
+      className={`group absolute hidden border border-transparent transition hover:bg-[#e8ac51]/5 focus-visible:bg-[#e8ac51]/10 lg:block ${className}`}
       onClick={onClick}
       type="button"
     >
-      <span className="absolute left-1/2 top-2 -translate-x-1/2 -translate-y-full whitespace-nowrap border border-[#e8ac51] bg-[#071014]/95 px-2 py-1 text-xs uppercase text-[#f5c87f] opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
-        {label}
+      <span aria-hidden="true" className="absolute bottom-2 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-center text-sm uppercase leading-tight text-[#f5d18f] drop-shadow-[0_2px_2px_#000] transition-transform group-hover:-translate-y-1 group-focus-visible:-translate-y-1">
+        <GameIcon name={icon} className="size-14 drop-shadow-[0_2px_3px_#000]" />
+        <span>{label}</span>
       </span>
     </button>
   );
