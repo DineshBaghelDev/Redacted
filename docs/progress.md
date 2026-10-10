@@ -2,6 +2,7 @@
 
 ## 2026-10-10 — Investigation surface asset pass
 
+- A 320px case-brief capture exposed the room badge compressing a long generated title into single letters. The brief now gives the title full width on phones and starts its content inside the illustrated paper border; desktop still keeps the room stamp beside the title.
 - A narrow phone capture exposed the Join room title, Close control, and six code cells colliding with the illustrated frame. The dialog now gives the frame clear inner space, uses a compact icon Close control, and keeps all six code cells readable at 320px.
 - The waiting room now shows both detectives as portrait ID strips, gives the case title a clear reading band, and keeps Ready/Start as the main actions with Leave room quieter below. Long names and titles wrap inside the terminal frame; the room code and copy action remain available.
 - Tightened the clueboard's phone toolbar so Back, title, and Add note sit above the string colors, and shortened the help overlay. Interview detail now places the public description beneath the portrait and name, giving long case text the full dossier width.
