@@ -1,4 +1,5 @@
 import { input, menuButton, panel } from "../constants";
+import { CharacterPortrait } from "../character-portrait";
 
 type NameEntryScreenProps = {
   detectiveName: string;
@@ -27,9 +28,10 @@ export function NameEntryScreen({
           onSubmit();
         }}
       >
-        <label className="mb-3 block text-xl uppercase text-[#e4e6d8]" htmlFor="detective-name">
-          Detective name
-        </label>
+        <div className="mb-4 flex items-center gap-4">
+          <CharacterPortrait className="w-16" id={detectiveName.trim() || fallbackName} />
+          <label className="text-xl uppercase text-[#e4e6d8]" htmlFor="detective-name">Detective name</label>
+        </div>
         <input
           autoFocus
           className={input}

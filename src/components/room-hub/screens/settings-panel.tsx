@@ -1,4 +1,5 @@
 import { input, menuButton, panel } from "../constants";
+import { CharacterPortrait } from "../character-portrait";
 
 type SettingsPanelProps = {
   detectiveName: string;
@@ -24,9 +25,10 @@ export function SettingsPanel({
       }}
     >
       <h2 className="mb-5 text-3xl uppercase text-[#e4e6d8]">Detective profile</h2>
-      <label className="mb-3 block text-xl uppercase text-[#c8d8d2]" htmlFor="profile-name">
-        Detective name
-      </label>
+      <div className="mb-4 flex items-center gap-4">
+        <CharacterPortrait className="w-16" id={detectiveName.trim() || "Detective"} />
+        <label className="text-xl uppercase text-[#c8d8d2]" htmlFor="profile-name">Detective name</label>
+      </div>
       <input
         className={`${input} w-full`}
         id="profile-name"
