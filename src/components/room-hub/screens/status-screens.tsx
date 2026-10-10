@@ -22,11 +22,11 @@ export function CaseBriefScreen({
     <section className="flex h-screen w-full items-center justify-center overflow-y-auto bg-[#071014]/92 p-4 text-[#211d17] sm:p-8">
       <div className="game-dossier my-auto w-full max-w-3xl p-5 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-[#211d17] pb-4">
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="text-xs uppercase tracking-[0.2em] text-red-800">Bureau case file</p>
-            <h1 className="mt-2 text-3xl uppercase leading-none sm:text-5xl">{brief?.title ?? "Case brief"}</h1>
+            <h1 className="mt-2 break-words text-3xl uppercase leading-tight sm:text-5xl">{brief?.title ?? "Case brief"}</h1>
           </div>
-          <span className="border-2 border-red-800 px-3 py-1 text-sm uppercase text-red-800">Room {roomCode}</span>
+          <span className="shrink-0 border-2 border-red-800 px-3 py-1 text-sm uppercase text-red-800">Room {roomCode}</span>
         </div>
 
         {brief === undefined ? <p className="py-12 text-center text-xl uppercase">Opening the file...</p> : null}

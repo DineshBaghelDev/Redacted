@@ -59,7 +59,7 @@ export function RoomLobbyModal({
     >
       <div className={`${panel} w-full max-w-lg`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-3xl uppercase text-[#e4e6d8]" id="room-lobby-title">Room {joinedRoomCode}</h2>
+          <h2 className="min-w-0 text-3xl uppercase text-[#e4e6d8]" id="room-lobby-title">Room {joinedRoomCode}</h2>
           <button
             className="h-10 border border-[#6f9f98] bg-[#0b1a1c] px-4 text-base uppercase text-[#e8ac51]"
             disabled={workingAction !== null}
@@ -69,7 +69,7 @@ export function RoomLobbyModal({
             {workingAction === "copy" ? "Copying..." : copiedCode ? "Copied" : "Copy code"}
           </button>
         </div>
-        <p className="mt-3 text-lg uppercase text-[#e8ac51]">{room?.caseTitle ?? "Loading case..."}</p>
+        <p className="mt-3 break-words text-lg uppercase text-[#e8ac51]">{room?.caseTitle ?? "Loading case..."}</p>
         <p className="mt-4 text-xl uppercase text-[#c8d8d2]">Connected players</p>
         <ul className="mt-2 space-y-2 text-xl text-[#a5c6bb]">
           {(room?.players?.length
@@ -77,8 +77,8 @@ export function RoomLobbyModal({
             : [{ name: nickname, isReady: false }]
           ).map((player) => (
             <li className="flex justify-between gap-3" key={player.name}>
-              <span>{player.name}</span>
-              <span className={player.isReady ? "text-[#e8ac51]" : "text-[#c8d8d2]/60"}>
+              <span className="min-w-0 break-words">{player.name}</span>
+              <span className={`shrink-0 ${player.isReady ? "text-[#e8ac51]" : "text-[#c8d8d2]/60"}`}>
                 {player.isReady ? "Ready" : "Not ready"}
               </span>
             </li>
