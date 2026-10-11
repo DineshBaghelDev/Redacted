@@ -12,13 +12,26 @@ type Room = Place["rooms"][number];
 
 /** Where furniture sits in a room, as % of its width/height. Kept off the walls so doors stay clear. */
 const SPOT_ANCHORS = [[24, 30], [52, 26], [78, 32], [30, 70], [58, 72], [80, 66], [44, 48], [16, 52]];
-const WALLS = ["right", "left", "bottom", "top"] as const;
+// Bottom wall last: the stairs and lift buttons sit in the bottom-left corner.
+const WALLS = ["right", "left", "top", "bottom"] as const;
 
 function neighbours(place: Place, roomId: string) {
   return place.connections.flatMap((edge) => edge.a === roomId ? [edge.b] : edge.b === roomId ? [edge.a] : [])
     .map((id) => place.rooms.find((room) => room.id === id))
     .filter((room): room is Room => Boolean(room));
 }
+
+/** Stairs and lifts are rooms on the ground floor joined to every floor's corridor; they read as floor buttons, not doors. */
+const isHub = (room: Room) => room.type === "stairs" || room.type === "lift";
+
+/** The floors a stairwell or lift reaches, and which room you step out into on each. */
+function floorStops(place: Place, hub: Room) {
+  const stops = new Map<number, string>([[hub.floor, hub.id]]);
+  for (const next of neighbours(place, hub.id)) if (!stops.has(next.floor)) stops.set(next.floor, next.id);
+  return [...stops].sort(([a], [b]) => a - b).map(([floor, roomId]) => ({ floor, roomId }));
+}
+
+const floorName = (floor: number) => (floor === 0 ? "G" : String(floor));
 
 /** Where a door sits on a wall: walls are filled in turn, doors spread evenly along each wall. */
 function doorStyle(index: number, total: number): CSSProperties {
@@ -33,8 +46,8 @@ function doorStyle(index: number, total: number): CSSProperties {
 }
 
 /**
- * The room you are standing in, seen from above: furniture you can press and hold to search, and doors in the
- * walls to the rooms next door. Doors to rooms nobody has entered yet don't say what's behind them.
+ * The room you are standing in, seen from above: furniture you can press and hold to search, doors in the walls
+ * to the rooms next door, and floor buttons when stairs or a lift are at hand.
  */
 export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySpot, onSearch, onWalk, onCamera }: {
   place: Place;
@@ -47,7 +60,9 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
   onWalk: (roomId: string) => void;
   onCamera: () => void;
 }) {
-  const doors = neighbours(place, room.id);
+  const around = neighbours(place, room.id);
+  const hubs = isHub(room) ? [room] : around.filter(isHub);
+  const doors = around.filter((next) => !isHub(next) && !(isHub(room) && next.floor !== room.floor));
   return (
     <div className="room-floor relative flex flex-wrap content-start gap-2 p-4 animate-in fade-in zoom-in-95 duration-300 sm:block sm:aspect-[16/9] sm:p-0" key={room.id}>
       {room.spots.map((spot, index) => {
@@ -72,12 +87,10 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
       {!room.spots.length ? <p className="w-full text-center text-sm text-[#c8d8d2]/60 sm:absolute sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2">Nothing to search here. Try a door.</p> : null}
 
       {doors.map((next, index) => {
-        const stairs = next.floor !== room.floor;
-        const label = stairs ? `Stairs ${next.floor > room.floor ? "up" : "down"}${next.visited ? ` · ${next.name}` : ""}` : next.visited ? next.name : "Unexplored";
+        const level = next.floor === room.floor ? "" : next.floor > room.floor ? " · upstairs" : " · downstairs";
         return (
           <button
             className="room-door w-full sm:absolute sm:left-[var(--dx)] sm:top-[var(--dy)] sm:w-auto sm:translate-x-[var(--tx)] sm:translate-y-[var(--ty)]"
-            data-unexplored={!next.visited}
             disabled={busy}
             key={next.id}
             onClick={() => onWalk(next.id)}
@@ -85,18 +98,31 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
             title={`Walk through · ${next.walkMinutes ?? 1} min`}
             type="button"
           >
-            <span>{stairs ? "▤ " : "▯ "}{label}</span>
+            <span>▯ {next.name}{level}</span>
             <span className="text-[0.6rem] normal-case text-[#c8d8d2]/60">{next.walkMinutes ?? 1} min{place.partners.some((partner) => partner.roomId === next.id) ? " · ◆ partner" : ""}</span>
           </button>
         );
       })}
+
+      {hubs.length ? (
+        <div className="flex w-full flex-col gap-1 sm:absolute sm:bottom-3 sm:left-3 sm:w-auto">
+          {hubs.map((hub) => (
+            <div className="room-door" key={hub.id} style={{ flexDirection: "row", gap: "0.4rem" }}>
+              <span>{hub.type === "lift" ? "▤ Lift" : "▤ Stairs"}</span>
+              {floorStops(place, hub).map((stop) => (
+                <button aria-label={`${hub.type === "lift" ? "Lift" : "Stairs"} to floor ${floorName(stop.floor)}`} className="min-w-7 border border-current px-1.5 py-0.5 disabled:border-[#e8ac51] disabled:bg-[#e8ac51] disabled:text-[#14120c]" disabled={busy || stop.floor === room.floor} key={stop.floor} onClick={() => onWalk(stop.roomId)} title={place.rooms.find((item) => item.id === stop.roomId)?.name} type="button">{floorName(stop.floor)}</button>
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {room.hasCamera ? (
         <button className="absolute right-2 top-2 flex items-center gap-1 text-[0.65rem] uppercase text-[#f1c987] hover:text-white" onClick={onCamera} title="Check this room's camera" type="button">
           <GameIcon className="size-7" name="cctv" /><span className="hidden sm:inline">Camera</span>
         </button>
       ) : null}
-      {walkingTo ? <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/55 text-sm uppercase tracking-widest text-[#f1c987] animate-in fade-in" role="status">Walking to {walkingTo.visited ? walkingTo.name : "the next room"}…</div> : null}
+      {walkingTo ? <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/55 text-sm uppercase tracking-widest text-[#f1c987] animate-in fade-in" role="status">Walking to {walkingTo.name}…</div> : null}
     </div>
   );
 }
@@ -131,13 +157,12 @@ const CELL_H = 30;
 const GAP = 10;
 
 /**
- * A small hand-drawn map of the building that fills in as the team walks it. Rooms nobody has entered show as "?"
- * once a door to them has been seen; the rest stay hidden. Tap an explored room to walk back to it.
+ * A small paper map of one floor. Every room is named; rooms either detective has been in are inked in solid.
+ * Tap any room to walk there by the shortest way.
  */
 export function BuildingMap({ place, floor, floors, busy, onFloor, onWalk }: { place: Place; floor: number; floors: number[]; busy: boolean; onFloor: (floor: number) => void; onWalk: (roomId: string) => void }) {
   const visited = new Set(place.rooms.filter((room) => room.visited).map((room) => room.id));
-  const seen = new Set(place.connections.flatMap((edge) => visited.has(edge.a) || visited.has(edge.b) ? [edge.a, edge.b] : []));
-  const rooms = place.rooms.filter((room) => room.floor === floor && (visited.has(room.id) || seen.has(room.id)));
+  const rooms = place.rooms.filter((room) => room.floor === floor);
   const layout = mapLayout(rooms, place.connections);
   const width = layout.columns * (CELL_W + GAP) - GAP;
   const height = layout.rows * (CELL_H + GAP) - GAP;
@@ -169,18 +194,18 @@ export function BuildingMap({ place, floor, floors, busy, onFloor, onWalk }: { p
             const done = room.spots.length > 0 && room.spots.every((spot) => spot.searched);
             return (
               <button
-                aria-label={known ? `${room.name}${current ? " (you are here)" : ""}` : "Unexplored room"}
+                aria-label={`${room.name}${current ? " (you are here)" : ""}`}
                 className="map-room"
                 data-current={current}
                 data-known={known}
-                disabled={busy || current || !known}
+                disabled={busy || current || room.walkMinutes === undefined}
                 key={room.id}
                 onClick={() => onWalk(room.id)}
                 style={{ left: point.x, top: point.y, width: CELL_W, height: CELL_H }}
-                title={known ? (current ? "You are here" : `Walk back · ${room.walkMinutes ?? "?"} min`) : "Not explored yet"}
+                title={current ? "You are here" : `Walk here · ${room.walkMinutes ?? "?"} min`}
                 type="button"
               >
-                {known ? <span className="line-clamp-2">{current ? "● " : partner ? "◆ " : ""}{room.name}{done ? " ✓" : ""}</span> : "?"}
+                <span className="line-clamp-2">{current ? "● " : partner ? "◆ " : ""}{room.name}{done ? " ✓" : ""}</span>
               </button>
             );
           })}

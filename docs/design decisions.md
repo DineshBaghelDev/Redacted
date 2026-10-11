@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-10-11 — Navigation is about the case, not the maze
+
+- Players are solving a case, not a maze: room names are always shown, the map is fully labelled, and any room is one tap away. Walking still costs the shortest-path minutes.
+- Stairs and lifts read as floor buttons because they are hubs joined to every floor in the building templates.
+- Arrival is a toast, not a card to dismiss.
+
 ## 2026-10-11 — Buildings are explored, not picked from a list
 
 - Moving is through doors to neighbouring rooms, so the layout is discovered by walking it. The fogged map is shared, matching the rule that both players share all case state.

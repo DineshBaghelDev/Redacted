@@ -117,7 +117,7 @@ Do not make every corridor a database room. Represent most corridors as graph ed
 
 Search is deterministic reveal of generated content.
 
-Rooms are searched one spot at a time. A room's spots are its template slots plus any generated item slot naming a new spot; names are normalized ("On the body" and "The body" are one spot). Inside, the detective sees one room at a time from above: furniture spots to press and hold, and doors in the walls to neighbouring rooms (stairs to other floors). Doors to rooms nobody has entered are unlabelled. A small paper map fills in as either detective explores; explored rooms on it can be tapped to walk back. Walking costs the shortest path.
+Rooms are searched one spot at a time. A room's spots are its template slots plus any generated item slot naming a new spot; names are normalized ("On the body" and "The body" are one spot). Inside, the detective sees one room at a time from above: furniture spots to press and hold, and doors in the walls to neighbouring rooms (stairs to other floors). Stairs and lifts show as floor buttons. A small paper map shows every room on the floor, inks in rooms either detective has entered, and any room on it can be tapped to walk there. Walking costs the shortest path.
 
 Rules:
 

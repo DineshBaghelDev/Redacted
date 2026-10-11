@@ -9,7 +9,7 @@ import type { FunctionReturnType } from "convex/server";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
-import { formatGameMinute, partOfDay } from "../../../lib/game-time";
+import { partOfDay } from "../../../lib/game-time";
 import { play } from "../../../lib/sound";
 import { CctvScreen } from "./cctv-screen";
 import { GameIcon } from "../game-icon";
@@ -43,13 +43,8 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   const [error, setError] = useState("");
   const [cameraOpen, setCameraOpen] = useState(false);
   const [floor, setFloor] = useState<number | null>(null);
-  const [arrivedAt, setArrivedAt] = useState<string | null>(() => {
-    try {
-      return window.sessionStorage.getItem(`redacted.arrived.${roomCode}`);
-    } catch {
-      return null;
-    }
-  });
+  // Arriving shows a short toast with the place and its mood, then gets out of the way.
+  const [toastDoneFor, setToastDoneFor] = useState<string | null>(null);
   const [activeDeviceId, setActiveDeviceId] = useState<Id<"caseItems"> | null>(null);
   const seenItems = useRef<Set<string> | null>(null);
   const [freshItems, setFreshItems] = useState<Set<string>>(new Set());
@@ -84,6 +79,13 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
     seenItems.current = ids;
   }, [place]);
 
+  const placeName = place?.placeName;
+  useEffect(() => {
+    if (!placeName) return;
+    const timer = window.setTimeout(() => setToastDoneFor(placeName), 3500);
+    return () => window.clearTimeout(timer);
+  }, [placeName]);
+
   const currentRoomId = place?.currentRoomId;
   useEffect(() => {
     if (currentRoomId) play("door");
@@ -117,14 +119,13 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
     ? 0 : Math.max(0, Math.floor((now - place.clock.clockStartedAt) / place.clock.minuteMs)));
   const floors = [...new Set(place.rooms.map((room) => room.floor))].sort((a, b) => a - b);
   const shownFloor = floor ?? currentRoom?.floor ?? floors[0] ?? 0;
-  const searchedSpots = currentRoom?.spots.filter((spot) => spot.searched) ?? [];
-  const foundBySpot = new Map(searchedSpots.map((spot) => [spot.key, here.filter((item) => item.spot === spot.key).length]));
+  const foundBySpot = new Map((currentRoom?.spots ?? []).map((spot) => [spot.key, here.filter((item) => item.spot === spot.key).length]));
+  const searchedSpots = currentRoom?.spots.filter((spot) => spot.searched && foundBySpot.get(spot.key)) ?? [];
   const actionRoom = place.rooms.find((room) => room.id === place.action?.roomId);
   const actionLabel = place.action?.kind === "move" ? `Walking to ${actionRoom?.name ?? "the room"}`
     : place.action?.kind === "search" ? `Searching ${currentRoom?.spots.find((spot) => spot.key === place.action?.slot)?.name ?? "the room"}`
       : place.action?.kind === "device" ? "Reading device"
         : place.action?.kind === "inspect" ? "Inspecting" : "Working";
-  const showArrival = arrivedAt !== place.placeName;
 
   return (
     <section className="game-place-scene absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
@@ -136,30 +137,11 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
         <button className="min-h-11 shrink-0 border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">Leave building</button>
       </header>
 
-      {showArrival ? (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 p-4 animate-in fade-in duration-500">
-          <div className="game-dossier w-full max-w-lg px-6 py-8 text-center">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-red-800">{formatGameMinute(gameTime)}</p>
-            <h3 className="mt-2 text-3xl uppercase">{place.placeName}</h3>
-            <p className="mt-4 text-sm leading-relaxed">{place.placeDescription}</p>
-            <p className="mt-3 text-sm italic leading-relaxed text-[#5d4d3d]">{atmosphere[partOfDay(gameTime)]} {place.rooms.length} rooms{floors.length > 1 ? ` over ${floors.length} floors` : ""}.</p>
-            {place.partners.length ? <p className="mt-2 text-xs uppercase text-red-800">{place.partners[0].name} is already inside · {place.rooms.find((room) => room.id === place.partners[0].roomId)?.name}</p> : null}
-            <button autoFocus className="mt-6 min-h-11 border-2 border-[#573821] px-5 uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={() => {
-              play("door");
-              setArrivedAt(place.placeName);
-              try {
-                window.sessionStorage.setItem(`redacted.arrived.${roomCode}`, place.placeName);
-              } catch {
-                // Arrival cards are a convenience; showing one again is harmless.
-              }
-            }} type="button">Step inside</button>
-          </div>
-        </div>
-      ) : null}
+      {toastDoneFor !== place.placeName ? <p className="game-toast pointer-events-none absolute right-4 top-24 z-30 max-w-sm animate-in fade-in slide-in-from-right" role="status">{place.placeName} · {atmosphere[partOfDay(gameTime)]}</p> : null}
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="game-station-main mx-auto min-h-0 max-w-6xl p-4 sm:p-6">
-          <FirstTimeTip id="place" title="Exploring a building">Press and hold a piece of furniture to search it (4 min). Walk through the doors to explore; unexplored doors don&apos;t say what&apos;s behind them. The map fills in as you go, and you can tap an explored room on it to walk back.</FirstTimeTip>
+          <FirstTimeTip id="place" title="Exploring a building">Press and hold a piece of furniture to search it (4 min). Walk through the doors, or use the stairs and lift buttons to change floor. Tap any room on the map to walk straight there.</FirstTimeTip>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_19rem]">
             <div>
               <h3 className="mb-2 flex items-center gap-3 text-xl uppercase"><InvestigationIcon className="size-9" name="room" /><span className="min-w-0 break-words">{currentRoom?.name ?? "Entrance"}</span></h3>
@@ -198,9 +180,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
                   return (
                     <li className="border border-[#6f9f98]/30 bg-[#071619]/80 p-3" id={`spot-${spot.key}`} key={spot.key}>
                       <p className="flex items-center gap-2 text-sm uppercase"><InvestigationIcon className="size-7" name="search" />{spot.name}</p>
-                      {found.length ? (
-                        <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />)}</div>
-                      ) : <p className="mt-2 text-sm text-[#c8d8d2]/55">Nothing here.</p>}
+                      <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />)}</div>
                     </li>
                   );
                 })}

@@ -610,7 +610,6 @@
   color: #f1c987;
   white-space: nowrap;
 }
-.room-door[data-unexplored="true"] { border-style: dashed; border-color: rgb(200 216 210 / 45%); color: rgb(200 216 210 / 75%); background: rgb(5 8 9 / 92%); }
 .room-door:hover:not(:disabled) { color: #fff; border-color: #fff; }
 .room-door:disabled { opacity: 0.5; }
 

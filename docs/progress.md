@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-10-11 — Smoother building navigation
+
+- Doors always name the room behind them; no more "Unexplored" doors or "?" rooms. The map shows every room on a floor by name (explored ones inked solid) and any room can be tapped to walk there.
+- Stairs and lifts are floor buttons ("Lift: G 1 2 3"), not a pile of stair doors; one tap takes you to that floor's corridor. Doors between floors in houses say "upstairs"/"downstairs".
+- An empty search says "✓ Nothing here" once, on the furniture; the list under the room only shows spots where something was found.
+- Arriving at a place no longer shows the "Step inside" card; a short toast names the place and its mood instead.
+
 ## 2026-10-11 — Exploring buildings
 
 - Inside a building you stand in one room seen from above: furniture you press and hold to search, and doors cut into the walls to the rooms next door (stairs lead to other floors). Doors to rooms nobody has entered say "Unexplored".

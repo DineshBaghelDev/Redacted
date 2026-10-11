@@ -25,17 +25,14 @@ vi.mock("convex/react", () => ({
 }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/lobby/ABC123/place", useSearchParams: () => new URLSearchParams() }));
 
-test("arrives with the place description, then shows the room to search, its doors, and the building map", () => {
+test("shows the room to search, its doors, and the building map", () => {
   query.calls = 0;
   const html = renderToStaticMarkup(<PlaceScreen roomCode="ABC123" onBack={() => {}} />);
-  expect(html).toContain("A tired apartment block.");
-  expect(html).toContain("Step inside");
   expect(html).toContain("Front desk");
   expect(html).toContain("Hold to search · 4 min");
   expect(html).toContain("Check this room&#x27;s camera");
   expect(html).toContain('aria-label="Building map"');
-  // The office has not been entered yet, so its door doesn't say what's behind it.
-  expect(html).toContain("Unexplored");
-  expect(html).not.toContain(">Office<");
+  // Doors always say which room is behind them.
+  expect(html).toContain("▯ Office");
   expect(html).toContain("1 min · ◆ partner");
 });
