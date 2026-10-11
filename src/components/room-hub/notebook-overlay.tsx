@@ -65,7 +65,7 @@ export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle }: { room
         </header>
         {picking ? null : <div className="mt-3 grid grid-cols-2 gap-2" role="tablist">
           {(["evidence", "people"] as const).map((item) => (
-            <button aria-selected={tab === item} className="min-h-10 border-b-2 border-transparent text-sm uppercase aria-selected:border-red-900 aria-selected:text-red-900" key={item} onClick={() => setTab(item)} role="tab" type="button">
+            <button aria-selected={tab === item} className="min-h-10 border-b-2 border-transparent text-sm uppercase aria-selected:border-red-900 aria-selected:text-red-900" key={item} onClick={() => { play("page"); setTab(item); }} role="tab" type="button">
               {item === "evidence" ? `Evidence · ${entries?.length ?? 0}` : `People · ${people?.length ?? 0}`}
             </button>
           ))}

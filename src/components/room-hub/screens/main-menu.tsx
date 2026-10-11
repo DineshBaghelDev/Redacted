@@ -55,11 +55,11 @@ export function MainMenuScreen({
             <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
           </button>
         ))}
-        <button className={menuOptionButton} onClick={() => { play("open"); onPrevious(); }} type="button">
+        <button className={menuOptionButton} onClick={() => { play("page"); onPrevious(); }} type="button">
           <GameIcon name="case" />
           Play a case
         </button>
-        <button className={menuOptionButton} onClick={() => { play("open"); onHistory(); }} type="button">
+        <button className={menuOptionButton} onClick={() => { play("page"); onHistory(); }} type="button">
           <GameIcon name="records" />
           Case history
         </button>
@@ -67,7 +67,7 @@ export function MainMenuScreen({
           <GameIcon name="badge" />
           Join room
         </button>
-        <button className={menuOptionButton} onClick={() => { play("open"); onHowToPlay(); }} type="button">
+        <button className={menuOptionButton} onClick={() => { play("page"); onHowToPlay(); }} type="button">
           <GameIcon name="clueboard" />
           How to play
         </button>

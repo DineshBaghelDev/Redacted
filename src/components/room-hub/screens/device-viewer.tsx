@@ -73,7 +73,7 @@ export function DeviceViewer({ roomCode, title, data, nodes, onBack, onPinError,
               {file ? <p className="mt-5 whitespace-pre-wrap break-words border-l-2 border-[#e8ac51] pl-4 text-base leading-relaxed">{file.body}</p> : null}
               <PinButton className="mt-6" disabled={busy} key={openId} nodes={nodes} onError={onPinError} referenceId={openId!} roomCode={roomCode} type={file ? "device_file" : call ? "call" : "message"} />
             </article> : <div className="mt-3 divide-y divide-[#45635d]/60">
-              {files.map((row) => <button className="flex min-h-16 w-full items-center justify-between gap-3 py-3 text-left text-sm" key={row.id} onClick={() => setOpenId(row.id)} type="button"><span className="min-w-0 break-words">{row.title}</span><span className="text-[#e8ac51]">Open →</span></button>)}
+              {files.map((row) => <button className="flex min-h-16 w-full items-center justify-between gap-3 py-3 text-left text-sm" key={row.id} onClick={() => { play("page"); setOpenId(row.id); }} type="button"><span className="min-w-0 break-words">{row.title}</span><span className="text-[#e8ac51]">Open →</span></button>)}
               {calls.map((row) => <button className="flex min-h-16 w-full items-center justify-between gap-3 py-3 text-left text-sm" key={row.id} onClick={() => setOpenId(row.id)} type="button"><span className="min-w-0"><span className="block break-words">{row.direction === "incoming" ? "From" : "To"} {row.otherParty}</span><span className="block text-xs text-[#a5c6bb]">{timeLabel(row.time)}</span></span><span className="text-[#e8ac51]">Open →</span></button>)}
               {messages.map((row) => <button className="flex min-h-16 w-full items-center justify-between gap-3 py-3 text-left text-sm" key={row.id} onClick={() => setOpenId(row.id)} type="button"><span className="min-w-0"><span className="block break-words">{row.direction === "incoming" ? "From" : "To"} {row.otherParty}</span><span className="block text-xs text-[#a5c6bb]">{timeLabel(row.time)}</span></span><span className="text-[#e8ac51]">Open →</span></button>)}
               {!files.length && !calls.length && !messages.length ? <p className="py-6 text-sm text-[#a5c6bb]">No {app} on this {data.type}.</p> : null}
@@ -106,7 +106,7 @@ function Laptop({ roomCode, title, files, nodes, busy, onPinError }: { roomCode:
               <ul className="border-b border-[#2c4446] bg-[#0e2022] p-2 sm:border-b-0 sm:border-r" aria-label="Files">
                 {files.map((row) => (
                   <li key={row.id}>
-                    <button aria-pressed={row.id === openId} className="flex min-h-10 w-full items-center gap-2 px-2 text-left font-mono text-xs text-[#c8d8d2] hover:bg-[#1c3436] aria-pressed:bg-[#e8ac51]/15 aria-pressed:text-[#f1c987]" onClick={() => setOpenId(row.id)} type="button">
+                    <button aria-pressed={row.id === openId} className="flex min-h-10 w-full items-center gap-2 px-2 text-left font-mono text-xs text-[#c8d8d2] hover:bg-[#1c3436] aria-pressed:bg-[#e8ac51]/15 aria-pressed:text-[#f1c987]" onClick={() => { play("page"); setOpenId(row.id); }} type="button">
                       <span aria-hidden="true" className="h-4 w-3 shrink-0 border border-current [clip-path:polygon(0_0,70%_0,100%_25%,100%_100%,0_100%)]" />
                       <span className="min-w-0 break-words">{row.title}</span>
                     </button>

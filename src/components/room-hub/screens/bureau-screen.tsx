@@ -9,7 +9,8 @@ import { go, replaceTo } from "../../../lib/game-nav";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { currentGameMinute, formatGameMinute, formatDuration, partOfDay } from "../../../lib/game-time";
-import { getVolume, isMuted, play, setMuted, setVolume } from "../../../lib/sound";
+import { isMuted, play, setMuted } from "../../../lib/sound";
+import { VolumeSliders } from "../volume-sliders";
 import { GameIcon } from "../game-icon";
 import { ControlIcon } from "../control-icon";
 import { NotebookOverlay } from "../notebook-overlay";
@@ -119,7 +120,8 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   const gameTime = clock ? currentGameMinute(clock, now) : null;
 
   function openStation(nextStation: Station) {
-    play("door");
+    // Paper stations (case file, clueboard) turn a page; rooms and terminals open a door.
+    play(nextStation === "case" || nextStation === "clueboard" ? "page" : "door");
     const path = nextStation === "map" || nextStation === "place" || nextStation === "lab" || nextStation === "case"
       ? `/lobby/${roomCode}/${nextStation}`
       : `/lobby/${roomCode}/bureau/${nextStation}`;
@@ -342,7 +344,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
             <div className="mt-4 grid gap-2">
               <button autoFocus className="game-control-button flex min-h-11 items-center justify-center gap-2 text-sm uppercase text-[#f1c987]" onClick={() => { play("close"); setMenuOpen(false); }} type="button"><ControlIcon name="play" />Resume</button>
               <button className="game-control-button flex min-h-11 items-center justify-center gap-2 text-sm uppercase" onClick={() => { const next = !muted; setMuted(next); setMutedState(next); if (!next) play("ping"); }} type="button"><ControlIcon name="speaker" />Music &amp; effects · {muted ? "Off" : "On"}</button>
-              {!muted ? <label className="flex items-center gap-3 text-xs uppercase text-[#c8d8d2]">Volume<input aria-label="Volume" className="flex-1 accent-[#e8ac51]" defaultValue={Math.round(getVolume() * 100)} max={100} min={0} onChange={(event) => setVolume(Number(event.target.value) / 100)} onPointerUp={() => play("ping")} type="range" /></label> : null}
+              {!muted ? <VolumeSliders className="text-[#c8d8d2]" /> : null}
               <button className="game-control-button flex min-h-11 items-center justify-center gap-2 text-sm uppercase" onClick={() => { play("close"); setMenuOpen(false); go("/"); }} type="button"><ControlIcon name="back" />Main menu</button>
               <button className="min-h-11 border border-[#6f9f98]/60 text-sm uppercase" onClick={() => setPauseView("how")} type="button">How to play</button>
               <button className="min-h-11 border border-[#6f9f98]/60 text-sm uppercase" onClick={() => { resetTips(); setMenuOpen(false); }} type="button">Show tips again</button>

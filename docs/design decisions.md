@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-11 — Sound levels and channels
+
+- Music and effects have separate volume controls. Loudness order: hover (faint) < button press (soft knock) < actions (door, page, stamp, bag). The score is voiced above 220 Hz, with overtones on the bass, so it plays on laptop and phone speakers.
+- Paper interactions (notebook, case file, clueboard, archive, reports, files) use the page-turn sound; rooms and terminals use the door.
+
 ## 2026-10-11 — Sound is synthesized and every control answers
 
 - All sound stays synthesized in the browser (no downloaded files, no licensing, nothing to load), mixed at normal game loudness behind a limiter.

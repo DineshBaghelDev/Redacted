@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-10-11 — Real music, separate volumes, softer clicks, page turns
+
+- **Music you can hear:** the old score was soft sines at 110–330 Hz, below what laptop speakers reproduce, so only the rain came through. The new score (Am–F–Dm–E) has a slow triangle pad, a sawtooth bass whose overtones carry on small speakers, and a sparse piano-like melody at 440–880 Hz. The rain sits under it.
+- **Separate volumes:** music (score and rain) and effects now have their own buses and their own sliders in Settings and the pause menu (default 80% each; the old single volume setting is no longer read).
+- **Softer button press:** the generic click is a short wooden knock (sine, no noise) instead of the square snap and hiss that sounded like a shot.
+- **Page turns:** a rising paper rustle for the notebook and its tabs, the case file and clueboard, the archive, Case history and How to play, laptop files, and the report steps.
+- **Measured in Chrome at default volume:** music and rain average -22 dBFS RMS (peaks -5); hover peaks at -20 dBFS, a button click at -7.5, and action cues just under full scale behind the limiter. 174 tests and lint pass.
+
 ## 2026-10-11 — Audible sound and a fuller cue set
 
 - **Why nothing was heard:** the synthesized mix was about 30 dB below normal game levels (score notes at ~1% amplitude, rain ~2%, clicks ~3%), so it was effectively silent on laptop speakers. Not a mute or unlock bug.

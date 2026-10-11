@@ -13,6 +13,7 @@ import { NotebookOverlay } from "../notebook-overlay";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { ControlIcon } from "../control-icon";
 import { go } from "../../../lib/game-nav";
+import { play } from "../../../lib/sound";
 
 const MAX_EVIDENCE = 12;
 const fields = [
@@ -96,7 +97,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
 
   function review(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (canReview) setReviewing(true);
+    if (canReview) { play("page"); setReviewing(true); }
   }
 
   function submit() {
@@ -228,7 +229,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   <ul className="mt-5 list-disc space-y-2 border-t border-[#6d5138]/40 pt-4 pl-5 text-sm leading-relaxed">
                     {brief.initialFacts.map((fact) => <li key={fact}>{fact}</li>)}
                   </ul>
-                  <button className="game-control-button mt-7 min-h-12 w-full px-5 uppercase text-[#f1c987] disabled:opacity-50 sm:w-auto" disabled={!people?.length} onClick={() => setClosing(true)} type="button">
+                  <button className="game-control-button mt-7 min-h-12 w-full px-5 uppercase text-[#f1c987] disabled:opacity-50 sm:w-auto" disabled={!people?.length} onClick={() => { play("page"); setClosing(true); }} type="button">
                     <ControlIcon name="play" />
                     Close this case
                   </button>
