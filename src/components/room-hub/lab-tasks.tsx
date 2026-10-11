@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { ScrubPad } from "./gestures";
+import { play } from "../../lib/sound";
 
 export type LabTest = "fingerprint" | "footprint" | "dna" | "blood" | "toxicology" | "fiber" | "ballistics" | "autopsy";
 
@@ -45,6 +46,7 @@ export function LabTask({ test, seed, disabled, onDone, children }: { test: LabT
   const finish = () => {
     if (finished.current || disabled) return;
     finished.current = true;
+    play("success");
     onDone();
   };
   const game: Game = { seed, onDone: finish, say: setNote };
@@ -93,6 +95,7 @@ function UvLamp({ seed, onDone, say }: Game) {
   function mark(index: number) {
     if (marked.includes(index)) return;
     const next = [...marked, index];
+    play("lamp");
     setMarked(next);
     say(`${next.length} of ${spots.length} marked`);
     if (next.length === spots.length) onDone();
@@ -133,7 +136,8 @@ function Swab({ seed, onDone, say }: Game) {
     const point = local(event);
     const now = performance.now();
     const inside = Math.hypot(point.x - centre.x * point.width, point.y - centre.y * point.height) < 34;
-    if (!inside) { if (held > 0) say("Slipped off. Start again."); setHeld(0); last.current = now; return; }
+    if (!inside) { if (held > 0) { play("wrong"); say("Slipped off. Start again."); } setHeld(0); last.current = now; return; }
+    play("swab");
     const next = held + (now - last.current);
     last.current = now;
     setHeld(next);
@@ -158,6 +162,7 @@ function Pipette({ seed, onDone, say }: Game) {
   const frame = useRef<number | null>(null);
   const levelRef = useRef(0);
   function start() {
+    play("pour");
     const begin = performance.now();
     const tick = (now: number) => {
       levelRef.current = Math.min(1.05, (now - begin) / 1800);
@@ -173,6 +178,7 @@ function Pipette({ seed, onDone, say }: Game) {
     frame.current = null;
     const value = levelRef.current;
     if (value >= band && value <= band + 0.15) { onDone(); return; }
+    play("wrong");
     say(value > band + 0.15 ? "Overfilled and spilled. Try again." : "Not enough sample. Try again.");
     levelRef.current = 0;
     setLevel(0);
@@ -205,10 +211,11 @@ function Tape({ onDone, say }: Game) {
         if (!pulling.current) return;
         const point = local(event);
         const next = Math.max(0, Math.min(1, point.x / point.width));
+        if (next > pull) play("tape");
         setPull(next);
         if (next >= 0.95) { pulling.current = false; onDone(); }
       }}
-      onPointerUp={() => { if (pulling.current && pull < 0.95) say("The tape snapped back. Pull it all the way."); pulling.current = false; setPull(0); }}
+      onPointerUp={() => { if (pulling.current && pull < 0.95) { play("wrong"); say("The tape snapped back. Pull it all the way."); } pulling.current = false; setPull(0); }}
     >
       <span aria-hidden="true" className="absolute left-0 top-1/2 h-16 w-[12%] -translate-y-1/2 border-2 border-[#bcd3ff] bg-[#bcd3ff]/30" />
       <span aria-hidden="true" className="absolute left-0 top-1/2 h-16 -translate-y-1/2 bg-[#bcd3ff]/25" style={{ width: `${Math.max(12, pull * 100)}%` }} />
@@ -236,6 +243,7 @@ function Stir({ onDone, say }: Game) {
         if (delta < -Math.PI) delta += Math.PI * 2;
         angle.current = next;
         total.current += Math.abs(delta);
+        if (Math.abs(delta) > 0.05) play("stir");
         setTurned(total.current);
         if (total.current >= NEEDED) { angle.current = null; onDone(); }
       }}
@@ -269,8 +277,9 @@ function Scope({ seed, onDone, say }: Game) {
         if (!drag.current) return;
         const point = local(event);
         setOffset(Math.max(-40, Math.min(40, drag.current.offset + ((point.x - drag.current.x) / point.width) * 100)));
+        play("scope");
       }}
-      onPointerUp={() => { drag.current = null; if (Math.abs(offset) < 2) { setOffset(0); onDone(); } else say("The grooves don't line up yet."); }}
+      onPointerUp={() => { drag.current = null; if (Math.abs(offset) < 2) { setOffset(0); onDone(); } else { play("wrong"); say("The grooves don't line up yet."); } }}
     >
       {strip(0, "Reference bullet")}
       {strip(offset, "This sample · drag me")}
@@ -300,7 +309,8 @@ function Autopsy({ seed, onDone, say }: Game) {
   const [next, setNext] = useState(0);
   const dictation = order.map((index, step) => <span className={step < next ? "text-[#e5a18e]/45 line-through" : step === next ? "text-[#f1c987]" : ""} key={index}>{step ? ", then " : ""}{REGIONS[index].name}</span>);
   function examine(index: number) {
-    if (index !== order[next]) { say(`Not there. The pathologist asked for ${REGIONS[order[next]].name}.`); return; }
+    if (index !== order[next]) { play("wrong"); say(`Not there. The pathologist asked for ${REGIONS[order[next]].name}.`); return; }
+    play("tap");
     say("");
     if (next === order.length - 1) { onDone(); return; }
     setNext(next + 1);

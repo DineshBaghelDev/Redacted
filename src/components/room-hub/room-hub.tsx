@@ -13,7 +13,7 @@ import { SettingsPanel } from "./screens/settings-panel";
 import { CaseBriefScreen } from "./screens/status-screens";
 import { BureauScreen, preloadStations } from "./screens/bureau-screen";
 import { GameLogo } from "./game-logo";
-import { startAmbience, stopAmbience } from "../../lib/sound";
+import { installUiSounds, startAmbience, stopAmbience } from "../../lib/sound";
 import { applyTextSize } from "../../lib/text-size";
 import { CaseHistoryScreen } from "./screens/case-history";
 import { HowToPlay } from "./how-to-play";
@@ -85,7 +85,8 @@ export function RoomHub() {
     begin();
     window.addEventListener("pointerdown", begin);
     window.addEventListener("keydown", begin);
-    return () => { window.removeEventListener("pointerdown", begin); window.removeEventListener("keydown", begin); stopAmbience(); };
+    const removeUiSounds = installUiSounds();
+    return () => { window.removeEventListener("pointerdown", begin); window.removeEventListener("keydown", begin); removeUiSounds(); stopAmbience(); };
   }, []);
 
   if (!isMounted) {

@@ -10,7 +10,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { partOfDay } from "../../../lib/game-time";
-import { play } from "../../../lib/sound";
+import { play, type Cue } from "../../../lib/sound";
 import { ControlIcon } from "../control-icon";
 import { CctvScreen } from "./cctv-screen";
 import { PinButton } from "../pin-button";
@@ -91,11 +91,12 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
     if (currentRoomId) play("door");
   }, [currentRoomId]);
 
-  function run(action: Promise<unknown>, cue: "click" | "search" = "click") {
+  function run(action: Promise<unknown>, cue: Cue = "click", success?: Cue) {
     setWorking(true);
     setError("");
     play(cue);
-    void action.catch((caught: unknown) => {
+    void action.then(() => { if (success) play(success); }).catch((caught: unknown) => {
+      play("wrong");
       setError(errorText(caught, "That action could not be completed."));
     }).finally(() => setWorking(false));
   }
@@ -145,7 +146,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
                   foundBySpot={foundBySpot}
                   onCamera={() => setCameraOpen(true)}
                   onSearch={(spot) => run(searchSpot({ roomCode, spot }), "search")}
-                  onWalk={(roomId) => run(moveToRoom({ roomCode, roomId: roomId as Id<"rooms"> }))}
+                  onWalk={(roomId) => run(moveToRoom({ roomCode, roomId: roomId as Id<"rooms"> }), "step")}
                   place={place}
                   room={currentRoom}
                   searchingKey={place.action?.kind === "search" ? place.action.slot ?? null : null}
@@ -161,7 +162,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
               {error ? <p className="mt-3 border border-red-300/60 bg-red-950/70 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
             </div>
             <aside aria-label="Building map" className="lg:pt-11">
-              <BuildingMap busy={busy} floor={shownFloor} floors={floors} onFloor={setFloor} onWalk={(roomId) => run(moveToRoom({ roomCode, roomId: roomId as Id<"rooms"> }))} place={place} />
+              <BuildingMap busy={busy} floor={shownFloor} floors={floors} onFloor={setFloor} onWalk={(roomId) => run(moveToRoom({ roomCode, roomId: roomId as Id<"rooms"> }), "step")} place={place} />
             </aside>
           </div>
 
@@ -174,7 +175,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
                   return (
                     <li className="border border-[#6f9f98]/30 bg-[#071619]/80 p-3" id={`spot-${spot.key}`} key={spot.key}>
                       <p className="flex items-center gap-2 text-sm uppercase"><InvestigationIcon className="size-7" name="search" />{spot.name}</p>
-                      <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => { play("open"); setActiveDeviceId(item.id); }} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinControl={<PinButton disabled={busy} nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={item.id} roomCode={roomCode} type="item" />} />)}</div>
+                      <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }), "bag")} onOpenDevice={() => { play("open"); setActiveDeviceId(item.id); }} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }), "click", "unlock")} pinControl={<PinButton disabled={busy} nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={item.id} roomCode={roomCode} type="item" />} />)}</div>
                     </li>
                   );
                 })}

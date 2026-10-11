@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-11 — Sound is synthesized and every control answers
+
+- All sound stays synthesized in the browser (no downloaded files, no licensing, nothing to load), mixed at normal game loudness behind a limiter.
+- Every control gives feedback: a soft hover tick for mouse users and a click on press, unless a specific cue (door, page, stamp, bag, unlock) already answered. Bench tools each have their own sound; failures buzz.
+
 ## 2026-10-11 — The report is written, not chosen
 
 - The final report has no option tray: the detective writes who, with what, why and how, and cites proof from the notebook. A list of every person and object turned the ending into multiple choice. Scoring is unchanged: a typed name must match someone the team has uncovered, and a weapon matching a bagged object is matched exactly. This replaces "the final report reads as one sentence with blanks" (drop or tap cards).

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { play } from "../../lib/sound";
 
 /** Press and hold to commit (search a spot, send a sample). Releasing early cancels. Enter/Space also work. */
 export function HoldButton({ label, ms = 700, disabled, onDone, className = "", children }: { label: string; ms?: number; disabled?: boolean; onDone: () => void; className?: string; children?: ReactNode }) {
@@ -81,6 +82,7 @@ export function ScrubPad({ tool, needed = 900, disabled, onDone, children, class
     if (last.current && context) {
       const distance = Math.hypot(here.x - last.current.x, here.y - last.current.y);
       travelled.current += distance;
+      if (distance > 2) play("brush");
       for (let step = 0; step < distance; step += 4) {
         const t = step / Math.max(distance, 1);
         context.beginPath();

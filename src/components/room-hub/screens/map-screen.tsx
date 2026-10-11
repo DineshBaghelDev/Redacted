@@ -115,6 +115,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
   const travelRemaining = city.activeTravel ? Math.max(0, city.activeTravel.completeGameTime - gameTime) : 0;
 
   function travelToSelected() {
+    play("car");
     setTraveling(true);
     setError("");
     void startTravel({ roomCode, destinationId: selected.id }).catch((caught: unknown) => {

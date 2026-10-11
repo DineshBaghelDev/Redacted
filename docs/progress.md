@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-10-11 — Audible sound and a fuller cue set
+
+- **Why nothing was heard:** the synthesized mix was about 30 dB below normal game levels (score notes at ~1% amplitude, rain ~2%, clicks ~3%), so it was effectively silent on laptop speakers. Not a mute or unlock bug.
+- **Mix:** score, rain and effects raised to game levels behind a limiter (a compressor on the master); default volume 80%. The score now skips ahead instead of firing a backlog after the tab was suspended.
+- **New cues (all synthesized, no audio files):** hover tick (mouse only) and a generic click on every control, installed once by the shell; the click stays silent when a specific cue already played for that press. Notebook page turn, footsteps when walking, car on travel, bagging, unlock (and an error buzz on a wrong code or failed action), success chime when a lab task finishes, and one sound per bench tool: brush swish, UV hum, swab dab, pipette bubbles, tape rip, plaster scrape, scope ratchet, autopsy tap. Wrong moves in lab tasks buzz. Continuous gestures are rate-limited so they read as texture.
+- **Verified in Chrome:** the audio context is running after the first gesture; the score schedules notes (40 in two seconds); hover and button clicks start their sounds. 174 tests and lint pass.
+
 ## 2026-10-11 — The report is written, not chosen
 
 - The case-close form no longer lays out every known person, bagged object and pinned card. The killer and the weapon are typed. A name suggestion appears only after part of an already-known name is typed, and an unknown name says "No one by that name in your files". The typed name is matched to the person for exact scoring; a weapon matching a bagged object is scored exactly, otherwise it is judged on meaning. Proof is cited through the notebook picker ("Cite evidence from the notebook") and pinned automatically. Opening the form no longer requires a pin first.
