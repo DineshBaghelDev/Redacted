@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-11 — One way to confront
+
+- Fixed: confronting with evidence picked from the notebook failed with a server validation error (an extra `label` field was sent).
+- Interviews now have one path to catch a lie: **Show evidence** → pick it in the notebook → **Confront**. Removed the clickable reply sentences (Press / Show evidence per line) and dropping evidence on the portrait. While picking, the notebook shows only evidence, your notes as plain text, and "Show this". The table line reads "Showing · … Press Confront." and the box invites an optional remark.
+- Checked in Chrome on ZYZTSR: the debt record that caused the error now confronts cleanly ("They don't budge", since it disproves nothing). 174 tests and lint pass.
+
 ## 2026-10-11 — Show evidence from the notebook
 
 - "Show evidence" in an interview opens the shared notebook in a picking mode instead of the small tray: evidence only, the same groups and notes, search focused, items already on the clueboard marked, and a "Show this" button on each entry. Picking puts it on the table; if a reply line was chosen first, it confronts straight away. Dragging evidence onto the portrait still works.

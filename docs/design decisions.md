@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-11 — One way to confront
+
+- Interviews keep free typing and exactly one way to present proof: Show evidence → pick → Confront. Line-by-line pressing and portrait drops were removed (player feedback: too many overlapping ways, confusing). This replaces the Ace Attorney-style "press a line" layer from the 2026-10-11 "Do it, don't click it" entry.
+
 ## 2026-10-11 — Pick proof from the notebook
 
 - Presenting evidence uses the notebook itself, so there is one place to find what the team knows, with the same search, groups and notes. The separate evidence tray is removed.
