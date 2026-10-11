@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-11 — Pick proof from the notebook
+
+- Presenting evidence uses the notebook itself, so there is one place to find what the team knows, with the same search, groups and notes. The separate evidence tray is removed.
+
 ## 2026-10-11 — Autopsy and crowd
 
 - The autopsy is a dictation: find the named regions in order, with left and right from the body's point of view. It stays a stand-in for doing the work and never shows findings; the stored report is the result.

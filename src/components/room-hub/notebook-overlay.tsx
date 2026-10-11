@@ -5,6 +5,7 @@ import { FirstTimeTip } from "./first-time-tip";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
 import { useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { api } from "../../../convex/_generated/api";
 import { formatGameMinute } from "../../lib/game-time";
 import { play } from "../../lib/sound";
@@ -24,8 +25,13 @@ const groups = [
   ["public_record", "Public records"],
 ] as const;
 
-/** The shared notebook: everything found so far, in one place. Pin what matters; the board is for your theory. */
-export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClose: () => void }) {
+export type NotebookPick = { type: (typeof groups)[number][0]; referenceId: string; label: string };
+
+/**
+ * The shared notebook: everything found so far, in one place. Pin what matters; the board is for your theory.
+ * With `onPick` it opens to choose evidence to show someone: evidence only, one "Show this" per entry.
+ */
+export function NotebookOverlay({ roomCode, onClose, onPick, pickFor }: { roomCode: string; onClose: () => void; onPick?: (entry: NotebookPick) => void; pickFor?: string }) {
   const entries = useQuery(api.notebook.get, { roomCode });
   const people = useQuery(api.npcs.list, { roomCode });
   const nodes = useQuery(api.clueBoard.getNodes, { roomCode });
@@ -35,6 +41,8 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
   const [filter, setFilter] = useState("");
   const [partnerText, setPartnerText] = useState("");
   const [tab, setTab] = useState<"people" | "evidence">("evidence");
+  const picking = Boolean(onPick);
+  const onBoard = (referenceId: string) => nodes?.some((node) => node.referenceId === referenceId) ?? false;
   const [message, setMessage] = useState("");
   // While dragging an entry out, fade the notebook so the screen behind can take the drop.
   const [dragging, setDragging] = useState(false);
@@ -44,29 +52,30 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
     void ping({ roomCode, text }).then(() => setMessage("Sent to your partner."));
   }
 
-  return (
+  // Rendered on the page body so it sits above the game's top bar wherever it is opened from.
+  return createPortal(
     <div className={`fixed inset-0 z-[60] flex justify-end bg-black/60 transition-opacity animate-in fade-in ${dragging ? "pointer-events-none opacity-20" : ""}`} onClick={onClose} role="presentation">
       <aside aria-label="Case notebook" className="game-dossier flex h-full w-full max-w-xl flex-col px-5 pb-10 pt-12 animate-in slide-in-from-right sm:px-8" onClick={(event) => event.stopPropagation()} role="dialog">
         <header className="flex items-center justify-between gap-3 border-b border-[#8b7355] pb-3">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-red-800">Shared notebook</p>
-            <h2 className="mt-1 text-2xl uppercase">What we know</h2>
+            <h2 className="mt-1 text-2xl uppercase">{picking ? `Show ${pickFor ?? "them"}…` : "What we know"}</h2>
           </div>
           <button aria-label="Close notebook" className="game-icon-button" onClick={onClose} title="Close notebook · N" type="button"><ControlIcon name="close" /></button>
         </header>
-        <div className="mt-3 grid grid-cols-2 gap-2" role="tablist">
+        {picking ? null : <div className="mt-3 grid grid-cols-2 gap-2" role="tablist">
           {(["evidence", "people"] as const).map((item) => (
             <button aria-selected={tab === item} className="min-h-10 border-b-2 border-transparent text-sm uppercase aria-selected:border-red-900 aria-selected:text-red-900" key={item} onClick={() => setTab(item)} role="tab" type="button">
               {item === "evidence" ? `Evidence · ${entries?.length ?? 0}` : `People · ${people?.length ?? 0}`}
             </button>
           ))}
-        </div>
+        </div>}
         <label className="sr-only" htmlFor="notebook-filter">Find in notebook</label>
-        <input className="mt-3 h-10 w-full border border-[#8b7355] bg-[#efe3c4] px-3 text-sm text-[#211d17] outline-none placeholder:text-[#8b7355] focus:border-red-900" id="notebook-filter" onChange={(event) => setFilter(event.target.value)} placeholder="Find a name, place, or word..." type="search" value={filter} />
+        <input autoFocus={picking} className="mt-3 h-10 w-full border border-[#8b7355] bg-[#efe3c4] px-3 text-sm text-[#211d17] outline-none placeholder:text-[#8b7355] focus:border-red-900" id="notebook-filter" onChange={(event) => setFilter(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); onClose(); } }} placeholder="Find a name, place, or word..." type="search" value={filter} />
         {message ? <p className="mt-2 text-sm text-red-900" role="status">{message}</p> : null}
-        <FirstTimeTip id="notebook" title="Shared notebook">Discoveries appear here. Drag one to the clueboard, a person, the lab bench, or your report.</FirstTimeTip>
+        {picking ? null : <FirstTimeTip id="notebook" title="Shared notebook">Discoveries appear here. Drag one to the clueboard, a person, the lab bench, or your report.</FirstTimeTip>}
         <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
-          {tab === "people" ? (
+          {tab === "people" && !picking ? (
             people === undefined ? <p className="uppercase">Opening files...</p> : (
               <ul className="space-y-3">
                 {(people ?? []).filter((person) => matches(filter, person.name, person.occupation ?? "", person.publicDescription)).map((person) => (
@@ -85,6 +94,8 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
             )
           ) : entries === undefined ? <p className="uppercase">Opening notebook...</p> : !entries?.length ? (
             <p className="text-sm leading-relaxed">Nothing written down yet. Search places, read devices, question people, and review records. Everything you uncover lands here for both of you.</p>
+          ) : !entries.some((entry) => matches(filter, entry.title, entry.body, entry.note ?? "")) ? (
+            <p className="text-sm leading-relaxed">Nothing in the notebook matches “{filter.trim()}”.</p>
           ) : (
             groups.map(([type, label]) => {
               const rows = entries.filter((entry) => entry.type === type && matches(filter, entry.title, entry.body, entry.note ?? ""));
@@ -95,11 +106,11 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
                   <ul>
                     {rows.map((entry) => (
                       <li className="group cursor-grab border-b border-[#8b7355]/40 py-3" draggable key={`${entry.type}:${entry.referenceId}`} onDragEnd={() => setDragging(false)} onDragStart={(event) => { startCardDrag(event, { kind: entry.type, referenceId: entry.referenceId, label: entry.title }); setDragging(true); }}>
-                        <p className="text-sm font-semibold">{entry.title}</p>
+                        <p className="text-sm font-semibold">{entry.title}{picking && onBoard(entry.referenceId) ? <span className="ml-2 text-xs font-normal uppercase text-red-800">On clueboard</span> : null}</p>
                         {entry.time !== undefined ? <p className="font-mono text-xs text-[#5d4d3d]">{formatGameMinute(entry.time)}</p> : null}
                         <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{entry.body}</p>
                         <EntryNote note={entry.note} onSave={(text) => { void setNote({ roomCode, referenceId: entry.referenceId, text }).catch((caught: unknown) => setMessage(errorText(caught, "Could not save that note."))); }} />
-                        <EntryActions onShare={() => share(`Look at: ${entry.title}`)} pinControl={<PinButton nodes={nodes} onChange={(next) => setMessage(next ? "Pinned to the clueboard." : "Removed from the clueboard.")} onError={(caught) => setMessage(errorText(caught, "Could not update this pin."))} referenceId={entry.referenceId} roomCode={roomCode} type={entry.type} />} />
+                        {onPick ? <button className="game-control-button mt-2 min-h-10 px-4 text-xs uppercase text-[#f1c987]" onClick={() => { play("click"); onPick({ type: entry.type, referenceId: entry.referenceId, label: entry.title }); }} type="button">Show this</button> : <EntryActions onShare={() => share(`Look at: ${entry.title}`)} pinControl={<PinButton nodes={nodes} onChange={(next) => setMessage(next ? "Pinned to the clueboard." : "Removed from the clueboard.")} onError={(caught) => setMessage(errorText(caught, "Could not update this pin."))} referenceId={entry.referenceId} roomCode={roomCode} type={entry.type} />} />}
                       </li>
                     ))}
                   </ul>
@@ -108,7 +119,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
             })
           )}
         </div>
-        {coop?.partners.length ? (
+        {coop?.partners.length && !picking ? (
           <form className="mt-3 flex gap-2 border-t border-[#8b7355] pt-3" onSubmit={(event) => { event.preventDefault(); if (partnerText.trim()) { share(partnerText); setPartnerText(""); } }}>
             <label className="sr-only" htmlFor="partner-message">Message your partner</label>
             <input className="h-10 min-w-0 flex-1 border border-[#8b7355] bg-[#efe3c4] px-3 text-sm text-[#211d17] outline-none placeholder:text-[#8b7355] focus:border-red-900" id="partner-message" maxLength={140} onChange={(event) => setPartnerText(event.target.value)} placeholder={`Message ${coop.partners[0].name}...`} value={partnerText} />
@@ -116,7 +127,8 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
           </form>
         ) : null}
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -131,10 +143,13 @@ function EntryActions({ pinControl, onShare }: { pinControl: ReactNode; onShare:
   );
 }
 
+/** Lower case with every kind of space (generated text uses narrow and non-breaking ones) as one plain space. */
+const plain = (text: string) => text.toLowerCase().replace(/\s+/g, " ");
+
 /** Case-insensitive match of the notebook search against any of an entry's texts. */
 function matches(filter: string, ...texts: string[]) {
-  const term = filter.trim().toLowerCase();
-  return !term || texts.some((text) => text.toLowerCase().includes(term));
+  const term = plain(filter.trim());
+  return !term || texts.some((text) => plain(text).includes(term));
 }
 
 /** The team's own one-line note on an entry: reasoning, never evidence. */

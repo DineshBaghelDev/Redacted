@@ -17,7 +17,8 @@ import { ControlIcon } from "../control-icon";
 import { PinButton } from "../pin-button";
 import { DeviceViewer } from "./device-viewer";
 import { TypeAhead } from "../type-ahead";
-import { cardDropTarget, startCardDrag } from "../../../lib/evidence-drag";
+import { NotebookOverlay } from "../notebook-overlay";
+import { cardDropTarget } from "../../../lib/evidence-drag";
 
 type Person = NonNullable<FunctionReturnType<typeof api.npcs.list>>[number];
 type Proof = FunctionReturnType<typeof api.npcConversations.listAvailableProof>[number];
@@ -137,8 +138,6 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
     ...people.filter((other) => other.id !== person.id).map((other) => other.name),
     ...(proof ?? []).filter((entry) => entry.type === "item").map((entry) => entry.label),
   ];
-  const onBoard = (entry: Proof) => boardNodes?.some((node) => node.type === entry.type && node.referenceId === entry.referenceId) ?? false;
-  const orderedProof = [...(proof ?? [])].sort((a, b) => Number(onBoard(b)) - Number(onBoard(a)));
 
   /** Put evidence on the table and demand an explanation, optionally about one line they said. */
   function confront(entry: { type: Proof["type"]; referenceId: string }, line?: string) {
@@ -150,6 +149,8 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
 
   return (
     <div className="relative grid h-full min-h-0 grid-rows-[max-content_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:grid-rows-1 lg:gap-5">
+      {/* Showing evidence opens the notebook to pick from: the same groups, notes, and search the team already uses. */}
+      {trayOpen ? <NotebookOverlay onClose={() => setTrayOpen(false)} onPick={(entry) => { setTrayOpen(false); if (quote) confront(entry, quote); else setShown(entry); }} pickFor={person.name.split(" ")[0]} roomCode={roomCode} /> : null}
       {stamp ? <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"><p className={`contradiction-stamp px-6 py-3 text-3xl sm:text-5xl ${stamp === "missed" ? "contradiction-stamp--missed" : ""}`}>{stamp === "caught" ? "Contradiction" : "They don't budge"}</p></div> : null}
       <aside className="game-dossier min-h-0 overflow-y-auto p-3 text-[#211d17] lg:p-5">
         <div
@@ -213,11 +214,6 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
               <button className="game-control-button min-h-11 px-4 text-xs uppercase text-[#f1c987] disabled:opacity-50" disabled={!canAsk || (!question.trim() && !shown)} type="submit"><ControlIcon name="play" />{shown ? "Confront · 3 min" : "Ask · 3 min"}</button>
               {!interview.canTalkHere ? <p className="text-xs text-red-200">Return to the bureau to continue.</p> : null}
             </div>
-            {trayOpen ? (
-              <div aria-label="Your evidence" className="absolute inset-x-2 bottom-full z-20 mb-1 max-h-[min(12rem,40vh)] overflow-y-auto border border-[#6f9f98]/60 bg-[#09191c] p-2 shadow-[0_-8px_24px_#0009]">
-                {orderedProof.length ? <div className="grid gap-1 sm:grid-cols-2">{orderedProof.map((entry) => <button aria-pressed={shown?.referenceId === entry.referenceId} className="min-h-10 cursor-grab border border-[#45635d] px-2 py-1 text-left text-sm leading-snug aria-pressed:border-[#e8ac51] aria-pressed:text-[#f1c987]" draggable key={`${entry.type}:${entry.referenceId}`} onClick={() => { play("click"); if (quote) confront(entry, quote); else { setShown(entry); setTrayOpen(false); } }} onDragStart={(event) => startCardDrag(event, { kind: entry.type, referenceId: entry.referenceId, label: entry.label })} type="button">{onBoard(entry) ? <span className="mb-1 block text-xs uppercase text-[#e8ac51]">On clueboard</span> : null}<span className="line-clamp-2 break-words">{entry.label}</span></button>)}</div> : <p className="text-sm text-[#c8d8d2]/70">You have nothing to show yet.</p>}
-              </div>
-            ) : null}
           </form>
         ) : null}
         {error ? <p className="mx-3 mb-3 border border-red-400 bg-red-950 p-3 text-sm text-red-50" role="alert">{error}</p> : null}

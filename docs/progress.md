@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-11 — Show evidence from the notebook
+
+- "Show evidence" in an interview opens the shared notebook in a picking mode instead of the small tray: evidence only, the same groups and notes, search focused, items already on the clueboard marked, and a "Show this" button on each entry. Picking puts it on the table; if a reply line was chosen first, it confronts straight away. Dragging evidence onto the portrait still works.
+- The notebook now renders above the game's top bar wherever it opens from. Search treats every kind of space alike (generated text used narrow spaces, so "7 pm" found nothing) and says when nothing matches.
+- Checked in Chrome on room ZYZTSR: "7 pm" finds both phones' copies of the meeting text, "Show this" puts it on the table, and the button changes to "Confront · 3 min". 174 tests and lint pass.
+
 ## 2026-10-11 — Autopsy task, crowd safety, phone pass
 
 - **Autopsy:** the pathologist now dictates four body regions in a seeded order ("the neck, then the body's left arm…"). You examine each on an unlabelled body; left and right are the body's own. A wrong region gets a correction, not a reset. The task shows no findings.
