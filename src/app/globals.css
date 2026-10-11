@@ -161,6 +161,16 @@
     background: #071014 url('/assets/interview-room.png') center / cover no-repeat;
   }
 
+  .interview-transcript {
+    border: 18px solid transparent;
+    border-image: url('/assets/interview-transcript.png') 120 fill / 18px / 0 stretch;
+    scrollbar-color: #8b7355 #e9dcc0;
+  }
+  .interview-foreground {
+    background: url('/assets/interview-foreground.png') center bottom / 100% auto no-repeat;
+    image-rendering: pixelated;
+  }
+
   .game-records-scene {
     background: #071014 url('/assets/records-room.png') center / cover no-repeat;
   }
@@ -576,20 +586,30 @@
 
   /* Rubber stamp that lands when proof breaks a lie. */
   .contradiction-stamp {
-    border: 4px double #b91c1c;
+    border: 0;
     color: #b91c1c;
     font-family: var(--font-pixelify-sans), sans-serif;
     letter-spacing: 0.15em;
     text-transform: uppercase;
     transform: rotate(-8deg);
     animation: stamp-in 380ms cubic-bezier(.2, 1.6, .4, 1) both;
-    background: rgb(244 234 210 / 92%);
+    background: rgb(244 234 210 / 92%) url('/assets/stamps/contradiction.png') center / 100% 100% no-repeat;
   }
   /* Proof that proves nothing: a grey stamp, so the team knows it didn't land. */
   .contradiction-stamp--missed {
-    border-color: #4b5563;
     color: #374151;
     transform: rotate(5deg);
+    background-image: url('/assets/stamps/missed.png');
+  }
+  .statement-stamp {
+    display: inline-block;
+    background: url('/assets/stamps/statement.png') center / 100% 100% no-repeat;
+    padding: 0.45rem 0.8rem;
+    color: #185357;
+    font-family: var(--font-pixelify-sans), sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
   @keyframes stamp-in {
     from { transform: rotate(-8deg) scale(2.4); opacity: 0; }

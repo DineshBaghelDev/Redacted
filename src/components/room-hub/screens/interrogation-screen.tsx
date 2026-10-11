@@ -146,7 +146,10 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
       {stamp ? <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"><p className={`contradiction-stamp px-6 py-3 text-3xl sm:text-5xl ${stamp === "missed" ? "contradiction-stamp--missed" : ""}`}>{stamp === "caught" ? "Contradiction" : "They don't budge"}</p></div> : null}
       <aside className="game-dossier min-h-0 overflow-y-auto p-3 text-[#211d17] lg:p-5">
         <div className="flex items-center gap-3 lg:flex-col lg:items-start">
-          <CharacterPortrait age={person.age} className={`w-16 transition sm:w-20 lg:w-full lg:max-w-[14rem] ${interview && interview.exposedLies > 0 ? "saturate-150 sepia-[.2]" : ""}`} description={person.publicDescription} gender={person.gender} id={person.id} />
+          <div className="relative w-16 shrink-0 sm:w-20 lg:w-full lg:max-w-[14rem]">
+            <CharacterPortrait age={person.age} className="w-full transition" description={person.publicDescription} expression={stamp === "caught" ? "caught" : stamp === "missed" ? "angry" : interview && interview.exposedLies > 0 ? "nervous" : "neutral"} gender={person.gender} id={person.id} />
+            <span aria-hidden="true" className="interview-foreground pointer-events-none absolute inset-x-0 bottom-0 hidden h-[36%] lg:block" />
+          </div>
           <div className="min-w-0">
             <h3 className="break-words text-lg uppercase leading-tight">{person.name}</h3>
             <p className="mt-1 text-xs italic text-[#5d4d3d]">
@@ -165,6 +168,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
         {present && interview?.statements.length ? (
           <details className="mt-4 border-t border-[#8b7355] pt-3" open>
             <summary className="cursor-pointer text-xs uppercase tracking-widest text-red-800">Their statement</summary>
+            <span className="statement-stamp mt-2">Statement taken</span>
             {interview.statements.map((statement) => (
               <div className="mt-3 border-l-2 border-[#8b7355] pl-3" key={statement.id}>
                 <p className="text-sm font-semibold">{statement.title}</p>
@@ -220,20 +224,20 @@ function ConversationMessages({ roomCode, threadId, name }: { roomCode: string; 
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [results.length]);
   return (
-    <div aria-label="Shared interview conversation" className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-4 sm:px-5" ref={scrollRef}>
+    <div aria-label="Shared interview conversation" className="interview-transcript min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-6 text-[#31271f] sm:px-8" ref={scrollRef}>
       {status === "CanLoadMore" ? <button className="min-h-10 border border-[#8b7355] px-3 text-xs uppercase" onClick={() => loadMore(30)} type="button">Earlier conversation</button> : null}
       {results.length ? results.map((message) => {
         const asked = message.role === "user" ? detectiveLine(message.text) : null;
         return (
-        <div className={`border-b border-[#6f9f98]/20 py-3 text-sm leading-relaxed ${message.role === "user" ? "pl-0 text-[#f1c987]" : "pl-4"}`} key={message.key}>
-          <p className="mb-1 text-xs uppercase tracking-widest text-[#e8ac51]/80">{asked ? `${asked.speaker} asks` : name}{message.status === "streaming" ? " · speaking" : ""}</p>
+        <div className={`border-b border-[#8b7355]/30 py-3 text-sm leading-relaxed ${message.role === "user" ? "pl-0 text-[#6e3529]" : "pl-4"}`} key={message.key}>
+          <p className="mb-1 text-xs uppercase tracking-widest text-[#8a6043]">{asked ? `${asked.speaker} asks` : name}{message.status === "streaming" ? " · speaking" : ""}</p>
           {asked ? <>
             <p className="whitespace-pre-wrap">{asked.question}</p>
-            {asked.shown ? <p className="mt-2 border-l-2 border-[#e8ac51] pl-2 text-xs text-[#c8d8d2]"><span className="uppercase text-[#e8ac51]">Shows · </span>{asked.shown}</p> : null}
+            {asked.shown ? <p className="mt-2 border-l-2 border-[#9a573e] pl-2 text-xs text-[#5d4d3d]"><span className="uppercase text-[#8b1d1d]">Shows · </span>{asked.shown}</p> : null}
           </> : <p className="whitespace-pre-wrap">{message.text}</p>}
         </div>
         );
-      }) : <p className="text-sm italic text-[#c8d8d2]/60">{name} is shown in and sits down, waiting.</p>}
+      }) : <p className="text-sm italic text-[#5d4d3d]">{name} is shown in and sits down, waiting.</p>}
     </div>
   );
 }

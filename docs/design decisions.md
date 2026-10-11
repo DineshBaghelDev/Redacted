@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-11 — Interview as a record
+
+- Keep all dialogue as selectable text on a light transcript surface. The portrait remains deterministic from identity, description, gender, and age; temporary expressions change only its face during the interview. Stamp assets carry no baked lettering.
+
 ## 2026-10-11 — Material and map art
 
 - Keep floors subtle under search targets; each generated room kind selects a repeating pixel material. Named map buildings may have their own art, with generic kind icons as a fallback for future places. Player and travel tokens stay small enough to preserve map labels.

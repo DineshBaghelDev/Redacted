@@ -1,5 +1,7 @@
 import { expect, test } from "vitest";
-import { portraitTraits } from "./character-portrait";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { CharacterPortrait, portraitTraits } from "./character-portrait";
 
 test("case portrait traits are stable for a person and stay within the layer ranges", () => {
   const portrait = portraitTraits("person-17");
@@ -22,4 +24,12 @@ test("written clothing and build guide stable portrait layers", () => {
   expect(traits.outfit).toBe(2);
   expect(traits.face).toBe(1);
   expect(portraitTraits("person-17", { gender: "male", description }).hairstyle).not.toBe(traits.hairstyle);
+});
+
+test("interview expressions change the face without changing identity", () => {
+  const neutral = renderToStaticMarkup(createElement(CharacterPortrait, { id: "person-17" }));
+  const caught = renderToStaticMarkup(createElement(CharacterPortrait, { id: "person-17", expression: "caught" }));
+  expect(neutral).toContain('data-expression="neutral"');
+  expect(caught).toContain('data-expression="caught"');
+  expect(caught).not.toBe(neutral);
 });

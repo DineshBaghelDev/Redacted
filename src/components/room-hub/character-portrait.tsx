@@ -3,6 +3,7 @@ const hairColors = ["#1d2829", "#513a2c", "#a06e3d", "#a6aba1", "#683b36", "#dcd
 const coatColors = ["#294047", "#403b38", "#41534a", "#39495a"];
 
 type PortraitAppearance = { gender?: "male" | "female" | "nonbinary"; description?: string; age?: number };
+type PortraitExpression = "neutral" | "nervous" | "angry" | "caught";
 
 export function portraitTraits(id: string, appearance: PortraitAppearance = {}) {
   let seed = 2166136261;
@@ -31,14 +32,14 @@ export function portraitTraits(id: string, appearance: PortraitAppearance = {}) 
   };
 }
 
-export function CharacterPortrait({ id, className = "", gender, description, age }: { id: string; className?: string } & PortraitAppearance) {
+export function CharacterPortrait({ id, className = "", gender, description, age, expression = "neutral" }: { id: string; className?: string; expression?: PortraitExpression } & PortraitAppearance) {
   const traits = portraitTraits(id, { gender, description, age });
   const skin = skinColors[traits.skin];
   const hair = hairColors[traits.hair];
   const coat = coatColors[traits.coat];
 
   return (
-    <svg aria-hidden="true" className={`character-portrait ${className}`} shapeRendering="crispEdges" viewBox="0 0 64 80">
+    <svg aria-hidden="true" className={`character-portrait ${className}`} data-expression={expression} shapeRendering="crispEdges" viewBox="0 0 64 80">
       <rect fill="#0d2227" height="80" width="64" />
       <path d="M0 0h64v4H0zM0 76h64v4H0zM0 0h4v80H0zM60 0h4v80h-4z" fill="#59716d" />
       <path d="M5 5h54v3H5zM5 72h54v3H5z" fill="#172f33" />
@@ -74,10 +75,11 @@ export function CharacterPortrait({ id, className = "", gender, description, age
       {traits.hairstyle === 3 ? <path d="M18 20h5v-6h5v3h5v-5h5v4h6v4h4v13h-5v-8H21v8h-4V20z" fill={hair} /> : null}
       {traits.hairstyle === 4 ? <path d="M20 21h24v7h-3v-3H23v3h-3zM18 25h4v9h-4zM42 25h4v9h-4z" fill={hair} /> : null}
       {traits.hairstyle === 5 ? <path d="M17 18h5v-4h20v4h5v38h-6V28H23v28h-6zM14 50h6v13h-6zM44 50h6v13h-6z" fill={hair} /> : null}
-      <path d="M24 34h6v2h-6zM36 34h6v2h-6z" fill={hair} />
-      <path d="M26 38h3v3h-3zM37 38h3v3h-3z" fill="#172329" />
+      <path d={expression === "angry" ? "M23 33h4v2h3v2h-3v-1h-4zM41 33h-4v2h-3v2h3v-1h4z" : expression === "caught" ? "M23 32h8v2h-8zM35 32h8v2h-8z" : expression === "nervous" ? "M24 33h6v2h-6zM36 34h6v2h-6z" : "M24 34h6v2h-6zM36 34h6v2h-6z"} fill={hair} />
+      <path d={expression === "caught" ? "M25 37h5v5h-5zM36 37h5v5h-5z" : "M26 38h3v3h-3zM37 38h3v3h-3z"} fill="#172329" />
       <path d="M31 40h2v4h-2z" fill="#704635" />
-      <path d="M28 47h8v2h-8z" fill="#5c392f" />
+      <path d={expression === "caught" ? "M29 46h6v5h-6z" : expression === "nervous" ? "M28 48h3v-1h5v2h-8z" : expression === "angry" ? "M27 47h10v2H27z" : "M28 47h8v2h-8z"} fill="#5c392f" />
+      {expression === "nervous" || expression === "caught" ? <path d="M43 38h2v4h-2z" fill="#c7d9d1" opacity=".7" /> : null}
       {traits.lined ? <path d="M24 42h2v2h-2zM38 42h2v2h-2zM26 32h4v1h-4zM34 32h4v1h-4z" fill="#42302a" opacity=".45" /> : null}
       {traits.glasses ? <path d="M23 36h9v8h-9zM34 36h9v8h-9zM31 38h4v2h-4z" fill="none" stroke="#27343a" strokeWidth="2" /> : null}
       <path d="M8 71h48v2H8z" fill="#d0a567" />

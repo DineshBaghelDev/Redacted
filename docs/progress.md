@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-11 — Interview art and expressions
+
+- Replaced the dark conversation slab with a generated blank transcript-paper frame and readable live text. Added a restrained table/chair foreground beneath the desktop portrait. Existing deterministic portraits now change eyes, brows, and mouth for nervous, angry, and caught states when the interview warrants it.
+- Added text-free raster frames for Contradiction, failed proof, and Statement taken; the words remain accessible live text.
+
 ## 2026-10-11 — Floor materials and named map art
 
 - Added 12 restrained floor textures for the generated room kinds and used them behind the furniture sprites. The map now has distinct silhouettes for the missing named houses, bank, clinic, pier, bureau, lab, shop, bar, and diner. Travel and detective positions use small car/character tokens instead of a glowing square and boxed diamond.

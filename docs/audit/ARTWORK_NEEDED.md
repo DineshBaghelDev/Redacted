@@ -7,6 +7,8 @@ bureau-noir, menu-noir, archive-room, interview-room, lab-room, records-room, re
 
 **Update:** room-furniture and room-furniture-searched atlases cover the common search spots; evidence-objects-primary and evidence-objects-secondary cover 25 found-object categories. Twelve floor materials, named-place silhouettes, and the car/detective map tokens are now in use. Clean art is still needed for doors, special search spots, and the stations below.
 
+**Interview update:** transcript paper, table/chair foreground, three blank stamp frames, and deterministic portrait expressions are now in use.
+
 ## Priority 1 — the screens players spend most time on
 
 ### A. Room interiors (biggest "app vs game" gap)
