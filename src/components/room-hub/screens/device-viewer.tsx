@@ -1,7 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { go } from "../../../lib/game-nav";
 import { useState } from "react";
 import { InvestigationIcon } from "../investigation-icon";
 
@@ -28,7 +26,6 @@ export function DeviceViewer({ title, data, onBack, onPin, isPinned, busy, error
   busy: boolean;
   error?: string;
 }) {
-  const roomCode = usePathname().split("/")[2] ?? "";
   const [app, setApp] = useState<App>("home");
   const [openId, setOpenId] = useState<string | null>(null);
   const files = app === "files" ? data.files : [];
@@ -68,7 +65,6 @@ export function DeviceViewer({ title, data, onBack, onPin, isPinned, busy, error
               <h4 className="mt-2 break-words text-lg uppercase text-[#e8ac51]">{file?.title ?? call?.otherParty ?? message?.otherParty}</h4>
               {call ? <p className="mt-3 text-sm">{call.direction === "incoming" ? "Incoming" : "Outgoing"} · {timeLabel(call.time)} · {Math.ceil(call.durationSeconds / 60)} min</p> : null}
               {message ? <><p className="mt-3 text-xs uppercase text-[#a5c6bb]">{message.direction === "incoming" ? "Received" : "Sent"} · {timeLabel(message.time)}</p><p className="mt-5 whitespace-pre-wrap break-words border-l-2 border-[#e8ac51] pl-4 text-base leading-relaxed">{message.body}</p></> : null}
-              {call || message ? <button className="mt-4 inline-flex min-h-10 items-center gap-2 border-b border-[#6f9f98] text-xs uppercase text-[#a5c6bb] hover:text-[#e8ac51]" onClick={() => go(`/lobby/${roomCode}/bureau/cctv?t=${(call ?? message)!.time}`)} type="button">Check street cameras at this time →</button> : null}
               {file ? <p className="mt-5 whitespace-pre-wrap break-words border-l-2 border-[#e8ac51] pl-4 text-base leading-relaxed">{file.body}</p> : null}
               <button className="mt-6 min-h-11 border border-[#e8ac51] px-4 text-xs uppercase text-[#e8ac51] disabled:opacity-50" disabled={busy || isPinned(file ? "device_file" : call ? "call" : "message", openId!)} onClick={() => onPin(file ? "device_file" : call ? "call" : "message", openId!)} type="button">{isPinned(file ? "device_file" : call ? "call" : "message", openId!) ? "Pinned to clueboard" : "Pin to clueboard"}</button>
             </article> : <div className="mt-3 divide-y divide-[#45635d]/60">

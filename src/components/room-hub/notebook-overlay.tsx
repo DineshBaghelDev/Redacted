@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "../../lib/error-text";
 import { FirstTimeTip } from "./first-time-tip";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
@@ -8,6 +9,7 @@ import { api } from "../../../convex/_generated/api";
 import { formatGameMinute } from "../../lib/game-time";
 import { play } from "../../lib/sound";
 import { CharacterPortrait } from "./character-portrait";
+import { startCardDrag } from "../../lib/evidence-drag";
 
 const groups = [
   ["item", "Objects"],
@@ -29,6 +31,8 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
   const ping = useMutation(api.coop.ping);
   const [tab, setTab] = useState<"people" | "evidence">("evidence");
   const [message, setMessage] = useState("");
+  // While dragging an entry out, fade the notebook so the screen behind can take the drop.
+  const [dragging, setDragging] = useState(false);
 
   function pinned(type: string, id: string) {
     return nodes?.some((node) => node.type === type && node.referenceId === id) ?? false;
@@ -40,7 +44,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
     play("click");
     void pin({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 })
       .then(() => setMessage("Pinned to the clueboard."))
-      .catch((caught: unknown) => setMessage(caught instanceof Error ? caught.message : "Could not pin that."));
+      .catch((caught: unknown) => setMessage(errorText(caught, "Could not pin that.")));
   }
 
   function share(text: string) {
@@ -49,7 +53,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end bg-black/60 animate-in fade-in" onClick={onClose} role="presentation">
+    <div className={`fixed inset-0 z-[60] flex justify-end bg-black/60 transition-opacity animate-in fade-in ${dragging ? "pointer-events-none opacity-20" : ""}`} onClick={onClose} role="presentation">
       <aside aria-label="Case notebook" className="game-dossier flex h-full w-full max-w-xl flex-col px-5 pb-10 pt-12 animate-in slide-in-from-right sm:px-8" onClick={(event) => event.stopPropagation()} role="dialog">
         <header className="flex items-center justify-between gap-3 border-b border-[#8b7355] pb-3">
           <div>
@@ -66,13 +70,13 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
           ))}
         </div>
         {message ? <p className="mt-2 text-sm text-red-900" role="status">{message}</p> : null}
-        <FirstTimeTip id="notebook" title="Shared notebook">Everything either of you uncovers lands here on its own. Pin what matters to the clueboard; Show partner points your partner at it.</FirstTimeTip>
+        <FirstTimeTip id="notebook" title="Shared notebook">Everything either of you uncovers lands here on its own. Drag an entry onto the clueboard, a suspect&apos;s portrait, the lab bench, or your report. Show partner points your partner at it.</FirstTimeTip>
         <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
           {tab === "people" ? (
             people === undefined ? <p className="uppercase">Opening files...</p> : (
               <ul className="space-y-3">
                 {(people ?? []).map((person) => (
-                  <li className="flex gap-3 border-b border-[#8b7355]/60 pb-3" key={person.id}>
+                  <li className="flex cursor-grab gap-3 border-b border-[#8b7355]/60 pb-3" draggable key={person.id} onDragEnd={() => setDragging(false)} onDragStart={(event) => { startCardDrag(event, { kind: "person", referenceId: person.id, label: person.name }); setDragging(true); }}>
                     <CharacterPortrait age={person.age} className="w-14" description={person.publicDescription} gender={person.gender} id={person.id} />
                     <div className="min-w-0 flex-1">
                       <p className="text-base uppercase">{person.name}{person.isVictim ? <span className="ml-2 text-xs text-red-800">Victim</span> : null}</p>
@@ -98,7 +102,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
                   <h3 className="border-b border-red-900/50 pb-1 text-xs uppercase tracking-[0.18em] text-red-800">{label} · {rows.length}</h3>
                   <ul>
                     {rows.map((entry) => (
-                      <li className="border-b border-[#8b7355]/40 py-3" key={`${entry.type}:${entry.referenceId}`}>
+                      <li className="cursor-grab border-b border-[#8b7355]/40 py-3" draggable key={`${entry.type}:${entry.referenceId}`} onDragEnd={() => setDragging(false)} onDragStart={(event) => { startCardDrag(event, { kind: entry.type, referenceId: entry.referenceId, label: entry.title }); setDragging(true); }}>
                         <p className="text-sm font-semibold">{entry.title}</p>
                         {entry.time !== undefined ? <p className="font-mono text-xs text-[#5d4d3d]">{formatGameMinute(entry.time)}</p> : null}
                         <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{entry.body}</p>

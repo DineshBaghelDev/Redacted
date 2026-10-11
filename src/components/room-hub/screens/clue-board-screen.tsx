@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "../../../lib/error-text";
 import {
   Background,
   ConnectionMode,
@@ -11,6 +12,7 @@ import {
   type Edge,
   type Node,
   type NodeProps,
+  type ReactFlowInstance,
   useNodesState,
 } from "@xyflow/react";
 import { Link2, Maximize2, Plus, Trash2, X } from "lucide-react";
@@ -20,6 +22,10 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { GameIcon } from "../game-icon";
+import { cardDropTarget } from "../../../lib/evidence-drag";
+
+/** Last pointer position during a drag, used to place a dropped card where it was let go. */
+const dropPoint = { x: 0, y: 0 };
 
 type StringColor = "red" | "gold" | "blue" | "green";
 type BoardData = {
@@ -49,6 +55,8 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
   const createEdge = useMutation(api.clueBoard.createEdge);
   const updateEdge = useMutation(api.clueBoard.updateEdge);
   const deleteEdge = useMutation(api.clueBoard.deleteEdge);
+  const createReference = useMutation(api.clueBoard.createReferenceNode);
+  const [flow, setFlow] = useState<ReactFlowInstance<BoardNode, Edge> | null>(null);
   const [stringColor, setStringColor] = useState<StringColor>("red");
   const [selectedEdge, setSelectedEdge] = useState<Id<"clueBoardEdges"> | null>(null);
   const [inspectingNode, setInspectingNode] = useState<Id<"clueBoardNodes"> | null>(null);
@@ -59,7 +67,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
   const [nodes, setNodes, onNodesChange] = useNodesState<BoardNode>([]);
 
   const showError = useCallback((caught: unknown) => {
-    setError(caught instanceof Error ? caught.message : "Could not update the board.");
+    setError(errorText(caught, "Could not update the board."));
   }, []);
   const saveText = useCallback((id: Id<"clueBoardNodes">, text: string) => {
     void updateNode({ nodeId: id, text }).catch(showError);
@@ -208,8 +216,18 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
         </details> : null}
       </header>
 
-      <div className="clue-board relative min-h-0 flex-1">
+      <div
+        className="clue-board relative min-h-0 flex-1"
+        {...cardDropTarget((card) => {
+          // A notebook entry dropped on the board becomes a pinned card where it lands.
+          if (card.referenceId.includes(":") || card.referenceId === "victim") return;
+          const position = flow?.screenToFlowPosition({ x: dropPoint.x, y: dropPoint.y }) ?? { x: 80, y: 90 };
+          void createReference({ roomCode, type: card.kind === "person" ? "npc" : card.kind, referenceId: card.referenceId, x: position.x, y: position.y }).catch(showError);
+        })}
+        onDragOverCapture={(event) => { dropPoint.x = event.clientX; dropPoint.y = event.clientY; }}
+      >
         <ReactFlow<BoardNode, Edge>
+          onInit={setFlow}
           colorMode="dark"
           connectionLineStyle={{ stroke: colors[stringColor].value, strokeWidth: 3 }}
           connectionMode={ConnectionMode.Loose}

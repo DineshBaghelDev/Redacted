@@ -1,11 +1,13 @@
 "use client";
 
+import { errorText } from "../../../lib/error-text";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
 import { useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { InvestigationIcon } from "../investigation-icon";
+import { TypeAhead } from "../type-ahead";
 
 function normalizedTerm(search: string) {
   return search.trim().replace(/\s+/g, " ").toLowerCase();
@@ -40,7 +42,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
     setStartingSearch(true);
     setError("");
     void performSearch({ roomCode, search: term }).catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "Could not search these records.");
+      setError(errorText(caught, "Could not search these records."));
     }).finally(() => setStartingSearch(false));
   }
 
@@ -55,7 +57,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
       x: 80 + (count % 4) * 220,
       y: 90 + Math.floor(count / 4) * 180,
     }).catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "Could not pin this record.");
+      setError(errorText(caught, "Could not pin this record."));
     }).finally(() => setPinning(""));
   }
 
@@ -97,6 +99,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
             {startingSearch ? "Starting search..." : !search.trim() ? "Browse files" : result?.savedTerms.includes(currentTerm) ? "Open saved search" : "Search records"}
           </button>
         </div>
+        <TypeAhead names={(people ?? []).map((person) => person.name)} onPick={setSearch} value={search} />
         {result?.savedTerms.length ? (
           <div className="mt-3 flex flex-wrap items-center gap-2" aria-label="Recent shared searches">
             <span className="mr-1 text-xs uppercase tracking-[0.16em] text-[#c8d8d2]/65">Shared searches</span>
@@ -111,12 +114,6 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
                 {term || "General browse"}
               </button>
             ))}
-          </div>
-        ) : null}
-        {people?.length ? (
-          <div className="mt-3 flex flex-wrap items-center gap-2" aria-label="Names you know">
-            <span className="mr-1 text-xs uppercase tracking-[0.16em] text-[#c8d8d2]/65">Names you know</span>
-            {people.map((person) => <button className="min-h-9 border border-[#6f9f98]/25 px-3 text-xs text-[#c8d8d2]/80 hover:border-[#e8ac51] hover:text-[#f1c987]" key={person.id} onClick={() => setSearch(person.name)} type="button">{person.name}</button>)}
           </div>
         ) : null}
         <p className="mt-2 text-xs text-[#c8d8d2]/65">New searches take 10 case minutes. Reopen a saved search for free.</p>

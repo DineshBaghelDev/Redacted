@@ -32,7 +32,7 @@ test("arrives with the place description, then shows spots to search and a click
   expect(html).toContain("Step inside");
   expect(html).toContain("Where to look");
   expect(html).toContain("Front desk");
-  expect(html).toContain("Search here");
+  expect(html).toContain("Hold to search");
   expect(html).toContain("Check this room&#x27;s camera");
   expect(html).toContain('aria-label="Floor plan"');
   expect(html).toContain("◆ Sam");

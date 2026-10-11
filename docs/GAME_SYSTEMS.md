@@ -164,6 +164,8 @@ Device data:
 - call logs,
 - messages.
 
+Found phones and laptops are locked with a 4-digit code derived from the device ID; an unlabeled sticky note with the code is hidden in the same building. Typing the code unlocks the device (5 minutes); without it, the lab can crack it (60 minutes). Phones an NPC hands over are already unlocked.
+
 Found laptops can also hold generated files. Reading a physical laptop takes 5 shared game minutes; its stored files become available to both detectives afterward and may be pinned as evidence. A victim phone found by searching the scene takes the same 5-minute read. An NPC-held phone is handed over when a detective asks for it during a bureau interview (the question takes 3 minutes); a separate 5-minute read then reveals its frozen calls and messages to both detectives. The player chooses which records to pin.
 
 No social-post system in V1.

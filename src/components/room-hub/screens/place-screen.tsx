@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "../../../lib/error-text";
 import { FirstTimeTip } from "../first-time-tip";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
@@ -12,7 +13,9 @@ import { formatGameMinute, partOfDay } from "../../../lib/game-time";
 import { play } from "../../../lib/sound";
 import { CctvScreen } from "./cctv-screen";
 import { GameIcon } from "../game-icon";
+import { HoldButton, ScrubPad } from "../gestures";
 import { InvestigationIcon } from "../investigation-icon";
+import { startCardDrag } from "../../../lib/evidence-drag";
 import { DeviceViewer } from "./device-viewer";
 
 type Place = NonNullable<FunctionReturnType<typeof api.investigation.getPlace>>;
@@ -99,7 +102,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
       finishing = true;
       void finishAction({ roomCode }).catch((caught: unknown) => {
         finishing = false;
-        setError(caught instanceof Error ? caught.message : "Could not finish that action.");
+        setError(errorText(caught, "Could not finish that action."));
       });
     };
     update();
@@ -128,7 +131,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
     setError("");
     play("click");
     void action.catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "That action could not be completed.");
+      setError(errorText(caught, "That action could not be completed."));
     }).finally(() => setWorking(false));
   }
 
@@ -269,9 +272,9 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
                     <li className={`border p-3 ${spot.searched ? "border-[#6f9f98]/30 bg-[#071619]/70" : "border-[#e8ac51]/40 bg-[#14140e]/70"}`} key={spot.key}>
                       <p className="flex items-center gap-2 text-sm uppercase"><InvestigationIcon className="size-7" name="search" />{spot.name}</p>
                       {!spot.searched ? (
-                        <button className="mt-2 min-h-10 w-full border border-[#e8ac51]/70 text-xs uppercase text-[#f1c987] hover:bg-[#e8ac51]/15 disabled:opacity-45" disabled={busy} onClick={() => run(searchSpot({ roomCode, spot: spot.key }))} type="button">{searching ? "Searching..." : "Search here"}</button>
+                        <HoldButton className="mt-2" disabled={busy} label={searching ? "Searching..." : "Hold to search"} onDone={() => run(searchSpot({ roomCode, spot: spot.key }))} />
                       ) : found.length ? (
-                        <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={() => run(readDevice({ roomCode, itemId: item.id }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />)}</div>
+                        <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />)}</div>
                       ) : <p className="mt-2 text-sm text-[#c8d8d2]/55">Nothing here.</p>}
                     </li>
                   );
@@ -283,7 +286,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
           <details className="mt-8 border-t border-[#6f9f98]/25 pt-4">
             <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/70">Carried evidence · {inventory.length}</summary>
             {inventory.length ? <div className="mt-3 grid gap-2 sm:grid-cols-2">{inventory.map((item) => (
-              <ItemCard busy={busy} fresh={false} item={item} key={item.id} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={() => run(readDevice({ roomCode, itemId: item.id }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />
+              <ItemCard busy={busy} fresh={false} item={item} key={item.id} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />
             ))}</div> : <p className="mt-3 text-sm text-[#c8d8d2]/55">Collected objects travel with both of you.</p>}
           </details>
         </div>
@@ -298,18 +301,30 @@ function ItemCard({ item, busy, pinned, fresh, onInspect, onRead, onOpenDevice, 
   pinned: boolean;
   fresh: boolean;
   onInspect: () => void;
-  onRead: () => void;
+  onRead: (code?: string, crack?: boolean) => void;
   onOpenDevice: () => void;
   onCollect?: () => void;
   onPin: () => void;
 }) {
+  const [code, setCode] = useState("");
+  const locked = item.device && !item.device.read;
   return (
-    <article className={`border-l-2 border-[#e8ac51] bg-[#0b1a1c]/90 p-3 ${fresh ? "reveal-card" : ""}`}>
+    <article className={`border-l-2 border-[#e8ac51] bg-[#0b1a1c]/90 p-3 ${fresh ? "reveal-card" : ""}`} draggable onDragStart={(event) => startCardDrag(event, { kind: "item", referenceId: item.id, label: item.name })}>
       <h5 className="flex items-center gap-2 text-sm uppercase text-[#f1c987]"><InvestigationIcon className="size-8" name={item.device ? "device" : "evidence"} /><span className="min-w-0 break-words">{item.name}</span></h5>
-      <p className="mt-2 text-sm leading-relaxed text-[#c8d8d2]/75">{item.description ?? "Take a closer look to learn more."}</p>
+      {item.inspected ? <p className="mt-2 text-sm leading-relaxed text-[#c8d8d2]/75">{item.description}</p> : (
+        <ScrubPad className="mt-2 border border-dashed border-[#6f9f98]/50 p-3" disabled={busy} needed={500} onDone={onInspect} tool="lens">
+          <p className="text-sm leading-relaxed text-[#c8d8d2]/60">Run the magnifier over it to look closer · 2 min</p>
+        </ScrubPad>
+      )}
+      {locked ? (
+        <form className="mt-3 flex flex-wrap items-center gap-2" onSubmit={(event) => { event.preventDefault(); if (code.length === 4) onRead(code); }}>
+          <label className="sr-only" htmlFor={`code-${item.id}`}>Unlock code</label>
+          <input autoComplete="off" className="h-9 w-24 border border-[#45635d] bg-[#071014] text-center font-mono text-lg tracking-[0.4em] text-[#f1c987] outline-none focus:border-[#e8ac51]" id={`code-${item.id}`} inputMode="numeric" maxLength={4} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="····" value={code} />
+          <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={busy || code.length !== 4} type="submit">Unlock · 5 min</button>
+          <button className="min-h-9 px-1 text-xs uppercase text-[#c8d8d2]/70 underline-offset-4 hover:text-[#e8ac51] hover:underline disabled:opacity-45" disabled={busy} onClick={() => onRead(undefined, true)} type="button">Have the lab crack it · 60 min</button>
+        </form>
+      ) : null}
       <div className="mt-3 flex flex-wrap gap-2">
-        {!item.inspected ? <button className="min-h-9 border border-[#6f9f98]/60 px-2 text-xs uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] disabled:opacity-45" disabled={busy} onClick={onInspect} type="button">Look closer · 2 min</button> : null}
-        {item.device && !item.device.read ? <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={busy} onClick={onRead} type="button">Unlock {item.device.type} · 5 min</button> : null}
         {item.device?.read ? <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987]" onClick={onOpenDevice} type="button">Open {item.device.type}</button> : null}
         {onCollect && item.collectible && !item.collected ? <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={busy} onClick={onCollect} type="button">Bag it</button> : null}
         <button className="min-h-9 border border-[#6f9f98]/60 px-2 text-xs uppercase disabled:opacity-45" disabled={busy || pinned} onClick={onPin} type="button">{pinned ? "Pinned" : "Pin"}</button>

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getPlayingRoomMember, requireInvestigationOpen } from "./lib/auth";
+import { CRACK_MINUTES, deviceCode } from "./lib/deviceCodes";
 import { roomSpots, spotKey, SPOT_SEARCH_MINUTES } from "./lib/spots";
 import { GAME_MINUTE_MS, settleActions } from "./world";
 
@@ -212,10 +213,11 @@ export const inspectItem = mutation({
   },
 });
 
+/** Unlock a found phone or laptop: type its 4-digit code (5 min) or have the lab crack it (60 min). */
 export const readDevice = mutation({
-  args: { roomCode: v.string(), itemId: v.id("caseItems") },
+  args: { roomCode: v.string(), itemId: v.id("caseItems"), code: v.optional(v.string()), crack: v.optional(v.boolean()) },
   returns: v.object({ completeGameTime: v.number() }),
-  handler: async (ctx, { roomCode, itemId }) => {
+  handler: async (ctx, { roomCode, itemId, code, crack }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.session.caseId) throw new Error("Start the investigation first.");
     await requireInvestigationOpen(ctx, member.session._id);
@@ -231,9 +233,10 @@ export const readDevice = mutation({
     if (actions.some((action) => action.kind === "device" && action.itemId === itemId)) throw new Error("Your partner is already reading this device.");
     const device = item.sourceId ? await ctx.db.query("devices").withIndex("by_caseId_and_sourceId", (q) => q.eq("caseId", item.caseId).eq("sourceId", item.sourceId!)).unique() : null;
     if (!device || device.sourceItemId !== itemId) throw new Error("That item has no readable records.");
+    if (!crack && code?.trim() !== deviceCode(device._id)) throw new Error("Wrong code. The screen shakes.");
     const roomId = player.currentRoomId;
     if (!roomId) throw new Error("Enter a room to read the device.");
-    return await startRoomAction(ctx, member.session, player._id, "device", roomId, 5, now, settled.gameTime, settled.activeCount, itemId);
+    return await startRoomAction(ctx, member.session, player._id, "device", roomId, crack ? CRACK_MINUTES : 5, now, settled.gameTime, settled.activeCount, itemId);
   },
 });
 

@@ -48,7 +48,9 @@ export async function collectDiscoveries(ctx: QueryCtx, session: Doc<"sessions">
     for (const record of await ctx.db.query("cctvRecords").withIndex("by_cameraId_and_startTime", q => q.eq("cameraId", camera._id).lte("startTime", review.minute + CCTV_HALF_WINDOW)).order("desc").take(100)) {
       if (record.endTime < review.minute - CCTV_HALF_WINDOW || reviewed.has(record.evidenceId)) continue;
       reviewed.add(record.evidenceId);
-      entries.push({ type: "cctv", referenceId: record.evidenceId, title: camera.name, body: record.description, time: record.startTime });
+      const label = await ctx.db.query("cctvLabels").withIndex("by_sessionId_and_recordEvidenceId", q => q.eq("sessionId", session._id).eq("recordEvidenceId", record.evidenceId)).unique();
+      const marked = label ? await ctx.db.get(label.npcId) : null;
+      entries.push({ type: "cctv", referenceId: record.evidenceId, title: camera.name, body: marked ? `${record.description}\nYou marked: looks like ${marked.name}` : record.description, time: record.startTime });
     }
   }
   const readDevices = new Set<Id<"devices">>();

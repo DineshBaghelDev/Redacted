@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "../../../lib/error-text";
 import { FirstTimeTip } from "../first-time-tip";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
@@ -74,7 +75,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
       finishing = true;
       void finishTravel({ roomCode }).catch((caught: unknown) => {
         finishing = false;
-        setError(caught instanceof Error ? caught.message : "Could not finish this journey.");
+        setError(errorText(caught, "Could not finish this journey."));
       });
     };
     update();
@@ -125,7 +126,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
       x: 80 + (count % 4) * 220,
       y: 90 + Math.floor(count / 4) * 180,
     }).catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "Could not pin this place.");
+      setError(errorText(caught, "Could not pin this place."));
     }).finally(() => setPinning(""));
   }
 
@@ -133,7 +134,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
     setTraveling(true);
     setError("");
     void startTravel({ roomCode, destinationId: selected.id }).catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "Could not start this journey.");
+      setError(errorText(caught, "Could not start this journey."));
     }).finally(() => setTraveling(false));
   }
 

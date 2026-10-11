@@ -259,6 +259,8 @@ npcs.list({ roomCode })                    // only people the team has come acro
 coop.get({ roomCode })                     // partner place/activity + recent pings
 coop.ping({ roomCode, text })              // "look at this" to the partner
 caseClose.giveUp({ roomCode })             // ends the room for both, reveals the epilogue
+investigation.readDevice({ roomCode, itemId, code?, crack? })  // code: 5 min; crack: 60 min
+cases.labelSighting({ roomCode, recordId, npcId | null })      // "looks like" mark on a camera sighting
 forensics.readyCount({ roomCode })         // unread ready lab results, from anywhere
 caseClose.getEpilogue({ roomCode })        // canonical account + timeline, only after scoring or giving up
 ```

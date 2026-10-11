@@ -4,6 +4,7 @@ import { convexTest } from "convex-test";
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import { GAME_MINUTE_MS } from "./lib/clock";
+import { deviceCode } from "./lib/deviceCodes";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -36,7 +37,7 @@ test("partners search, inspect, and collect shared items without revealing hidde
     const messageId = await ctx.db.insert("messages", { caseId, evidenceId: "message/victim/0", deviceId: phoneId, timestamp: 130, direction: "outgoing", body: "Meet me outside.", otherPartyLabel: "Mara" });
     const sessionId = await ctx.db.insert("sessions", { caseId, roomCode: "ABC123", status: "waiting", createdAt: 1, expiresAt: 1_000_000 });
     for (const authUserId of ["one", "two"]) await ctx.db.insert("sessionPlayers", { sessionId, authUserId, nickname: authUserId, isReady: true, joinedAt: 1 });
-    return { entrance, office, itemId, deviceItemId, phoneItemId, callId, messageId };
+    return { entrance, office, itemId, deviceItemId, deviceId, phoneItemId, callId, messageId };
   });
   const one = t.withIdentity({ subject: "one" });
   const two = t.withIdentity({ subject: "two" });
@@ -79,7 +80,8 @@ test("partners search, inspect, and collect shared items without revealing hidde
   expect(beforeRead?.device).toEqual({ type: "laptop", read: false, files: [], calls: [], messages: [] });
   await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "device_file", referenceId: "file/laptop/0", x: 0, y: 0 })).rejects.toThrow("Read this device");
   await expect(one.mutation(api.investigation.readDevice, { roomCode, itemId: ids.itemId })).rejects.toThrow("no readable records");
-  expect(await two.mutation(api.investigation.readDevice, { roomCode, itemId: ids.deviceItemId })).toEqual({ completeGameTime: 12 });
+  await expect(two.mutation(api.investigation.readDevice, { roomCode, itemId: ids.deviceItemId, code: "nope" })).rejects.toThrow("Wrong code");
+  expect(await two.mutation(api.investigation.readDevice, { roomCode, itemId: ids.deviceItemId, code: deviceCode(ids.deviceId) })).toEqual({ completeGameTime: 12 });
   await expect(one.mutation(api.investigation.readDevice, { roomCode, itemId: ids.deviceItemId })).rejects.toThrow("partner is already reading");
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.items.find((item) => item.id === ids.deviceItemId)?.device?.files).toEqual([]);
   vi.advanceTimersByTime(5 * GAME_MINUTE_MS);
@@ -92,8 +94,9 @@ test("partners search, inspect, and collect shared items without revealing hidde
   vi.advanceTimersByTime(4 * GAME_MINUTE_MS);
   await one.mutation(api.investigation.finishAction, { roomCode });
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.items.find((item) => item.id === ids.phoneItemId)?.device).toEqual({ type: "phone", read: false, files: [], calls: [], messages: [] });
-  expect(await one.mutation(api.investigation.readDevice, { roomCode, itemId: ids.phoneItemId })).toEqual({ completeGameTime: 21 });
-  vi.advanceTimersByTime(5 * GAME_MINUTE_MS);
+  // Without the code, the lab can crack it, slowly.
+  expect(await one.mutation(api.investigation.readDevice, { roomCode, itemId: ids.phoneItemId, crack: true })).toEqual({ completeGameTime: 76 });
+  vi.advanceTimersByTime(60 * GAME_MINUTE_MS);
   await one.mutation(api.investigation.finishAction, { roomCode });
   expect((await two.query(api.investigation.getPlace, { roomCode }))?.items.find((item) => item.id === ids.phoneItemId)?.device).toMatchObject({ read: true, calls: [{ id: ids.callId, otherParty: "Mara" }], messages: [{ id: ids.messageId, body: "Meet me outside." }] });
   await one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "call", referenceId: ids.callId, x: 0, y: 0 });

@@ -495,6 +495,12 @@ export default defineSchema({
     sourceSearchId: v.optional(v.id("publicRecordSearches")),
     previousCompleteGameTime: v.optional(v.number()),
   }).index("by_sessionId_and_recordId", ["sessionId", "recordId"]),
+  /** Who the detectives think a camera sighting shows. Their reasoning only; never checked. */
+  cctvLabels: defineTable({
+    sessionId: v.id("sessions"),
+    recordEvidenceId: v.string(),
+    npcId: v.id("npcs"),
+  }).index("by_sessionId_and_recordEvidenceId", ["sessionId", "recordEvidenceId"]),
   /** People named aloud in an interview; they join the People file. */
   sessionKnownPeople: defineTable({
     sessionId: v.id("sessions"),

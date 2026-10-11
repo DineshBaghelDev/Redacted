@@ -363,7 +363,7 @@ test("a lobby keeps the selected passed case", async () => {
       ? await ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
       : [];
     const items = session?.caseId
-      ? (await ctx.db.query("caseItems").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()).filter((item) => !item.evidenceId.startsWith("scatter/"))
+      ? (await ctx.db.query("caseItems").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()).filter((item) => !item.evidenceId.startsWith("scatter/") && !item.evidenceId.startsWith("code/"))
       : [];
     const cameras = session?.caseId
       ? await ctx.db.query("cctvCameras").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()

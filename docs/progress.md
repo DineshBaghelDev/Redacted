@@ -1,5 +1,18 @@
 # Progress
 
+## 2026-10-11 — Hands-on investigation
+
+- Removed suggestions that did the thinking: interview topic chips, records name chips, and the "check cameras at this time" link. Names you already know are finished only once you start typing them.
+- Found phones and laptops are locked with a 4-digit code derived from the device ID. A sticky note with the digits is hidden in the same building (seeded code, no generation); typing it unlocks in 5 minutes, or the lab cracks it in 60.
+- Spots are searched by pressing and holding; objects are examined by running a magnifier over them.
+- The lab is a bench: drag (or tap) a bag onto it, pick a tool (powder brush, UV lamp, DNA swab, tox kit, lifting tape, casting kit, comparison scope, autopsy), and rub over the evidence to run that test.
+- Interviews keep free chat. Any line of a reply can be pressed ("Press · 3 min") or proved wrong with evidence, and evidence can be dropped straight onto the portrait.
+- Camera sightings can be marked "looks like …" by choosing or dropping a person. The mark is shared, shown on the tape and in the notebook, and never checked.
+- The final report is a sentence with blanks: drop or tap people, bagged objects, and evidence; motive and method stay in your own words. Evidence dropped from the notebook is pinned automatically.
+- Notebook entries can be dragged onto the clueboard, a portrait, the lab bench, and the report; the notebook fades out while you drag.
+- Server error text is cleaned to its plain sentence everywhere (no Convex request wrapper).
+- Checked in a signed-in Playwright run: hold-to-search, magnifier, wrong code, bench brushing, press/prove menu, type-ahead, and the report. 169 tests, TypeScript, and lint pass.
+
 ## 2026-10-11 — Audit follow-ups
 
 - Everyday objects are scattered through every searchable room in the city (seeded code, no generation) when a case is published or replayed, so finding something no longer means a room matters. Existing cases get the scatter on their next replay.

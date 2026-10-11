@@ -58,6 +58,7 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_cancelRoomAction from "../lib/cancelRoomAction.js";
 import type * as lib_clock from "../lib/clock.js";
 import type * as lib_deviceAccess from "../lib/deviceAccess.js";
+import type * as lib_deviceCodes from "../lib/deviceCodes.js";
 import type * as lib_discoveries from "../lib/discoveries.js";
 import type * as lib_publishCctv from "../lib/publishCctv.js";
 import type * as lib_publishClutter from "../lib/publishClutter.js";
@@ -133,6 +134,7 @@ declare const fullApi: ApiFromModules<{
   "lib/cancelRoomAction": typeof lib_cancelRoomAction;
   "lib/clock": typeof lib_clock;
   "lib/deviceAccess": typeof lib_deviceAccess;
+  "lib/deviceCodes": typeof lib_deviceCodes;
   "lib/discoveries": typeof lib_discoveries;
   "lib/publishCctv": typeof lib_publishCctv;
   "lib/publishClutter": typeof lib_publishClutter;

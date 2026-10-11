@@ -557,3 +557,18 @@
   .reveal-card, .terminal-line, .contradiction-stamp, .cctv-static, .game-toast, .game-tip { animation: none !important; }
   .game-panorama, .cctv-tape { scroll-behavior: auto; }
 }
+
+@layer components {
+  /* A typed blank inside the final report sentence. */
+  .case-close-blank {
+    border: 0;
+    border-bottom: 2px dashed #6d5138;
+    background: rgb(239 227 196 / 55%);
+    padding: 0.2rem 0.4rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #211d17;
+    outline: none;
+  }
+  .case-close-blank:focus { border-bottom-color: #7f1d1d; background: rgb(239 227 196 / 90%); }
+}

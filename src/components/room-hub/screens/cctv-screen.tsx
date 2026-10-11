@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText } from "../../../lib/error-text";
 import { FirstTimeTip } from "../first-time-tip";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
@@ -11,6 +12,8 @@ import { api } from "../../../../convex/_generated/api";
 import { play } from "../../../lib/sound";
 import { CharacterPortrait } from "../character-portrait";
 import { GameIcon } from "../game-icon";
+import { cardDropTarget } from "../../../lib/evidence-drag";
+import type { Id } from "../../../../convex/_generated/dataModel";
 
 type Camera = NonNullable<FunctionReturnType<typeof api.cases.getCctv>>["cameras"][number];
 
@@ -129,6 +132,8 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
   const tape = useQuery(api.cases.getCctvTape, { roomCode, cameraId: camera.id });
   const boardNodes = useQuery(api.clueBoard.getNodes, { roomCode });
   const startReview = useMutation(api.cases.startCctvReview);
+  const labelSighting = useMutation(api.cases.labelSighting);
+  const people = useQuery(api.npcs.list, { roomCode });
   const createReference = useMutation(api.clueBoard.createReferenceNode);
   const scroller = useRef<HTMLDivElement>(null);
   const requested = useRef(new Set<number>());
@@ -199,11 +204,20 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
     scroller.current?.scrollTo({ left: (clamped - camera.start) * PX_PER_MINUTE, behavior: "smooth" });
   }
 
+  function labelFor(recordId: string) {
+    return tape?.labels.find((label) => label.recordId === recordId)?.name ?? null;
+  }
+
+  function mark(recordId: string, npcId: string | null) {
+    setError("");
+    void labelSighting({ roomCode, recordId, npcId: npcId as Id<"npcs"> | null }).catch((caught: unknown) => setError(errorText(caught, "Could not mark that sighting.")));
+  }
+
   function pinRecord(referenceId: string) {
     const count = boardNodes?.length ?? 0;
     setPinning(referenceId);
     void createReference({ roomCode, type: "cctv", referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 })
-      .catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Could not pin this sighting."))
+      .catch((caught: unknown) => setError(errorText(caught, "Could not pin this sighting.")))
       .finally(() => setPinning(""));
   }
 
@@ -227,6 +241,7 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
             : onScreen.length ? onScreen.map((record) => (
                 <p className={`terminal-line ${record.kind === "offline" ? "text-red-300" : "text-[#f1c987]"}`} key={record.id}>
                   <span className="text-[#7fd1ae]">[{clock(record.start)}–{clock(record.end)}]</span> {record.summary}
+                  {labelFor(record.id) ? <span className="ml-2 border border-[#9fd1c4]/60 px-1 text-xs text-[#9fd1c4]">you think: {labelFor(record.id)}</span> : null}
                 </p>
               )) : <p className="text-[#7fd1ae]/50">Empty frame. Nobody in view.</p>}
         </div>
@@ -285,8 +300,15 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
                   {thisHour.map((record) => {
                     const pinned = boardNodes?.some((node) => node.type === "cctv" && node.referenceId === record.id);
                     return (
-                      <li className="flex flex-wrap items-start gap-2 py-2" key={record.id}>
+                      <li className="flex flex-wrap items-start gap-2 py-2" key={record.id} {...cardDropTarget((card) => mark(record.id, card.referenceId), (kind) => kind === "person")}>
                         <button className="text-left text-[#c9f2dd] hover:text-[#f1c987]" onClick={() => seek(record.start)} type="button"><span className="text-[#e8ac51]">[{clock(record.start)}]</span> {record.summary}</button>
+                        <label className="flex items-center gap-1 text-xs text-[#7fd1ae]">
+                          <span className="sr-only">Who do you think this is?</span>
+                          <select className="max-w-40 border border-[#2f4a47] bg-[#020807] px-1 py-1 text-xs text-[#c9f2dd]" onChange={(event) => mark(record.id, event.target.value || null)} value={tape?.labels.find((label) => label.recordId === record.id)?.npcId ?? ""}>
+                            <option value="">Looks like…?</option>
+                            {(people ?? []).map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}
+                          </select>
+                        </label>
                         <button className="ml-auto border-b border-[#7fd1ae]/50 text-xs uppercase text-[#7fd1ae] hover:text-[#e8ac51] disabled:opacity-50" disabled={pinning === record.id || pinned} onClick={() => pinRecord(record.id)} type="button">{pinned ? "Pinned" : "Pin"}</button>
                       </li>
                     );

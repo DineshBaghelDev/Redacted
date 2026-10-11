@@ -1,11 +1,13 @@
 "use client";
 
+import { errorText } from "../../../lib/error-text";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
 import { useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { formatDuration, formatGameMinute } from "../../../lib/game-time";
+import { cardDropTarget, startCardDrag, type DragCard, type DragKind } from "../../../lib/evidence-drag";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 const MAX_EVIDENCE = 12;
@@ -29,6 +31,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
   const giveUp = useMutation(api.caseClose.giveUp);
   const [confirmGiveUp, setConfirmGiveUp] = useState(false);
   const submitCase = useMutation(api.caseClose.submit);
+  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const retryJudge = useMutation(api.caseClose.retry);
   const [closing, setClosing] = useState(false);
   const [reviewing, setReviewing] = useState(false);
@@ -46,6 +49,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
     (node): node is typeof node & { referenceId: string } =>
       (node.type === "cctv" || node.type === "public_record" || node.type === "item" || node.type === "forensic" || node.type === "device_file" || node.type === "call" || node.type === "message" || node.type === "statement") && !!node.referenceId,
   );
+  const victimName = people?.find((person) => person.isVictim)?.name ?? "the victim";
   const canReview = !!culpritNpcId
     && motiveExplanation.trim().length >= 10
     && weaponDescription.trim().length > 0
@@ -67,6 +71,18 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
     setError("");
   }
 
+  /** Evidence dropped from the notebook is pinned first, since the report cites the clueboard. */
+  function addProof(card: DragCard) {
+    if (evidence.some((item) => item.referenceId === card.referenceId)) {
+      if (!evidenceIds.includes(card.referenceId)) toggleEvidence(card.referenceId);
+      return;
+    }
+    const count = boardNodes?.length ?? 0;
+    void createReference({ roomCode, type: card.kind as "item", referenceId: card.referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 })
+      .then(() => setEvidenceIds((current) => current.includes(card.referenceId) || current.length >= MAX_EVIDENCE ? current : [...current, card.referenceId]))
+      .catch((caught: unknown) => setError(errorText(caught, "Could not add that evidence.")));
+  }
+
   function review(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (canReview) setReviewing(true);
@@ -85,7 +101,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
       evidenceExplanation,
       methodExplanation,
     }).catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "Could not submit the case.");
+      setError(errorText(caught, "Could not submit the case."));
       setReviewing(false);
     }).finally(() => setSubmitting(false));
   }
@@ -94,7 +110,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
     setSubmitting(true);
     setError("");
     void retryJudge({ roomCode })
-      .catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Could not retry judging."))
+      .catch((caught: unknown) => setError(errorText(caught, "Could not retry judging.")))
       .finally(() => setSubmitting(false));
   }
 
@@ -180,7 +196,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                         <p className="text-sm">Give up and see what really happened? The case ends for both detectives and no report can be filed.</p>
                         <div className="mt-3 flex flex-wrap gap-2">
                           <button className="min-h-11 border-2 border-[#573821] px-4 text-sm uppercase" onClick={() => setConfirmGiveUp(false)} type="button">Keep investigating</button>
-                          <button className="min-h-11 border-2 border-red-900 px-4 text-sm uppercase text-red-900 hover:bg-red-900 hover:text-red-50" onClick={() => { setError(""); void giveUp({ roomCode }).catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Could not give up.")); }} type="button">Give up</button>
+                          <button className="min-h-11 border-2 border-red-900 px-4 text-sm uppercase text-red-900 hover:bg-red-900 hover:text-red-50" onClick={() => { setError(""); void giveUp({ roomCode }).catch((caught: unknown) => setError(errorText(caught, "Could not give up."))); }} type="button">Give up</button>
                         </div>
                       </div>
                     ) : <button className="min-h-10 text-sm uppercase text-[#5b4635] underline-offset-4 hover:text-red-900 hover:underline" onClick={() => setConfirmGiveUp(true)} type="button">Give up and see the solution</button>}
@@ -206,31 +222,37 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
             </section>
           ) : (
             <form className="game-dossier space-y-5 px-5 pb-20 pt-20 sm:px-8 sm:pb-16" onSubmit={review}>
-              <div className="border-b-2 border-[#6d5138] pb-4"><p className="text-xs uppercase tracking-[0.2em] text-red-800">Five findings · five stars</p><h3 className="mt-2 text-3xl uppercase">Your final theory</h3></div>
-              <label className="block"><span className="case-close-label">1 · Who did it?</span><select className="case-close-input" onChange={(event) => setCulpritNpcId(event.target.value)} required value={culpritNpcId}><option value="">Choose a person</option>{people?.filter((person) => !person.isVictim).map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
-              <label className="block"><span className="case-close-label">2 · Why did they do it?</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setMotiveExplanation(event.target.value)} required value={motiveExplanation} /></label>
-              <div>
-                <p className="case-close-label">3 · What was the weapon?</p>
-                {inventory?.length ? <label className="mt-2 block text-sm"><span>Choose a collected item, if you have it</span><select className="case-close-input" onChange={(event) => { const id = event.target.value; setWeaponItemId(id); if (id) setWeaponDescription(inventory.find((item) => item.id === id)?.name ?? ""); }} value={weaponItemId}><option value="">Describe another weapon</option>{inventory.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : null}
-                <label className="mt-2 block text-sm"><span>Describe the weapon</span><input className="case-close-input" maxLength={200} onChange={(event) => { setWeaponDescription(event.target.value); setWeaponItemId(""); }} required type="text" value={weaponDescription} /></label>
-              </div>
-              <fieldset>
-                <legend className="case-close-label">4 · Which pinned evidence proves it?</legend>
-                <p className="mt-1 text-xs text-[#6d5138]">Choose up to {MAX_EVIDENCE}. Selected: {evidenceIds.length}.</p>
-                <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {evidence.map((item) => {
-                    const selected = evidenceIds.includes(item.referenceId);
-                    return (
-                      <label className={`flex min-h-12 items-start gap-3 border-b border-[#6d5138]/40 py-3 pr-2 text-sm ${!selected && evidenceIds.length >= MAX_EVIDENCE ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`} key={`${item.type}:${item.referenceId}`}>
-                        <input checked={selected} className="mt-1 size-4 accent-red-900" disabled={!selected && evidenceIds.length >= MAX_EVIDENCE} onChange={() => toggleEvidence(item.referenceId)} type="checkbox" />
-                        <span className="min-w-0"><strong className="block uppercase text-red-800">{item.type === "cctv" ? "Camera record" : item.type === "public_record" ? "Public record" : item.type === "forensic" ? "Lab report" : item.type === "device_file" ? "Device file" : item.type === "call" ? "Call" : item.type === "message" ? "Message" : item.type === "statement" ? "Statement" : "Found object"}</strong>{item.text.split("\n")[0]}</span>
-                      </label>
-                    );
-                  })}
+              <div className="border-b-2 border-[#6d5138] pb-4"><p className="text-xs uppercase tracking-[0.2em] text-red-800">Five findings · five stars</p><h3 className="mt-2 text-3xl uppercase">Tell it like it happened</h3><p className="mt-2 text-sm text-[#5b4635]">Drag cards from below (or from the notebook) into the blanks, or tap a card to place it.</p></div>
+              <div className="space-y-4 text-lg leading-[2.6rem]">
+                <p>
+                  <Slot accepts={(kind) => kind === "person"} label="who" onCard={(card) => setCulpritNpcId(card.referenceId)} onClear={() => setCulpritNpcId("")} value={people?.find((person) => person.id === culpritNpcId)?.name} />
+                  {" "}killed {victimName} with{" "}
+                  <Slot accepts={(kind) => kind === "item"} label="the weapon" onCard={(card) => { setWeaponItemId(inventory?.some((item) => item.id === card.referenceId) ? card.referenceId : ""); setWeaponDescription(card.label); }} onClear={() => { setWeaponItemId(""); setWeaponDescription(""); }} value={weaponItemId ? weaponDescription : undefined}>
+                    <input aria-label="Describe the weapon" className="case-close-blank w-44" maxLength={200} onChange={(event) => { setWeaponDescription(event.target.value); setWeaponItemId(""); }} placeholder="or describe it" value={weaponDescription} />
+                  </Slot>.
+                </p>
+                <p>They did it because <textarea aria-label="Why did they do it?" className="case-close-blank block min-h-16 w-full" maxLength={2000} onChange={(event) => setMotiveExplanation(event.target.value)} placeholder="the reason, in your words" value={motiveExplanation} /></p>
+                <p>This is how it was done: <textarea aria-label="How was it done?" className="case-close-blank block min-h-16 w-full" maxLength={2000} onChange={(event) => setMethodExplanation(event.target.value)} placeholder="step by step, in your words" value={methodExplanation} /></p>
+                <div>
+                  <p>And here is the proof:</p>
+                  <div className="min-h-16 border-2 border-dashed border-[#6d5138]/60 p-2 leading-normal" {...cardDropTarget(addProof, (kind) => kind !== "person" && kind !== "place")}>
+                    {evidenceIds.length ? (
+                      <ul className="flex flex-wrap gap-2">
+                        {evidenceIds.map((id) => <li className="flex items-center gap-2 border border-red-900/60 bg-[#efe3c4] px-2 py-1 text-sm" key={id}>{evidence.find((item) => item.referenceId === id)?.text.split("\n")[0] ?? "Evidence"}<button aria-label="Remove" className="text-red-900" onClick={() => toggleEvidence(id)} type="button">✕</button></li>)}
+                      </ul>
+                    ) : <p className="text-sm text-[#6d5138]">Drop up to {MAX_EVIDENCE} pieces of evidence here.</p>}
+                  </div>
+                  <textarea aria-label="Explain how the evidence proves it" className="case-close-blank mt-2 block min-h-16 w-full" maxLength={2000} onChange={(event) => setEvidenceExplanation(event.target.value)} placeholder="because this evidence shows..." value={evidenceExplanation} />
                 </div>
-              </fieldset>
-              <label className="block"><span className="case-close-label">Explain how the evidence proves your theory</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setEvidenceExplanation(event.target.value)} required value={evidenceExplanation} /></label>
-              <label className="block"><span className="case-close-label">5 · How was it done?</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setMethodExplanation(event.target.value)} required value={methodExplanation} /></label>
+              </div>
+              <section className="border-t border-[#6d5138]/40 pt-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-red-800">Your cards</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {people?.filter((person) => !person.isVictim).map((person) => <Card card={{ kind: "person", referenceId: person.id, label: person.name }} key={person.id} onTap={() => setCulpritNpcId(person.id)} tone="person" />)}
+                  {inventory?.map((item) => <Card card={{ kind: "item", referenceId: item.id, label: item.name }} key={item.id} onTap={() => { setWeaponItemId(item.id); setWeaponDescription(item.name); }} tone="object" />)}
+                  {evidence.map((item) => <Card card={{ kind: item.type as DragKind, referenceId: item.referenceId, label: item.text.split("\n")[0] }} key={`${item.type}:${item.referenceId}`} onTap={() => toggleEvidence(item.referenceId)} tone="evidence" />)}
+                </div>
+              </section>
               <div className="flex flex-col-reverse gap-3 border-t border-[#6d5138]/40 pt-5 sm:flex-row sm:justify-end"><button className="min-h-11 border-2 border-[#573821] px-5 uppercase" onClick={() => setClosing(false)} type="button">Cancel</button><button className="min-h-11 border-2 border-red-900 bg-red-950 px-5 uppercase text-red-50 disabled:opacity-50" disabled={!canReview} type="submit">Review final theory</button></div>
             </form>
           )}
@@ -260,5 +282,33 @@ function Epilogue({ epilogue }: { epilogue: EpilogueData }) {
         ))}
       </ol>
     </div>
+  );
+}
+
+/** A blank in the report sentence that takes a dropped card. */
+function Slot({ label, value, accepts, onCard, onClear, children }: { label: string; value?: string; accepts: (kind: DragKind) => boolean; onCard: (card: DragCard) => void; onClear: () => void; children?: React.ReactNode }) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-2 align-middle" {...cardDropTarget(onCard, accepts)}>
+      {value ? (
+        <span className="inline-flex items-center gap-2 border-b-2 border-red-900 bg-[#efe3c4] px-2 leading-8">{value}<button aria-label={`Clear ${label}`} className="text-sm text-red-900" onClick={onClear} type="button">✕</button></span>
+      ) : <span className="inline-block min-w-32 border-b-2 border-dashed border-[#6d5138] px-2 text-center text-sm leading-8 text-[#8b7355]">{label}</span>}
+      {!value ? children : null}
+    </span>
+  );
+}
+
+/** A draggable, tappable card in the report's card tray. */
+function Card({ card, tone, onTap }: { card: DragCard; tone: "person" | "object" | "evidence"; onTap: () => void }) {
+  return (
+    <button
+      className={`max-w-56 cursor-grab truncate border px-2 py-1 text-left text-xs ${tone === "person" ? "border-red-900/60 bg-[#e9d9c0]" : tone === "object" ? "border-[#573821] bg-[#e6dcc2]" : "border-[#6d5138]/60 bg-[#efe6cf]"}`}
+      draggable
+      onClick={onTap}
+      onDragStart={(event) => startCardDrag(event, card)}
+      title={card.label}
+      type="button"
+    >
+      {card.label}
+    </button>
   );
 }

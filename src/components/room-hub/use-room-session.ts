@@ -1,4 +1,5 @@
 import { useAuth } from "@clerk/nextjs";
+import { errorText } from "../../lib/error-text";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
 import { usePathname, useRouter } from "next/navigation";
@@ -123,7 +124,7 @@ export function useRoomSession(nickname: string) {
     try {
       await setReady({ roomCode: joinedRoomCode, isReady: !room?.meReady });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not update your ready status.");
+      setError(errorText(caught, "Could not update your ready status."));
     } finally {
       setWorkingAction(null);
     }
@@ -136,7 +137,7 @@ export function useRoomSession(nickname: string) {
     try {
       await startRoom({ roomCode: joinedRoomCode });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not start the investigation.");
+      setError(errorText(caught, "Could not start the investigation."));
     } finally {
       setWorkingAction(null);
     }
@@ -172,7 +173,7 @@ export function useRoomSession(nickname: string) {
       setRoomCode("");
       navigateTo("menu");
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not leave the room.");
+      setError(errorText(caught, "Could not leave the room."));
     } finally {
       setWorkingAction(null);
     }

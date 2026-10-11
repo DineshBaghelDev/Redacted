@@ -812,6 +812,8 @@ Player claims must remain claims, not canonical facts.
 - `sessionKnownPeople` (`by_sessionId_and_npcId`): people named in interview replies, with where they were first heard of.
 - `accusations.submittedGameTime`: case time when the report was filed, used for the result's time taken.
 - `caseItems` with `scatter/` evidence IDs: everyday objects placed by seeded code in every searchable room.
+- `cctvLabels` (`by_sessionId_and_recordEvidenceId`): who the team thinks a sighting shows; reasoning only.
+- `caseItems` with `code/` evidence IDs: the sticky note holding a found device's code, placed by seeded code.
 - `caseItems.collectible` is no longer used as a gate; every found object can be collected.
 
 ## LLM telemetry

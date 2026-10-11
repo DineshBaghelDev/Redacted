@@ -5,9 +5,10 @@ import { internalMutation, mutation, query, type MutationCtx, type QueryCtx } fr
 import { crimeCoreSchema } from "./generation/core/crimes";
 import { castSchema } from "./generation/core/schemas";
 import { cameraAtAccessPoint, getCameraAccess, getPlayingRoomMember, getRoomMember, requireInvestigationOpen, requireUserId } from "./lib/auth";
-import { CCTV_HALF_WINDOW } from "./lib/discoveries";
+import { CCTV_HALF_WINDOW, knownPeople } from "./lib/discoveries";
 import { ensureCaseCctv } from "./lib/publishCctv";
 import { ensureCaseClutter } from "./lib/publishClutter";
+import { ensureDeviceNotes } from "./lib/deviceCodes";
 import { ensureCaseDevices } from "./lib/publishDevices";
 import { ensureCaseForensics, restoreBodyForensicSources } from "./lib/publishForensics";
 import { ensureCaseNarrative } from "./lib/publishNarrative";
@@ -88,6 +89,7 @@ async function ensureCaseEstimate(ctx: MutationCtx, caseId: Id<"cases">, generat
 /** Copies the discovery minute and crime-scene room into the frozen case, once. */
 export async function ensureCaseOpening(ctx: MutationCtx, caseId: Id<"cases">) {
   await ensureCaseClutter(ctx, caseId);
+  await ensureDeviceNotes(ctx, caseId);
   const playableCase = await ctx.db.get(caseId);
   if (!playableCase || playableCase.discoveryMinute !== undefined || !playableCase.cityId) return;
   const crime = (await getDraft(ctx, playableCase.generationJobId, "crime"))?.output as { discovery?: { time?: unknown }; sceneRoomId?: unknown } | undefined;
@@ -356,6 +358,7 @@ export const getCctvTape = query({
   returns: v.union(v.null(), v.object({
     reviews: v.array(v.object({ minute: v.number(), ready: v.boolean() })),
     records: v.array(cctvRecord),
+    labels: v.array(v.object({ recordId: v.string(), npcId: v.id("npcs"), name: v.string() })),
   })),
   handler: async (ctx, { roomCode, cameraId }) => {
     const cctv = await loadCctv(ctx, roomCode);
@@ -367,10 +370,35 @@ export const getCctvTape = query({
       .take(200);
     // At the terminal the whole tape is visible; scrubbing is free and instant.
     const records = await ctx.db.query("cctvRecords").withIndex("by_cameraId_and_startTime", (q) => q.eq("cameraId", camera._id)).take(500);
+    const labels = [];
+    for await (const label of ctx.db.query("cctvLabels").withIndex("by_sessionId_and_recordEvidenceId", (q) => q.eq("sessionId", cctv.member.session._id))) {
+      if (!records.some((record) => record.evidenceId === label.recordEvidenceId)) continue;
+      const person = await ctx.db.get(label.npcId);
+      if (person) labels.push({ recordId: label.recordEvidenceId, npcId: label.npcId, name: person.name });
+    }
     return {
+      labels,
       reviews: reviews.map((review) => ({ minute: review.minute, ready: review.completeGameTime <= gameTime })),
       records: records.map((record) => ({ id: record.evidenceId, cameraId, start: record.startTime, end: record.endTime, summary: record.description, kind: record.kind })),
     };
+  },
+});
+
+/** Mark who the detectives think a sighting shows, or clear it. Shared with the partner; never graded. */
+export const labelSighting = mutation({
+  args: { roomCode: v.string(), recordId: v.string(), npcId: v.union(v.id("npcs"), v.null()) },
+  returns: v.null(),
+  handler: async (ctx, { roomCode, recordId, npcId }) => {
+    const member = await getPlayingRoomMember(ctx, roomCode);
+    if (!member?.session.caseId) throw new Error("Start the investigation first.");
+    const record = await ctx.db.query("cctvRecords").withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", member.session.caseId!).eq("evidenceId", recordId)).unique();
+    if (!record) throw new Error("That sighting is not part of this case.");
+    if (npcId && !(await knownPeople(ctx, member.session)).has(npcId)) throw new Error("You have not come across this person yet.");
+    const existing = await ctx.db.query("cctvLabels").withIndex("by_sessionId_and_recordEvidenceId", (q) => q.eq("sessionId", member.session._id).eq("recordEvidenceId", recordId)).unique();
+    if (!npcId) { if (existing) await ctx.db.delete(existing._id); return null; }
+    if (existing) await ctx.db.patch(existing._id, { npcId });
+    else await ctx.db.insert("cctvLabels", { sessionId: member.session._id, recordEvidenceId: recordId, npcId });
+    return null;
   },
 });
 
