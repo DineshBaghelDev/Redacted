@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-11 — Searchable objects as sprites
+
+- Search spots use deterministic furniture sprites and a separate searched-state atlas; generated case facts remain live text and are never painted into art. A short label stays with every sprite for clarity and accessibility. Found-object icons come from public item names only, with a neutral fallback, so icon selection does not disclose hidden evidence.
+
 ## 2026-10-11 — Sound levels and channels
 
 - Music and effects have separate volume controls. Loudness order: hover (faint) < button press (soft knock) < actions (door, page, stamp, bag). The score is voiced above 220 Hz, with overtones on the bass, so it plays on laptop and phone speakers.

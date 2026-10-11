@@ -6,6 +6,7 @@ import type { api } from "../../../convex/_generated/api";
 import { GameIcon } from "./game-icon";
 import { HoldButton } from "./gestures";
 import { InvestigationIcon } from "./investigation-icon";
+import { FurnitureSprite } from "./furniture-sprite";
 
 type Place = NonNullable<FunctionReturnType<typeof api.investigation.getPlace>>;
 type Room = Place["rooms"][number];
@@ -64,21 +65,23 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
   const hubs = isHub(room) ? [room] : around.filter(isHub);
   const doors = around.filter((next) => !isHub(next) && !(isHub(room) && next.floor !== room.floor));
   return (
-    <div className="room-floor relative flex flex-wrap content-start gap-2 p-4 animate-in fade-in zoom-in-95 duration-300 sm:block sm:aspect-[16/9] sm:p-0" key={room.id}>
+    <div className="room-floor relative flex flex-wrap content-start gap-2 p-4 animate-in fade-in zoom-in-95 duration-300 sm:block sm:aspect-[16/9] sm:p-0" data-room-type={room.type} key={room.id}>
       {room.spots.map((spot, index) => {
         const [x, y] = SPOT_ANCHORS[index % SPOT_ANCHORS.length];
         const found = foundBySpot.get(spot.key) ?? 0;
         const style = { "--x": `${x}%`, "--y": `${y}%` } as CSSProperties;
         return (
-          <div className="w-[calc(50%-0.25rem)] sm:absolute sm:left-[var(--x)] sm:top-[var(--y)] sm:w-40 sm:-translate-x-1/2 sm:-translate-y-1/2" key={spot.key} style={style}>
+          <div className="w-[calc(50%-0.25rem)] sm:absolute sm:left-[var(--x)] sm:top-[var(--y)] sm:w-36 sm:-translate-x-1/2 sm:-translate-y-1/2" key={spot.key} style={style}>
             {spot.searched ? (
-              <a className="room-furniture block border-[#6f9f98]/40 bg-[#0b1a1c]/85 text-[#c8d8d2]/80 hover:border-[#e8ac51]" href={`#spot-${spot.key}`}>
-                <span className="flex items-center gap-2 text-xs uppercase"><InvestigationIcon className="size-6" name="search" />{spot.name}</span>
-                <span className="mt-1 block text-[0.65rem] normal-case">{found ? `✓ ${found} found` : "✓ Nothing here"}</span>
+              <a className="room-spot block text-[#c8d8d2]/80" href={`#spot-${spot.key}`}>
+                {spot.name === "on the body" || spot.name === "shed" ? <InvestigationIcon className="size-14" name="room" /> : <FurnitureSprite searched spot={spot.name} />}
+                <span className="room-spot-label">{spot.name}</span>
+                <span className="block text-[0.65rem] normal-case">{found ? `✓ ${found} found` : "✓ Nothing here"}</span>
               </a>
             ) : (
-              <HoldButton className="room-furniture border-[#e8ac51]/50 bg-[#1a1710]/90 text-left normal-case" disabled={busy} label={searchingKey === spot.key ? "Searching..." : "Hold to search · 4 min"} onDone={() => onSearch(spot.key)}>
-                <span className="flex items-center gap-2 text-xs uppercase text-[#e4e6d8]"><InvestigationIcon className="size-6" name="search" />{spot.name}</span>
+              <HoldButton className="room-spot text-center normal-case" disabled={busy} label={searchingKey === spot.key ? "Searching..." : "Hold to search · 4 min"} onDone={() => onSearch(spot.key)}>
+                {spot.name === "on the body" || spot.name === "shed" ? <InvestigationIcon className="size-14" name="room" /> : <FurnitureSprite searched={false} spot={spot.name} />}
+                <span className="room-spot-label">{spot.name}</span>
               </HoldButton>
             )}
           </div>

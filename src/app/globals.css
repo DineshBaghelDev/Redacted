@@ -64,6 +64,23 @@
   .investigation-icon--lab { background-position: 50% 100%; }
   .investigation-icon--file { background-position: 100% 100%; }
 
+  .object-icon {
+    display: inline-block;
+    flex: none;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+  }
+
+  .furniture-sprite {
+    display: block;
+    width: 4rem;
+    height: 4rem;
+    margin-inline: auto;
+    background-size: 400% 400%;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+  }
+
   .device-app-icon {
     display: inline-block;
     width: 3.5rem;
@@ -663,6 +680,28 @@
   border-width: 2px;
   padding: 0.5rem 0.6rem;
   box-shadow: 0 6px 14px rgb(0 0 0 / 45%);
+}
+.room-spot {
+  display: block;
+  min-height: 6.5rem;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0.25rem;
+  text-align: center;
+  text-decoration: none;
+}
+.room-spot:hover, .room-spot:focus-visible { border-color: #e8ac51; background: rgb(7 20 22 / 45%); }
+.room-spot-label {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  background: rgb(7 20 22 / 82%);
+  padding: 0.1rem 0.3rem;
+  color: #e4e6d8;
+  font-size: 0.7rem;
+  line-height: 1.15;
+  text-transform: uppercase;
 }
 /* A doorway cut into the wall. Unexplored doors stay dark. */
 .room-door {

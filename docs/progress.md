@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-11 — Room furniture and found-object art
+
+- Added inspected, transparent pixel-art atlases for 16 furniture/search-spot types with matching searched appearances and 25 found-object categories. Room search now puts the furniture in the scene, keeps short labels visible, and preserves hold-to-search and discovered-item navigation. Found objects and lab bags use the matching category art; unknown names keep a neutral object icon.
+- Rejected a room-control sheet that carried a dark generated backdrop. Kept doors and floor graphics unchanged until clean artwork is ready.
+
 ## 2026-10-11 — Real music, separate volumes, softer clicks, page turns
 
 - **Music you can hear:** the old score was soft sines at 110–330 Hz, below what laptop speakers reproduce, so only the rain came through. The new score (Am–F–Dm–E) has a slow triangle pad, a sawtooth bass whose overtones carry on small speakers, and a sparse piano-like melody at 440–880 Hz. The rain sits under it.

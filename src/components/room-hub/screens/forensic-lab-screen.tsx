@@ -14,6 +14,7 @@ import { PinButton } from "../pin-button";
 import { FirstTimeTip } from "../first-time-tip";
 import { LabTask, type LabTest } from "../lab-tasks";
 import { InvestigationIcon } from "../investigation-icon";
+import { ObjectIcon } from "../object-icon";
 
 type TestType = LabTest;
 
@@ -28,10 +29,6 @@ const tools: { test: TestType; name: string; colour: string }[] = [
   { test: "ballistics", name: "Comparison scope", colour: "#e8ac51" },
   { test: "autopsy", name: "Autopsy", colour: "#e5a18e" },
 ];
-
-function sourceIcon(key: string) {
-  return key.startsWith("room:") ? "room" : "evidence";
-}
 
 export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
@@ -114,7 +111,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
                     onDragStart={(event) => startCardDrag(event, { kind: item.key.startsWith("item:") ? "item" : "place", referenceId: item.key, label: item.name })}
                     type="button"
                   >
-                    <InvestigationIcon className="size-8" name={sourceIcon(item.key)} />
+                    {item.key.startsWith("room:") ? <InvestigationIcon className="size-8" name="room" /> : <ObjectIcon className="size-8" name={item.name} />}
                     <span className="min-w-0 break-words">{item.name}</span>
                   </button>
                 </li>
@@ -134,12 +131,12 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
             >
               {!source ? <p className="text-sm uppercase tracking-widest text-[#c8d8d2]/50">Drag evidence onto the bench</p> : chosen && !alreadyDone ? (
                 <LabTask disabled={Boolean(lab.action) || Boolean(working)} key={`${source.key}:${chosen.test}`} onDone={() => run(chosen.test, requestTest({ roomCode, sourceKey: source.key, testType: chosen.test }))} seed={source.key} test={chosen.test}>
-                  <p className="flex min-w-0 items-center gap-2 text-sm uppercase"><InvestigationIcon className="size-8" name={sourceIcon(source.key)} /><span className="break-words">{source.name}</span></p>
+                  <p className="flex min-w-0 items-center gap-2 text-sm uppercase">{source.key.startsWith("room:") ? <InvestigationIcon className="size-8" name="room" /> : <ObjectIcon className="size-8" name={source.name} />}<span className="break-words">{source.name}</span></p>
                   <p className="shrink-0 text-xs uppercase" style={{ color: chosen.colour }}>{chosen.name}</p>
                 </LabTask>
               ) : (
                 <>
-                  <InvestigationIcon className="size-20" name={sourceIcon(source.key)} />
+                  {source.key.startsWith("room:") ? <InvestigationIcon className="size-20" name="room" /> : <ObjectIcon className="size-20" name={source.name} />}
                   <p className="mt-2 text-lg uppercase">{source.name}</p>
                   <p className="mt-1 text-xs uppercase tracking-widest text-[#c8d8d2]/60">{chosen ? "That test is already done on this" : "Pick a tool"}</p>
                 </>
