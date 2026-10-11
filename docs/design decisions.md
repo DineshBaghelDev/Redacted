@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-11 — Translucent control centers
+
+- The raster plate supplies button edges; its center has a translucent dark tint so the game scene shows through while labels remain readable. Main menu actions use a compact shared width, and long case titles can wrap inside it. The site icon uses the existing dossier emblem.
+
 ## 2026-10-11 — Open pin controls and complete button plates
 
 - Icon-only actions have no backing box, including controls whose labels hide on narrow screens. The clueboard pin uses the existing raster icon in two states: tilted silver when loose, upright gold when attached. Pressing it changes the visible state immediately; pressing the attached pin again removes the shared card and its strings through the existing board deletion action. A rejected action restores the shared state.

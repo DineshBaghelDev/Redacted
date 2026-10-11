@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-11 — Lighter menu controls and site icon
+
+- Replaced the opaque fill behind the existing raster button frames with a translucent dark tint. Main menu actions now use a compact, consistent width and shorter padding while keeping their labels readable on mobile.
+- Replaced the starter favicon with a small PNG derived from the existing REDACTED dossier emblem.
+
 ## 2026-10-11 — Pin toggles, raster plate fit, and archive summaries
 
 - Removed the boxes around icon-only pin, close, and bag controls, plus station returns, the bureau HUD, and the note control when their labels hide on mobile. The pin uses two appearances from the existing pixel icon atlas and flips immediately on press. Pressing an attached pin deletes that shared clueboard card using the existing mutation; a failed write restores the prior appearance.

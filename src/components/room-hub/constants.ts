@@ -2,7 +2,7 @@ export const menuButton =
   "game-menu-button text-lg uppercase disabled:opacity-60";
 
 export const menuOptionButton =
-  "game-menu-button text-lg uppercase disabled:opacity-60";
+  "game-menu-button w-full max-w-80 text-lg uppercase disabled:opacity-60";
 
 export const panel =
   "game-panel p-5";

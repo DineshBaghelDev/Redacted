@@ -34,10 +34,10 @@ export function MainMenuScreen({
   return (
     <div className="flex max-h-full w-full max-w-md flex-col gap-7 overflow-y-auto py-1">
       <GameLogo />
-      <nav aria-label="Main menu" className="flex w-full flex-col gap-2">
+      <nav aria-label="Main menu" className="flex w-full flex-col items-start gap-2">
         {activeRooms?.map((room) => (
           <button
-            className="game-menu-button mb-2 min-h-20 border-[#e8ac51] bg-[#2b2419]"
+            className="game-menu-button mb-2 min-h-20 w-full max-w-80 border-[#e8ac51]"
             key={room.roomCode}
             onClick={() => { play("open"); onContinue(room.roomCode, room.status, room.reportSubmitted); }}
             type="button"
