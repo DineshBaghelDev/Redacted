@@ -182,8 +182,8 @@ export function RoomHub() {
       {screen === "history" ? <CaseHistoryScreen onBack={() => setScreen("menu")} onOpen={openReport} /> : null}
 
       {screen === "how" ? (
-        <div className="game-panel w-full max-w-xl overflow-y-auto px-8 py-12 sm:px-12">
-          <h1 className="game-title mb-5 text-3xl uppercase">How to play</h1>
+        <div className="w-full max-w-xl shrink-0 border border-[#45635d] bg-[#071014]/92 px-6 py-8 sm:px-10">
+          <h1 className="game-title mb-6 text-3xl uppercase">How to play</h1>
           <HowToPlay />
           <button className={`${menuButton} mt-6`} onClick={() => setScreen("menu")} type="button"><ControlIcon name="back" />Back to menu</button>
         </div>

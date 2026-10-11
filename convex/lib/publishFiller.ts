@@ -2,7 +2,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 
 /** Bump when the filler below changes, so cases opened earlier get the new set on their next replay. */
-const FILLER_VERSION = 1;
+const FILLER_VERSION = 2;
 const PREFIX = "filler/";
 
 /** Small deterministic random generator seeded from text, so a case always gets the same filler. */
@@ -51,8 +51,21 @@ const CLOTHES = [
   "checked shirt, toolbelt", "red scarf, pushchair", "school uniform, rucksack", "delivery uniform, insulated box",
 ];
 
-function sighting(random: () => number) {
-  return `${pick(random, HEIGHTS)} ${pick(random, PEOPLE)}, ${pick(random, BUILDS)}, ${pick(random, CLOTHES)}`;
+/**
+ * Passers-by must never pass for someone in the case: no height or clothing word any cast member's public
+ * description uses. They are crowd, not characters, and never touch a lie, the score, or People.
+ */
+export function crowdFor(descriptions: string[]) {
+  const cast = descriptions.join(" ").toLowerCase();
+  const castWords = new Set(cast.match(/[a-z]{4,}/g) ?? []);
+  return {
+    heights: HEIGHTS.filter((height) => !cast.includes(height.toLowerCase())),
+    clothes: CLOTHES.filter((outfit) => !(outfit.toLowerCase().match(/[a-z]{4,}/g) ?? []).some((word) => castWords.has(word))),
+  };
+}
+
+function sighting(random: () => number, crowd: ReturnType<typeof crowdFor>) {
+  return `${pick(random, crowd.heights)} ${pick(random, PEOPLE)}, ${pick(random, BUILDS)}, ${pick(random, crowd.clothes)}`;
 }
 
 /**
@@ -62,11 +75,13 @@ function sighting(random: () => number) {
 export async function ensureCaseFiller(ctx: MutationCtx, caseId: Id<"cases">) {
   const playableCase = await ctx.db.get(caseId);
   if (!playableCase || (playableCase.fillerVersion ?? 0) >= FILLER_VERSION) return;
+  const firstTime = (playableCase.fillerVersion ?? 0) < 1;
   const end = playableCase.discoveryMinute ?? 2 * 1440;
   const start = Math.max(0, end - 2 * 1440);
   const between = (random: () => number, from: number, to: number) => from + Math.floor(random() * Math.max(1, to - from));
 
-  for await (const device of ctx.db.query("devices").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) {
+  // Device filler only changes with version 1; later versions redo the camera crowd alone.
+  if (firstTime) for await (const device of ctx.db.query("devices").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) {
     const random = seeded(`${device._id}:filler`);
     if (device.type === "laptop") {
       for (const [title, body] of [...FILES].sort(() => random() - 0.5).slice(0, 2)) {
@@ -90,10 +105,16 @@ export async function ensureCaseFiller(ctx: MutationCtx, caseId: Id<"cases">) {
     if (!placeNames.has(id)) placeNames.set(id, (await ctx.db.get(id))?.name ?? "");
     return placeNames.get(id)!;
   };
+  // Redo the crowd: same evidence IDs, so any marks or pins on a passer-by still point at a record.
+  const oldCrowd = await ctx.db.query("cctvRecords").withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", caseId).gte("evidenceId", PREFIX).lt("evidenceId", `${PREFIX}￿`)).take(1000);
+  for (const old of oldCrowd) await ctx.db.delete(old._id);
+  const descriptions: string[] = [];
+  for await (const person of ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) descriptions.push(person.publicDescription);
+  const crowd = crowdFor(descriptions);
   const cameras: Doc<"cctvCameras">[] = [];
   for await (const camera of ctx.db.query("cctvCameras").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) cameras.push(camera);
   for (const camera of cameras) {
-    if (camera.faulty) continue;
+    if (camera.faulty || !crowd.heights.length || !crowd.clothes.length) continue;
     const random = seeded(`${camera._id}:filler`);
     const from = await placeName(camera.streetFromPlaceId);
     const to = await placeName(camera.streetToPlaceId);
@@ -102,7 +123,7 @@ export async function ensureCaseFiller(ctx: MutationCtx, caseId: Id<"cases">) {
     for (let index = 0; index < count; index++) {
       const time = between(random, Math.max(camera.startTime, start), Math.min(camera.endTime, end));
       const movement = street ? (random() < 0.5 ? `walking from ${from} towards ${to}` : `walking from ${to} towards ${from}`) : pick(random, ["passing through", "walking past", "waiting briefly, then leaving"]);
-      await ctx.db.insert("cctvRecords", { caseId, cameraId: camera._id, evidenceId: `${PREFIX}${camera.sourceId}/${index}`, startTime: time, endTime: time + 1, npcIds: [], vehicleIds: [], description: `${sighting(random)}: ${movement}`, kind: "pass" });
+      await ctx.db.insert("cctvRecords", { caseId, cameraId: camera._id, evidenceId: `${PREFIX}${camera.sourceId}/${index}`, startTime: time, endTime: time + 1, npcIds: [], vehicleIds: [], description: `${sighting(random, crowd)}: ${movement}`, kind: "pass" });
     }
   }
   await ctx.db.patch(caseId, { fillerVersion: FILLER_VERSION });

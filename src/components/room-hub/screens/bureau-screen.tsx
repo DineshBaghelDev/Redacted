@@ -309,7 +309,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
       {notebookOpen ? <NotebookOverlay roomCode={roomCode} onClose={() => setNotebookOpen(false)} /> : null}
 
       <dialog aria-labelledby="pause-title" className="m-auto max-h-[90vh] w-[min(30rem,calc(100%-2rem))] bg-transparent p-0 backdrop:bg-black/75" onCancel={(event) => { event.preventDefault(); setMenuOpen(false); setConfirmLeave(false); }} ref={menuRef}>
-        <div className="game-panel px-10 py-10 text-[#e4e6d8]">
+        <div className="game-panel px-10 py-16 text-[#e4e6d8]">
           <h2 className="game-title text-2xl uppercase" id="pause-title">Paused</h2>
           <p className="mt-1 text-xs text-[#c8d8d2]/70">The case clock only runs while someone is busy.</p>
           {confirmLeave ? (
@@ -350,7 +350,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
               <button className="min-h-11 border border-red-400/70 text-sm uppercase text-red-100" onClick={() => setConfirmLeave(true)} type="button">Leave case</button>
             </div>
           )}
-          <details className="mt-4 text-xs text-[#c8d8d2]/75"><summary className="cursor-pointer uppercase text-[#e8ac51]">Controls</summary><dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+          <details className="mt-4 hidden text-xs text-[#c8d8d2]/75 sm:block"><summary className="cursor-pointer uppercase text-[#e8ac51]">Controls</summary><dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
             <dt className="font-mono text-[#e8ac51]">N</dt><dd>Notebook</dd>
             <dt className="font-mono text-[#e8ac51]">M</dt><dd>City map</dd>
             <dt className="font-mono text-[#e8ac51]">B</dt><dd>Clueboard</dd>

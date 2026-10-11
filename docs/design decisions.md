@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-10-11 — Autopsy and crowd
+
+- The autopsy is a dictation: find the named regions in order, with left and right from the body's point of view. It stays a stand-in for doing the work and never shows findings; the stored report is the result.
+- Camera passers-by are crowd, not characters. They may not share a height or clothing word with anyone in the case, so a description that seems to match a suspect is always a real sighting.
+- Reading-heavy menu pages (How to play) use a plain panel; the illustrated frame is kept for short panels, because its seams cross long text.
+
 ## 2026-10-11 — Final audit fixes
 
 - **Time has a stake:** the five stars are unchanged, but stars plus one step for filing by the deadline give a detective rank (Rookie, Detective, Inspector, Chief Inspector), shown on the result and in Case history. This replaces "time is cosmetic" while keeping the score rule.

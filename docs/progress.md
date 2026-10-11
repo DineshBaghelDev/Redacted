@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-10-11 — Autopsy task, crowd safety, phone pass
+
+- **Autopsy:** the pathologist now dictates four body regions in a seeded order ("the neck, then the body's left arm…"). You examine each on an unlabelled body; left and right are the body's own. A wrong region gets a correction, not a reset. The task shows no findings.
+- **Camera crowd:** passers-by never use a height or clothing word from any cast member's public description, so they can't be mistaken for a character. They are linked to nobody and never break a lie or count for the score. Cases that already had filler get the crowd redone on their next replay (filler version 2, same record IDs). On Whitlock, the cast spans 5'5"–6'1" and the crowd uses only 5'2", 5'4", 5'10" and 6'2".
+- **Phone pass (390×844 frame, signed in):** menu, How to play, Case history, archive, solo lobby, brief, scene, bureau, security desk, interview with the evidence tray, notebook, pause menu, case file, clueboard, and the given-up result with its buttons. No page-wide sideways scroll anywhere. Fixed: How to play scrolled inside its frame and the frame's seam crossed the text (now a plain reading panel). The pause menu's title and bottom touched the frame (more padding; keyboard controls hidden on phones). "Close the file" wrapped (icon-only on phones).
+- 174 tests, TypeScript and lint pass.
+
 ## 2026-10-11 — Final audit fixes
 
 - **Interviews:** statements are taken by any whereabouts or "what did you see" question, and the first-time tip explains it. Only "your phone" triggers a handover. Proof that disproves nothing shows a grey "They don't budge" stamp. NPCs may lie only about scripted topics and know the current case time. The transcript drops the repeated "Name asks:" prefix and shows presented evidence on its own line. Statement titles read "Statement of …". "Tag clue" and "Prove it wrong" are now "Show evidence".

@@ -152,7 +152,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
           <p className="text-xs uppercase tracking-[0.24em] text-red-900/70">Final investigation file</p>
           <h2 className="mt-1 text-xl uppercase sm:text-2xl">Case file</h2>
         </div>
-        <button className="game-control-button min-h-11 px-4 text-sm uppercase" onClick={onBack} type="button"><ControlIcon name="back" />Close the file</button>
+        <button aria-label="Close the file" className="game-control-button game-icon-mobile min-h-11 px-4 text-sm uppercase" onClick={onBack} title="Close the file" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Close the file</span></button>
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto bg-[#160f0b]/60 p-4 sm:p-6 lg:p-8">

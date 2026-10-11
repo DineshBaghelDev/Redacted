@@ -6,7 +6,7 @@ Features a normal player expects around the case itself: menus, history, sharing
 
 Built: 1 case history (closed rooms never expire), 2 Main menu exit, 3 archive stamps and replay warning, 4 after-result buttons, 5 invite links, 6 How to play, 7 solo start, 8 profile stats (on the Case history screen), 9 name saved to the account, 10 rejoin a started room by code, 11 Large text, 12 notebook search, 13 Report a problem (Sentry feedback), 14 Share result (text), 15 case of the day, 16 badges, 18 partner messages in the notebook.
 
-Not built: **17 watch-replay timeline.** The game doesn't record when each discovery was made, so a team timeline needs a new action log. Deferred rather than faked.
+Not built: **17 watch-replay timeline.** Dropped by decision; the game doesn't record when each discovery was made.
 
 ## Must have before ship
 

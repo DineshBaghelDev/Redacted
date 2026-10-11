@@ -20,8 +20,8 @@ Fixed and checked (tests and a signed-in Chrome run; details in `docs/progress.m
 Still open:
 
 - **Needs art** (see `ARTWORK_NEEDED.md`): room sprites, object icons, portrait expressions, interview room foreground, clueboard surface, missing map icons.
-- **Design calls left as they are:** the autopsy bench task is still trivial; the lab still offers every tool on every bag; the report keeps three written answers because motive and method are separate stars.
-- **Not measured:** render churn on a mid-range phone; client-settled clock with both tabs closed.
+- **Design calls left as they are:** the lab still offers every tool on every bag (the autopsy task was reworked into a dictation); the report keeps three written answers because motive and method are separate stars.
+- **Phone layout:** checked at 390×844 and fixed (see progress). **Not measured:** render churn on a mid-range phone; client-settled clock with both tabs closed.
 - **Not reproduced:** the main-menu "never finishes loading" seen twice in the first run. The menu loaded normally in the second run.
 - **Not run:** `next build`, because the dev server was using `.next`.
 
