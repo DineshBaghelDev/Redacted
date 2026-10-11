@@ -128,8 +128,8 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   if (activeDevice?.device) return <DeviceViewer title={activeDevice.name} data={activeDevice.device} onBack={() => setActiveDeviceId(null)} onPin={pin} isPinned={(type, id) => boardNodes?.some((node) => node.type === type && node.referenceId === id) ?? false} busy={working || Boolean(place.action)} error={error} />;
 
   const currentRoom = place.rooms.find((room) => room.id === place.currentRoomId);
-  const here = place.items.filter((item) => item.roomId === place.currentRoomId && !item.collected);
-  const inventory = place.items.filter((item) => item.collected);
+  // Bagged objects stay on their spot's card (marked "Bagged"); the lab and notebook are where carried evidence is used.
+  const here = place.items.filter((item) => item.roomId === place.currentRoomId);
   const busy = working || Boolean(place.action);
   const gameTime = place.clock.gameTime + (place.clock.clockStartedAt === null || now === 0
     ? 0 : Math.max(0, Math.floor((now - place.clock.clockStartedAt) / place.clock.minuteMs)));
@@ -245,12 +245,6 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
             </>
           ) : <p className="mt-6 text-sm text-[#c8d8d2]/60">Nothing to search here. Pick another room at the top.</p>}
 
-          <details className="mt-8 border-t border-[#6f9f98]/25 pt-4">
-            <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/70">Carried evidence · {inventory.length}</summary>
-            {inventory.length ? <div className="mt-3 grid gap-2 sm:grid-cols-2">{inventory.map((item) => (
-              <ItemCard busy={busy} fresh={false} item={item} key={item.id} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />
-            ))}</div> : <p className="mt-3 text-sm text-[#c8d8d2]/55">Collected objects travel with both of you.</p>}
-          </details>
         </div>
       </div>
     </section>

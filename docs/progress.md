@@ -3,6 +3,7 @@
 ## 2026-10-11 — Clutter pass
 
 - Places: the floor plan is now a thin strip of rooms across the top (ordered by doors from the entrance), so the search area gets the full width. Each spot card is itself the press-and-hold target; no separate buttons.
+- The "Carried evidence" dropdown is gone from search screens; bagged objects stay on their spot card marked "Bagged".
 - Found objects: Bag and Pin are small icons in the card's header; "No code? Have the lab crack it" is a quiet link under the keypad.
 - Notebook: Pin and Show partner appear only when you point at an entry (always shown on touch screens); pinned entries keep a small mark.
 - Interviews: the "What did you see?" and "Hand me your phone" chips are gone. Asking in your own words ("where were you", "what happened", "can I see your phone") does the same.
