@@ -25,14 +25,23 @@ const placeArtwork: Record<string, string> = {
   "linden-court": "apartment",
   "carver-towers": "apartment",
   "calder-park": "park",
-  "quik-stop": "cafe",
+  "quik-stop": "quik-stop",
   "ember-cafe": "cafe",
   "union-station": "station",
   "meridian-tower": "apartment",
   "regent-hotel": "hotel",
-  "blue-lantern": "cafe",
-  "route-9-diner": "cafe",
+  "blue-lantern": "blue-lantern",
+  "route-9-diner": "route-9-diner",
   "rusk-garage": "garage",
+  "keel-14": "keel-14",
+  "harlow-3": "harlow-3",
+  "marlow-27": "marlow-27",
+  "gable-row": "gable-row",
+  "civic-bank": "civic-bank",
+  "st-clare-clinic": "st-clare-clinic",
+  "pier-9": "pier-9",
+  "police-bureau": "police-bureau",
+  "forensic-lab": "forensic-lab",
 };
 
 function artworkForPlace(place: { id: string; kind: keyof typeof kindLabels }) {
@@ -186,11 +195,11 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
               if (!from || !to) return null;
               const span = Math.max(1, city.activeTravel.completeGameTime - city.activeTravel.startGameTime);
               const progress = Math.min(1, Math.max(0, (gameTime - city.activeTravel.startGameTime) / span));
-              return <span aria-hidden="true" className="map-traveller absolute z-40 size-4 -translate-x-1/2 -translate-y-1/2 border-2 border-[#071014] bg-[#ffd287] shadow-[0_0_10px_#ffd287]" style={{ left: `${from.x + (to.x - from.x) * progress}%`, top: `${from.y + (to.y - from.y) * progress}%` }} />;
+              return <span aria-hidden="true" className="map-token map-token--car map-traveller absolute z-40 size-7 -translate-x-1/2 -translate-y-1/2" style={{ left: `${from.x + (to.x - from.x) * progress}%`, top: `${from.y + (to.y - from.y) * progress}%` }} />;
             })() : null}
             {coop?.partners.map((partner) => {
               const at = city.places.find((place) => place.id === partner.placeId);
-              return at ? <span className="pointer-events-none absolute z-40 -translate-x-1/2 translate-y-3 whitespace-nowrap border border-[#9fd1c4] bg-[#071014]/90 px-1 text-[0.65rem] uppercase text-[#9fd1c4]" key={partner.name} style={{ left: `${at.x}%`, top: `${at.y}%` }}>◆ {partner.name}</span> : null;
+              return at ? <span className="pointer-events-none absolute z-40 flex -translate-x-1/2 translate-y-3 items-center gap-1 whitespace-nowrap text-[0.65rem] uppercase text-[#9fd1c4]" key={partner.name} style={{ left: `${at.x}%`, top: `${at.y}%` }}><span aria-hidden="true" className="map-token map-token--partner size-5" />{partner.name}</span> : null;
             })}
             {city.places.map((place) => {
               const active = place.id === selected.id;
@@ -207,7 +216,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
                   type="button"
                 >
                   <span aria-hidden="true" className={`map-place-icon map-place-icon--${artworkForPlace(place)}`} />
-                  {current ? <span aria-hidden="true" className="map-marker-current absolute -right-0.5 -top-0.5 block size-3 bg-[#ffd287]" /> : null}
+                  {current ? <span aria-hidden="true" className="map-token map-token--player absolute -right-1 -top-1 size-5" /> : null}
                   <span className={`map-marker-label ${crowded ? "map-marker-label--crowded" : ""} ${place.y > 77 ? "map-marker-label--above" : ""} ${place.x > 82 ? "map-marker-label--right" : ""}`}>{place.name}</span>
                 </button>
               );

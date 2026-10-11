@@ -5,7 +5,7 @@ Style: the existing pixel-noir set (charcoal, petrol teal, aged amber; transpare
 ## Already in `public/assets/`
 bureau-noir, menu-noir, archive-room, interview-room, lab-room, records-room, report-desk, exploration-wall, city-grid, clueboard-cork (reverted), dossier-frame, terminal-frame, control-plate(+trim), control-icons, station-icons, investigation-icons, device-app-icons, map-places, map-places-extra, redacted-emblem.
 
-**Update:** room-furniture and room-furniture-searched atlases now cover the common search spots; evidence-objects-primary and evidence-objects-secondary cover 25 found-object categories. Clean art is still needed for the remaining room kinds, doors, floors, and stations below.
+**Update:** room-furniture and room-furniture-searched atlases cover the common search spots; evidence-objects-primary and evidence-objects-secondary cover 25 found-object categories. Twelve floor materials, named-place silhouettes, and the car/detective map tokens are now in use. Clean art is still needed for doors, special search spots, and the stations below.
 
 ## Priority 1 — the screens players spend most time on
 

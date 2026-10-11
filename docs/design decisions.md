@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-11 — Material and map art
+
+- Keep floors subtle under search targets; each generated room kind selects a repeating pixel material. Named map buildings may have their own art, with generic kind icons as a fallback for future places. Player and travel tokens stay small enough to preserve map labels.
+
 ## 2026-10-11 — Searchable objects as sprites
 
 - Search spots use deterministic furniture sprites and a separate searched-state atlas; generated case facts remain live text and are never painted into art. A short label stays with every sprite for clarity and accessibility. Found-object icons come from public item names only, with a neutral fallback, so icon selection does not disclose hidden evidence.

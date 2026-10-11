@@ -308,6 +308,34 @@
   .map-place-icon--station { background-position: 0 100%; }
   .map-place-icon--hotel { background-position: 50% 100%; }
   .map-place-icon--garage { background-position: 100% 100%; }
+  .map-place-icon--keel-14, .map-place-icon--harlow-3, .map-place-icon--marlow-27,
+  .map-place-icon--gable-row, .map-place-icon--civic-bank, .map-place-icon--st-clare-clinic,
+  .map-place-icon--pier-9, .map-place-icon--police-bureau, .map-place-icon--forensic-lab,
+  .map-place-icon--quik-stop, .map-place-icon--blue-lantern, .map-place-icon--route-9-diner {
+    background-image: url('/assets/map-places-named.png');
+    background-size: 400% 300%;
+  }
+  .map-place-icon--keel-14 { background-position: 0 0; }
+  .map-place-icon--harlow-3 { background-position: 33.333% 0; }
+  .map-place-icon--marlow-27 { background-position: 66.667% 0; }
+  .map-place-icon--gable-row { background-position: 100% 0; }
+  .map-place-icon--civic-bank { background-position: 0 50%; }
+  .map-place-icon--st-clare-clinic { background-position: 33.333% 50%; }
+  .map-place-icon--pier-9 { background-position: 66.667% 50%; }
+  .map-place-icon--police-bureau { background-position: 100% 50%; }
+  .map-place-icon--forensic-lab { background-position: 0 100%; }
+  .map-place-icon--quik-stop { background-position: 33.333% 100%; }
+  .map-place-icon--blue-lantern { background-position: 66.667% 100%; }
+  .map-place-icon--route-9-diner { background-position: 100% 100%; }
+  .map-token {
+    display: inline-block;
+    flex: none;
+    background: url('/assets/map-tokens.png') no-repeat 0 0 / 300% 100%;
+    image-rendering: pixelated;
+    filter: drop-shadow(1px 2px 1px #061013);
+  }
+  .map-token--player { background-position: 50% 0; }
+  .map-token--partner { background-position: 100% 0; }
 
   .map-marker {
     border: 0;
@@ -665,17 +693,29 @@
   background-color: rgb(232 172 81 / 0.08);
 }
 
-/* A room seen from above: plank floor inside thick walls. */
+/* A room seen from above: material floor inside thick walls. */
 .room-floor {
+  --floor-art: url('/assets/floors/corridor.png');
   border: 10px solid #1b2a2c;
   outline: 2px solid rgb(111 159 152 / 35%);
   background-color: #2a1f15;
-  background-image:
-    radial-gradient(ellipse at 50% 40%, rgb(232 172 81 / 10%), transparent 65%),
-    repeating-linear-gradient(90deg, rgb(0 0 0 / 22%) 0 2px, transparent 2px 64px),
-    repeating-linear-gradient(0deg, rgb(255 255 255 / 3%) 0 1px, transparent 1px 22px);
+  background-image: linear-gradient(rgb(4 12 15 / 24%), rgb(4 12 15 / 24%)), var(--floor-art);
+  background-size: auto, 181px 181px;
+  image-rendering: pixelated;
   box-shadow: inset 0 0 40px rgb(0 0 0 / 70%);
 }
+.room-floor[data-room-type="living"] { --floor-art: url('/assets/floors/living.png'); }
+.room-floor[data-room-type="kitchen"] { --floor-art: url('/assets/floors/kitchen.png'); }
+.room-floor[data-room-type="bedroom"] { --floor-art: url('/assets/floors/bedroom.png'); }
+.room-floor[data-room-type="bathroom"] { --floor-art: url('/assets/floors/bathroom.png'); }
+.room-floor[data-room-type="garage"] { --floor-art: url('/assets/floors/garage.png'); }
+.room-floor[data-room-type="yard"] { --floor-art: url('/assets/floors/yard.png'); }
+.room-floor[data-room-type="unit"] { --floor-art: url('/assets/floors/unit.png'); }
+.room-floor[data-room-type="office"] { --floor-art: url('/assets/floors/office.png'); }
+.room-floor[data-room-type="storage"] { --floor-art: url('/assets/floors/storage.png'); }
+.room-floor[data-room-type="shopfloor"] { --floor-art: url('/assets/floors/shopfloor.png'); }
+.room-floor[data-room-type="outdoor"] { --floor-art: url('/assets/floors/outdoor.png'); }
+.room-floor[data-room-type="special"] { --floor-art: url('/assets/floors/office.png'); }
 .room-furniture {
   border-width: 2px;
   padding: 0.5rem 0.6rem;

@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-11 — Floor materials and named map art
+
+- Added 12 restrained floor textures for the generated room kinds and used them behind the furniture sprites. The map now has distinct silhouettes for the missing named houses, bank, clinic, pier, bureau, lab, shop, bar, and diner. Travel and detective positions use small car/character tokens instead of a glowing square and boxed diamond.
+
 ## 2026-10-11 — Room furniture and found-object art
 
 - Added inspected, transparent pixel-art atlases for 16 furniture/search-spot types with matching searched appearances and 25 found-object categories. Room search now puts the furniture in the scene, keeps short labels visible, and preserves hold-to-search and discovered-item navigation. Found objects and lab bags use the matching category art; unknown names keep a neutral object icon.
