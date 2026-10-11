@@ -122,21 +122,22 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
 
           <div>
             <div
-              className="relative flex min-h-56 flex-col items-center justify-center border-2 border-dashed border-[#6f9f98]/40 bg-[#081315]/80 p-4 text-center"
+              className="lab-bench relative flex min-h-56 flex-col items-center justify-center p-4 text-center"
               {...cardDropTarget((card) => {
                 const key = card.kind === "item" && !card.referenceId.includes(":") ? `item:${card.referenceId}` : card.referenceId;
                 if (lab.sources.some((item) => item.key === key)) placeOnBench(key);
                 else setError("Bag that at the scene first, then bring it here.");
               })}
             >
-              {!source ? <p className="text-sm uppercase tracking-widest text-[#c8d8d2]/50">Drag evidence onto the bench</p> : chosen && !alreadyDone ? (
+              {!source ? <div className="flex flex-col items-center"><span aria-hidden="true" className="lab-prop size-16" /><p className="mt-2 text-sm uppercase tracking-widest text-[#c8d8d2]">Drag evidence onto the bench</p></div> : chosen && !alreadyDone ? (
                 <LabTask disabled={Boolean(lab.action) || Boolean(working)} key={`${source.key}:${chosen.test}`} onDone={() => run(chosen.test, requestTest({ roomCode, sourceKey: source.key, testType: chosen.test }))} seed={source.key} test={chosen.test}>
-                  <p className="flex min-w-0 items-center gap-2 text-sm uppercase">{source.key.startsWith("room:") ? <InvestigationIcon className="size-8" name="room" /> : <ObjectIcon className="size-8" name={source.name} />}<span className="break-words">{source.name}</span></p>
+                  <p className="flex min-w-0 items-center gap-2 text-sm uppercase"><span aria-hidden="true" className={`lab-tool-icon lab-tool-icon--${chosen.test} size-8`} /><span className="break-words">{source.name}</span></p>
                   <p className="shrink-0 text-xs uppercase" style={{ color: chosen.colour }}>{chosen.name}</p>
                 </LabTask>
               ) : (
                 <>
-                  {source.key.startsWith("room:") ? <InvestigationIcon className="size-20" name="room" /> : <ObjectIcon className="size-20" name={source.name} />}
+                  <span aria-hidden="true" className="lab-prop lab-prop--open size-12" />
+                  {source.key.startsWith("room:") ? <InvestigationIcon className="size-16" name="room" /> : <ObjectIcon className="size-16" name={source.name} />}
                   <p className="mt-2 text-lg uppercase">{source.name}</p>
                   <p className="mt-1 text-xs uppercase tracking-widest text-[#c8d8d2]/60">{chosen ? "That test is already done on this" : "Pick a tool"}</p>
                 </>
@@ -150,8 +151,8 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
                 {tools.map((item) => {
                   const done = requests.some((row) => row.testType === item.test);
                   return (
-                    <button aria-checked={tool === item.test} className="flex min-h-11 items-center gap-2 border border-[#6f9f98]/40 px-3 text-xs uppercase aria-checked:border-[#e8ac51] aria-checked:bg-[#e8ac51]/10 aria-checked:text-[#f1c987]" key={item.test} onClick={() => { play("click"); setTool(item.test); }} role="radio" type="button">
-                      <span aria-hidden="true" className="size-3 rounded-full" style={{ background: item.colour }} />
+                    <button aria-checked={tool === item.test} className="flex min-h-11 items-center gap-2 border-b-2 border-transparent px-2 text-xs uppercase hover:text-[#f1c987] aria-checked:border-[#e8ac51] aria-checked:text-[#f1c987]" key={item.test} onClick={() => { play("click"); setTool(item.test); }} role="radio" type="button">
+                      <span aria-hidden="true" className={`lab-tool-icon lab-tool-icon--${item.test} size-9`} />
                       {item.name}{done ? " ✓" : ""}
                     </button>
                   );
@@ -166,7 +167,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
                   const name = tools.find((item) => item.test === request.testType)?.name ?? request.testType;
                   return (
                     <li className="game-dossier p-3 text-[#211d17] sm:col-span-2" key={request.id}>
-                      <p className="flex items-center justify-between gap-2 text-sm uppercase"><span>{name}</span><span className="text-xs">Report</span></p>
+                      <p className="flex items-center justify-between gap-2 text-sm uppercase"><span className="flex items-center gap-2"><span aria-hidden="true" className="lab-prop lab-prop--report size-8" />{name}</span><span className="text-xs">Report</span></p>
                       <p className="mt-2 whitespace-pre-wrap border-t border-[#8b7355] pt-2 text-sm leading-relaxed">{request.result}</p>
                       {request.outputId ? <PinButton className="mt-2" disabled={Boolean(working)} nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={request.outputId} roomCode={roomCode} type="forensic" /> : null}
                     </li>

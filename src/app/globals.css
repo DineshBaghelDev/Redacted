@@ -170,6 +170,32 @@
     background: url('/assets/interview-foreground.png') center bottom / 100% auto no-repeat;
     image-rendering: pixelated;
   }
+  .lab-bench {
+    background: #10262a url('/assets/lab-bench.png') center / 100% 100% no-repeat;
+    box-shadow: 0 8px 18px rgb(0 0 0 / 45%);
+    text-shadow: 1px 2px #061013;
+  }
+  .lab-tool-icon {
+    display: inline-block;
+    flex: none;
+    background: url('/assets/lab-tools.png') no-repeat 0 0 / 400% 200%;
+    image-rendering: pixelated;
+  }
+  .lab-tool-icon--blood { background-position: 33.333% 0; }
+  .lab-tool-icon--dna { background-position: 66.667% 0; }
+  .lab-tool-icon--toxicology { background-position: 100% 0; }
+  .lab-tool-icon--fiber { background-position: 0 100%; }
+  .lab-tool-icon--footprint { background-position: 33.333% 100%; }
+  .lab-tool-icon--ballistics { background-position: 66.667% 100%; }
+  .lab-tool-icon--autopsy { background-position: 100% 100%; }
+  .lab-prop {
+    display: inline-block;
+    flex: none;
+    background: url('/assets/lab-props.png') no-repeat 0 0 / 300% 100%;
+    image-rendering: pixelated;
+  }
+  .lab-prop--open { background-position: 50% 0; }
+  .lab-prop--report { background-position: 100% 0; }
 
   .game-records-scene {
     background: #071014 url('/assets/records-room.png') center / cover no-repeat;

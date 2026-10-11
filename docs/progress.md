@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-11 — Lab equipment and bench art
+
+- Added inspected transparent sprites for all eight existing lab tools and sealed/open evidence bags, plus a restrained bench surface and blank report sheet. The selected task, tool picker, bench state, and completed reports now show the matching art. Results remain live text and the test actions and timings are unchanged.
+
 ## 2026-10-11 — Interview art and expressions
 
 - Replaced the dark conversation slab with a generated blank transcript-paper frame and readable live text. Added a restrained table/chair foreground beneath the desktop portrait. Existing deterministic portraits now change eyes, brows, and mouth for nervous, angry, and caught states when the interview warrants it.

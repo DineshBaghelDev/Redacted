@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-11 — Lab work surfaces
+
+- Lab art is equipment and blank stationery only. The bench and report sheet contain no case findings, and the existing hands-on tests still reveal the stored result only after completion.
+
 ## 2026-10-11 — Interview as a record
 
 - Keep all dialogue as selectable text on a light transcript surface. The portrait remains deterministic from identity, description, gender, and age; temporary expressions change only its face during the interview. Stamp assets carry no baked lettering.

@@ -9,6 +9,8 @@ bureau-noir, menu-noir, archive-room, interview-room, lab-room, records-room, re
 
 **Interview update:** transcript paper, table/chair foreground, three blank stamp frames, and deterministic portrait expressions are now in use.
 
+**Lab update:** all eight tool sprites, the bench, sealed/open evidence bags, and a blank report sheet are now in use. Per-task visuals remain open.
+
 ## Priority 1 — the screens players spend most time on
 
 ### A. Room interiors (biggest "app vs game" gap)
