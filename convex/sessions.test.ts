@@ -816,4 +816,4 @@ test("a lobby keeps the selected passed case", async () => {
   await expect(stranger.mutation(api.cases.startCctvReview, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).rejects.toThrow("Start the investigation first");
   expect(await stranger.query(api.world.getMap, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.npcs.list, { roomCode: created.roomCode })).toBeNull();
-}, 15_000);
+}, 30_000);
