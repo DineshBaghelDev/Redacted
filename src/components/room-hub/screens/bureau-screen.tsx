@@ -244,8 +244,8 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         </span>
         {left !== null ? <span className={`whitespace-nowrap ${left <= 0 ? "text-[#e5a18e]" : left < 120 ? "text-[#f1c987]" : "text-[#b8ccc1]"}`}>{left <= 0 ? "Overdue" : <>{formatDuration(left)}<span className="hidden sm:inline"> left</span></>}</span> : null}
         {partner ? <span className="ml-auto hidden min-w-0 truncate normal-case tracking-normal text-[#c8d8d2] sm:inline" title="Your partner">{partner.name} · {partner.place} · {partner.activity}</span> : <span className="ml-auto" />}
-        <button aria-label="Notebook" className="game-control-button flex min-h-9 shrink-0 items-center gap-2 px-3" onClick={() => { play("open"); setNotebookOpen(true); }} title="Notebook · N" type="button"><ControlIcon name="notebook" /><span className="hidden sm:inline">Notebook</span></button>
-        <button aria-label="Pause menu" className="game-control-button flex min-h-9 shrink-0 items-center gap-2 px-3" onClick={() => { play("open"); setMenuOpen(true); }} title="Pause · Esc" type="button"><ControlIcon name="pause" /><span className="hidden sm:inline">Menu</span></button>
+        <button aria-label="Notebook" className="game-control-button game-icon-mobile flex min-h-9 shrink-0 items-center gap-2 px-3" onClick={() => { play("open"); setNotebookOpen(true); }} title="Notebook · N" type="button"><ControlIcon name="notebook" /><span className="hidden sm:inline">Notebook</span></button>
+        <button aria-label="Pause menu" className="game-control-button game-icon-mobile flex min-h-9 shrink-0 items-center gap-2 px-3" onClick={() => { play("open"); setMenuOpen(true); }} title="Pause · Esc" type="button"><ControlIcon name="pause" /><span className="hidden sm:inline">Menu</span></button>
       </header>
       {clockError ? <p className="absolute inset-x-3 top-11 z-50 mx-auto w-fit border border-red-300/60 bg-red-950/95 px-3 py-2 text-sm text-red-100" role="status">Clock sync delayed. Retrying...</p> : null}
 

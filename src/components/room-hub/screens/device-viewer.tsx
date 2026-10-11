@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import { InvestigationIcon } from "../investigation-icon";
 import { ControlIcon } from "../control-icon";
 import { PinButton } from "../pin-button";
@@ -20,12 +20,13 @@ function timeLabel(minutes: number) {
   return `Day ${Math.floor(minutes / 1440) + 1} · ${String(Math.floor(withinDay / 60)).padStart(2, "0")}:${String(withinDay % 60).padStart(2, "0")}`;
 }
 
-export function DeviceViewer({ title, data, onBack, onPin, isPinned, busy, error }: {
+export function DeviceViewer({ roomCode, title, data, nodes, onBack, onPinError, busy, error }: {
+  roomCode: string;
   title: string;
   data: DeviceData;
+  nodes: ComponentProps<typeof PinButton>["nodes"];
   onBack: () => void;
-  onPin: (type: "device_file" | "call" | "message", id: string) => void;
-  isPinned: (type: "device_file" | "call" | "message", id: string) => boolean;
+  onPinError: (error: unknown) => void;
   busy: boolean;
   error?: string;
 }) {
@@ -48,10 +49,10 @@ export function DeviceViewer({ title, data, onBack, onPin, isPinned, busy, error
     <header className="game-station-header flex shrink-0 items-center gap-3 px-4 py-3 sm:px-6">
       <InvestigationIcon className="size-10" name={data.type === "laptop" ? "file" : "device"} />
       <div className="min-w-0 flex-1"><p className="text-xs uppercase tracking-widest text-[#a5c6bb]">Recovered {data.type}</p><h2 className="break-words text-lg uppercase sm:text-2xl">{title}</h2></div>
-      <button aria-label="Put it down" className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-xs uppercase" onClick={() => { play("close"); onBack(); }} title="Put it down" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Put it down</span></button>
+      <button aria-label="Put it down" className="game-control-button game-icon-mobile flex min-h-11 shrink-0 items-center gap-2 px-3 text-xs uppercase" onClick={() => { play("close"); onBack(); }} title="Put it down" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Put it down</span></button>
     </header>
     {error ? <p className="mx-3 mt-3 border border-red-400 bg-red-950 p-3 text-sm text-red-50" role="alert">{error}</p> : null}
-    {data.type === "laptop" ? <Laptop busy={busy} files={data.files} isPinned={(id) => isPinned("device_file", id)} onPin={(id) => onPin("device_file", id)} title={title} /> : (
+    {data.type === "laptop" ? <Laptop busy={busy} files={data.files} nodes={nodes} onPinError={onPinError} roomCode={roomCode} title={title} /> : (
     <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-6">
       <div className={`mx-auto flex min-h-[30rem] flex-col border-[10px] border-[#20383a] bg-[#09191b] shadow-[8px_10px_0_#0008] ${data.type === "phone" ? "max-w-[25rem] rounded-[1.5rem]" : "max-w-4xl"}`}>
         {data.type === "phone" ? <div aria-hidden="true" className="mx-auto mt-2 h-1 w-14 rounded-full bg-[#446269]" /> : null}
@@ -70,7 +71,7 @@ export function DeviceViewer({ title, data, onBack, onPin, isPinned, busy, error
               {call ? <p className="mt-3 text-sm">{call.direction === "incoming" ? "Incoming" : "Outgoing"} · {timeLabel(call.time)} · {Math.ceil(call.durationSeconds / 60)} min</p> : null}
               {message ? <><p className="mt-3 text-xs uppercase text-[#a5c6bb]">{message.direction === "incoming" ? "Received" : "Sent"} · {timeLabel(message.time)}</p><p className="mt-5 whitespace-pre-wrap break-words border-l-2 border-[#e8ac51] pl-4 text-base leading-relaxed">{message.body}</p></> : null}
               {file ? <p className="mt-5 whitespace-pre-wrap break-words border-l-2 border-[#e8ac51] pl-4 text-base leading-relaxed">{file.body}</p> : null}
-              <PinButton busy={busy} className="mt-6" onClick={() => onPin(file ? "device_file" : call ? "call" : "message", openId!)} pinned={isPinned(file ? "device_file" : call ? "call" : "message", openId!)} />
+              <PinButton className="mt-6" disabled={busy} key={openId} nodes={nodes} onError={onPinError} referenceId={openId!} roomCode={roomCode} type={file ? "device_file" : call ? "call" : "message"} />
             </article> : <div className="mt-3 divide-y divide-[#45635d]/60">
               {files.map((row) => <button className="flex min-h-16 w-full items-center justify-between gap-3 py-3 text-left text-sm" key={row.id} onClick={() => setOpenId(row.id)} type="button"><span className="min-w-0 break-words">{row.title}</span><span className="text-[#e8ac51]">Open →</span></button>)}
               {calls.map((row) => <button className="flex min-h-16 w-full items-center justify-between gap-3 py-3 text-left text-sm" key={row.id} onClick={() => setOpenId(row.id)} type="button"><span className="min-w-0"><span className="block break-words">{row.direction === "incoming" ? "From" : "To"} {row.otherParty}</span><span className="block text-xs text-[#a5c6bb]">{timeLabel(row.time)}</span></span><span className="text-[#e8ac51]">Open →</span></button>)}
@@ -87,7 +88,7 @@ export function DeviceViewer({ title, data, onBack, onPin, isPinned, busy, error
 }
 
 /** A recovered laptop: bezel and webcam, a file window with the list beside the open document, and a keyboard deck. */
-function Laptop({ title, files, busy, isPinned, onPin }: { title: string; files: DeviceData["files"]; busy: boolean; isPinned: (id: string) => boolean; onPin: (id: string) => void }) {
+function Laptop({ roomCode, title, files, nodes, busy, onPinError }: { roomCode: string; title: string; files: DeviceData["files"]; nodes: ComponentProps<typeof PinButton>["nodes"]; busy: boolean; onPinError: (error: unknown) => void }) {
   const [openId, setOpenId] = useState(files[0]?.id ?? null);
   const file = files.find((row) => row.id === openId);
   return (
@@ -118,7 +119,7 @@ function Laptop({ title, files, busy, isPinned, onPin }: { title: string; files:
                   <>
                     <h3 className="break-words font-mono text-sm uppercase tracking-wide text-[#f1c987]">{file.title}</h3>
                     <p className="mt-4 whitespace-pre-wrap break-words bg-[#e9e2cf] p-4 font-mono text-sm leading-relaxed text-[#211d17] shadow-[3px_3px_0_#0006]">{file.body}</p>
-                    <PinButton busy={busy} className="mt-5" onClick={() => onPin(file.id)} pinned={isPinned(file.id)} />
+                    <PinButton className="mt-5" disabled={busy} key={file.id} nodes={nodes} onError={onPinError} referenceId={file.id} roomCode={roomCode} type="device_file" />
                   </>
                 ) : <p className="font-mono text-sm text-[#a5c6bb]/70">Open a file from the list.</p>}
               </article>

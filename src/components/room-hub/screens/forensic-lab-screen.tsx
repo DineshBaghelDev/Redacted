@@ -6,7 +6,6 @@ import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
 import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
 import { cardDropTarget, startCardDrag } from "../../../lib/evidence-drag";
 import { formatDuration, formatGameMinute } from "../../../lib/game-time";
 import { play } from "../../../lib/sound";
@@ -40,7 +39,6 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
   const requestTest = useMutation(api.forensics.request);
   const markViewed = useMutation(api.forensics.markViewed);
-  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const finishAction = useMutation(api.investigation.finishAction);
   const [sourceKey, setSourceKey] = useState<string | null>(null);
   const [tool, setTool] = useState<TestType | null>(null);
@@ -92,11 +90,6 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
     }).finally(() => setWorking(""));
   }
 
-  function pin(outputId: Id<"forensicOutputs">) {
-    const count = boardNodes?.length ?? 0;
-    run(outputId, createReference({ roomCode, type: "forensic", referenceId: outputId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 }));
-  }
-
   return (
     <section className="game-lab-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#e4e6d8]">
       <header className="game-station-header flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6">
@@ -104,7 +97,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
           <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">{lab.placeName} · {formatGameMinute(gameTime)}</p>
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">Forensic lab</h2>
         </div>
-        <button aria-label="Leave the lab" className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase" onClick={onBack} title="Leave the lab" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Leave the lab</span></button>
+        <button aria-label="Leave the lab" className="game-control-button game-icon-mobile flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase" onClick={onBack} title="Leave the lab" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Leave the lab</span></button>
       </header>
       <FirstTimeTip id="lab" title="Forensic lab">Put evidence on the bench, pick a tool, and follow its action. Results appear when you finish.</FirstTimeTip>
       <main className="game-station-main min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
@@ -174,7 +167,6 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
               <ul className="mt-6 grid gap-3 sm:grid-cols-2">
                 {requests.map((request) => {
                   const remaining = Math.max(0, request.readyAtGameTime - gameTime);
-                  const pinned = request.outputId ? boardNodes?.some((node) => node.type === "forensic" && node.referenceId === request.outputId) : false;
                   const name = tools.find((item) => item.test === request.testType)?.name ?? request.testType;
                   return (
                     <li className={request.status === "viewed" ? "game-dossier p-3 text-[#211d17] sm:col-span-2" : "border border-[#6f9f98]/30 bg-[#071619]/75 p-3"} key={request.id}>
@@ -185,7 +177,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
                       {request.status === "viewed" ? (
                         <>
                           <p className="mt-2 whitespace-pre-wrap border-t border-[#8b7355] pt-2 text-sm leading-relaxed">{request.result}</p>
-                          {request.outputId ? <PinButton busy={Boolean(working)} className="mt-2" onClick={() => pin(request.outputId!)} pinned={Boolean(pinned)} /> : null}
+                          {request.outputId ? <PinButton className="mt-2" disabled={Boolean(working)} nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={request.outputId} roomCode={roomCode} type="forensic" /> : null}
                         </>
                       ) : null}
                     </li>

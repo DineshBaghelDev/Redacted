@@ -162,7 +162,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
           <p className="hidden text-xs uppercase tracking-[0.22em] text-[#c99b63] sm:block">Shared case workspace</p>
           <h1 className="text-lg uppercase text-[#fff1c9] sm:text-xl">Clueboard</h1>
         </div>
-        <button aria-label="Add note" className="clue-board-button ml-auto sm:ml-0" onClick={addNote} type="button">
+        <button aria-label="Add note" className="clue-board-button game-icon-mobile ml-auto sm:ml-0" onClick={addNote} type="button">
           <Plus aria-hidden="true" size={18} /> <span className="hidden sm:inline">Add note</span>
         </button>
         <div className="flex w-full items-center justify-end gap-2 border-t border-[#5e3e29] pt-2 sm:w-auto sm:border-0 sm:pt-0" aria-label="String color" role="group">

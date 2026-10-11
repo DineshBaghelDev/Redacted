@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-11 — Pin toggles, raster plate fit, and archive summaries
+
+- Removed the boxes around icon-only pin, close, and bag controls, plus station returns, the bureau HUD, and the note control when their labels hide on mobile. The pin uses two appearances from the existing pixel icon atlas and flips immediately on press. Pressing an attached pin deletes that shared clueboard card using the existing mutation; a failed write restores the prior appearance.
+- Trimmed only transparent padding from the original generated button plate and used its raster edges as a scalable frame. Checked complete top, bottom, and end caps on short and wide buttons.
+- Previous-case descriptions are shown directly instead of behind “Read case brief.”
+
 ## 2026-10-11 — Button alignment and clueboard pin states
 
 - Centered labels within the existing illustrated menu and control plates, and applied those plates to map travel/entry, interview, lab report, device opening, and other primary station actions.

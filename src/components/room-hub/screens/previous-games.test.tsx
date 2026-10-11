@@ -18,6 +18,8 @@ test("shows replay creation errors beside the case choices", () => {
   expect(html).toContain("Set a custom deadline");
   expect(html).toContain("your score is unchanged");
   expect(html).toContain("Use case default");
+  expect(html).toContain("A case");
+  expect(html).not.toContain("Read case brief");
 });
 
 

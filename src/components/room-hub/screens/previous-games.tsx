@@ -56,7 +56,7 @@ export function PreviousGamesScreen({ error, isWorking, onBack, onPlay }: Previo
             <h2 className="min-h-16 break-words border-b border-[#573821] pb-2 text-2xl uppercase leading-tight">
               {game.title}
             </h2>
-            <details className="mt-3 border-b border-[#8b7355]/60 text-[#3e342a]"><summary className="min-h-11 cursor-pointer py-3 text-sm uppercase text-red-800">Read case brief</summary><p className="pb-3 break-words text-base leading-snug">{game.description}</p></details>
+            <p className="mt-3 break-words border-b border-[#8b7355]/60 pb-3 text-base leading-snug text-[#3e342a]">{game.description}</p>
             <button
               className="game-control-button mt-5 flex h-12 w-full items-center justify-center gap-2 text-lg uppercase text-[#e8ac51]"
               disabled={isWorking || invalidDeadline}

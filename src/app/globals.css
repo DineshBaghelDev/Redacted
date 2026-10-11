@@ -95,7 +95,9 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    background: url('/assets/control-plate.png') center 24% / 100% 250% no-repeat;
+    border: 8px solid transparent;
+    border-image: url('/assets/control-plate-trim.png') 90 120 / 8px / 0 stretch;
+    background: #1b353b;
     color: #e4e6d8;
     line-height: 1.15;
     padding-top: 0.3rem;
@@ -104,26 +106,23 @@
   .game-control-button:hover, .game-control-button:focus-visible { filter: brightness(1.2); transform: translateY(-1px); }
   .game-control-button:active { transform: translateY(1px); }
 
-  .game-pin-button {
-    position: relative;
+  .game-icon-button {
     display: inline-flex;
     flex: none;
     width: 2.75rem;
     height: 2.75rem;
     align-items: center;
     justify-content: center;
-    border: 1px solid #54756e;
-    background: #102427;
-    color: #d3e0d7;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    transition: filter 120ms, transform 120ms;
   }
-  .game-pin-button:hover:not(:disabled) { border-color: #e8ac51; background: #1b3536; }
-  .game-pin-button .control-icon { width: 2rem; height: 2rem; filter: grayscale(1) brightness(0.95); }
-  .game-pin-button[aria-pressed="true"] { border-color: #bc8a46; background: #493822; }
-  .game-pin-button[aria-pressed="true"] .control-icon { filter: sepia(1) saturate(1.6) brightness(1.25); }
-  .game-pin-check { position: absolute; right: 2px; bottom: 2px; width: 7px; height: 7px; background: #f5c87f; box-shadow: 0 0 0 1px #102427; }
-  .game-pin-button:disabled:not([aria-pressed="true"]) { opacity: 0.55; }
-  .game-dossier .game-pin-button { border-color: #6d5136; background: #e2d4b2; }
-  .game-dossier .game-pin-button[aria-pressed="true"] { border-color: #7e3f26; background: #b98146; }
+  .game-icon-button:hover:not(:disabled) { filter: brightness(1.2); transform: translateY(-2px); }
+  .game-icon-button:disabled:not([aria-pressed="true"]) { opacity: 0.55; }
+  .game-icon-button .control-icon { width: 2rem; height: 2rem; }
+  .game-pin-art { display: block; width: 2.75rem; height: 2.75rem; background: url('/assets/control-icons.png') no-repeat 66.667% 100% / 400% 200%; image-rendering: pixelated; filter: grayscale(1) brightness(1.2); transform: rotate(-24deg); }
+  .game-icon-button[aria-pressed="true"] .game-pin-art { filter: none; transform: none; }
 
   .character-portrait {
     display: block;
@@ -191,9 +190,10 @@
     min-height: 3.5rem;
     align-items: center;
     gap: 0.85rem;
-    border: 0;
-    background: url('/assets/control-plate.png') center 24% / 100% 250% no-repeat;
-    padding: 1.05rem 1.35rem 0.65rem;
+    border: 8px solid transparent;
+    border-image: url('/assets/control-plate-trim.png') 90 120 / 8px / 0 stretch;
+    background: #1b353b;
+    padding: 0.75rem 1.35rem 0.5rem;
     line-height: 1.15;
     text-align: left;
     color: #e4e6d8;
@@ -699,3 +699,17 @@
 .map-room[data-known="true"] { border-style: solid; border-color: #573821; background: #f4ead2; color: #3a2a1b; }
 .map-room[data-current="true"] { border-color: #8b1d1d; background: #f1d9a8; color: #8b1d1d; font-weight: 700; }
 .map-room:hover:not(:disabled) { border-color: #8b1d1d; }
+
+@media (max-width: 639px) {
+  .game-icon-mobile.game-control-button, .game-icon-mobile.clue-board-button {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    min-height: 2.75rem;
+    border: 0;
+    border-image: none;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+  }
+}

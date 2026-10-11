@@ -1,16 +1,22 @@
 # Design Decisions
 
+## 2026-10-11 — Open pin controls and complete button plates
+
+- Icon-only actions have no backing box, including controls whose labels hide on narrow screens. The clueboard pin uses the existing raster icon in two states: tilted silver when loose, upright gold when attached. Pressing it changes the visible state immediately; pressing the attached pin again removes the shared card and its strings through the existing board deletion action. A rejected action restores the shared state.
+- Button frames use a copy of the original generated plate with only transparent padding trimmed. Its raster edge is sliced around the content so the top, bottom, and end caps stay visible at different button sizes.
+- Previous-case descriptions appear directly on their cards; the archive list remains scrollable.
+
 ## 2026-10-11 — Control alignment and pin language
 
 - Keep primary action labels optically centered on the illustrated metal plate. Use the plate for destination and commitment actions; leave lists, tabs, and evidence text as lighter surfaces so the game stays scannable.
-- Every clueboard pin is an icon action with a title and accessible name. A gold pin and corner mark persist after pinning; the button stays disabled to avoid duplicate nodes. A pending pin has its own label.
+- Every clueboard pin is an icon action with a title and accessible name. The newer open pin control above replaces the earlier boxed, disabled pinned state.
 
 ## 2026-10-11 — Logo, audio, and lighter controls
 
 - The brand mark is one simple pixel dossier with a redaction bar; the REDACTED wordmark stays live text so it remains sharp and cannot contain generated lettering artifacts. Generated art is reserved for prominent controls and symbols, while long case text remains selectable DOM text.
 - A quiet synthesized minor progression and rain form the menu and investigation bed. The shared game shell owns audio across route changes. Browsers may block audio until interaction, so pointer and keyboard input both unlock it. Menu settings and pause expose the same mute and volume preference for music, ambience, and effects.
 - Use illustrated plates and clear icon silhouettes for primary actions and exits. Keep accessible names and visible labels where space permits; mobile icon-only returns have titles and accessible names. Do not add an illustrated box around every evidence row or object.
-- Full case summaries remain available within each archive card, but start collapsed so case choice and replay actions stay scannable. First-time tips describe gestures in short lines, with deeper case information opened intentionally.
+- Full case summaries are visible within each archive card. First-time tips describe gestures in short lines, with deeper case information opened intentionally.
 - On narrow interviews, keep the portrait identity visible, fold appearance text, and anchor the evidence tray above the question composer. Evidence already on the clueboard appears first and is labeled; other discovered proof remains usable under the existing game rule.
 
 ## 2026-10-11 — Navigation is about the case, not the maze

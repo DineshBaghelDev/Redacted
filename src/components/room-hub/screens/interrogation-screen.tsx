@@ -26,19 +26,8 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
   const { isLoaded, isSignedIn } = useAuth();
   const people = useQuery(api.npcs.list, isLoaded && isSignedIn ? { roomCode } : "skip");
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
-  const createReference = useMutation(api.clueBoard.createReferenceNode);
-  const [pinning, setPinning] = useState("");
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState<Id<"npcs"> | null>(null);
-
-  function pinPerson(referenceId: string) {
-    const count = boardNodes?.length ?? 0;
-    setPinning(referenceId);
-    setError("");
-    void createReference({ roomCode, type: "npc", referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 })
-      .catch((caught: unknown) => setError(errorText(caught, "Could not pin this person.")))
-      .finally(() => setPinning(""));
-  }
 
   if (people === undefined) return <Message message="Opening interview files..." onBack={onBack} />;
   if (!people) return <Message message="Interview files are unavailable for this room." onBack={onBack} />;
@@ -51,7 +40,7 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
           <p className="text-xs uppercase tracking-[0.25em] text-[#e8ac51]">Interview room</p>
           <h2 className="mt-1 break-words text-xl uppercase tracking-wide sm:text-2xl">{selected ? selected.name : "People we know of"}</h2>
         </div>
-        <button aria-label={selected ? "End interview" : "Leave the room"} className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase" onClick={selected ? () => setSelectedId(null) : onBack} title={selected ? "End interview" : "Leave the room"} type="button">
+        <button aria-label={selected ? "End interview" : "Leave the room"} className="game-control-button game-icon-mobile flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase" onClick={selected ? () => setSelectedId(null) : onBack} title={selected ? "End interview" : "Leave the room"} type="button">
           <ControlIcon name="back" /><span className="hidden sm:inline">{selected ? "End interview" : "Leave the room"}</span>
         </button>
       </header>
@@ -65,7 +54,6 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
               </p>
               <ul className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {people.map((person) => {
-                  const pinned = boardNodes?.some((node) => node.type === "npc" && node.referenceId === person.id);
                   return (
                     <li className="game-dossier min-w-0 p-4 text-[#211d17]" key={person.id}>
                       <div className="flex min-w-0 gap-4">
@@ -79,7 +67,7 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
                       <p className="mt-3 break-words border-t border-[#8b7355]/50 pt-3 text-sm leading-relaxed text-[#3e342a]">{person.publicDescription}</p>
                       <p className="mt-2 text-xs italic text-[#5d4d3d]">First seen in: {person.firstSeenIn}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <PinButton busy={pinning === person.id} onClick={() => pinPerson(person.id)} pinned={Boolean(pinned)} />
+                        <PinButton nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={person.id} roomCode={roomCode} type="npc" />
                         {!person.isVictim ? <button className="game-control-button min-h-11 px-3 text-xs uppercase text-[#f1c987]" onClick={() => { play("door"); setSelectedId(person.id); }} type="button">Interview</button> : null}
                       </div>
                     </li>
@@ -101,7 +89,6 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
   const callToBureau = useMutation(api.npcConversations.callToBureau);
   const sendQuestion = useMutation(api.npcConversations.sendQuestion);
   const readPhone = useMutation(api.npcConversations.readPhone);
-  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const retryFailed = useMutation(api.npcConversations.retryFailed);
   const [question, setQuestion] = useState("");
   const [shown, setShown] = useState<Proof | null>(null);
@@ -132,12 +119,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
     void action.then(after).catch((caught: unknown) => setError(errorText(caught, "Could not complete that interview action."))).finally(() => setWorking(false));
   }
 
-  function pinRecord(type: "device_file" | "call" | "message" | "statement", referenceId: string) {
-    const count = boardNodes?.length ?? 0;
-    run(createReference({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 }));
-  }
-
-  if (phoneOpen && interview?.phone?.read) return <DeviceViewer title={`${person.name}'s phone`} data={{ type: "phone", files: [], calls: interview.phone.calls, messages: interview.phone.messages }} onBack={() => setPhoneOpen(false)} onPin={pinRecord} isPinned={(type, id) => boardNodes?.some((node) => node.type === type && node.referenceId === id) ?? false} busy={working} error={error} />;
+  if (phoneOpen && interview?.phone?.read) return <DeviceViewer roomCode={roomCode} title={`${person.name}'s phone`} data={{ type: "phone", files: [], calls: interview.phone.calls, messages: interview.phone.messages }} nodes={boardNodes} onBack={() => setPhoneOpen(false)} onPinError={(caught) => setError(errorText(caught, "Could not update this pin."))} busy={working} error={error} />;
 
   const present = interview?.bureauPresent ?? false;
   const canAsk = Boolean(present && interview && !interview.busy && interview.canTalkHere && !working);
@@ -189,7 +171,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
               <div className="mt-3 border-l-2 border-[#8b7355] pl-3" key={statement.id}>
                 <p className="text-sm font-semibold">{statement.title}</p>
                 <p className="mt-1 whitespace-pre-wrap text-sm">{statement.text}</p>
-                <PinButton busy={Boolean(working)} className="mt-2" onClick={() => pinRecord("statement", statement.id)} pinned={Boolean(boardNodes?.some((node) => node.type === "statement" && node.referenceId === statement.id))} />
+                <PinButton className="mt-2" disabled={Boolean(working)} nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={statement.id} roomCode={roomCode} type="statement" />
               </div>
             ))}
           </details>

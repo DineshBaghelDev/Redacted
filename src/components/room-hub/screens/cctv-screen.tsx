@@ -59,7 +59,7 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Step away from the t
           <h2 className="mt-1 text-lg uppercase tracking-wide sm:text-2xl">Camera tapes</h2>
         </div>
         <button className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-xs uppercase sm:text-sm" onClick={() => setCompareOpen(!compareOpen)} type="button"><GameIcon className="size-6" name="interview" />{compareOpen ? "Hide people" : <>Compare<span className="hidden sm:inline"> with people</span></>}</button>
-        <button aria-label={backLabel} className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-xs uppercase sm:text-sm" onClick={onBack} title={backLabel} type="button"><ControlIcon name="back" /><span className="hidden sm:inline">{backLabel}</span></button>
+        <button aria-label={backLabel} className="game-control-button game-icon-mobile flex min-h-11 shrink-0 items-center gap-2 px-3 text-xs uppercase sm:text-sm" onClick={onBack} title={backLabel} type="button"><ControlIcon name="back" /><span className="hidden sm:inline">{backLabel}</span></button>
       </header>
       <div className="game-station-main relative flex min-h-0 flex-1">
         <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
@@ -139,13 +139,11 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
   const startReview = useMutation(api.cases.startCctvReview);
   const labelSighting = useMutation(api.cases.labelSighting);
   const people = useQuery(api.npcs.list, { roomCode });
-  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const scroller = useRef<HTMLDivElement>(null);
   const requested = useRef(new Set<number>());
   const startMinute = presetTime !== null && presetTime >= camera.start && presetTime <= camera.end ? presetTime : camera.start;
   const [minute, setMinute] = useState(startMinute);
   const [error, setError] = useState("");
-  const [pinning, setPinning] = useState("");
   const length = camera.end - camera.start;
   const key = hourKey(minute, camera);
   const review = tape?.reviews.find((row) => row.minute === key);
@@ -219,14 +217,6 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
     void labelSighting({ roomCode, recordId, npcId: npcId as Id<"npcs"> | null }).catch((caught: unknown) => setError(errorText(caught, "Could not mark that sighting.")));
   }
 
-  function pinRecord(referenceId: string) {
-    const count = boardNodes?.length ?? 0;
-    setPinning(referenceId);
-    void createReference({ roomCode, type: "cctv", referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 })
-      .catch((caught: unknown) => setError(errorText(caught, "Could not pin this sighting.")))
-      .finally(() => setPinning(""));
-  }
-
   const hours = [];
   for (let hour = Math.ceil(camera.start / 60) * 60; hour <= camera.end; hour += 60) hours.push(hour);
   const sightings = tape?.records ?? [];
@@ -248,7 +238,7 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
                 <div className={`terminal-line flex items-start gap-3 ${record.kind === "offline" ? "text-red-300" : "text-[#f1c987]"}`} key={record.id} {...cardDropTarget((card) => mark(record.id, card.referenceId), (kind) => kind === "person")}>
                   <p className="min-w-0 flex-1"><span className="text-[#7fd1ae]">[{clock(record.start)}–{clock(record.end)}]</span> {record.summary}</p>
                   {record.kind !== "offline" ? <PhotoSlot onMark={(npcId) => mark(record.id, npcId)} people={people ?? []} person={personFor(record.id)} /> : null}
-                  <PinButton busy={pinning === record.id} onClick={() => pinRecord(record.id)} pinned={Boolean(boardNodes?.some((node) => node.type === "cctv" && node.referenceId === record.id))} />
+                  <PinButton nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={record.id} roomCode={roomCode} type="cctv" />
                 </div>
               )) : <p className="text-[#7fd1ae]/50">Empty frame. Nobody in view.</p>}
         </div>
@@ -305,12 +295,11 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
               {thisHour.length ? (
                 <ul className="mt-2 divide-y divide-[#2f4a47] border-y border-[#2f4a47] font-mono text-sm">
                   {thisHour.map((record) => {
-                    const pinned = boardNodes?.some((node) => node.type === "cctv" && node.referenceId === record.id);
                     return (
                       <li className="flex flex-wrap items-center gap-2 py-2" key={record.id} {...cardDropTarget((card) => mark(record.id, card.referenceId), (kind) => kind === "person")}>
                         <button className="min-w-0 flex-1 text-left font-mono normal-case text-[#c9f2dd] hover:text-[#f1c987]" onClick={() => seek(record.start)} type="button"><span className="text-[#e8ac51]">[{clock(record.start)}]</span> {record.summary}</button>
                         {record.kind !== "offline" ? <PhotoSlot onMark={(npcId) => mark(record.id, npcId)} people={people ?? []} person={personFor(record.id)} small /> : null}
-                        <PinButton busy={pinning === record.id} className="ml-auto" onClick={() => pinRecord(record.id)} pinned={Boolean(pinned)} />
+                        <PinButton className="ml-auto" nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={record.id} roomCode={roomCode} type="cctv" />
                       </li>
                     );
                   })}

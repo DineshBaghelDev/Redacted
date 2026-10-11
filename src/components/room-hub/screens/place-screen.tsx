@@ -6,7 +6,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
 import type { FunctionReturnType } from "convex/server";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { partOfDay } from "../../../lib/game-time";
@@ -38,7 +38,6 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   const readDevice = useMutation(api.investigation.readDevice);
   const collectItem = useMutation(api.investigation.collectItem);
   const finishAction = useMutation(api.investigation.finishAction);
-  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const [working, setWorking] = useState(false);
   const [now, setNow] = useState(0);
   const [error, setError] = useState("");
@@ -101,16 +100,11 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
     }).finally(() => setWorking(false));
   }
 
-  function pin(type: "item" | "device_file" | "call" | "message", referenceId: string) {
-    const count = boardNodes?.length ?? 0;
-    run(createReference({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 }));
-  }
-
   if (place === undefined) return <PlaceMessage message="Opening this place..." onBack={onBack} />;
   if (!place) return <PlaceMessage message="There are no rooms to explore here right now." onBack={onBack} />;
   if (cameraOpen) return <CctvScreen roomCode={roomCode} onBack={() => setCameraOpen(false)} backLabel="Back to room" />;
   const activeDevice = place.items.find((item) => item.id === activeDeviceId && item.device?.read);
-  if (activeDevice?.device) return <DeviceViewer title={activeDevice.name} data={activeDevice.device} onBack={() => setActiveDeviceId(null)} onPin={pin} isPinned={(type, id) => boardNodes?.some((node) => node.type === type && node.referenceId === id) ?? false} busy={working || Boolean(place.action)} error={error} />;
+  if (activeDevice?.device) return <DeviceViewer roomCode={roomCode} title={activeDevice.name} data={activeDevice.device} nodes={boardNodes} onBack={() => setActiveDeviceId(null)} onPinError={(caught) => setError(errorText(caught, "Could not update this pin."))} busy={working || Boolean(place.action)} error={error} />;
 
   const currentRoom = place.rooms.find((room) => room.id === place.currentRoomId);
   // Bagged objects stay on their spot's card (marked "Bagged"); the lab and notebook are where carried evidence is used.
@@ -135,7 +129,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
           <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">{currentRoom?.name ?? "Inside"}</p>
           <h2 className="mt-1 break-words text-xl uppercase tracking-wide sm:text-2xl">{place.placeName}</h2>
         </div>
-        <button aria-label="Leave building" className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase" onClick={onBack} title="Leave building" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Leave building</span></button>
+        <button aria-label="Leave building" className="game-control-button game-icon-mobile flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase" onClick={onBack} title="Leave building" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Leave building</span></button>
       </header>
 
       {toastDoneFor !== place.placeName ? <p className="game-toast pointer-events-none absolute right-4 top-24 z-30 max-w-sm animate-in fade-in slide-in-from-right" role="status">{place.placeName} · {atmosphere[partOfDay(gameTime)]}</p> : null}
@@ -181,7 +175,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
                   return (
                     <li className="border border-[#6f9f98]/30 bg-[#071619]/80 p-3" id={`spot-${spot.key}`} key={spot.key}>
                       <p className="flex items-center gap-2 text-sm uppercase"><InvestigationIcon className="size-7" name="search" />{spot.name}</p>
-                      <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => { play("open"); setActiveDeviceId(item.id); }} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />)}</div>
+                      <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => { play("open"); setActiveDeviceId(item.id); }} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinControl={<PinButton disabled={busy} nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={item.id} roomCode={roomCode} type="item" />} />)}</div>
                     </li>
                   );
                 })}
@@ -195,15 +189,14 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   );
 }
 
-function ItemCard({ item, busy, pinned, fresh, onRead, onOpenDevice, onCollect, onPin }: {
+function ItemCard({ item, busy, pinControl, fresh, onRead, onOpenDevice, onCollect }: {
   item: Item;
   busy: boolean;
-  pinned: boolean;
+  pinControl: ReactNode;
   fresh: boolean;
   onRead: (code?: string, crack?: boolean) => void;
   onOpenDevice: () => void;
   onCollect?: () => void;
-  onPin: () => void;
 }) {
   const [code, setCode] = useState("");
   const locked = item.device && !item.device.read;
@@ -211,9 +204,9 @@ function ItemCard({ item, busy, pinned, fresh, onRead, onOpenDevice, onCollect, 
     <article className={`border-l-2 border-[#e8ac51] bg-[#0b1a1c]/90 p-3 ${fresh ? "reveal-card" : ""}`} draggable onDragStart={(event) => startCardDrag(event, { kind: "item", referenceId: item.id, label: item.name })}>
       <div className="flex items-start gap-2">
         <h5 className="flex min-w-0 flex-1 items-center gap-2 text-sm uppercase text-[#f1c987]"><InvestigationIcon className="size-8" name={item.device ? "device" : "evidence"} /><span className="min-w-0 break-words">{item.name}</span></h5>
-        {onCollect && item.collectible && !item.collected ? <button aria-label="Bag it for the lab" className="shrink-0 border border-[#e8ac51]/50 p-1 hover:border-[#e8ac51] disabled:opacity-45" disabled={busy} onClick={onCollect} title="Bag it for the lab" type="button"><InvestigationIcon className="size-6" name="lab" /></button> : null}
+        {onCollect && item.collectible && !item.collected ? <button aria-label="Bag it for the lab" className="game-icon-button disabled:opacity-45" disabled={busy} onClick={onCollect} title="Bag it for the lab" type="button"><InvestigationIcon className="size-8" name="lab" /></button> : null}
         {item.collected ? <span className="shrink-0 text-[0.65rem] uppercase text-[#9fd1c4]" title="In the evidence bag">Bagged</span> : null}
-        <PinButton busy={busy} onClick={onPin} pinned={pinned} />
+        {pinControl}
       </div>
       <p className="mt-2 text-sm leading-relaxed text-[#c8d8d2]/75">{item.description}</p>
       {locked ? (

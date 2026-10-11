@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { X } from "lucide-react";
 import { menuButton } from "../constants";
+import { ControlIcon } from "../control-icon";
 import { GameIcon } from "../game-icon";
 import { RoomCodeInput } from "./room-code-input";
 
@@ -63,11 +63,11 @@ export function JoinModal({
           <h2 className="min-w-0 flex-1 text-xl uppercase text-[#e4e6d8] sm:text-3xl" id="join-room-title">Join room</h2>
           <button
             aria-label="Close join room"
-            className="flex size-9 shrink-0 items-center justify-center border border-[#6f9f98] bg-[#0b1a1c] text-[#c8d8d2] transition hover:border-[#e8ac51] hover:text-[#e8ac51]"
+            className="game-icon-button"
             onClick={onClose}
             type="button"
           >
-            <X aria-hidden="true" size={18} />
+            <ControlIcon name="close" />
           </button>
         </div>
         <RoomCodeInput onChange={onRoomCodeChange} value={roomCode} />

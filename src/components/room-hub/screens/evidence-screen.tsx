@@ -21,14 +21,12 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [startingSearch, setStartingSearch] = useState(false);
-  const [pinning, setPinning] = useState("");
   const [error, setError] = useState("");
   const result = useQuery(
     api.publicRecords.search,
     isLoaded && isSignedIn && roomCode ? { roomCode, search: submittedSearch } : "skip",
   );
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn && roomCode ? { roomCode } : "skip");
-  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const performSearch = useMutation(api.publicRecords.performSearch);
   const people = useQuery(api.npcs.list, isLoaded && isSignedIn && roomCode ? { roomCode } : "skip");
   const records = hasSubmitted && result?.status === "ready" ? result.records : [];
@@ -48,21 +46,6 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
     }).finally(() => setStartingSearch(false));
   }
 
-  function pinRecord(referenceId: string) {
-    const count = boardNodes?.length ?? 0;
-    setPinning(referenceId);
-    setError("");
-    void createReference({
-      roomCode,
-      type: "public_record",
-      referenceId,
-      x: 80 + (count % 4) * 220,
-      y: 90 + Math.floor(count / 4) * 180,
-    }).catch((caught: unknown) => {
-      setError(errorText(caught, "Could not pin this record."));
-    }).finally(() => setPinning(""));
-  }
-
   return (
     <section className="game-evidence-scene game-records-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#c8d8d2]">
       <header className="game-station-header flex shrink-0 items-start justify-between gap-4 p-4 sm:p-6">
@@ -72,7 +55,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
         </div>
         <button
           aria-label="Leave the records room"
-          className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase focus-visible:outline-2 focus-visible:outline-[#e8ac51]"
+          className="game-control-button game-icon-mobile flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase focus-visible:outline-2 focus-visible:outline-[#e8ac51]"
           onClick={onBack}
           type="button"
         >
@@ -137,7 +120,6 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
         {records.length ? (
           <ul className="mx-auto grid max-w-5xl gap-3 md:grid-cols-2">
             {records.map((record) => {
-              const isPinned = boardNodes?.some((node) => node.type === "public_record" && node.referenceId === record.id);
               return (
                 <li className="game-dossier p-3 text-[#211d17]" key={record.id}>
                   <div className="flex items-start gap-3 border-b border-[#211d17]/30 pb-2">
@@ -148,7 +130,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
                     </div>
                   </div>
                   <p className="mt-3 text-sm leading-relaxed sm:text-base">{record.content}</p>
-                  <PinButton busy={pinning === record.id} className="mt-4" onClick={() => pinRecord(record.id)} pinned={Boolean(isPinned)} />
+                  <PinButton className="mt-4" nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={record.id} roomCode={roomCode} type="public_record" />
                 </li>
               );
             })}

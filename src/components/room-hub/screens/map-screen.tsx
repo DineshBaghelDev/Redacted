@@ -5,7 +5,7 @@ import { FirstTimeTip } from "../first-time-tip";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { go } from "../../../lib/game-nav";
 import { play } from "../../../lib/sound";
@@ -43,14 +43,12 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
   const { isLoaded, isSignedIn } = useAuth();
   const city = useQuery(api.world.getMap, isLoaded && isSignedIn ? { roomCode } : "skip");
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
-  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const startTravel = useMutation(api.world.startTravel);
   const coop = useQuery(api.coop.get, isLoaded && isSignedIn ? { roomCode } : "skip");
   const wasTravelling = useRef<string | null>(null);
   const finishTravel = useMutation(api.world.finishTravel);
   const [selectedId, setSelectedId] = useState("");
   const [findOpen, setFindOpen] = useState(false);
-  const [pinning, setPinning] = useState("");
   const [traveling, setTraveling] = useState(false);
   const [now, setNow] = useState(0);
   const [error, setError] = useState("");
@@ -111,26 +109,10 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
       place: city.places.find((place) => place.id === (street.a === selected.id ? street.b : street.a))!,
     }));
   const activeStreetIds = new Set(connected.map((street) => street.id));
-  const isPinned = boardNodes?.some((node) => node.type === "place" && node.referenceId === selected.id);
   const gameTime = city.clock.gameTime + (city.clock.clockStartedAt === null || now === 0
     ? 0
     : Math.max(0, Math.floor((now - city.clock.clockStartedAt) / city.clock.minuteMs)));
   const travelRemaining = city.activeTravel ? Math.max(0, city.activeTravel.completeGameTime - gameTime) : 0;
-
-  function pinPlace() {
-    const count = boardNodes?.length ?? 0;
-    setPinning(selected.id);
-    setError("");
-    void createReference({
-      roomCode,
-      type: "place",
-      referenceId: selected.id,
-      x: 80 + (count % 4) * 220,
-      y: 90 + Math.floor(count / 4) * 180,
-    }).catch((caught: unknown) => {
-      setError(errorText(caught, "Could not pin this place."));
-    }).finally(() => setPinning(""));
-  }
 
   function travelToSelected() {
     setTraveling(true);
@@ -162,7 +144,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
           <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Investigation routes</p>
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">City map</h2>
         </div>
-        <button aria-label="Put the map away" className="game-control-button flex min-h-11 items-center gap-2 px-3 text-sm uppercase" onClick={onBack} title="Put the map away" type="button">
+        <button aria-label="Put the map away" className="game-control-button game-icon-mobile flex min-h-11 items-center gap-2 px-3 text-sm uppercase" onClick={onBack} title="Put the map away" type="button">
           <ControlIcon name="back" /><span className="hidden sm:inline">Put the map away</span>
         </button>
       </header>
@@ -235,10 +217,8 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
               here={open.id === city.currentPlaceId && !city.activeTravel}
               onClose={() => setSelectedId("")}
               onEnter={() => go(`/lobby/${roomCode}/${open.kind === "bureau" ? "bureau" : open.kind === "lab" ? "lab" : "place"}`)}
-              onPin={pinPlace}
               onTravel={travelToSelected}
-              pinned={Boolean(isPinned)}
-              pinning={pinning === open.id}
+              pinControl={<PinButton key={open.id} nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={open.id} roomCode={roomCode} type="place" />}
               place={open}
               travelling={Boolean(city.activeTravel)}
             /> : null}
@@ -268,17 +248,15 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
 }
 
 /** The actions for one place, floating above its marker. */
-function PlaceCard({ place, here, travelling, busy, pinned, pinning, error, onTravel, onEnter, onPin, onClose }: {
+function PlaceCard({ place, here, travelling, busy, pinControl, error, onTravel, onEnter, onClose }: {
   place: { id: string; name: string; kind: keyof typeof kindLabels; area: string; x: number; y: number; hasInterior: boolean; travelMinutes?: number };
   here: boolean;
   travelling: boolean;
   busy: boolean;
-  pinned: boolean;
-  pinning: boolean;
+  pinControl: ReactNode;
   error: string;
   onTravel: () => void;
   onEnter: () => void;
-  onPin: () => void;
   onClose: () => void;
 }) {
   const below = place.y < 30;
@@ -297,7 +275,7 @@ function PlaceCard({ place, here, travelling, busy, pinned, pinning, error, onTr
           <p className="break-words text-sm uppercase leading-tight text-[#f1c987]">{place.name}</p>
           <p className="mt-0.5 text-[0.65rem] uppercase text-[#c8d8d2]/60">{kindLabels[place.kind]} · {place.area}</p>
         </div>
-        <button aria-label="Close place details" className="game-pin-button -mr-1 -mt-1" onClick={onClose} title="Close" type="button"><ControlIcon name="close" /></button>
+        <button aria-label="Close place details" className="game-icon-button -mr-1 -mt-1" onClick={onClose} title="Close" type="button"><ControlIcon name="close" /></button>
       </div>
       <div className="mt-3 grid gap-2">
         {here ? (
@@ -309,7 +287,7 @@ function PlaceCard({ place, here, travelling, busy, pinned, pinning, error, onTr
             {travelling ? "Already on the road" : place.travelMinutes === undefined ? "No route" : `Travel · ${place.travelMinutes} min`}
           </button>
         )}
-        <PinButton busy={pinning} onClick={onPin} pinned={pinned} />
+        {pinControl}
       </div>
       {error ? <p className="mt-2 text-xs text-red-200" role="alert">{error}</p> : null}
     </div>

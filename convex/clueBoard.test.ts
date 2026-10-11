@@ -163,6 +163,11 @@ test("room partners share notes, positions, and colored strings", async () => {
 
   await player.mutation(api.clueBoard.deleteNode, { nodeId: first });
   expect(await player.query(api.clueBoard.getEdges, { roomCode: "ABC123" })).toEqual([]);
+  await player.mutation(api.clueBoard.deleteNode, { nodeId: record });
+  expect((await player.query(api.clueBoard.getNodes, { roomCode: "ABC123" }))?.some((node) => node._id === record)).toBe(false);
+  expect(await player.mutation(api.clueBoard.createReferenceNode, {
+    roomCode: "ABC123", type: "public_record", referenceId: "record/address", x: 20, y: 220,
+  })).not.toBe(record);
 
   const stranger = t.withIdentity({ subject: "player-2" });
   expect(await stranger.query(api.clueBoard.getNodes, { roomCode: "ABC123" })).toBeNull();
