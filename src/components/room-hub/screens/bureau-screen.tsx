@@ -9,7 +9,7 @@ import { go, replaceTo } from "../../../lib/game-nav";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { currentGameMinute, formatGameMinute, formatDuration, partOfDay } from "../../../lib/game-time";
-import { getVolume, isMuted, play, setMuted, setVolume, startAmbience, stopAmbience } from "../../../lib/sound";
+import { getVolume, isMuted, play, setMuted, setVolume } from "../../../lib/sound";
 import { GameIcon } from "../game-icon";
 import { ControlIcon } from "../control-icon";
 import { NotebookOverlay } from "../notebook-overlay";
@@ -199,14 +199,6 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   useEffect(() => {
     const idle = window.setTimeout(preloadStations, 300);
     return () => window.clearTimeout(idle);
-  }, []);
-
-  useEffect(() => {
-    const begin = () => startAmbience();
-    begin();
-    window.addEventListener("pointerdown", begin);
-    window.addEventListener("keydown", begin);
-    return () => { window.removeEventListener("pointerdown", begin); window.removeEventListener("keydown", begin); stopAmbience(); };
   }, []);
 
   useEffect(() => {

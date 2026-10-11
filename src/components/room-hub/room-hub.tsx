@@ -13,6 +13,7 @@ import { SettingsPanel } from "./screens/settings-panel";
 import { CaseBriefScreen } from "./screens/status-screens";
 import { BureauScreen, preloadStations } from "./screens/bureau-screen";
 import { GameLogo } from "./game-logo";
+import { startAmbience, stopAmbience } from "../../lib/sound";
 
 const DETECTIVE_NAME_KEY = "redacted.detectiveName";
 const subscribeToNothing = () => () => {};
@@ -66,6 +67,14 @@ export function RoomHub() {
   useEffect(() => {
     if (screen === "brief") preloadStations();
   }, [screen]);
+
+  useEffect(() => {
+    const begin = () => startAmbience();
+    begin();
+    window.addEventListener("pointerdown", begin);
+    window.addEventListener("keydown", begin);
+    return () => { window.removeEventListener("pointerdown", begin); window.removeEventListener("keydown", begin); stopAmbience(); };
+  }, []);
 
   if (!isMounted) {
     return (

@@ -3,7 +3,7 @@
 ## 2026-10-11 — Logo, audio, and lighter controls
 
 - The brand mark is one simple pixel dossier with a redaction bar; the REDACTED wordmark stays live text so it remains sharp and cannot contain generated lettering artifacts. Generated art is reserved for prominent controls and symbols, while long case text remains selectable DOM text.
-- A quiet synthesized minor progression and rain form the investigation bed. Browsers may block audio until interaction, so pointer and keyboard input both unlock it. Music, ambience, and effects share one mute and volume setting.
+- A quiet synthesized minor progression and rain form the menu and investigation bed. The shared game shell owns audio across route changes. Browsers may block audio until interaction, so pointer and keyboard input both unlock it. Menu settings and pause expose the same mute and volume preference for music, ambience, and effects.
 - Use illustrated plates and clear icon silhouettes for primary actions and exits. Keep accessible names and visible labels where space permits; mobile icon-only returns have titles and accessible names. Do not add an illustrated box around every evidence row or object.
 - Full case summaries remain available within each archive card, but start collapsed so case choice and replay actions stay scannable. First-time tips describe gestures in short lines, with deeper case information opened intentionally.
 - On narrow interviews, keep the portrait identity visible, fold appearance text, and anchor the evidence tray above the question composer. Evidence already on the clueboard appears first and is labeled; other discovered proof remains usable under the existing game rule.

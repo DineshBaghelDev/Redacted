@@ -589,6 +589,7 @@
 @media (prefers-reduced-motion: reduce) {
   .reveal-card, .terminal-line, .contradiction-stamp, .cctv-static, .game-toast, .game-tip,
   .game-menu-scene nav[aria-label="Main menu"] > button { animation: none !important; }
+  .game-control-button { transition: none !important; transform: none !important; }
   .game-panorama, .cctv-tape { scroll-behavior: auto; }
 }
 

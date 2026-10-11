@@ -5,6 +5,7 @@ import {
 } from "@clerk/nextjs";
 import { RoomHub } from "@/components/room-hub/room-hub";
 import { GameIcon } from "@/components/room-hub/game-icon";
+import { GameLogo } from "@/components/room-hub/game-logo";
 
 /**
  * Renders the authentication-dependent home page.
@@ -22,10 +23,8 @@ export default function Home() {
               "url('/assets/menu-noir.png')",
           }}
         >
-          <div className="relative z-10 flex w-full max-w-xs flex-col gap-3">
-            <h1 className="game-title mb-8 text-5xl leading-none sm:text-7xl">
-              REDACTED
-            </h1>
+          <div className="relative z-10 flex w-full max-w-sm flex-col gap-3">
+            <GameLogo className="mb-8" />
             <SignInButton>
               <button className="game-menu-button w-full text-xl uppercase">
                 <GameIcon name="badge" />
