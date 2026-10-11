@@ -10,6 +10,7 @@ import { formatDuration, formatGameMinute } from "../../../lib/game-time";
 import { cardDropTarget, startCardDrag, type DragCard, type DragKind } from "../../../lib/evidence-drag";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { ControlIcon } from "../control-icon";
+import { go } from "../../../lib/game-nav";
 
 const MAX_EVIDENCE = 12;
 const fields = [
@@ -34,6 +35,8 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
   const submitCase = useMutation(api.caseClose.submit);
   const createReference = useMutation(api.clueBoard.createReferenceNode);
   const retryJudge = useMutation(api.caseClose.retry);
+  const replay = useMutation(api.sessions.replay);
+  const [shared, setShared] = useState("");
   const [closing, setClosing] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -107,6 +110,33 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
     }).finally(() => setSubmitting(false));
   }
 
+  /** A fresh room on the same case, for another go. */
+  function replayCase() {
+    setError("");
+    const nickname = window.localStorage.getItem("redacted.detectiveName") ?? "Detective";
+    void replay({ roomCode, nickname }).then((created) => go(`/lobby/${created.roomCode}`)).catch((caught: unknown) => setError(errorText(caught, "Could not start a new room.")));
+  }
+
+  /** A spoiler-free line about the result: title, stars, rank, and time. */
+  function shareResult() {
+    if (!closeState?.result || !brief) return;
+    const stars = closeState.result.totalStars;
+    const text = `I closed "${brief.title}" in Redacted: ${"★".repeat(stars)}${"☆".repeat(5 - stars)}${closeState.rank ? `, ranked ${closeState.rank}` : ""}${closeState.tookMinutes !== undefined ? `, case time ${formatDuration(closeState.tookMinutes)}` : ""}.`;
+    const done = () => setShared("Copied to share.");
+    if (navigator.share) void navigator.share({ text }).catch(() => {});
+    else void navigator.clipboard.writeText(text).then(done).catch(() => setShared(text));
+  }
+
+  const afterCase = (
+    <div className="mt-8 flex flex-col gap-2 border-t-2 border-[#6d5138] pt-5 sm:flex-row sm:flex-wrap">
+      <button className="game-control-button min-h-11 px-4 text-sm uppercase text-[#f1c987]" onClick={() => go("/")} type="button"><ControlIcon name="back" />Main menu</button>
+      <button className="game-control-button min-h-11 px-4 text-sm uppercase text-[#f1c987]" onClick={() => go("/previous")} type="button">Another case</button>
+      <button className="min-h-11 border-2 border-[#573821] px-4 text-sm uppercase" onClick={replayCase} type="button">Replay this case</button>
+      {closeState?.result ? <button className="min-h-11 border-2 border-[#573821] px-4 text-sm uppercase" onClick={shareResult} type="button">Share result</button> : null}
+      {shared ? <p className="basis-full text-sm text-[#5b4635]" role="status">{shared}</p> : null}
+    </div>
+  );
+
   function retry() {
     setSubmitting(true);
     setError("");
@@ -138,6 +168,8 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   {"★".repeat(closeState.result.totalStars)}{"☆".repeat(5 - closeState.result.totalStars)}
                 </p>
               </div>
+              {closeState.rank ? <p className="mt-4 inline-block -rotate-2 border-4 border-double border-red-900 px-3 py-1 text-xl uppercase tracking-widest text-red-900">{closeState.rank}</p> : null}
+              {closeState.badges.length ? <ul aria-label="Badges" className="mt-3 flex flex-wrap gap-2">{closeState.badges.map((badge) => <li className="border border-[#6d5138] bg-[#efe3c4] px-2 py-0.5 text-xs uppercase" key={badge}>{badge}</li>)}</ul> : null}
               {closeState.tookMinutes !== undefined ? (
                 <p className="mt-3 font-mono text-sm text-[#5b4635]">
                   Case time {formatDuration(closeState.tookMinutes)}
@@ -155,7 +187,8 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   );
                 })}
               </ul>
-              {epilogue ? <Epilogue epilogue={epilogue} /> : null}
+              {epilogue ? <Epilogue answer={closeState.answer} epilogue={epilogue} /> : null}
+              {afterCase}
             </section>
           ) : closeState?.status === "judging" || (closeState?.status === "pending" && !closeState.error) ? (
             <section className="game-dossier px-5 pb-20 pt-20 text-center sm:px-8 sm:pb-16" aria-live="polite">
@@ -176,6 +209,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               <p className="text-xs uppercase tracking-[0.2em] text-red-800">Case given up</p>
               <h3 className="mt-2 text-3xl uppercase">No report was filed</h3>
               <Epilogue epilogue={epilogue} />
+              {afterCase}
             </section>
           ) : !closing ? (
             <section className="game-dossier px-5 pb-20 pt-20 sm:px-8 sm:pb-16">
@@ -266,13 +300,32 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
 
 type EpilogueData = { culprit: string; motive: string; method: string; explanation: string; events: { time: number; place: string; text: string }[] };
 
-function Epilogue({ epilogue }: { epilogue: EpilogueData }) {
+type Answer = { culprit: string; weapon: string; motive: string; method: string; evidence: string };
+
+function Epilogue({ epilogue, answer }: { epilogue: EpilogueData; answer?: Answer }) {
   return (
     <div className="mt-10 border-t-2 border-[#6d5138] pt-6">
       <p className="text-xs uppercase tracking-[0.2em] text-red-800">What really happened</p>
       <h3 className="mt-2 text-2xl uppercase">{epilogue.culprit}</h3>
-      <p className="mt-3 text-sm leading-relaxed"><span className="uppercase text-red-900">Why · </span>{epilogue.motive}</p>
-      <p className="mt-2 text-sm leading-relaxed"><span className="uppercase text-red-900">How · </span>{epilogue.method}</p>
+      {answer ? (
+        <dl className="mt-4 grid gap-x-4 gap-y-3 border-y border-[#6d5138]/40 py-4 text-sm leading-relaxed sm:grid-cols-[auto_1fr_1fr]">
+          <dt className="hidden sm:block" />
+          <dd className="hidden text-xs uppercase text-red-900 sm:block">You said</dd>
+          <dd className="hidden text-xs uppercase text-red-900 sm:block">The truth</dd>
+          {([["Who", answer.culprit, epilogue.culprit], ["Why", answer.motive, epilogue.motive], ["How", answer.method, epilogue.method]] as const).map(([label, yours, truth]) => (
+            <div className="contents" key={label}>
+              <dt className="uppercase text-red-900">{label}</dt>
+              <dd><span className="text-xs uppercase text-[#8b7355] sm:hidden">You said · </span>{yours || "–"}</dd>
+              <dd><span className="text-xs uppercase text-[#8b7355] sm:hidden">The truth · </span>{truth}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <>
+          <p className="mt-3 text-sm leading-relaxed"><span className="uppercase text-red-900">Why · </span>{epilogue.motive}</p>
+          <p className="mt-2 text-sm leading-relaxed"><span className="uppercase text-red-900">How · </span>{epilogue.method}</p>
+        </>
+      )}
       <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed">{epilogue.explanation}</p>
       <ol className="mt-6 border-l-2 border-red-900/60 pl-4">
         {epilogue.events.map((event, index) => (

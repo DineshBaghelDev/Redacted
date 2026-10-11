@@ -55,7 +55,7 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Step away from the t
     <section className="game-cctv-scene game-records-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#e4e6d8]">
       <header className="game-station-header flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:flex-nowrap sm:px-6">
         <div className="min-w-0 basis-full sm:basis-auto">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Security terminal</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Security desk</p>
           <h2 className="mt-1 text-lg uppercase tracking-wide sm:text-2xl">Camera tapes</h2>
         </div>
         <button className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-xs uppercase sm:text-sm" onClick={() => setCompareOpen(!compareOpen)} type="button"><GameIcon className="size-6" name="interview" />{compareOpen ? "Hide people" : <>Compare<span className="hidden sm:inline"> with people</span></>}</button>
@@ -229,7 +229,7 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
       <div className="cctv-monitor relative overflow-hidden border-2 border-[#2f4a47] bg-[#020807] p-4 font-mono sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs uppercase tracking-[0.18em] text-[#7fd1ae]">
           <span>{camera.name}</span>
-          <span className="text-[#7fd1ae]">{camera.faulty ? "No signal" : "▶ Play"}</span>
+          <span className="text-[#7fd1ae]/70">{camera.faulty ? "No signal" : "Recorded tape"}</span>
         </div>
         <p className="mt-3 text-3xl tabular-nums text-[#c9f2dd] sm:text-5xl">Day {day(minute)} · {clock(minute)}</p>
         <div className="mt-4 min-h-24 border-t border-[#2f4a47] pt-3 text-sm leading-relaxed sm:text-base">

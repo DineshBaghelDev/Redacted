@@ -11,7 +11,9 @@ import type { Screen } from "./constants";
 type WorkingAction = "create" | "join" | "ready" | "start" | "copy" | "leave" | null;
 
 function screenForPath(pathname: string): Screen {
-  if (pathname === "/join") return "join";
+  if (pathname === "/join" || pathname.startsWith("/join/")) return "join";
+  if (pathname === "/history") return "history";
+  if (pathname === "/how-to-play") return "how";
   if (pathname === "/previous") return "previous";
   if (pathname === "/settings") return "settings";
   if (pathname === "/game" || pathname.startsWith("/game/")) return "bureau";
@@ -24,6 +26,8 @@ function pathForScreen(screen: Screen, roomCode: string) {
   if (screen === "join") return "/join";
   if (screen === "previous") return "/previous";
   if (screen === "settings") return "/settings";
+  if (screen === "history") return "/history";
+  if (screen === "how") return "/how-to-play";
   if (screen === "brief") return roomCode ? `/lobby/${roomCode}/brief` : "/";
   if (screen === "bureau") return roomCode ? `/lobby/${roomCode}/bureau` : "/game";
   return "/";
@@ -32,6 +36,12 @@ function pathForScreen(screen: Screen, roomCode: string) {
 function roomCodeForPath(pathname: string) {
   const match = pathname.match(/^\/lobby\/([^/]+)(?:\/|$)/);
   return match ? decodeURIComponent(match[1]).toUpperCase() : "";
+}
+
+/** An invite link (/join/ABC123) carries the room code to fill in. */
+export function inviteCodeForPath(pathname: string) {
+  const match = pathname.match(/^\/join\/([A-Za-z0-9]{6})$/);
+  return match ? match[1].toUpperCase() : "";
 }
 
 function isLobbyPath(pathname: string) {
@@ -50,7 +60,7 @@ export function useRoomSession(nickname: string) {
 
   const screen = screenForPath(pathname);
   const joinedRoomCode = roomCodeForPath(pathname);
-  const [roomCode, setRoomCode] = useState(joinedRoomCode);
+  const [roomCode, setRoomCode] = useState(joinedRoomCode || inviteCodeForPath(pathname));
   const [error, setError] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
   const [workingAction, setWorkingAction] = useState<WorkingAction>(null);
@@ -131,7 +141,7 @@ export function useRoomSession(nickname: string) {
   }
 
   async function startInvestigation() {
-    if (!joinedRoomCode || !room?.allReady || workingAction) return;
+    if (!joinedRoomCode || !room?.canStart || workingAction) return;
     setWorkingAction("start");
     setError("");
     try {
@@ -148,11 +158,12 @@ export function useRoomSession(nickname: string) {
     setWorkingAction("copy");
     setError("");
     try {
-      await navigator.clipboard.writeText(joinedRoomCode);
+      // An invite link opens the join screen with the code filled in; the code still works on its own.
+      await navigator.clipboard.writeText(`${window.location.origin}/join/${joinedRoomCode}`);
       setCopiedCode(true);
       window.setTimeout(() => setCopiedCode(false), 1200);
     } catch {
-      setError("Could not copy the room code. Select it from the room heading instead.");
+      setError("Could not copy the invite link. Share the room code from the heading instead.");
     } finally {
       setWorkingAction(null);
     }
@@ -177,6 +188,12 @@ export function useRoomSession(nickname: string) {
     } finally {
       setWorkingAction(null);
     }
+  }
+
+  /** Open a finished case from the history: its report, result, and what really happened. */
+  function openReport(roomCode: string) {
+    setRoomCode(roomCode);
+    router.push(`/lobby/${roomCode}/case`);
   }
 
   function continueRoom(roomCode: string, status: "waiting" | "playing", reportSubmitted: boolean) {
@@ -211,5 +228,6 @@ export function useRoomSession(nickname: string) {
     closeJoin,
     leaveRoom,
     continueRoom,
+    openReport,
   };
 }

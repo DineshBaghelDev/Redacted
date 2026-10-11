@@ -30,6 +30,10 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
   const people = useQuery(api.npcs.list, { roomCode });
   const nodes = useQuery(api.clueBoard.getNodes, { roomCode });
   const ping = useMutation(api.coop.ping);
+  const setNote = useMutation(api.notebook.setNote);
+  const coop = useQuery(api.coop.get, { roomCode });
+  const [filter, setFilter] = useState("");
+  const [partnerText, setPartnerText] = useState("");
   const [tab, setTab] = useState<"people" | "evidence">("evidence");
   const [message, setMessage] = useState("");
   // While dragging an entry out, fade the notebook so the screen behind can take the drop.
@@ -37,7 +41,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
 
   function share(text: string) {
     play("ping");
-    void ping({ roomCode, text }).then(() => setMessage("Your partner has been pointed to it."));
+    void ping({ roomCode, text }).then(() => setMessage("Sent to your partner."));
   }
 
   return (
@@ -57,13 +61,15 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
             </button>
           ))}
         </div>
+        <label className="sr-only" htmlFor="notebook-filter">Find in notebook</label>
+        <input className="mt-3 h-10 w-full border border-[#8b7355] bg-[#efe3c4] px-3 text-sm text-[#211d17] outline-none placeholder:text-[#8b7355] focus:border-red-900" id="notebook-filter" onChange={(event) => setFilter(event.target.value)} placeholder="Find a name, place, or word..." type="search" value={filter} />
         {message ? <p className="mt-2 text-sm text-red-900" role="status">{message}</p> : null}
         <FirstTimeTip id="notebook" title="Shared notebook">Discoveries appear here. Drag one to the clueboard, a person, the lab bench, or your report.</FirstTimeTip>
         <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
           {tab === "people" ? (
             people === undefined ? <p className="uppercase">Opening files...</p> : (
               <ul className="space-y-3">
-                {(people ?? []).map((person) => (
+                {(people ?? []).filter((person) => matches(filter, person.name, person.occupation ?? "", person.publicDescription)).map((person) => (
                   <li className="group flex cursor-grab gap-3 border-b border-[#8b7355]/60 pb-3" draggable key={person.id} onDragEnd={() => setDragging(false)} onDragStart={(event) => { startCardDrag(event, { kind: "person", referenceId: person.id, label: person.name }); setDragging(true); }}>
                     <CharacterPortrait age={person.age} className="w-14" description={person.publicDescription} gender={person.gender} id={person.id} />
                     <div className="min-w-0 flex-1">
@@ -81,7 +87,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
             <p className="text-sm leading-relaxed">Nothing written down yet. Search places, read devices, question people, and review records. Everything you uncover lands here for both of you.</p>
           ) : (
             groups.map(([type, label]) => {
-              const rows = entries.filter((entry) => entry.type === type);
+              const rows = entries.filter((entry) => entry.type === type && matches(filter, entry.title, entry.body, entry.note ?? ""));
               if (!rows.length) return null;
               return (
                 <section className="mb-5" key={type}>
@@ -92,6 +98,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
                         <p className="text-sm font-semibold">{entry.title}</p>
                         {entry.time !== undefined ? <p className="font-mono text-xs text-[#5d4d3d]">{formatGameMinute(entry.time)}</p> : null}
                         <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{entry.body}</p>
+                        <EntryNote note={entry.note} onSave={(text) => { void setNote({ roomCode, referenceId: entry.referenceId, text }).catch((caught: unknown) => setMessage(errorText(caught, "Could not save that note."))); }} />
                         <EntryActions onShare={() => share(`Look at: ${entry.title}`)} pinControl={<PinButton nodes={nodes} onChange={(next) => setMessage(next ? "Pinned to the clueboard." : "Removed from the clueboard.")} onError={(caught) => setMessage(errorText(caught, "Could not update this pin."))} referenceId={entry.referenceId} roomCode={roomCode} type={entry.type} />} />
                       </li>
                     ))}
@@ -101,6 +108,13 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
             })
           )}
         </div>
+        {coop?.partners.length ? (
+          <form className="mt-3 flex gap-2 border-t border-[#8b7355] pt-3" onSubmit={(event) => { event.preventDefault(); if (partnerText.trim()) { share(partnerText); setPartnerText(""); } }}>
+            <label className="sr-only" htmlFor="partner-message">Message your partner</label>
+            <input className="h-10 min-w-0 flex-1 border border-[#8b7355] bg-[#efe3c4] px-3 text-sm text-[#211d17] outline-none placeholder:text-[#8b7355] focus:border-red-900" id="partner-message" maxLength={140} onChange={(event) => setPartnerText(event.target.value)} placeholder={`Message ${coop.partners[0].name}...`} value={partnerText} />
+            <button className="min-h-10 border border-[#573821] px-3 text-xs uppercase disabled:opacity-50" disabled={!partnerText.trim()} type="submit">Send</button>
+          </form>
+        ) : null}
       </aside>
     </div>
   );
@@ -114,5 +128,27 @@ function EntryActions({ pinControl, onShare }: { pinControl: ReactNode; onShare:
         <button className="min-h-8 border border-[#573821] px-2 text-xs uppercase" onClick={onShare} type="button">Show partner</button>
       </span>
     </div>
+  );
+}
+
+/** Case-insensitive match of the notebook search against any of an entry's texts. */
+function matches(filter: string, ...texts: string[]) {
+  const term = filter.trim().toLowerCase();
+  return !term || texts.some((text) => text.toLowerCase().includes(term));
+}
+
+/** The team's own one-line note on an entry: reasoning, never evidence. */
+function EntryNote({ note, onSave }: { note?: string; onSave: (text: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  if (!editing) {
+    return note
+      ? <button className="mt-1 block text-left text-sm italic text-red-900" onClick={() => setEditing(true)} title="Edit your note" type="button">✎ {note}</button>
+      : <button className="mt-1 text-xs uppercase text-[#8b7355] hover:text-red-900" onClick={() => setEditing(true)} type="button">+ Add a note</button>;
+  }
+  return (
+    <form className="mt-1 flex gap-2" onSubmit={(event) => { event.preventDefault(); onSave(String(new FormData(event.currentTarget).get("note") ?? "")); setEditing(false); }}>
+      <input aria-label="Your note" autoFocus className="h-8 min-w-0 flex-1 border border-[#8b7355] bg-[#efe3c4] px-2 text-sm text-[#211d17] outline-none focus:border-red-900" defaultValue={note} maxLength={200} name="note" placeholder="lying about the dentist?" />
+      <button className="border border-[#573821] px-2 text-xs uppercase" type="submit">Save</button>
+    </form>
   );
 }

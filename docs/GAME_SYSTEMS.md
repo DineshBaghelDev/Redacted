@@ -150,7 +150,7 @@ CCTV consists of:
 CCTV records have no visual representation at all. Do not add generated video, stills, thumbnails, or visual playback later.
 
 At a camera's access point the whole tape is visible: players scrub a timeline, see stored sightings as marks, and read what is in frame at the playhead. Watching is instant and free; hours scrubbed through are recorded so their sightings join the notebook and can be pinned or shown. Calls and messages link to the street cameras at their time. Matching written descriptions to people's public descriptions is the intended deduction.
-Street and bureau cameras are reviewed at the bureau. Building cameras are reviewed in the room where the camera is installed. The player sees only the cameras available at that access point; review and pin actions use the same location gate.
+Street cameras are reviewed at the bureau; the bureau's own cameras are not offered, since they never bear on a case. Building cameras are reviewed in the room where the camera is installed. The player sees only the cameras available at that access point; review and pin actions use the same location gate.
 
 ## Devices
 
@@ -191,7 +191,7 @@ Pre-generated searchable records such as:
 - criminal/publicly available records,
 - case-specific public record types.
 
-Retrieval searches stored case data; it does not generate answers live.
+Retrieval searches stored case data; it does not generate answers live. A search needs a name or address of at least two characters; there is no browse-everything search. Card payments show the day and time they went through.
 
 ## Forensic laboratory
 
@@ -224,7 +224,7 @@ Supported base test types:
 
 Forensic output is separate from `caseItems`.
 
-Sources are collected objects, searched rooms, and the victim's body. The lab never shows which tests will find something. A test with no stored output still costs its submission time and returns "No usable result" after 30 minutes.
+Sources are collected objects, searched rooms, and the victim's body. The lab never shows which tests will find something. A test is a hands-on task at the bench; its result shows as soon as the task is done, for 5 bench minutes. A test with no stored output still costs those minutes and returns "No usable result".
 
 ## Interrogation/NPC system
 
@@ -259,6 +259,10 @@ NPC dialogue does not automatically:
 ### Lies and showing proof
 
 - A lie breaks only when a player shows evidence that disproves it. Asking again or pushing harder never forces the truth.
+- Either phone's copy of a call or message is the same evidence for this check and for the evidence star.
+- Proof that disproves none of the person's lies "misses": both detectives see a "They don't budge" stamp, and the person is told the proof doesn't land. No extra cost.
+- NPCs may only lie about the topics in their script; elsewhere they stay consistent with what they know or decline to say. They know the current case time and that they heard of the death after the discovery.
+- Asking where they were, what they saw, or for their alibi takes a witness's statement; asking for "your phone" asks for theirs (someone else's phone is not a handover request).
 - Proof can be any evidence the players have found: physical items, lab results, CCTV records, calls and messages, public records, device files, or another person's statement.
 - Players can attach found evidence to a message ("show evidence").
 - The server checks the shown evidence against the lie's stored disproving evidence. The LLM never decides whether a lie is caught.
@@ -304,7 +308,7 @@ No Liveblocks in V1.
 
 The case has a shared deadline and deterministic action durations.
 
-The replay creator may set a custom shared deadline before creating the room; otherwise the frozen case estimate plus 50% after the discovery minute is used. Once set, it is fixed for both players. Passing it shows Overdue; play continues and the five-star score is unchanged. At any time before filing a report, the detectives may give up from the case file: the room becomes review-only for both and the solution is shown. Submitting the final report ends new investigation actions, while existing case data and the report remain readable.
+The replay creator may set a custom shared deadline before creating the room; otherwise the frozen case estimate plus 50% after the discovery minute is used. Once set, it is fixed for both players. Passing it shows Overdue; play continues and the five stars are unchanged, but the detective rank is one step higher for a report filed by the deadline (stars + 1 for on time: 6 Chief Inspector, 5 Inspector, 3–4 Detective, else Rookie). Badges (Perfect file, Beat the clock, Lie breaker, Partners) are shown with the result. At any time before filing a report, the detectives may give up from the case file: the room becomes review-only for both and the solution is shown. Submitting the final report ends new investigation actions, while existing case data and the report remain readable.
 
 V1 uses a continuous action-driven clock. Time advances only while at least one timed action is active, and concurrent player actions overlap on the same shared timeline. When the final active action ends, the clock pauses automatically. The server derives elapsed game time from timestamp anchors instead of writing a database update every minute. This preserves free discussion and evidence review while rewarding partners who split investigative work.
 
@@ -363,6 +367,10 @@ Suspect counts by difficulty:
 City size and case size have no hard upper limit. Keep minimum/solvability constraints and generation/runtime practicality checks.
 
 There is no V1 hint system.
+
+## Case history
+
+A scored or given-up room never expires. It moves from Continue to Case history, where its result, rank, and "What really happened" stay readable, with simple career stats. The result screen offers Main menu, Another case, Replay this case, and a spoiler-free Share.
 
 ## Replay
 

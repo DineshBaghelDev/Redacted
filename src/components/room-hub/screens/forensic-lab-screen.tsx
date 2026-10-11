@@ -7,7 +7,7 @@ import { useQuery } from "convex-helpers/react/cache";
 import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { cardDropTarget, startCardDrag } from "../../../lib/evidence-drag";
-import { formatDuration, formatGameMinute } from "../../../lib/game-time";
+import { formatGameMinute } from "../../../lib/game-time";
 import { play } from "../../../lib/sound";
 import { ControlIcon } from "../control-icon";
 import { PinButton } from "../pin-button";
@@ -30,7 +30,7 @@ const tools: { test: TestType; name: string; colour: string }[] = [
 ];
 
 function sourceIcon(key: string) {
-  return key === "victim" ? "file" : key.startsWith("room:") ? "room" : "evidence";
+  return key.startsWith("room:") ? "room" : "evidence";
 }
 
 export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
@@ -38,7 +38,6 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
   const lab = useQuery(api.forensics.getLab, isLoaded && isSignedIn ? { roomCode } : "skip");
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
   const requestTest = useMutation(api.forensics.request);
-  const markViewed = useMutation(api.forensics.markViewed);
   const finishAction = useMutation(api.investigation.finishAction);
   const [sourceKey, setSourceKey] = useState<string | null>(null);
   const [tool, setTool] = useState<TestType | null>(null);
@@ -165,21 +164,14 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
 
             {requests.length ? (
               <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+                {/* Bench work shows its result the moment the task is done, so every request here is a report. */}
                 {requests.map((request) => {
-                  const remaining = Math.max(0, request.readyAtGameTime - gameTime);
                   const name = tools.find((item) => item.test === request.testType)?.name ?? request.testType;
                   return (
-                    <li className={request.status === "viewed" ? "game-dossier p-3 text-[#211d17] sm:col-span-2" : "border border-[#6f9f98]/30 bg-[#071619]/75 p-3"} key={request.id}>
-                      <p className="flex items-center justify-between gap-2 text-sm uppercase"><span>{name}</span>
-                        <span className="text-xs">{request.status === "pending" ? `${formatDuration(remaining)} left` : request.status === "ready" ? "Ready" : "Report"}</span></p>
-                      {request.status === "pending" ? <progress aria-label={`${name} processing`} className="mt-2 h-2 w-full accent-[#6f9f98]" /> : null}
-                      {request.status === "ready" ? <button className="game-control-button mt-2 min-h-11 w-full px-3 text-xs uppercase text-[#f1c987]" disabled={Boolean(working)} onClick={() => run(request.id, markViewed({ roomCode, requestId: request.id }), "stamp")} type="button"><ControlIcon name="play" />Tear open the report</button> : null}
-                      {request.status === "viewed" ? (
-                        <>
-                          <p className="mt-2 whitespace-pre-wrap border-t border-[#8b7355] pt-2 text-sm leading-relaxed">{request.result}</p>
-                          {request.outputId ? <PinButton className="mt-2" disabled={Boolean(working)} nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={request.outputId} roomCode={roomCode} type="forensic" /> : null}
-                        </>
-                      ) : null}
+                    <li className="game-dossier p-3 text-[#211d17] sm:col-span-2" key={request.id}>
+                      <p className="flex items-center justify-between gap-2 text-sm uppercase"><span>{name}</span><span className="text-xs">Report</span></p>
+                      <p className="mt-2 whitespace-pre-wrap border-t border-[#8b7355] pt-2 text-sm leading-relaxed">{request.result}</p>
+                      {request.outputId ? <PinButton className="mt-2" disabled={Boolean(working)} nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={request.outputId} roomCode={roomCode} type="forensic" /> : null}
                     </li>
                   );
                 })}

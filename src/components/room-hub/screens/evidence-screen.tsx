@@ -11,6 +11,8 @@ import { InvestigationIcon } from "../investigation-icon";
 import { PinButton } from "../pin-button";
 import { TypeAhead } from "../type-ahead";
 
+const typeLabels: Record<string, string> = { person: "Address", property: "Property", vehicle: "Vehicle", business: "Company", criminal: "Police record", employment: "Employment", payment: "Card payment", other: "Record" };
+
 function normalizedTerm(search: string) {
   return search.trim().replace(/\s+/g, " ").toLowerCase();
 }
@@ -35,7 +37,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const term = search.trim();
-    if (startingSearch) return;
+    if (startingSearch || term.length < 2) return;
     setSubmittedSearch(term);
     setHasSubmitted(true);
     if (result?.savedTerms.includes(currentTerm)) return;
@@ -50,8 +52,8 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
     <section className="game-evidence-scene game-records-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#c8d8d2]">
       <header className="game-station-header flex shrink-0 items-start justify-between gap-4 p-4 sm:p-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-[#e8ac51]/75">Bureau records terminal</p>
-          <h2 className="mt-1 text-2xl uppercase text-[#e4e6d8] sm:text-3xl">Public records</h2>
+          <p className="text-xs uppercase tracking-[0.25em] text-[#e8ac51]/75">Public records</p>
+          <h2 className="mt-1 text-2xl uppercase text-[#e4e6d8] sm:text-3xl">Records room</h2>
         </div>
         <button
           aria-label="Leave the records room"
@@ -78,10 +80,10 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
           />
           <button
             className="game-control-button flex min-h-12 items-center justify-center gap-2 px-5 text-sm uppercase text-[#e8ac51] focus-visible:outline-2 focus-visible:outline-[#e8ac51] disabled:cursor-wait disabled:opacity-50"
-            disabled={startingSearch || (result?.status === "pending" && normalizedTerm(submittedSearch) === currentTerm)}
+            disabled={startingSearch || currentTerm.length < 2 || (result?.status === "pending" && normalizedTerm(submittedSearch) === currentTerm)}
             type="submit"
           >
-            <ControlIcon name="search" />{startingSearch ? "Starting search..." : !search.trim() ? "Browse files" : result?.savedTerms.includes(currentTerm) ? "Open saved search" : "Search records"}
+            <ControlIcon name="search" />{startingSearch ? "Starting search..." : currentTerm.length >= 2 && result?.savedTerms.includes(currentTerm) ? "Open saved search" : "Search records"}
           </button>
         </div>
         <TypeAhead names={(people ?? []).map((person) => person.name)} onPick={setSearch} value={search} />
@@ -101,7 +103,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
             ))}
           </div>
         ) : null}
-        <p className="mt-2 text-xs text-[#c8d8d2]/65">New searches take 10 case minutes. Reopen a saved search for free.</p>
+        <p className="mt-2 text-xs text-[#c8d8d2]/65">Search a name or address. New searches take 10 case minutes; reopening a saved search is free.</p>
       </form>
 
       <div className="game-station-main min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
@@ -109,7 +111,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
         {result === undefined ? <TerminalMessage>Connecting to the records desk...</TerminalMessage> : null}
         {result === null ? <TerminalMessage>This room cannot access these records.</TerminalMessage> : null}
         {!startingSearch && result?.status === "available" ? (
-          <TerminalMessage>{hasSubmitted ? `Ready to search for “${submittedSearch || "general browse"}”.` : "Search a title or browse the files to begin."}</TerminalMessage>
+          <TerminalMessage>{hasSubmitted ? `Ready to search for “${submittedSearch}”.` : "Type a name or address to begin."}</TerminalMessage>
         ) : null}
         {startingSearch || result?.status === "pending" ? (
           <TerminalMessage role="status">Search in progress. Records will appear when it finishes.</TerminalMessage>
@@ -125,7 +127,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   <div className="flex items-start gap-3 border-b border-[#211d17]/30 pb-2">
                     <InvestigationIcon className="size-10" name="file" />
                     <div className="min-w-0">
-                      <span className="text-xs uppercase tracking-wide text-red-800">{record.type}</span>
+                      <span className="text-xs uppercase tracking-wide text-red-800">{typeLabels[record.type] ?? "Record"}</span>
                       <h3 className="break-words text-lg uppercase leading-tight">{record.title}</h3>
                     </div>
                   </div>

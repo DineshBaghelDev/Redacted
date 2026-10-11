@@ -1,5 +1,24 @@
 # Progress
 
+## 2026-10-11 — Final audit fixes
+
+- **Interviews:** statements are taken by any whereabouts or "what did you see" question, and the first-time tip explains it. Only "your phone" triggers a handover. Proof that disproves nothing shows a grey "They don't budge" stamp. NPCs may lie only about scripted topics and know the current case time. The transcript drops the repeated "Name asks:" prefix and shows presented evidence on its own line. Statement titles read "Statement of …". "Tag clue" and "Prove it wrong" are now "Show evidence".
+- **Evidence matching:** either phone's copy of a call or message counts as the same evidence for lies and the evidence star (`convex/lib/evidenceIds.ts`). Checked live: showing the victim's copy of the 7 pm text now stamps Contradiction.
+- **Noise:** phones, laptops and cameras get seeded filler on case open (`convex/lib/publishFiller.ts`). The Whitlock street camera went from 1 sighting to 9; the victim's phone from 1 message to 6 plus 3 calls. Clutter descriptions were rewritten to full sentences, refreshed on existing cases, and never duplicated in a room. The reversed code clue no longer says "backwards!".
+- **Records:** searches need 2+ characters (no browse-all). Card payments are a "Card payment" type with their time, backfilled on case open. Record types show plain labels.
+- **Brief:** known details include the victim's home and workplace.
+- **Cameras:** the bureau's own cameras are hidden from the security desk; the fake "▶ Play" label is gone.
+- **Lab:** removed the dead turnaround UI (pending bar, "Tear open the report", "The lab called" notice and its query). The victim's bag uses the evidence icon.
+- **Result:** detective rank (stars + on-time), badges, "You said / The truth" beside What really happened, Share result, and Main menu / Another case / Replay this case.
+- **Menus:** Case history with stats (closed rooms no longer expire; `caseClose.backfillClosedRooms` marked 2 older rooms on dev), How to play (menu and pause), Main menu and Report a problem in pause, played/solved/in-progress stamps and a case of the day in the archive, a replay warning on solved cases, and suspect counts per difficulty. The archive's deadline text now matches the real ×1.5 default.
+- **Rooms:** solo lobby shows only Start; Start counts as the starter's ready; invite links (/join/CODE); started rooms can be rejoined by code while a seat is free.
+- **Notebook and settings:** notebook search, one-line team notes per entry, a message box to the partner, Large text, and the detective name saved to the account.
+- **Checks:** 173 tests across 37 files, TypeScript and lint pass. Backend pushed to the dev deployment. A signed-in Chrome run on a fresh Whitlock room covered: solo lobby, brief leads, clutter and code clue text, phone filler, street camera filler, records with payment times, interview statement, no accidental handover, "They don't budge", Contradiction on the victim's copy of the text, give up, after-case buttons, Main menu, and Case history. Not run: `next build` (the dev server was using `.next`).
+
+## 2026-10-11 — Final pre-ship audit
+
+- Wrote `docs/audit/FINAL_AUDIT.md` (game, design, and developer review with a ship order) and `docs/audit/ARTWORK_NEEDED.md` (artwork list by priority), now in `docs/audit/` with `MISSING_FEATURES.md` (player features the game lacks, such as case history and a non-destructive way back to the menu). No code changed.
+
 ## 2026-10-11 — Lighter menu controls and site icon
 
 - Replaced the opaque fill behind the existing raster button frames with a translucent dark tint. Main menu actions now use a compact, consistent width and shorter padding while keeping their labels readable on mobile.

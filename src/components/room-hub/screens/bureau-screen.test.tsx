@@ -48,7 +48,7 @@ test("shows the bureau as a scene with places to walk to, not a tab bar", () => 
   const html = renderToStaticMarkup(<BureauScreen error="" onLeave={() => {}} />);
   expect(html).toContain('aria-label="Interview room"');
   expect(html).toContain("game-icon--interview");
-  expect(html).toContain('aria-label="Records"');
+  expect(html).toContain('aria-label="Records room"');
   expect(html).not.toContain("Bureau stations");
   expect(html).not.toContain("Leave game");
 });

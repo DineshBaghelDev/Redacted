@@ -50,7 +50,7 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
           {selected ? <InterviewPanel key={selected.id} people={people} person={selected} roomCode={roomCode} /> : (
             <>
               <p className="max-w-2xl text-sm leading-relaxed text-[#c8d8d2]">
-                Only people your investigation has come across are on file. Find names in messages, records, and statements to add more.
+                Only people your investigation has come across are on file. Find names in messages, records, and statements to add more. Interviews happen here at the bureau.
               </p>
               <ul className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {people.map((person) => {
@@ -97,8 +97,9 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
-  const [stamp, setStamp] = useState(false);
+  const [stamp, setStamp] = useState<"caught" | "missed" | null>(null);
   const lastExposed = useRef<number | null>(null);
+  const lastMissed = useRef<number | null>(null);
 
   // A lie broken by proof gets its moment: stamp and sting.
   useEffect(() => {
@@ -106,10 +107,18 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
     if (lastExposed.current !== null && interview.exposedLies > lastExposed.current) {
       play("sting");
       window.setTimeout(() => play("stamp"), 150);
-      setStamp(true);
-      window.setTimeout(() => setStamp(false), 2600);
+      setStamp("caught");
+      window.setTimeout(() => setStamp(null), 2600);
     }
     lastExposed.current = interview.exposedLies;
+    // Proof that proves nothing gets its own answer once the reply is in: they don't budge.
+    const missed = interview.turns.filter((turn) => turn.proofMissed && turn.status === "complete").at(-1)?.sequence ?? -1;
+    if (lastMissed.current !== null && missed > lastMissed.current) {
+      play("stamp");
+      setStamp("missed");
+      window.setTimeout(() => setStamp(null), 2200);
+    }
+    lastMissed.current = missed;
   }, [interview]);
 
   function run(action: Promise<unknown>, after?: () => void) {
@@ -141,7 +150,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
 
   return (
     <div className="relative grid h-full min-h-0 grid-rows-[max-content_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:grid-rows-1 lg:gap-5">
-      {stamp ? <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"><p className="contradiction-stamp px-6 py-3 text-3xl sm:text-5xl">Contradiction</p></div> : null}
+      {stamp ? <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"><p className={`contradiction-stamp px-6 py-3 text-3xl sm:text-5xl ${stamp === "missed" ? "contradiction-stamp--missed" : ""}`}>{stamp === "caught" ? "Contradiction" : "They don't budge"}</p></div> : null}
       <aside className="game-dossier min-h-0 overflow-y-auto p-3 text-[#211d17] lg:p-5">
         <div
           className="flex items-center gap-3 lg:flex-col lg:items-start"
@@ -179,7 +188,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
       </aside>
 
       <section aria-label={`Interview with ${person.name}`} className="flex min-h-0 flex-col border border-[#6f9f98]/30 bg-[#09191c]/95 text-[#e4e6d8]">
-        <FirstTimeTip id="interview" title="Questioning">Type a question. Tap a reply line to press it, or drop proof on the portrait. Each question takes 3 minutes.</FirstTimeTip>
+        <FirstTimeTip id="interview" title="Questioning">Type a question; each takes 3 minutes. Ask where they were or what they saw to take their statement, or ask for their phone. Show evidence to catch a lie.</FirstTimeTip>
         {interview?.threadId ? <ConversationMessages canAsk={canAsk} name={person.name} onPress={(line) => run(sendQuestion({ roomCode, npcId: person.id, question: `You said: "${line}" Tell me more about that.` }))} onPresent={(line) => { setQuote(line); setTrayOpen(true); }} roomCode={roomCode} threadId={interview.threadId} /> : <div className="flex min-h-0 flex-1 items-center justify-center p-4 text-center text-sm text-[#c8d8d2]/60">{present ? `${person.name} is shown in and sits down.` : "The chair across the table is empty."}</div>}
         {waiting ? <p className="px-4 py-2 text-sm italic text-[#e8ac51]" role="status">{person.name} is thinking<span className="animate-pulse">...</span></p> : null}
         {interview?.turns.at(-1)?.status === "failed" ? <div className="px-4 py-2 text-sm text-red-200" role="alert"><p>That answer was lost. Asking again costs no time.</p><button className="mt-2 min-h-10 border border-red-400 px-3 text-xs uppercase disabled:opacity-50" disabled={working} onClick={() => run(retryFailed({ roomCode, npcId: person.id }))} type="button">Ask again</button></div> : null}
@@ -194,13 +203,13 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
               {interview.phone?.acquired && !interview.phone.read ? <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={!canAsk} onClick={() => run(readPhone({ roomCode, npcId: person.id }))} type="button">Go through their phone · 5 min</button> : null}
               {interview.phone?.read ? <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987]" onClick={() => setPhoneOpen(true)} type="button">Open their phone</button> : null}
             </div>
-            {quote ? <div className="mb-2 flex items-start justify-between gap-2 border-l-2 border-red-400 bg-[#2a1a1a] px-3 py-2 text-xs"><span className="min-w-0 break-words">Against: &ldquo;{quote}&rdquo; · pick the evidence that proves it wrong</span><button className="shrink-0 text-[#e8ac51]" onClick={() => setQuote(null)} type="button">Never mind</button></div> : null}
+            {quote ? <div className="mb-2 flex items-start justify-between gap-2 border-l-2 border-red-400 bg-[#2a1a1a] px-3 py-2 text-xs"><span className="min-w-0 break-words">About &ldquo;{quote}&rdquo; · pick the evidence to show them</span><button className="shrink-0 text-[#e8ac51]" onClick={() => setQuote(null)} type="button">Never mind</button></div> : null}
             {shown ? <div className="mb-2 flex items-start justify-between gap-2 border-l-2 border-[#e8ac51] bg-[#1c2d2d] px-3 py-2 text-xs"><span className="min-w-0 break-words">On the table: {shown.label}</span><button className="shrink-0 text-[#e8ac51]" onClick={() => setShown(null)} type="button">Take back</button></div> : null}
             <label className="sr-only" htmlFor="interview-question">Ask a question</label>
             <textarea className="min-h-16 w-full resize-y border border-[#45635d] bg-[#102326] p-3 text-base text-[#e4e6d8] outline-none focus:border-[#e8ac51]" id="interview-question" maxLength={500} onChange={(event) => setQuestion(event.target.value)} placeholder={`Ask ${person.name.split(" ")[0]} anything...`} value={question} />
             <TypeAhead names={knownNames} onPick={setQuestion} value={question} />
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <button aria-expanded={trayOpen} className="game-control-button flex min-h-11 items-center gap-2 px-4 text-xs uppercase text-[#f1c987]" onClick={() => { play("open"); setTrayOpen(!trayOpen); }} title="Choose discovered evidence" type="button"><ControlIcon name="pin" />Tag clue</button>
+              <button aria-expanded={trayOpen} className="game-control-button flex min-h-11 items-center gap-2 px-4 text-xs uppercase text-[#f1c987]" onClick={() => { play("open"); setTrayOpen(!trayOpen); }} title="Show something you found" type="button"><GameIcon className="size-6" name="records" />Show evidence</button>
               <button className="game-control-button min-h-11 px-4 text-xs uppercase text-[#f1c987] disabled:opacity-50" disabled={!canAsk || (!question.trim() && !shown)} type="submit"><ControlIcon name="play" />{shown ? "Confront · 3 min" : "Ask · 3 min"}</button>
               {!interview.canTalkHere ? <p className="text-xs text-red-200">Return to the bureau to continue.</p> : null}
             </div>
@@ -217,6 +226,12 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
   );
 }
 
+/** A saved question reads "Name asks: …" plus an optional shown-evidence block; split it for a clean transcript. */
+function detectiveLine(text: string) {
+  const match = text.match(/^(.+?) asks: ([\s\S]*?)(?:\nShows evidence from the shared case file: ([\s\S]*))?$/);
+  return match ? { speaker: match[1], question: match[2], shown: match[3]?.split("\n")[0] } : { speaker: "Detective", question: text, shown: undefined };
+}
+
 /** Split a reply into sentences so any line can be pressed or contradicted. */
 function lines(text: string) {
   return text.match(/[^.!?\n]+[.!?]*["”']?/g)?.map((line) => line.trim()).filter(Boolean) ?? [text];
@@ -230,10 +245,15 @@ function ConversationMessages({ roomCode, threadId, name, canAsk, onPress, onPre
   return (
     <div aria-label="Shared interview conversation" className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-4 sm:px-5" ref={scrollRef}>
       {status === "CanLoadMore" ? <button className="min-h-10 border border-[#8b7355] px-3 text-xs uppercase" onClick={() => loadMore(30)} type="button">Earlier conversation</button> : null}
-      {results.length ? results.map((message) => (
-        <div className={`max-w-[88%] border-l-4 p-3 text-sm leading-relaxed ${message.role === "user" ? "ml-auto border-[#e8ac51] bg-[#273735]" : "border-[#6f9f98] bg-[#13292b]"}`} key={message.key}>
-          <p className="mb-1 text-xs uppercase tracking-widest text-[#e8ac51]">{message.role === "user" ? "Detective" : name}{message.status === "streaming" ? " · speaking" : ""}</p>
-          {message.role === "user" || message.status === "streaming" ? <p className="whitespace-pre-wrap">{message.text}</p> : (
+      {results.length ? results.map((message) => {
+        const asked = message.role === "user" ? detectiveLine(message.text) : null;
+        return (
+        <div className={`border-b border-[#6f9f98]/20 py-3 text-sm leading-relaxed ${message.role === "user" ? "pl-0 text-[#f1c987]" : "pl-4"}`} key={message.key}>
+          <p className="mb-1 text-xs uppercase tracking-widest text-[#e8ac51]/80">{asked ? `${asked.speaker} asks` : name}{message.status === "streaming" ? " · speaking" : ""}</p>
+          {asked ? <>
+            <p className="whitespace-pre-wrap">{asked.question}</p>
+            {asked.shown ? <p className="mt-2 border-l-2 border-[#e8ac51] pl-2 text-xs text-[#c8d8d2]"><span className="uppercase text-[#e8ac51]">Shows · </span>{asked.shown}</p> : null}
+          </> : message.status === "streaming" ? <p className="whitespace-pre-wrap">{message.text}</p> : (
             <p className="whitespace-pre-wrap">
               {lines(message.text).map((line, index) => {
                 const id = `${message.key}:${index}`;
@@ -243,7 +263,7 @@ function ConversationMessages({ roomCode, threadId, name, canAsk, onPress, onPre
                     {picked === id ? (
                       <span className="my-1 flex flex-wrap gap-2">
                         <button className="min-h-8 border border-[#6f9f98] px-2 text-xs uppercase disabled:opacity-45" disabled={!canAsk} onClick={() => { setPicked(null); onPress(line); }} type="button">Press · 3 min</button>
-                        <button className="min-h-8 border border-red-400 px-2 text-xs uppercase text-red-100 disabled:opacity-45" disabled={!canAsk} onClick={() => { setPicked(null); onPresent(line); }} type="button">Prove it wrong</button>
+                        <button className="min-h-8 border border-red-400 px-2 text-xs uppercase text-red-100 disabled:opacity-45" disabled={!canAsk} onClick={() => { setPicked(null); onPresent(line); }} type="button">Show evidence</button>
                       </span>
                     ) : null}
                   </span>
@@ -252,7 +272,8 @@ function ConversationMessages({ roomCode, threadId, name, canAsk, onPress, onPre
             </p>
           )}
         </div>
-      )) : <p className="text-sm italic text-[#c8d8d2]/60">{name} is shown in and sits down, waiting.</p>}
+        );
+      }) : <p className="text-sm italic text-[#c8d8d2]/60">{name} is shown in and sits down, waiting.</p>}
     </div>
   );
 }

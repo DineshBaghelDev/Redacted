@@ -16,7 +16,7 @@ test("shows replay creation errors beside the case choices", () => {
   expect(html).toContain("Could not open this case.");
   expect(html).toContain("Back to menu");
   expect(html).toContain("Set a custom deadline");
-  expect(html).toContain("your score is unchanged");
+  expect(html).toContain("higher detective rank");
   expect(html).toContain("Use case default");
   expect(html).toContain("A case");
   expect(html).not.toContain("Read case brief");
@@ -33,7 +33,7 @@ test.each([["", undefined], ["1", 60], ["1.234", 74]])("passes whole minutes for
   state.deadline = deadline;
   const onPlay = vi.fn();
   const screen = PreviousGamesScreen({ error: "", isWorking: false, onBack: () => {}, onPlay });
-  const section = screen.props.children[4];
+  const section = screen.props.children[5];
   const article = section.props.children[2][0];
   const button = article.props.children[3];
   expect(button.props.disabled).toBe(false);

@@ -16,6 +16,8 @@ type MainMenuScreenProps = {
   onJoin: () => void;
   onPrevious: () => void;
   onSettings: () => void;
+  onHistory: () => void;
+  onHowToPlay: () => void;
   isLoaded: boolean | undefined;
   isSignedIn: boolean | undefined;
   error: string;
@@ -27,12 +29,14 @@ export function MainMenuScreen({
   onJoin,
   onPrevious,
   onSettings,
+  onHistory,
+  onHowToPlay,
   isLoaded,
   isSignedIn,
   error,
 }: MainMenuScreenProps) {
   return (
-    <div className="flex max-h-full w-full max-w-md flex-col gap-7 overflow-y-auto py-1">
+    <div className="flex max-h-full w-full max-w-md flex-col gap-5 overflow-y-auto py-1">
       <GameLogo />
       <nav aria-label="Main menu" className="flex w-full flex-col items-start gap-2">
         {activeRooms?.map((room) => (
@@ -53,11 +57,19 @@ export function MainMenuScreen({
         ))}
         <button className={menuOptionButton} onClick={() => { play("open"); onPrevious(); }} type="button">
           <GameIcon name="case" />
-          Play a previous case
+          Play a case
+        </button>
+        <button className={menuOptionButton} onClick={() => { play("open"); onHistory(); }} type="button">
+          <GameIcon name="records" />
+          Case history
         </button>
         <button className={menuOptionButton} onClick={() => { play("open"); onJoin(); }} type="button">
           <GameIcon name="badge" />
           Join room
+        </button>
+        <button className={menuOptionButton} onClick={() => { play("open"); onHowToPlay(); }} type="button">
+          <GameIcon name="clueboard" />
+          How to play
         </button>
         <button className={menuOptionButton} onClick={() => { play("open"); onSettings(); }} type="button">
           <GameIcon name="records" />

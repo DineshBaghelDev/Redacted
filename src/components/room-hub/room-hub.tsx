@@ -14,6 +14,11 @@ import { CaseBriefScreen } from "./screens/status-screens";
 import { BureauScreen, preloadStations } from "./screens/bureau-screen";
 import { GameLogo } from "./game-logo";
 import { startAmbience, stopAmbience } from "../../lib/sound";
+import { applyTextSize } from "../../lib/text-size";
+import { CaseHistoryScreen } from "./screens/case-history";
+import { HowToPlay } from "./how-to-play";
+import { menuButton } from "./constants";
+import { ControlIcon } from "./control-icon";
 
 const DETECTIVE_NAME_KEY = "redacted.detectiveName";
 const subscribeToNothing = () => () => {};
@@ -35,7 +40,11 @@ export function RoomHub() {
   const isMounted = useSyncExternalStore(subscribeToNothing, () => true, () => false);
 
   const fallbackName = user?.firstName || user?.username || "Detective";
-  const nickname = (hasDetectiveName ? savedDetectiveName : detectiveName).trim() || fallbackName;
+  // The detective name is also kept on the account, so a new device doesn't ask again.
+  const accountName = typeof user?.unsafeMetadata?.detectiveName === "string" ? user.unsafeMetadata.detectiveName.trim() : "";
+  const hasName = hasDetectiveName || Boolean(accountName);
+  const knownName = savedDetectiveName || accountName;
+  const nickname = (hasName ? knownName : detectiveName).trim() || fallbackName;
 
   // All hooks must be called before any conditional return.
   const {
@@ -61,7 +70,10 @@ export function RoomHub() {
     closeJoin,
     leaveRoom,
     continueRoom,
+    openReport,
   } = useRoomSession(nickname);
+
+  useEffect(() => applyTextSize(), []);
 
   // While the detectives read the brief, fetch the game screens so "Begin investigation" opens instantly.
   useEffect(() => {
@@ -88,13 +100,14 @@ export function RoomHub() {
   function saveDetectiveName() {
     const savedName = detectiveName.trim() || fallbackName;
     window.localStorage.setItem(DETECTIVE_NAME_KEY, savedName);
+    if (user && user.unsafeMetadata?.detectiveName !== savedName) void user.update({ unsafeMetadata: { ...user.unsafeMetadata, detectiveName: savedName } }).catch(() => {});
     setSavedDetectiveName(savedName);
     setDetectiveName(savedName);
     setHasDetectiveName(true);
     setScreen("menu");
   }
 
-  if (!hasDetectiveName) {
+  if (!hasName) {
     return (
       <NameEntryScreen
         canSubmit={Boolean(nickname.trim())}
@@ -123,7 +136,7 @@ export function RoomHub() {
   }
 
   return (
-    <div className={`relative z-10 flex h-full w-full flex-col gap-6 px-5 py-8 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-12 ${screen === "previous" ? "game-archive-scene overflow-y-auto" : "overflow-hidden"}`}>
+    <div className={`relative z-10 flex h-full w-full flex-col gap-6 px-5 py-8 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-12 ${screen === "previous" || screen === "history" ? "game-archive-scene overflow-y-auto" : screen === "how" ? "overflow-y-auto" : "overflow-hidden"}`}>
       {screen === "menu" || screen === "join" || showRoom ? (
         <MainMenuScreen
           activeRooms={screen === "menu" ? activeRooms : undefined}
@@ -137,7 +150,9 @@ export function RoomHub() {
           }}
           onContinue={continueRoom}
           onPrevious={() => { setError(""); setScreen("previous"); }}
-          onSettings={() => setScreen("settings")}
+          onSettings={() => { setDetectiveName(knownName); setScreen("settings"); }}
+          onHistory={() => setScreen("history")}
+          onHowToPlay={() => setScreen("how")}
         />
       ) : null}
 
@@ -159,9 +174,19 @@ export function RoomHub() {
           canSave={Boolean(nickname.trim())}
           detectiveName={detectiveName}
           onChange={setDetectiveName}
-          onBack={() => { setDetectiveName(savedDetectiveName); setScreen("menu"); }}
+          onBack={() => { setDetectiveName(knownName); setScreen("menu"); }}
           onSave={saveDetectiveName}
         />
+      ) : null}
+
+      {screen === "history" ? <CaseHistoryScreen onBack={() => setScreen("menu")} onOpen={openReport} /> : null}
+
+      {screen === "how" ? (
+        <div className="game-panel w-full max-w-xl overflow-y-auto px-8 py-12 sm:px-12">
+          <h1 className="game-title mb-5 text-3xl uppercase">How to play</h1>
+          <HowToPlay />
+          <button className={`${menuButton} mt-6`} onClick={() => setScreen("menu")} type="button"><ControlIcon name="back" />Back to menu</button>
+        </div>
       ) : null}
 
       {screen === "previous" ? (

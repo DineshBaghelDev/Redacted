@@ -89,7 +89,7 @@ test("partners search, inspect, and collect shared items without revealing hidde
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.items.find((item) => item.id === ids.deviceItemId)?.device?.files).toEqual([]);
   vi.advanceTimersByTime(5 * GAME_MINUTE_MS);
   await two.mutation(api.investigation.finishAction, { roomCode });
-  expect((await one.query(api.investigation.getPlace, { roomCode }))?.items.find((item) => item.id === ids.deviceItemId)?.device).toEqual({ type: "laptop", read: true, files: [{ id: "file/laptop/0", title: "Accounts", body: "A hidden payment." }], calls: [], messages: [] });
+  expect((await one.query(api.investigation.getPlace, { roomCode }))?.items.find((item) => item.id === ids.deviceItemId)?.device).toEqual({ type: "laptop", read: true, files: expect.arrayContaining([{ id: "file/laptop/0", title: "Accounts", body: "A hidden payment." }]), calls: [], messages: [] });
   await one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "device_file", referenceId: "file/laptop/0", x: 0, y: 0 });
   expect((await two.query(api.clueBoard.getNodes, { roomCode }))!.find((node) => node.type === "device_file")?.text).toBe("Accounts\nA hidden payment.");
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.clock).toMatchObject({ gameTime: 12, clockStartedAt: null });
@@ -101,7 +101,7 @@ test("partners search, inspect, and collect shared items without revealing hidde
   expect(await one.mutation(api.investigation.readDevice, { roomCode, itemId: ids.phoneItemId, crack: true })).toEqual({ completeGameTime: 76 });
   vi.advanceTimersByTime(60 * GAME_MINUTE_MS);
   await one.mutation(api.investigation.finishAction, { roomCode });
-  expect((await two.query(api.investigation.getPlace, { roomCode }))?.items.find((item) => item.id === ids.phoneItemId)?.device).toMatchObject({ read: true, calls: [{ id: ids.callId, otherParty: "Mara" }], messages: [{ id: ids.messageId, body: "Meet me outside." }] });
+  expect((await two.query(api.investigation.getPlace, { roomCode }))?.items.find((item) => item.id === ids.phoneItemId)?.device).toMatchObject({ read: true, calls: expect.arrayContaining([expect.objectContaining({ id: ids.callId, otherParty: "Mara" })]), messages: expect.arrayContaining([expect.objectContaining({ id: ids.messageId, body: "Meet me outside." })]) });
   await one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "call", referenceId: ids.callId, x: 0, y: 0 });
   await two.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "message", referenceId: ids.messageId, x: 0, y: 0 });
   expect((await one.query(api.clueBoard.getNodes, { roomCode }))!.filter((node) => node.type === "call" || node.type === "message")).toHaveLength(2);

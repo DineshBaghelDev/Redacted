@@ -43,8 +43,6 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   const [error, setError] = useState("");
   const [cameraOpen, setCameraOpen] = useState(false);
   const [floor, setFloor] = useState<number | null>(null);
-  // Arriving shows a short toast with the place and its mood, then gets out of the way.
-  const [toastDoneFor, setToastDoneFor] = useState<string | null>(null);
   const [activeDeviceId, setActiveDeviceId] = useState<Id<"caseItems"> | null>(null);
   const seenItems = useRef<Set<string> | null>(null);
   const [freshItems, setFreshItems] = useState<Set<string>>(new Set());
@@ -79,11 +77,13 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
     seenItems.current = ids;
   }, [place]);
 
+  // Arriving shows the place and its mood in the game's one notification stack.
   const placeName = place?.placeName;
+  const arrivalMood = place ? atmosphere[partOfDay(place.clock.gameTime)] : "";
   useEffect(() => {
-    if (!placeName) return;
-    const timer = window.setTimeout(() => setToastDoneFor(placeName), 3500);
-    return () => window.clearTimeout(timer);
+    if (placeName) window.dispatchEvent(new CustomEvent("game-toast", { detail: `${placeName} · ${arrivalMood}` }));
+    // Only on arriving somewhere new, not as the clock moves.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [placeName]);
 
   const currentRoomId = place?.currentRoomId;
@@ -132,7 +132,6 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
         <button aria-label="Leave building" className="game-control-button game-icon-mobile flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase" onClick={onBack} title="Leave building" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Leave building</span></button>
       </header>
 
-      {toastDoneFor !== place.placeName ? <p className="game-toast pointer-events-none absolute right-4 top-24 z-30 max-w-sm animate-in fade-in slide-in-from-right" role="status">{place.placeName} · {atmosphere[partOfDay(gameTime)]}</p> : null}
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="game-station-main mx-auto min-h-0 max-w-6xl p-4 sm:p-6">

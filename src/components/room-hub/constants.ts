@@ -10,4 +10,4 @@ export const panel =
 export const input =
   "h-12 min-w-0 border border-[#52716a] bg-[#071014] px-4 text-xl uppercase text-[#e4e6d8] outline-none placeholder:text-[#a8b8ae]/60 focus-visible:border-[#e8ac51]";
 
-export type Screen = "menu" | "join" | "previous" | "settings" | "brief" | "bureau";
+export type Screen = "menu" | "join" | "previous" | "settings" | "history" | "how" | "brief" | "bureau";

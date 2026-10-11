@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "./_generated/api";
-import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, mutation, query, type QueryCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { detectiveRank } from "./lib/rank";
+import { evidenceKey } from "./lib/evidenceIds";
 import { generateJson, modelsFor } from "./generation/llm";
 import { getPlayingRoomMember } from "./lib/auth";
 import { hasReadDevice } from "./lib/deviceAccess";
@@ -45,6 +48,33 @@ function shortText(value: string | undefined, label: string) {
 function sameText(a: string | undefined, b: string | undefined) {
   return !!a && !!b && a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
 }
+
+/** Lies caught across every interview in this room; a backup lie caught too counts twice. */
+async function exposedLieCount(ctx: QueryCtx, sessionId: Id<"sessions">) {
+  let count = 0;
+  for (const conversation of await ctx.db.query("npcConversations").withIndex("by_sessionId_and_npcId", (q) => q.eq("sessionId", sessionId)).take(50)) {
+    for (const exposed of await ctx.db.query("npcExposedLies").withIndex("by_conversationId_and_lieIndex", (q) => q.eq("conversationId", conversation._id)).take(20)) count += exposed.backupExposedAt === undefined ? 1 : 2;
+  }
+  return count;
+}
+
+/** Marks rooms scored or given up before rooms were kept as history, so they stop expiring. */
+export const backfillClosedRooms = internalMutation({
+  args: {},
+  returns: v.number(),
+  handler: async (ctx) => {
+    let patched = 0;
+    for await (const accusation of ctx.db.query("accusations")) {
+      if (accusation.status !== "complete") continue;
+      const session = await ctx.db.get(accusation.sessionId);
+      if (session && session.closedAt === undefined) { await ctx.db.patch(session._id, { closedAt: accusation.updatedAt }); patched++; }
+    }
+    for await (const session of ctx.db.query("sessions")) {
+      if (session.gaveUpAt !== undefined && session.closedAt === undefined) { await ctx.db.patch(session._id, { closedAt: session.gaveUpAt }); patched++; }
+    }
+    return patched;
+  },
+});
 
 export const submit = mutation({
   args: {
@@ -174,6 +204,11 @@ export const getResult = query({
     /** Case time from the discovery to filing, and how far that was from the deadline (negative = early). */
     tookMinutes: v.optional(v.number()),
     deadlineDelta: v.optional(v.number()),
+    /** Stars plus closing on time; shown once the report is scored. */
+    rank: v.optional(v.string()),
+    badges: v.array(v.string()),
+    /** The team's own filed answers, shown beside "What really happened". */
+    answer: v.object({ culprit: v.string(), weapon: v.string(), motive: v.string(), method: v.string(), evidence: v.string() }),
   })),
   handler: async (ctx, { roomCode }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
@@ -185,12 +220,31 @@ export const getResult = query({
     if (!accusation) return null;
     const playableCase = member.session.caseId ? await ctx.db.get(member.session.caseId) : null;
     const filedAt = accusation.submittedGameTime ?? member.session.gameTime ?? 0;
+    const onTime = member.session.deadline === undefined || filedAt <= member.session.deadline;
+    const culprit = await ctx.db.get(accusation.culpritNpcId);
+    const stars = accusation.result?.totalStars;
+    const badges: string[] = [];
+    if (stars !== undefined) {
+      if (stars === 5) badges.push("Perfect file");
+      if (onTime) badges.push("Beat the clock");
+      if (await exposedLieCount(ctx, member.session._id) >= 3) badges.push("Lie breaker");
+      if ((await ctx.db.query("sessionPlayers").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id)).take(2)).length === 2) badges.push("Partners");
+    }
     return {
       status: accusation.status,
       result: accusation.result,
       error: accusation.error,
       tookMinutes: Math.max(0, filedAt - (playableCase?.discoveryMinute ?? 0)),
       ...(member.session.deadline !== undefined ? { deadlineDelta: filedAt - member.session.deadline } : {}),
+      ...(stars !== undefined ? { rank: detectiveRank(stars, onTime) } : {}),
+      badges,
+      answer: {
+        culprit: culprit?.name ?? "",
+        weapon: accusation.weaponDescription ?? "",
+        motive: accusation.motiveExplanation,
+        method: accusation.methodExplanation,
+        evidence: accusation.evidenceExplanation,
+      },
     };
   },
 });
@@ -234,7 +288,7 @@ export const giveUp = mutation({
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.session.caseId) throw new Error("Start the investigation first.");
     if (await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id)).unique()) throw new Error("The report is already filed.");
-    if (member.session.gaveUpAt === undefined) await ctx.db.patch(member.session._id, { gaveUpAt: Date.now() });
+    if (member.session.gaveUpAt === undefined) await ctx.db.patch(member.session._id, { gaveUpAt: Date.now(), closedAt: Date.now() });
     return null;
   },
 });
@@ -277,6 +331,7 @@ export const finishJudging = internalMutation({
     const accusation = await ctx.db.get(accusationId);
     if (accusation?.status === "judging") {
       await ctx.db.patch(accusationId, { status: "complete", result, error: undefined, updatedAt: Date.now() });
+      await ctx.db.patch(accusation.sessionId, { closedAt: Date.now() });
     }
     return null;
   },
@@ -343,9 +398,10 @@ export const judge = internalAction({
         return null;
       }
 
-      const selected = new Set<string>(input.accusation.evidenceIds);
+      // Either phone's copy of a call or message counts as the same evidence.
+      const selected = new Set<string>(input.accusation.evidenceIds.map(evidenceKey));
       const evidenceGroupMatched = input.solution.evidenceGroups.some(
-        (group: { requiredEvidenceIds: string[] }) => group.requiredEvidenceIds.every((id) => selected.has(id)),
+        (group: { requiredEvidenceIds: string[] }) => group.requiredEvidenceIds.every((id) => selected.has(evidenceKey(id))),
       );
       const killer = input.accusation.culpritNpcId === input.solution.culpritNpcId;
       const weapon = input.canonicalWeapon

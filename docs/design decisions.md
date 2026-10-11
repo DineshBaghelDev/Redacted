@@ -1,5 +1,21 @@
 # Design Decisions
 
+## 2026-10-11 — Final audit fixes
+
+- **Time has a stake:** the five stars are unchanged, but stars plus one step for filing by the deadline give a detective rank (Rookie, Detective, Inspector, Chief Inspector), shown on the result and in Case history. This replaces "time is cosmetic" while keeping the score rule.
+- **Wrong proof gets an answer:** proof that disproves none of a person's lies shows a grey "They don't budge" stamp to both detectives, and the person is told it didn't land. No time penalty (player choice).
+- **No browse-everything:** records need a name or address. A single empty search used to return every file.
+- **One communication, one piece of evidence:** a call or message stored on two phones counts as the same evidence for breaking lies and for the evidence star. Showing the victim's copy of a text used to "miss".
+- **NPCs don't improvise lies:** they may only lie about their scripted topics, never drop an unexposed lie on their own, and know the current case time. The game and the dialogue no longer disagree about caught lies.
+- **Plain-language triggers, explained:** statements are taken by any question about whereabouts or what they saw, and the interview tip says so. Only "your phone" is a handover request.
+- **Noise everywhere evidence lives:** phones, laptops and cameras get seeded ordinary filler (texts from Mum, delivery alerts, passers-by in the same appearance format), and clutter descriptions read as fully as real evidence, so sparseness and short text no longer give the answer away. Seeded code, never generated.
+- **Starting leads:** the brief's known details include the victim's home and workplace, from the frozen cast. Police would know them at minute one; no suspect is named.
+- **The bureau's own cameras are hidden** from the security desk; "▶ Play" is a plain "Recorded tape" label.
+- **Keep finished cases:** a scored or given-up room never expires and lives in Case history. "Main menu" in pause and on the result returns home without leaving; Leave stays the destructive option, and a started room can be rejoined by code while a seat is free.
+- **Solo is first-class:** alone in the lobby, Start is the only button; Start counts as the starter's own ready. Invites are links (/join/CODE).
+- **One name per thing:** Interview room, Security desk, Records room, City map, Clueboard, Case file; "Show evidence" everywhere for presenting proof. Arrival notes use the one notification stack.
+- **Player-owned extras:** one-line team notes on notebook entries (reasoning only), notebook search, a short message box to the partner, Large text, the detective name kept on the account, How to play, Report a problem (Sentry feedback), Share result, case of the day, and played/solved stamps with a replay warning on solved cases.
+
 ## 2026-10-11 — Translucent control centers
 
 - The raster plate supplies button edges; its center has a translucent dark tint so the game scene shows through while labels remain readable. Main menu actions use a compact shared width, and long case titles can wrap inside it. The site icon uses the existing dossier emblem.

@@ -9,9 +9,10 @@ vi.mock("convex/react", () => ({
   useQuery: () => [{ status: "available", savedTerms: [""], records: [] }, []][query.calls++],
 }));
 
-test("offers Browse files for an empty search even when general browse was saved", () => {
+test("an empty search cannot browse every file, even when an old general browse was saved", () => {
   query.calls = 0;
   const html = renderToStaticMarkup(<EvidenceScreen roomCode="ABC123" onBack={() => {}} />);
-  expect(html).toContain(">Browse files</button>");
+  expect(html).not.toContain("Browse files");
+  expect(html).toMatch(/<button[^>]*disabled=""[^>]*type="submit"><span[^>]*><\/span>Search records<\/button>/);
   expect(html).not.toContain("Open saved search");
 });

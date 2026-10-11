@@ -7,13 +7,14 @@ import { castSchema } from "./generation/core/schemas";
 import { cameraAtAccessPoint, getCameraAccess, getPlayingRoomMember, getRoomMember, requireInvestigationOpen, requireUserId } from "./lib/auth";
 import { CCTV_HALF_WINDOW, knownPeople } from "./lib/discoveries";
 import { ensureCaseCctv } from "./lib/publishCctv";
+import { ensureCaseFiller, ensureVictimLeads } from "./lib/publishFiller";
 import { ensureCaseClutter } from "./lib/publishClutter";
 import { ensureDeviceNotes } from "./lib/deviceCodes";
 import { ensureCaseDevices } from "./lib/publishDevices";
 import { ensureCaseForensics, restoreBodyForensicSources } from "./lib/publishForensics";
 import { ensureCaseNarrative } from "./lib/publishNarrative";
 import { ensureCaseItems } from "./lib/publishItems";
-import { ensureCaseRecords } from "./lib/publishRecords";
+import { ensureCaseRecords, ensurePaymentTimes } from "./lib/publishRecords";
 import { ensureCaseStatements } from "./lib/publishStatements";
 import { ensureCaseWorld } from "./lib/publishWorld";
 import { settleActions } from "./world";
@@ -90,6 +91,10 @@ async function ensureCaseEstimate(ctx: MutationCtx, caseId: Id<"cases">, generat
 export async function ensureCaseOpening(ctx: MutationCtx, caseId: Id<"cases">) {
   await ensureCaseClutter(ctx, caseId);
   await ensureDeviceNotes(ctx, caseId);
+  await ensureCaseFiller(ctx, caseId);
+  const opening = await ctx.db.get(caseId);
+  if (opening) await ensurePaymentTimes(ctx, caseId, opening.generationJobId);
+  if (opening) await ensureVictimLeads(ctx, caseId, (await getDraft(ctx, opening.generationJobId, "cast"))?.output);
   const playableCase = await ctx.db.get(caseId);
   if (!playableCase || playableCase.discoveryMinute !== undefined || !playableCase.cityId) return;
   const crime = (await getDraft(ctx, playableCase.generationJobId, "crime"))?.output as { discovery?: { time?: unknown }; sceneRoomId?: unknown } | undefined;
@@ -307,9 +312,23 @@ export const listPassed = query({
     difficulty: v.union(v.literal("easy"), v.literal("normal"), v.literal("hard")),
     title: v.string(),
     description: v.string(),
+    /** This detective's own history with the case: unplayed, in progress, given up, or solved with its best stars. */
+    played: v.union(v.literal("new"), v.literal("in-progress"), v.literal("given-up"), v.literal("solved")),
+    bestStars: v.optional(v.number()),
   })),
   handler: async (ctx) => {
-    await requireUserId(ctx);
+    const authUserId = await requireUserId(ctx);
+    const mine = new Map<string, { played: "in-progress" | "given-up" | "solved"; bestStars?: number }>();
+    const order = { "in-progress": 0, "given-up": 1, solved: 2 } as const;
+    for (const membership of await ctx.db.query("sessionPlayers").withIndex("by_authUserId", (q) => q.eq("authUserId", authUserId)).order("desc").take(100)) {
+      const session = await ctx.db.get(membership.sessionId);
+      if (!session?.caseId || (session.expiresAt < Date.now() && session.closedAt === undefined && session.gaveUpAt === undefined)) continue;
+      const accusation = await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).unique();
+      const stars = accusation?.result?.totalStars;
+      const played = stars !== undefined ? "solved" as const : session.gaveUpAt !== undefined ? "given-up" as const : "in-progress" as const;
+      const before = mine.get(session.caseId);
+      if (!before || order[played] > order[before.played] || (played === "solved" && (stars ?? 0) > (before.bestStars ?? 0))) mine.set(session.caseId, { played, ...(stars !== undefined ? { bestStars: Math.max(stars, before?.bestStars ?? 0) } : {}) });
+    }
     const cases = [];
     for await (const playableCase of ctx.db.query("cases").withIndex("by_publicationVersion", (q) => q.eq("publicationVersion", PUBLICATION_VERSION))) {
       cases.push({
@@ -318,6 +337,7 @@ export const listPassed = query({
         difficulty: playableCase.difficulty,
         title: playableCase.title,
         description: playableCase.summary,
+        ...(mine.get(playableCase._id) ?? { played: "new" as const }),
       });
     }
     return cases.sort((a, b) => b.generationJobId.localeCompare(a.generationJobId));

@@ -49,7 +49,7 @@ function clue(device: Lock, owner: Doc<"npcs"> | null) {
     return { name: "Birthday card", description: `A birthday card, kept rather than thrown away. Inside: "Happy birthday, ${first}! The ${ordinal(day)} of ${MONTHS[month - 1]} again already. Love from all of us."` };
   }
   if (kind === "keepsake") return { name: "Engraved keyring", description: `A worn brass keyring tag. The engraving on the back reads: "Always · ${pad(day)}.${pad(month)}".` };
-  if (kind === "reversed") return { name: "Torn scrap of paper", description: `A torn scrap of paper with "${[...code].reverse().join("")}" scrawled on it, and underneath, underlined twice: "backwards!"` };
+  if (kind === "reversed") return { name: "Torn scrap of paper", description: `A torn scrap of paper with "${[...code].reverse().join("")}" scrawled on it, and a small arrow drawn under the digits, pointing from right to left.` };
   return { name: "Sticky note", description: `A yellow sticky note stuck out of sight. Four digits pressed hard into it and nothing else: ${code}.` };
 }
 

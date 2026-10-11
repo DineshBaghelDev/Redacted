@@ -11,6 +11,7 @@ export type RoomLobbyState = {
   caseTitle: string;
   playerCount: number;
   allReady: boolean;
+  canStart: boolean;
   meReady: boolean;
   players: Array<{ name: string; isReady: boolean }>;
 };
@@ -72,7 +73,7 @@ export function RoomLobbyModal({
             onClick={onCopyCode}
             type="button"
           >
-            {workingAction === "copy" ? "Copying..." : copiedCode ? "Copied" : "Copy code"}
+            {workingAction === "copy" ? "Copying..." : copiedCode ? "Link copied" : "Copy invite link"}
           </button>
         </div>
         <p className="mt-4 break-words border-y border-[#45635d] py-3 text-lg uppercase leading-tight text-[#e8ac51]">{room?.caseTitle ?? "Loading case..."}</p>
@@ -86,20 +87,25 @@ export function RoomLobbyModal({
               <CharacterPortrait className="w-12" id={player.name} />
               <span className="min-w-0 flex-1">
                 <span className="block break-words text-lg uppercase leading-tight">{player.name}</span>
-                <span className={`mt-1 block text-xs uppercase ${player.isReady ? "text-[#e8ac51]" : "text-[#c8d8d2]/60"}`}>
-                  {player.isReady ? "Ready" : "Not ready"}
-                </span>
+                {(room?.playerCount ?? 1) > 1 ? (
+                  <span className={`mt-1 block text-xs uppercase ${player.isReady ? "text-[#e8ac51]" : "text-[#c8d8d2]/60"}`}>
+                    {player.isReady ? "Ready" : "Not ready"}
+                  </span>
+                ) : null}
               </span>
             </li>
           ))}
         </ul>
-        <div className="mt-5 grid grid-cols-2 gap-2 sm:gap-3">
-          <button className={`${menuButton} min-w-0 justify-center text-center text-[#e8ac51]`} disabled={!room || openingCase || workingAction !== null} onClick={onToggleReady} type="button">
-            {workingAction === "ready" ? "Saving..." : room?.meReady ? "Unready" : "Ready"}
-          </button>
+        {/* Alone in the room, Start is all it takes; Ready only matters to a partner. */}
+        <div className={`mt-5 grid gap-2 sm:gap-3 ${(room?.playerCount ?? 1) > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+          {(room?.playerCount ?? 1) > 1 ? (
+            <button className={`${menuButton} min-w-0 justify-center text-center text-[#e8ac51]`} disabled={!room || openingCase || workingAction !== null} onClick={onToggleReady} type="button">
+              {workingAction === "ready" ? "Saving..." : room?.meReady ? "Unready" : "Ready"}
+            </button>
+          ) : null}
           <button
             className={`${menuButton} h-auto min-h-12 min-w-0 justify-center whitespace-normal py-2 text-center leading-tight`}
-            disabled={!room?.allReady || openingCase || workingAction !== null}
+            disabled={!room?.canStart || openingCase || workingAction !== null}
             onClick={onStart}
             type="button"
           >
@@ -110,9 +116,11 @@ export function RoomLobbyModal({
           <p className="mt-4 text-center text-sm uppercase text-[#c8d8d2]">
             {openingCase
               ? "Investigation started. Opening the case file..."
-              : room.allReady
-              ? "All detectives are ready"
-              : `${room.playerCount}/2 detectives connected. Waiting for ready.`}
+              : room.playerCount === 1
+              ? "Play alone, or send the invite link to a partner."
+              : room.canStart
+              ? "Your partner is ready"
+              : "Waiting for your partner to be ready."}
           </p>
         ) : null}
         {error ? <p className="mt-3 text-center text-sm text-red-300" role="alert">{error}</p> : null}

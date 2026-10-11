@@ -17,6 +17,8 @@ export default defineSchema({
     discoveryMinute: v.optional(v.number()),
     /** Room where the detectives arrive at the start of a replay. */
     sceneRoomId: v.optional(v.id("rooms")),
+    /** Which version of the seeded phone, laptop, and camera filler this case has received. */
+    fillerVersion: v.optional(v.number()),
     publicationVersion: v.optional(v.number()),
     createdAt: v.number(),
   })
@@ -249,6 +251,7 @@ export default defineSchema({
       v.literal("business"),
       v.literal("criminal"),
       v.literal("employment"),
+      v.literal("payment"),
       v.literal("other"),
     ),
     subjectNpcId: v.optional(v.id("npcs")),
@@ -356,6 +359,8 @@ export default defineSchema({
     promptMessageId: v.string(),
     canceled: v.optional(v.boolean()),
     proofEvidenceId: v.optional(v.string()),
+    /** The shown proof disproves none of this person's lies: they don't budge. */
+    proofMissed: v.optional(v.boolean()),
     requestedPhoneId: v.optional(v.id("devices")),
     requestedStatements: v.optional(v.boolean()),
     status: v.union(v.literal("waiting"), v.literal("queued"), v.literal("processing"), v.literal("complete"), v.literal("failed")),
@@ -377,11 +382,19 @@ export default defineSchema({
     deadline: v.optional(v.number()),
     /** Set when the detectives give up and ask to see the solution; the room becomes review-only. */
     gaveUpAt: v.optional(v.number()),
+    /** Set when the report is scored or the case is given up. A closed room never expires: it is the team's case history. */
+    closedAt: v.optional(v.number()),
     createdAt: v.number(),
     expiresAt: v.number(),
   })
     .index("by_roomCode", ["roomCode"])
     .index("by_expiresAt", ["expiresAt"]),
+  /** A detective's one-line note on a notebook entry, shared by the team. Player reasoning only. */
+  notebookNotes: defineTable({
+    sessionId: v.id("sessions"),
+    referenceId: v.string(),
+    text: v.string(),
+  }).index("by_sessionId_and_referenceId", ["sessionId", "referenceId"]),
   sessionPlayers: defineTable({
     sessionId: v.id("sessions"),
     authUserId: v.string(),

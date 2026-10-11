@@ -1,8 +1,9 @@
 import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { requireUserId } from "./lib/auth";
+import { isClosed, requireUserId } from "./lib/auth";
+import { detectiveRank } from "./lib/rank";
 import type { Id } from "./_generated/dataModel";
-import type { MutationCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { ensureCaseOpening, PUBLICATION_VERSION } from "./cases";
 import { cancelRoomAction } from "./lib/cancelRoomAction";
 import { entranceRoomId, markVisited, settleActions } from "./world";
@@ -16,6 +17,13 @@ function defaultDuration(estimate: number | undefined) {
     throw new Error("This case has no valid time estimate.");
   }
   return Math.ceil(estimate * 1.5);
+}
+
+async function bureauFor(ctx: QueryCtx, caseId: Id<"cases"> | undefined) {
+  const playableCase = caseId ? await ctx.db.get(caseId) : null;
+  if (!playableCase?.cityId) return null;
+  for await (const place of ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) if (place.kind === "bureau") return place;
+  return null;
 }
 
 /**
@@ -98,8 +106,9 @@ export const join = mutation({
     if (!session || session.expiresAt < Date.now()) {
       return { ok: false, message: "Room not found." };
     }
-    if (session.status !== "waiting") {
-      return { ok: false, message: "Investigation already started." };
+    // A started room can be (re)joined while it has a free seat, so a crash or a mistaken Leave isn't the end.
+    if (isClosed(session)) {
+      return { ok: false, message: "That case is already closed." };
     }
 
     const players = await ctx.db
@@ -115,11 +124,14 @@ export const join = mutation({
       return { ok: false, message: "Room is full." };
     }
 
+    // Joining a started room puts the detective at the bureau, ready to work.
+    const bureau = session.status === "playing" ? await bureauFor(ctx, session.caseId) : null;
     const playerId = await ctx.db.insert("sessionPlayers", {
       sessionId: session._id,
       authUserId,
       nickname: nickname.trim() || "Detective",
-      isReady: false,
+      isReady: session.status === "playing",
+      ...(bureau ? { currentPlaceId: bureau._id, currentRoomId: await entranceRoomId(ctx, bureau._id) } : {}),
       joinedAt: Date.now(),
     });
 
@@ -179,15 +191,14 @@ export const start = mutation({
       throw new Error("Join the room first.");
     }
 
-    if (!players.length || players.some((player) => !player.isReady)) {
-      throw new Error("Everyone must be ready first.");
+    // Pressing Start is the starter's own "ready"; everyone else must have said so.
+    if (players.some((player) => player.authUserId !== authUserId && !player.isReady)) {
+      throw new Error("Your partner isn't ready yet.");
     }
 
     if (session.caseId) await ensureCaseOpening(ctx, session.caseId);
     const playableCase = session.caseId ? await ctx.db.get(session.caseId) : null;
-    const bureau = playableCase?.cityId
-      ? (await ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!)).collect()).find((place) => place.kind === "bureau")
-      : null;
+    const bureau = await bureauFor(ctx, session.caseId);
     // Cold open: both detectives arrive at the crime scene room when it is known.
     const scene = playableCase?.sceneRoomId ? await ctx.db.get(playableCase.sceneRoomId) : null;
     const sceneBuilding = scene ? await ctx.db.get(scene.buildingId) : null;
@@ -251,6 +262,8 @@ export const get = query({
     caseTitle: v.string(),
     playerCount: v.number(),
     allReady: v.boolean(),
+    /** Start counts as the starter's own ready, so it only waits on the partner. */
+    canStart: v.boolean(),
     meReady: v.boolean(),
     players: v.array(v.object({ name: v.string(), isReady: v.boolean() })),
   })),
@@ -282,6 +295,7 @@ export const get = query({
       caseTitle: session.caseId ? (await ctx.db.get(session.caseId))?.title ?? "Case" : "Case",
       playerCount: players.length,
       allReady: players.length > 0 && players.every((player) => player.isReady),
+      canStart: players.every((player) => player.authUserId === authUserId || player.isReady),
       meReady: players.some((player) => player.authUserId === authUserId && player.isReady),
       players: players.map((player) => ({
         name: player.nickname,
@@ -310,7 +324,7 @@ export const listMine = query({
     const rooms = [];
     for (const membership of memberships) {
       const session = await ctx.db.get(membership.sessionId);
-      if (!session || session.expiresAt < Date.now() || !session.caseId) continue;
+      if (!session || session.expiresAt < Date.now() || !session.caseId || isClosed(session)) continue;
       const playableCase = await ctx.db.get(session.caseId);
       if (playableCase?.publicationVersion !== PUBLICATION_VERSION) continue;
       const players = await ctx.db.query("sessionPlayers").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).take(2);
@@ -324,5 +338,68 @@ export const listMine = query({
       });
     }
     return rooms;
+  },
+});
+
+/** Start a fresh room on the same frozen case as a finished one, for the signed-in detective. */
+export const replay = mutation({
+  args: { roomCode: v.string(), nickname: v.string() },
+  returns: v.object({ roomCode: v.string() }),
+  handler: async (ctx, { roomCode, nickname }) => {
+    const authUserId = await requireUserId(ctx);
+    const session = await ctx.db.query("sessions").withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase())).unique();
+    if (!session?.caseId || !(await ctx.db.query("sessionPlayers").withIndex("by_sessionId_authUserId", (q) => q.eq("sessionId", session._id).eq("authUserId", authUserId)).unique())) throw new Error("Room not found.");
+    await ensureCaseOpening(ctx, session.caseId);
+    const playableCase = await ctx.db.get(session.caseId);
+    if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not ready to replay.");
+    const startMinute = playableCase.discoveryMinute ?? 0;
+    const created = await createSession(ctx, authUserId, nickname, session.caseId, startMinute, startMinute + defaultDuration(playableCase.estimatedOptimalMinutes));
+    return { roomCode: created.roomCode };
+  },
+});
+
+const historyEntry = v.object({
+  roomCode: v.string(),
+  caseId: v.id("cases"),
+  caseTitle: v.string(),
+  difficulty: v.union(v.literal("easy"), v.literal("normal"), v.literal("hard")),
+  outcome: v.union(v.literal("solved"), v.literal("given-up"), v.literal("judging")),
+  stars: v.optional(v.number()),
+  rank: v.optional(v.string()),
+  tookMinutes: v.optional(v.number()),
+  partner: v.optional(v.string()),
+  closedAt: v.number(),
+});
+
+/** Every case this detective has filed or given up, newest first: the case history and its stats. */
+export const listHistory = query({
+  args: {},
+  returns: v.array(historyEntry),
+  handler: async (ctx) => {
+    const authUserId = await requireUserId(ctx);
+    const entries = [];
+    for (const membership of await ctx.db.query("sessionPlayers").withIndex("by_authUserId", (q) => q.eq("authUserId", authUserId)).order("desc").take(100)) {
+      const session = await ctx.db.get(membership.sessionId);
+      if (!session?.caseId || session.status !== "playing") continue;
+      const accusation = await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).unique();
+      if (!accusation && session.gaveUpAt === undefined) continue;
+      const playableCase = await ctx.db.get(session.caseId);
+      if (!playableCase) continue;
+      const partner = (await ctx.db.query("sessionPlayers").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).take(2)).find((player) => player.authUserId !== authUserId);
+      const filedAt = accusation?.submittedGameTime;
+      const stars = accusation?.result?.totalStars;
+      entries.push({
+        roomCode: session.roomCode,
+        caseId: playableCase._id,
+        caseTitle: playableCase.title,
+        difficulty: playableCase.difficulty,
+        outcome: accusation ? (stars === undefined ? "judging" as const : "solved" as const) : "given-up" as const,
+        ...(stars !== undefined ? { stars, rank: detectiveRank(stars, session.deadline === undefined || (filedAt ?? 0) <= session.deadline) } : {}),
+        ...(filedAt !== undefined ? { tookMinutes: Math.max(0, filedAt - (playableCase.discoveryMinute ?? 0)) } : {}),
+        ...(partner ? { partner: partner.nickname } : {}),
+        closedAt: session.closedAt ?? accusation?.createdAt ?? session.gaveUpAt ?? session.createdAt,
+      });
+    }
+    return entries;
   },
 });

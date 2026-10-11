@@ -38,7 +38,7 @@ async function setup() {
 
 test.each(["one", "two"])("canceling overlapping searches in order starting with %s preserves remaining access", async (first) => {
   const { t, ids, one, two, roomCode } = await setup();
-  await one.mutation(api.publicRecords.performSearch, { roomCode, search: "" });
+  await one.mutation(api.publicRecords.performSearch, { roomCode, search: "shared" });
   vi.setSystemTime(100_000 + 2 * GAME_MINUTE_MS);
   await two.mutation(api.publicRecords.performSearch, { roomCode, search: "Address" });
   const access = () => t.run(async (ctx) => ctx.db.query("sessionPublicRecords").withIndex("by_sessionId_and_recordId", q => q.eq("sessionId", ids.sessionId).eq("recordId", ids.recordId)).unique());
@@ -55,7 +55,7 @@ test.each(["one", "two"])("canceling overlapping searches in order starting with
 test.each([0, 30])("canceling a search preserves prior record access at minute %s", async (completeGameTime) => {
   const { t, ids, one, roomCode } = await setup();
   const accessId = await t.run(async (ctx) => ctx.db.insert("sessionPublicRecords", { sessionId: ids.sessionId, recordId: ids.recordId, completeGameTime }));
-  await one.mutation(api.publicRecords.performSearch, { roomCode, search: "" });
+  await one.mutation(api.publicRecords.performSearch, { roomCode, search: "shared" });
   await one.mutation(api.sessions.leave, { roomCode });
   expect(await t.run(async (ctx) => ctx.db.get(accessId))).toMatchObject({ completeGameTime });
   expect((await t.run(async (ctx) => ctx.db.get(accessId)))?.sourceSearchId).toBeUndefined();
@@ -73,7 +73,7 @@ test("watching camera tape is instant, takes no action time, and stays watched a
 
 test("leaving after a search finishes preserves its results", async () => {
   const { t, one, roomCode } = await setup();
-  await one.mutation(api.publicRecords.performSearch, { roomCode, search: "" });
+  await one.mutation(api.publicRecords.performSearch, { roomCode, search: "shared" });
   vi.setSystemTime(100_000 + 10 * GAME_MINUTE_MS);
   await one.mutation(api.sessions.leave, { roomCode });
   expect(await t.run(async (ctx) => ctx.db.query("publicRecordSearches").collect())).toHaveLength(1);
@@ -82,7 +82,7 @@ test("leaving after a search finishes preserves its results", async () => {
 
 test("record search reports a busy action before checking bureau location", async () => {
   const { t, ids, one, roomCode } = await setup();
-  await one.mutation(api.publicRecords.performSearch, { roomCode, search: "" });
+  await one.mutation(api.publicRecords.performSearch, { roomCode, search: "shared" });
   await expect(one.mutation(api.publicRecords.performSearch, { roomCode, search: "Address" })).rejects.toThrow("Finish your current action first.");
   vi.setSystemTime(100_000 + 10 * GAME_MINUTE_MS);
   await one.mutation(api.investigation.finishAction, { roomCode });

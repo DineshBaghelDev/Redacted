@@ -13,6 +13,8 @@ import { getVolume, isMuted, play, setMuted, setVolume } from "../../../lib/soun
 import { GameIcon } from "../game-icon";
 import { ControlIcon } from "../control-icon";
 import { NotebookOverlay } from "../notebook-overlay";
+import { HowToPlay } from "../how-to-play";
+import * as Sentry from "@sentry/nextjs";
 
 const ClueBoardScreen = dynamic(() =>
   import("./clue-board-screen").then((module) => module.ClueBoardScreen),
@@ -76,7 +78,7 @@ const hotspots: { station: Station; label: string; icon: Parameters<typeof GameI
   { station: "interrogate", label: "Interview room", icon: "interview", className: "left-[2%] top-[23%] h-[43%] w-[15%]" },
   { station: "cctv", label: "Security desk", icon: "cctv", className: "left-[19%] top-[34%] h-[33%] w-[18%]" },
   { station: "clueboard", label: "Clueboard", icon: "clueboard", className: "left-[38%] top-[23%] h-[34%] w-[23%]" },
-  { station: "evidence", label: "Records", icon: "records", className: "left-[63%] top-[34%] h-[33%] w-[16%]" },
+  { station: "evidence", label: "Records room", icon: "records", className: "left-[63%] top-[34%] h-[33%] w-[16%]" },
   { station: "map", label: "City map", icon: "map", className: "left-[80%] top-[23%] h-[34%] w-[19%]" },
   { station: "case", label: "Case file", icon: "case", className: "left-[39%] top-[76%] h-[22%] w-[23%]" },
 ];
@@ -86,6 +88,9 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [pauseView, setPauseView] = useState<"menu" | "how" | "report">("menu");
+  const [report, setReport] = useState("");
+  const [reportSent, setReportSent] = useState(false);
   const [notebookOpen, setNotebookOpen] = useState(false);
   const [muted, setMutedState] = useState(() => typeof window !== "undefined" && isMuted());
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -101,8 +106,6 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   const city = useQuery(api.world.getMap, ready ? { roomCode } : "skip");
   const coop = useQuery(api.coop.get, ready ? { roomCode } : "skip");
   const notebook = useQuery(api.notebook.get, ready ? { roomCode } : "skip");
-  const labReady = useQuery(api.forensics.readyCount, ready ? { roomCode } : "skip");
-  const seenLabReady = useRef<number | null>(null);
   const settleClock = useMutation(api.world.finishTravel);
   const station = (pathParts[3] === "bureau" ? pathParts[4] : pathParts[3]) as Station | undefined;
   const activeStation = station ? stations[station] : null;
@@ -179,15 +182,6 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   }, [notebook]);
 
   useEffect(() => {
-    if (labReady === undefined) return;
-    if (seenLabReady.current !== null && labReady > seenLabReady.current) {
-      play("ping");
-      toast("The lab called: a result is ready to read at the forensic lab.");
-    }
-    seenLabReady.current = labReady;
-  }, [labReady]);
-
-  useEffect(() => {
     if (!coop) return;
     const ids = new Set(coop.pings.map((ping) => ping.id));
     if (seenPings.current) {
@@ -195,6 +189,13 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
     }
     seenPings.current = ids;
   }, [coop]);
+
+  // Stations announce things (like arriving somewhere) through the same notice stack.
+  useEffect(() => {
+    const onToast = (event: Event) => toast((event as CustomEvent<string>).detail);
+    window.addEventListener("game-toast", onToast);
+    return () => window.removeEventListener("game-toast", onToast);
+  }, []);
 
   useEffect(() => {
     const idle = window.setTimeout(preloadStations, 300);
@@ -208,7 +209,8 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
       const key = event.key.toLowerCase();
       if (key === "escape") {
         if (notebookOpen) setNotebookOpen(false);
-        else setMenuOpen((open) => !open);
+        else if (menuOpen) setMenuOpen(false);
+        else openMenu();
       } else if (key === "n") setNotebookOpen((open) => !open);
       else if (key === "m") openStation("map");
       else if (key === "b") openStation("clueboard");
@@ -225,6 +227,20 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
     if (menuOpen && dialog && !dialog.open) dialog.showModal();
     if (!menuOpen && dialog?.open) dialog.close();
   }, [menuOpen]);
+
+  /** The pause menu always opens on its main list. */
+  function openMenu() {
+    setPauseView("menu");
+    setReportSent(false);
+    setMenuOpen(true);
+  }
+
+  function sendReport() {
+    if (!report.trim()) return;
+    Sentry.captureFeedback({ message: report.trim(), name: partner ? `Room ${roomCode} (with partner)` : `Room ${roomCode}` }, { captureContext: { tags: { roomCode, place: currentPlace?.name ?? "" } } });
+    setReport("");
+    setReportSent(true);
+  }
 
   useEffect(() => {
     const panorama = panoramaRef.current;
@@ -245,7 +261,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         {left !== null ? <span className={`whitespace-nowrap ${left <= 0 ? "text-[#e5a18e]" : left < 120 ? "text-[#f1c987]" : "text-[#b8ccc1]"}`}>{left <= 0 ? "Overdue" : <>{formatDuration(left)}<span className="hidden sm:inline"> left</span></>}</span> : null}
         {partner ? <span className="ml-auto hidden min-w-0 truncate normal-case tracking-normal text-[#c8d8d2] sm:inline" title="Your partner">{partner.name} · {partner.place} · {partner.activity}</span> : <span className="ml-auto" />}
         <button aria-label="Notebook" className="game-control-button game-icon-mobile flex min-h-9 shrink-0 items-center gap-2 px-3" onClick={() => { play("open"); setNotebookOpen(true); }} title="Notebook · N" type="button"><ControlIcon name="notebook" /><span className="hidden sm:inline">Notebook</span></button>
-        <button aria-label="Pause menu" className="game-control-button game-icon-mobile flex min-h-9 shrink-0 items-center gap-2 px-3" onClick={() => { play("open"); setMenuOpen(true); }} title="Pause · Esc" type="button"><ControlIcon name="pause" /><span className="hidden sm:inline">Menu</span></button>
+        <button aria-label="Pause menu" className="game-control-button game-icon-mobile flex min-h-9 shrink-0 items-center gap-2 px-3" onClick={() => { play("open"); openMenu(); }} title="Pause · Esc" type="button"><ControlIcon name="pause" /><span className="hidden sm:inline">Menu</span></button>
       </header>
       {clockError ? <p className="absolute inset-x-3 top-11 z-50 mx-auto w-fit border border-red-300/60 bg-red-950/95 px-3 py-2 text-sm text-red-100" role="status">Clock sync delayed. Retrying...</p> : null}
 
@@ -292,26 +308,45 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
 
       {notebookOpen ? <NotebookOverlay roomCode={roomCode} onClose={() => setNotebookOpen(false)} /> : null}
 
-      <dialog aria-labelledby="pause-title" className="m-auto w-[min(26rem,calc(100%-2rem))] bg-transparent p-0 backdrop:bg-black/75" onCancel={(event) => { event.preventDefault(); setMenuOpen(false); setConfirmLeave(false); }} ref={menuRef}>
+      <dialog aria-labelledby="pause-title" className="m-auto max-h-[90vh] w-[min(30rem,calc(100%-2rem))] bg-transparent p-0 backdrop:bg-black/75" onCancel={(event) => { event.preventDefault(); setMenuOpen(false); setConfirmLeave(false); }} ref={menuRef}>
         <div className="game-panel px-10 py-10 text-[#e4e6d8]">
           <h2 className="game-title text-2xl uppercase" id="pause-title">Paused</h2>
           <p className="mt-1 text-xs text-[#c8d8d2]/70">The case clock only runs while someone is busy.</p>
           {confirmLeave ? (
             <div className="mt-4 border border-red-400/70 p-3">
               <p className="text-sm uppercase text-red-100">Leave this investigation?</p>
-              <p className="mt-2 text-xs text-red-100/75">You cannot rejoin after leaving a started room.</p>
+              <p className="mt-2 text-xs text-red-100/75">You give up your seat. You can rejoin with the room code while a seat is free. To step away without leaving, use Main menu.</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button autoFocus className="min-h-10 border border-[#6f9f98]/60 text-xs uppercase" onClick={() => setConfirmLeave(false)} type="button">Stay</button>
                 <button className="min-h-10 border border-red-400 bg-red-950 text-xs uppercase text-red-50" onClick={onLeave} type="button">Leave</button>
               </div>
               {error ? <p className="mt-3 text-sm text-red-200" role="alert">{error}</p> : null}
             </div>
+          ) : pauseView === "how" ? (
+            <div className="mt-4 max-h-[60vh] overflow-y-auto pr-1">
+              <HowToPlay />
+              <button className="game-control-button mt-4 flex min-h-11 w-full items-center justify-center gap-2 text-sm uppercase" onClick={() => setPauseView("menu")} type="button"><ControlIcon name="back" />Back</button>
+            </div>
+          ) : pauseView === "report" ? (
+            <div className="mt-4">
+              <p className="text-sm text-[#c8d8d2]">Something wrong with this case? Tell us what happened. The room code is sent with it; nothing about the case is changed.</p>
+              {reportSent ? <p className="mt-3 text-sm text-[#9fd1c4]" role="status">Thanks. Your report has been sent.</p> : (
+                <textarea aria-label="Describe the problem" className="mt-3 min-h-24 w-full border border-[#45635d] bg-[#102326] p-2 text-sm text-[#e4e6d8] outline-none focus:border-[#e8ac51]" maxLength={1000} onChange={(event) => setReport(event.target.value)} placeholder="What went wrong?" value={report} />
+              )}
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button className="min-h-11 border border-[#6f9f98]/60 text-sm uppercase" onClick={() => setPauseView("menu")} type="button">Back</button>
+                {reportSent ? null : <button className="game-control-button min-h-11 text-sm uppercase text-[#f1c987] disabled:opacity-50" disabled={!report.trim()} onClick={sendReport} type="button">Send</button>}
+              </div>
+            </div>
           ) : (
             <div className="mt-4 grid gap-2">
               <button autoFocus className="game-control-button flex min-h-11 items-center justify-center gap-2 text-sm uppercase text-[#f1c987]" onClick={() => { play("close"); setMenuOpen(false); }} type="button"><ControlIcon name="play" />Resume</button>
               <button className="game-control-button flex min-h-11 items-center justify-center gap-2 text-sm uppercase" onClick={() => { const next = !muted; setMuted(next); setMutedState(next); if (!next) play("ping"); }} type="button"><ControlIcon name="speaker" />Music &amp; effects · {muted ? "Off" : "On"}</button>
               {!muted ? <label className="flex items-center gap-3 text-xs uppercase text-[#c8d8d2]">Volume<input aria-label="Volume" className="flex-1 accent-[#e8ac51]" defaultValue={Math.round(getVolume() * 100)} max={100} min={0} onChange={(event) => setVolume(Number(event.target.value) / 100)} onPointerUp={() => play("ping")} type="range" /></label> : null}
+              <button className="game-control-button flex min-h-11 items-center justify-center gap-2 text-sm uppercase" onClick={() => { play("close"); setMenuOpen(false); go("/"); }} type="button"><ControlIcon name="back" />Main menu</button>
+              <button className="min-h-11 border border-[#6f9f98]/60 text-sm uppercase" onClick={() => setPauseView("how")} type="button">How to play</button>
               <button className="min-h-11 border border-[#6f9f98]/60 text-sm uppercase" onClick={() => { resetTips(); setMenuOpen(false); }} type="button">Show tips again</button>
+              <button className="min-h-11 border border-[#6f9f98]/60 text-sm uppercase" onClick={() => setPauseView("report")} type="button">Report a problem</button>
               <button className="min-h-11 border border-red-400/70 text-sm uppercase text-red-100" onClick={() => setConfirmLeave(true)} type="button">Leave case</button>
             </div>
           )}

@@ -20,7 +20,7 @@ export async function collectDiscoveries(ctx: QueryCtx, session: Doc<"sessions">
     const statement = await ctx.db.get(heard.statementId);
     if (statement?.caseId !== caseId) continue;
     const witness = await ctx.db.get(statement.witnessNpcId);
-    entries.push({ type: "statement", referenceId: statement.evidenceId, title: `${witness?.name ?? "Witness"}: ${statement.title}`, body: statement.text });
+    entries.push({ type: "statement", referenceId: statement.evidenceId, title: `Statement of ${witness?.name ?? "a witness"}`, body: statement.text });
   }
   const foundItems = await ctx.db.query("sessionItems").withIndex("by_sessionId", q => q.eq("sessionId", session._id)).take(100);
   for (const found of foundItems) {

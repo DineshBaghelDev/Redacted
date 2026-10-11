@@ -26,7 +26,10 @@ export async function ensureCaseClutter(ctx: MutationCtx, caseId: Id<"cases">) {
   const done = await ctx.db.query("caseItems")
     .withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", caseId).gte("evidenceId", PREFIX).lt("evidenceId", `${PREFIX}￿`))
     .first();
-  if (done) return;
+  if (done) {
+    await refreshClutterText(ctx, caseId);
+    return;
+  }
   const random = seeded(caseId);
   for await (const place of ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) {
     if (!place.buildingId) continue;
@@ -35,7 +38,9 @@ export async function ensureCaseClutter(ctx: MutationCtx, caseId: Id<"cases">) {
       if (!room.searchable || !room.itemSlots.length || !pool?.length) continue;
       // Most rooms get one object, some two, some none.
       const count = random() < 0.25 ? 0 : random() < 0.7 ? 1 : 2;
-      const picks = [...pool].sort(() => random() - 0.5).slice(0, count);
+      // Never the same everyday object twice in one room (the case's own clutter may already be there).
+      const present = new Set((await ctx.db.query("caseItems").withIndex("by_roomId", (q) => q.eq("roomId", room._id)).take(50)).map((item) => item.name));
+      const picks = [...pool].filter(([name]) => !present.has(name)).sort(() => random() - 0.5).slice(0, count);
       for (const [name, description] of picks) {
         await ctx.db.insert("caseItems", {
           caseId,
@@ -51,6 +56,17 @@ export async function ensureCaseClutter(ctx: MutationCtx, caseId: Id<"cases">) {
           itemType: "other",
         });
       }
+    }
+  }
+}
+
+/** Keeps everyday objects' wording current, so their descriptions read as fully as the case's own evidence. */
+async function refreshClutterText(ctx: MutationCtx, caseId: Id<"cases">) {
+  const text = new Map(Object.values(POOL).flatMap((pool) => pool ?? []));
+  for (const prefix of [PREFIX, "clutter/"]) {
+    for await (const item of ctx.db.query("caseItems").withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", caseId).gte("evidenceId", prefix).lt("evidenceId", `${prefix}￿`))) {
+      const description = text.get(item.name);
+      if (description && description !== item.description) await ctx.db.patch(item._id, { description });
     }
   }
 }

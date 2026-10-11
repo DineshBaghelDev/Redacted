@@ -143,8 +143,8 @@ test("only a bureau detective can start a shared, timed NPC interview", async ()
   await expect(two.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "What did you witness?", requestStatements: true })).rejects.toThrow("already been asked");
   vi.advanceTimersByTime(3 * GAME_MINUTE_MS);
   await one.mutation(api.world.finishTravel, { roomCode: "ABC123" });
-  expect((await two.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId }))?.statements).toEqual([{ id: "witness/mara/safe", title: "Station sighting", text: "I saw the station door open." }]);
-  expect(await two.query(api.npcConversations.listAvailableProof, { roomCode: "ABC123" })).toContainEqual({ type: "statement", referenceId: "witness/mara/safe", label: "Mara: Station sighting" });
+  expect((await two.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId }))?.statements).toEqual([{ id: "witness/mara/safe", title: expect.stringMatching(/^Statement of /), text: "I saw the station door open." }]);
+  expect(await two.query(api.npcConversations.listAvailableProof, { roomCode: "ABC123" })).toContainEqual({ type: "statement", referenceId: "witness/mara/safe", label: "Statement of Mara" });
   expect(JSON.stringify(await two.query(api.npcConversations.listAvailableProof, { roomCode: "ABC123" }))).not.toContain("witness/mara/lied");
   await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "statement", referenceId: "witness/mara/lied", x: 0, y: 0 })).rejects.toThrow("Hear this statement");
   await expect(one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Show this", proofReference: { type: "statement", referenceId: "witness/mara/lied" } })).rejects.toThrow("Hear this statement");

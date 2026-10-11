@@ -377,10 +377,10 @@ test("a lobby keeps the selected passed case", async () => {
     const deviceFiles = devices.find((device) => device.type === "laptop")
       ? await ctx.db.query("deviceFiles").withIndex("by_deviceId", (q) => q.eq("deviceId", devices.find((device) => device.type === "laptop")!._id)).collect() : [];
     const calls = session?.caseId
-      ? await ctx.db.query("callLogs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      ? (await ctx.db.query("callLogs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()).filter((row) => !row.evidenceId.startsWith("filler/"))
       : [];
     const messages = session?.caseId
-      ? await ctx.db.query("messages").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      ? (await ctx.db.query("messages").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()).filter((row) => !row.evidenceId.startsWith("filler/"))
       : [];
     const records = session?.caseId
       ? await ctx.db.query("publicRecords").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
@@ -427,9 +427,10 @@ test("a lobby keeps the selected passed case", async () => {
       npcs,
       items,
       cameras,
-      cameraRecords,
+      // Seeded filler (ordinary messages, calls, files, passers-by) is not part of the frozen case.
+      cameraRecords: cameraRecords.filter((row) => !row.evidenceId.startsWith("filler/")),
       devices,
-      deviceFiles,
+      deviceFiles: deviceFiles.filter((row) => !row.evidenceId.startsWith("filler/")),
       calls,
       messages,
       records,
@@ -485,7 +486,7 @@ test("a lobby keeps the selected passed case", async () => {
   expect(frozen.records).toHaveLength(2);
   expect(frozen.records).toEqual(expect.arrayContaining([
     expect.objectContaining({ evidenceId: `record/${crimeCore.culpritId}/address`, type: "person", title: "Address record" }),
-    expect.objectContaining({ evidenceId: "card/purchase-1", type: "other", title: "Card payment" }),
+    expect.objectContaining({ evidenceId: "card/purchase-1", type: "payment", title: "Card payment", content: expect.stringContaining("Paid on Day 1 at") }),
   ]));
   expect(frozen.forensics).toEqual([
     expect.objectContaining({
@@ -540,7 +541,8 @@ test("a lobby keeps the selected passed case", async () => {
   expect(await user.query(api.cases.getBrief, { roomCode: created.roomCode })).toEqual({
     title: "The Selected Case",
     summary: "A specific mystery.",
-    initialFacts: ["One fact."],
+    // The victim's home and workplace are added from the frozen cast as starting leads.
+    initialFacts: ["One fact.", expect.stringMatching(/^Victim's home: /), expect.stringMatching(/^Victim's workplace: /)],
   });
   expect(JSON.stringify(await user.query(api.cases.listPassed, {}))).not.toContain(crimeCore.motive.details);
   expect(JSON.stringify(await user.query(api.cases.getBrief, { roomCode: created.roomCode }))).not.toContain(crimeCore.method);
