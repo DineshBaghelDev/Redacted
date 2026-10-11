@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-12 — Device lock and call details
+
+- Locked phones and laptops now open a compact illustrated keypad with live digits, clear and delete controls, and the existing keyboard input. Unlock duration and code rules are unchanged. Recovered phone call rows and details show incoming/outgoing sprites.
+- Rejected a generated per-task forensic sheet because the UV and footprint cells had visible halos and stray pixels. The existing legible task graphics remain until clean replacements are ready.
+
 ## 2026-10-11 — Interior navigation art and lab documentation
 
 - Added clean room-control sprites for doors, stairs, lifts and wall cameras, and neutral covered-body/shed search sprites. Door controls now sit on their own art without a solid box; room names and travel times remain live text.

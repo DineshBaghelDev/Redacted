@@ -211,12 +211,20 @@ function ItemCard({ item, busy, pinControl, fresh, onRead, onOpenDevice, onColle
       </div>
       <p className="mt-2 text-sm leading-relaxed text-[#c8d8d2]/75">{item.description}</p>
       {locked ? (
-        <form className="mt-3 flex flex-wrap items-center gap-2" onSubmit={(event) => { event.preventDefault(); if (code.length === 4) onRead(code); }}>
-          <label className="sr-only" htmlFor={`code-${item.id}`}>Unlock code</label>
-          <input autoComplete="off" className="h-9 w-24 border border-[#45635d] bg-[#071014] text-center font-mono text-lg tracking-[0.4em] text-[#f1c987] outline-none focus:border-[#e8ac51]" id={`code-${item.id}`} inputMode="numeric" maxLength={4} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="····" value={code} />
-          <button className="game-control-button min-h-11 px-3 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={busy || code.length !== 4} type="submit">Unlock · 5 min</button>
-          <button className="basis-full text-left text-[0.7rem] normal-case text-[#c8d8d2]/55 underline-offset-4 hover:text-[#e8ac51] hover:underline disabled:opacity-45" disabled={busy} onClick={() => onRead(undefined, true)} type="button">No code? Have the lab crack it (60 min)</button>
-        </form>
+        <details className="mt-3">
+          <summary className="cursor-pointer text-xs uppercase text-[#f1c987]">Unlock {item.device?.type} · enter code</summary>
+          <form className="mt-3 flex flex-col items-start gap-3" onSubmit={(event) => { event.preventDefault(); if (code.length === 4) onRead(code); }}>
+            <label className="sr-only" htmlFor={`code-${item.id}`}>Unlock code</label>
+            <input autoComplete="off" className="h-10 w-32 border-b border-[#e8ac51] bg-[#071014] text-center font-mono text-lg tracking-[0.4em] text-[#f1c987] outline-none focus:border-[#f1c987]" id={`code-${item.id}`} inputMode="numeric" maxLength={4} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="····" value={code} />
+            <div className="device-keypad relative w-40" role="group" aria-label="Code keypad">
+              <div className="absolute inset-[17%_15%_13%] grid grid-cols-3 grid-rows-4 gap-[4%]">
+                {["1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "⌫"].map((digit) => <button aria-label={digit === "C" ? "Clear code" : digit === "⌫" ? "Delete last digit" : `Digit ${digit}`} className="font-mono text-sm text-[#f1c987] hover:text-white focus-visible:outline-2 focus-visible:outline-[#f1c987]" key={digit} onClick={() => setCode((current) => digit === "C" ? "" : digit === "⌫" ? current.slice(0, -1) : `${current}${digit}`.slice(0, 4))} type="button">{digit}</button>)}
+              </div>
+            </div>
+            <button className="game-control-button min-h-11 px-3 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={busy || code.length !== 4} type="submit">Unlock · 5 min</button>
+            <button className="text-left text-[0.7rem] normal-case text-[#c8d8d2]/55 underline-offset-4 hover:text-[#e8ac51] hover:underline disabled:opacity-45" disabled={busy} onClick={() => onRead(undefined, true)} type="button">No code? Have the lab crack it (60 min)</button>
+          </form>
+        </details>
       ) : null}
       {item.device?.read ? <button className="game-control-button mt-3 min-h-11 px-3 text-xs uppercase text-[#f1c987]" onClick={onOpenDevice} type="button"><ControlIcon name="play" />Open {item.device.type}</button> : null}
     </article>

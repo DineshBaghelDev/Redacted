@@ -99,6 +99,22 @@
     image-rendering: pixelated;
   }
 
+  .device-keypad {
+    aspect-ratio: 2 / 3;
+    background: url('/assets/device-keypad.png') center / 100% 100% no-repeat;
+    image-rendering: pixelated;
+  }
+
+  .call-direction {
+    display: inline-block;
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: url('/assets/call-directions.png') no-repeat 0 50% / 300% 120%;
+    image-rendering: pixelated;
+  }
+  .call-direction--outgoing { background-position: 50% 50%; }
+
   @media (min-width: 768px) {
     .laptop-art-shell {
       aspect-ratio: 3 / 2;

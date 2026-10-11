@@ -11,7 +11,7 @@ bureau-noir, menu-noir, archive-room, interview-room, lab-room, records-room, re
 
 **Lab update:** all eight tool sprites, the bench, sealed/open evidence bags, and a blank report sheet are now in use. Per-task visuals remain open.
 
-**Board/device update:** dark felt, four blank card variants, raster board controls, image pin, and phone/laptop shells are in use. Keypad and call-log details remain open.
+**Board/device update:** dark felt, four blank card variants, raster board controls, image pin, phone/laptop shells, illustrated keypad, and incoming/outgoing call icons are in use. No missed-call type exists in stored phone data.
 
 ## Priority 1 — the screens players spend most time on
 

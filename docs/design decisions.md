@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-12 — Device code entry
+
+- Keep code entry collapsed inside each found device card so a room with many objects stays readable. The art is a blank keypad under live accessible buttons and the same four-digit text input; it does not change the unlock rule or reveal codes.
+
 ## 2026-10-11 — Interior controls
 
 - Door, stair, lift and camera art is a navigation aid; the room graph, floor stops, camera access and travel time do not change. Keep short live labels next to sprites for readable navigation.
