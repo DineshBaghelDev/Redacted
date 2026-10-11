@@ -3,9 +3,7 @@
 import type { CSSProperties } from "react";
 import type { FunctionReturnType } from "convex/server";
 import type { api } from "../../../convex/_generated/api";
-import { GameIcon } from "./game-icon";
 import { HoldButton } from "./gestures";
-import { InvestigationIcon } from "./investigation-icon";
 import { FurnitureSprite } from "./furniture-sprite";
 
 type Place = NonNullable<FunctionReturnType<typeof api.investigation.getPlace>>;
@@ -74,13 +72,13 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
           <div className="w-[calc(50%-0.25rem)] sm:absolute sm:left-[var(--x)] sm:top-[var(--y)] sm:w-36 sm:-translate-x-1/2 sm:-translate-y-1/2" key={spot.key} style={style}>
             {spot.searched ? (
               <a className="room-spot block text-[#c8d8d2]/80" href={`#spot-${spot.key}`}>
-                {spot.name === "on the body" || spot.name === "shed" ? <InvestigationIcon className="size-14" name="room" /> : <FurnitureSprite searched spot={spot.name} />}
+                {spot.name === "on the body" || spot.name === "shed" ? <span aria-hidden="true" className={`room-special-spot room-special-spot--${spot.name === "shed" ? "shed" : "body"}`} /> : <FurnitureSprite searched spot={spot.name} />}
                 <span className="room-spot-label">{spot.name}</span>
                 <span className="block text-[0.65rem] normal-case">{found ? `✓ ${found} found` : "✓ Nothing here"}</span>
               </a>
             ) : (
               <HoldButton className="room-spot text-center normal-case" disabled={busy} label={searchingKey === spot.key ? "Searching..." : "Hold to search · 4 min"} onDone={() => onSearch(spot.key)}>
-                {spot.name === "on the body" || spot.name === "shed" ? <InvestigationIcon className="size-14" name="room" /> : <FurnitureSprite searched={false} spot={spot.name} />}
+                {spot.name === "on the body" || spot.name === "shed" ? <span aria-hidden="true" className={`room-special-spot room-special-spot--${spot.name === "shed" ? "shed" : "body"}`} /> : <FurnitureSprite searched={false} spot={spot.name} />}
                 <span className="room-spot-label">{spot.name}</span>
               </HoldButton>
             )}
@@ -101,7 +99,8 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
             title={`Walk through · ${next.walkMinutes ?? 1} min`}
             type="button"
           >
-            <span>▯ {next.name}{level}</span>
+            <span aria-hidden="true" className="room-control-sprite room-control-sprite--door" />
+            <span>{next.name}{level}</span>
             <span className="text-[0.6rem] normal-case text-[#c8d8d2]/60">{next.walkMinutes ?? 1} min{place.partners.some((partner) => partner.roomId === next.id) ? " · ◆ partner" : ""}</span>
           </button>
         );
@@ -111,7 +110,8 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
         <div className="flex w-full flex-col gap-1 sm:absolute sm:bottom-3 sm:left-3 sm:w-auto">
           {hubs.map((hub) => (
             <div className="room-door" key={hub.id} style={{ flexDirection: "row", gap: "0.4rem" }}>
-              <span>{hub.type === "lift" ? "▤ Lift" : "▤ Stairs"}</span>
+              <span aria-hidden="true" className={`room-control-sprite room-control-sprite--${hub.type}`} />
+              <span>{hub.type === "lift" ? "Lift" : "Stairs"}</span>
               {floorStops(place, hub).map((stop) => (
                 <button aria-label={`${hub.type === "lift" ? "Lift" : "Stairs"} to floor ${floorName(stop.floor)}`} className="min-w-7 border border-current px-1.5 py-0.5 disabled:border-[#e8ac51] disabled:bg-[#e8ac51] disabled:text-[#14120c]" disabled={busy || stop.floor === room.floor} key={stop.floor} onClick={() => onWalk(stop.roomId)} title={place.rooms.find((item) => item.id === stop.roomId)?.name} type="button">{floorName(stop.floor)}</button>
               ))}
@@ -122,7 +122,7 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
 
       {room.hasCamera ? (
         <button className="absolute right-2 top-2 flex items-center gap-1 text-[0.65rem] uppercase text-[#f1c987] hover:text-white" onClick={onCamera} title="Check this room's camera" type="button">
-          <GameIcon className="size-7" name="cctv" /><span className="hidden sm:inline">Camera</span>
+          <span aria-hidden="true" className="room-control-sprite room-control-sprite--camera" /><span className="hidden sm:inline">Camera</span>
         </button>
       ) : null}
       {walkingTo ? <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/55 text-sm uppercase tracking-widest text-[#f1c987] animate-in fade-in" role="status">Walking to {walkingTo.name}…</div> : null}

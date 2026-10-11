@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-11 — Interior controls
+
+- Door, stair, lift and camera art is a navigation aid; the room graph, floor stops, camera access and travel time do not change. Keep short live labels next to sprites for readable navigation.
+
 ## 2026-10-11 — Board and device artwork
 
 - The clueboard uses dark felt with light paper cards for reading; each card's meaning remains live text. Phone and laptop shells are blank hardware frames around the existing interactive content. The laptop uses its compact reading layout below tablet width.

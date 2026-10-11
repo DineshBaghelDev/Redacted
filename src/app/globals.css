@@ -843,16 +843,37 @@
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  border: 2px solid #e8ac51;
-  background: rgb(20 18 12 / 92%);
-  padding: 0.3rem 0.6rem;
+  padding: 0.2rem 0.4rem;
   font-size: 0.7rem;
   text-transform: uppercase;
   color: #f1c987;
-  white-space: nowrap;
+  max-width: 10rem;
+  text-align: center;
+  text-shadow: 1px 2px #061013;
 }
-.room-door:hover:not(:disabled) { color: #fff; border-color: #fff; }
+.room-door:hover:not(:disabled) { color: #fff; }
 .room-door:disabled { opacity: 0.5; }
+.room-control-sprite {
+  display: inline-block;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: url('/assets/room-controls.png') no-repeat 0 50% / 500% 200%;
+  image-rendering: pixelated;
+}
+.room-control-sprite--open { background-position: 25% 50%; }
+.room-control-sprite--stairs { background-position: 50% 50%; }
+.room-control-sprite--lift { background-position: 75% 50%; }
+.room-control-sprite--camera { background-position: 100% 50%; }
+.room-special-spot {
+  display: block;
+  width: 4rem;
+  height: 4rem;
+  margin-inline: auto;
+  background: url('/assets/room-special-spots.png') no-repeat 0 0 / 200% 100%;
+  image-rendering: pixelated;
+}
+.room-special-spot--shed { background-position: 100% 0; }
 
 /* The small paper map of the building that fills in as you explore. */
 .building-map {

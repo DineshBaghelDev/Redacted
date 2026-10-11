@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-11 — Interior navigation art and lab documentation
+
+- Added clean room-control sprites for doors, stairs, lifts and wall cameras, and neutral covered-body/shed search sprites. Door controls now sit on their own art without a solid box; room names and travel times remain live text.
+- Corrected the forensic workflow in `GAME_SYSTEMS.md`: the hands-on bench task takes 5 game minutes and immediately shows the stored report. The old turnaround steps no longer describe the game.
+
 ## 2026-10-11 — Clueboard and device shells
 
 - Replaced the rejected light cork and dark grid with a restrained petrol felt board. Pinned cards now use four blank paper variants for people, records, lab reports, and notes; board controls and connection pins use raster icon art. Generated paper with visible halos was rejected before use.

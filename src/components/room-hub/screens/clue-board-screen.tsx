@@ -2,7 +2,6 @@
 
 import { errorText } from "../../../lib/error-text";
 import {
-  Background,
   ConnectionMode,
   Controls,
   Handle,
@@ -227,6 +226,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
         onDragOverCapture={(event) => { dropPoint.x = event.clientX; dropPoint.y = event.clientY; }}
       >
         <ReactFlow<BoardNode, Edge>
+          style={{ background: "transparent" }}
           onInit={setFlow}
           colorMode="dark"
           connectionLineStyle={{ stroke: colors[stringColor].value, strokeWidth: 3 }}
@@ -248,7 +248,6 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
           onNodesChange={onNodesChange}
           onPaneClick={() => setSelectedEdge(null)}
         >
-          <Background color="#8a6246" gap={28} size={1} />
           <Controls position="bottom-right" showInteractive={false} />
         </ReactFlow>
         {savedNodes?.length === 0 ? (
@@ -302,7 +301,7 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
   const label = boardLabel(data.kind);
   const paper = data.kind === "npc" ? "person" : data.kind === "forensic" ? "lab" : data.kind === "note" ? "note" : "record";
   return (
-    <article className={`board-card board-card--${paper} relative w-48 rotate-[-1deg] p-3 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(0,0,0,0.45)] [overflow-wrap:anywhere] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
+    <article className={`board-card board-card--${paper} relative w-52 rotate-[-1deg] p-3 pb-9 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(0,0,0,0.45)] [overflow-wrap:anywhere] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
       <Handle
         className="clue-pin"
         position={Position.Top}

@@ -201,11 +201,10 @@ Player workflow:
 
 ```text
 discover source/item
-  -> choose any test from the full menu (fingerprints, footprints, DNA, blood, toxicology, fibres, ballistics, autopsy)
-  -> spend submission time
-  -> wait in game time
-  -> result becomes ready
-  -> inspect result
+  -> place it on the lab bench
+  -> pick a tool (fingerprints, footprints, DNA, blood, toxicology, fibres, ballistics, autopsy)
+  -> perform that tool's task (5 game minutes)
+  -> read the stored result on the report
 ```
 
 The victim's body is a known lab source for autopsy and body-based tests; it does not require inventing a collectible item. Other tests still require their stored item or room source to be discovered.
