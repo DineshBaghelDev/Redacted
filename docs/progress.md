@@ -61,7 +61,7 @@
 
 ## 2026-10-11 — Lighter menu controls and site icon
 
-- Replaced the opaque fill behind the existing raster button frames with a translucent dark tint. Main menu actions now use a compact, consistent width and shorter padding while keeping their labels readable on mobile.
+- The existing raster button plate now supplies both its frame and its face, with no CSS color fill. Main menu actions use a compact, consistent width and shorter padding while keeping their labels readable on mobile.
 - Replaced the starter favicon with a small PNG derived from the existing REDACTED dossier emblem.
 
 ## 2026-10-11 — Pin toggles, raster plate fit, and archive summaries

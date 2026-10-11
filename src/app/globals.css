@@ -96,8 +96,7 @@
     justify-content: center;
     gap: 0.5rem;
     border: 8px solid transparent;
-    border-image: url('/assets/control-plate-trim.png') 90 120 / 8px / 0 stretch;
-    background: rgb(17 40 45 / 72%);
+    border-image: url('/assets/control-plate-trim.png') 90 120 fill / 8px / 0 stretch;
     color: #e4e6d8;
     line-height: 1.15;
     padding-top: 0.3rem;
@@ -191,8 +190,7 @@
     align-items: center;
     gap: 0.65rem;
     border: 8px solid transparent;
-    border-image: url('/assets/control-plate-trim.png') 90 120 / 8px / 0 stretch;
-    background: rgb(17 40 45 / 72%);
+    border-image: url('/assets/control-plate-trim.png') 90 120 fill / 8px / 0 stretch;
     padding: 0.35rem 0.8rem 0.25rem;
     line-height: 1.15;
     text-align: left;

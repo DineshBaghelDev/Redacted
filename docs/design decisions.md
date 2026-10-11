@@ -44,9 +44,9 @@
 - **One name per thing:** Interview room, Security desk, Records room, City map, Clueboard, Case file; "Show evidence" everywhere for presenting proof. Arrival notes use the one notification stack.
 - **Player-owned extras:** one-line team notes on notebook entries (reasoning only), notebook search, a short message box to the partner, Large text, the detective name kept on the account, How to play, Report a problem (Sentry feedback), Share result, case of the day, and played/solved stamps with a replay warning on solved cases.
 
-## 2026-10-11 — Translucent control centers
+## 2026-10-11 — Image-backed controls
 
-- The raster plate supplies button edges; its center has a translucent dark tint so the game scene shows through while labels remain readable. Main menu actions use a compact shared width, and long case titles can wrap inside it. The site icon uses the existing dossier emblem.
+- The original trimmed raster plate supplies both the button edges and center. CSS adds no separate color fill. Main menu actions use a compact shared width, and long case titles can wrap inside it. The site icon uses the existing dossier emblem.
 
 ## 2026-10-11 — Open pin controls and complete button plates
 
