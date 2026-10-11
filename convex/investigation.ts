@@ -96,7 +96,7 @@ export const getPlace = query({
           ? await ctx.db.query("callLogs").withIndex("by_deviceId_and_timestamp", (q) => q.eq("deviceId", device._id)).take(100) : [];
         const messages = accessible && device?.type === "phone" && known.readAt !== undefined
           ? await ctx.db.query("messages").withIndex("by_deviceId_and_timestamp", (q) => q.eq("deviceId", device._id)).take(100) : [];
-        knownItems.push({ id: item._id, name: item.name, description: known.inspectedAt === undefined ? undefined : item.description, roomId: item.roomId, slot: item.slot, spot: spotKey(item.slot), collectible: true, collected: known.collectedAt !== undefined, inspected: known.inspectedAt !== undefined,
+        knownItems.push({ id: item._id, name: item.name, description: item.description, roomId: item.roomId, slot: item.slot, spot: spotKey(item.slot), collectible: true, collected: known.collectedAt !== undefined, inspected: known.inspectedAt !== undefined,
           device: accessible && device ? { type: device.type, read: known.readAt !== undefined,
             files: files.map((file) => ({ id: file.evidenceId, title: file.title, body: file.body })),
             calls: calls.map((call) => ({ id: call._id, time: call.timestamp, direction: call.direction, durationSeconds: call.durationSeconds, otherParty: call.otherPartyLabel ?? "Unknown" })),
@@ -233,7 +233,7 @@ export const readDevice = mutation({
     if (actions.some((action) => action.kind === "device" && action.itemId === itemId)) throw new Error("Your partner is already reading this device.");
     const device = item.sourceId ? await ctx.db.query("devices").withIndex("by_caseId_and_sourceId", (q) => q.eq("caseId", item.caseId).eq("sourceId", item.sourceId!)).unique() : null;
     if (!device || device.sourceItemId !== itemId) throw new Error("That item has no readable records.");
-    if (!crack && code?.trim() !== deviceCode(device._id)) throw new Error("Wrong code. The screen shakes.");
+    if (!crack && code?.trim() !== deviceCode(device)) throw new Error("Wrong code. The screen shakes.");
     const roomId = player.currentRoomId;
     if (!roomId) throw new Error("Enter a room to read the device.");
     return await startRoomAction(ctx, member.session, player._id, "device", roomId, crack ? CRACK_MINUTES : 5, now, settled.gameTime, settled.activeCount, itemId);

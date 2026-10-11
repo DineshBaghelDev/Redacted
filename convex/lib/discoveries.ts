@@ -26,8 +26,7 @@ export async function collectDiscoveries(ctx: QueryCtx, session: Doc<"sessions">
   for (const found of foundItems) {
     const item = await ctx.db.get(found.itemId);
     if (!item || item.caseId !== caseId) continue;
-    const room = await ctx.db.get(item.roomId);
-    entries.push({ type: "item", referenceId: item._id, title: item.name, body: found.inspectedAt === undefined ? `Found: ${item.slot}${room ? `, ${room.name}` : ""}. Not inspected yet.` : item.description });
+    entries.push({ type: "item", referenceId: item._id, title: item.name, body: item.description });
   }
   for (const request of await ctx.db.query("forensicRequests").withIndex("by_sessionId", q => q.eq("sessionId", session._id)).take(100)) {
     if (request.viewedAt === undefined || !request.forensicOutputId) continue;

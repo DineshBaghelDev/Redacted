@@ -13,7 +13,7 @@ import { formatGameMinute, partOfDay } from "../../../lib/game-time";
 import { play } from "../../../lib/sound";
 import { CctvScreen } from "./cctv-screen";
 import { GameIcon } from "../game-icon";
-import { HoldButton, ScrubPad } from "../gestures";
+import { HoldButton } from "../gestures";
 import { InvestigationIcon } from "../investigation-icon";
 import { startCardDrag } from "../../../lib/evidence-drag";
 import { DeviceViewer } from "./device-viewer";
@@ -69,7 +69,6 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
   const moveToRoom = useMutation(api.investigation.moveToRoom);
   const searchSpot = useMutation(api.investigation.searchSpot);
-  const inspectItem = useMutation(api.investigation.inspectItem);
   const readDevice = useMutation(api.investigation.readDevice);
   const collectItem = useMutation(api.investigation.collectItem);
   const finishAction = useMutation(api.investigation.finishAction);
@@ -251,8 +250,8 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
 
         <div className="game-station-main order-1 min-h-0 p-4 sm:p-6 lg:order-2 lg:overflow-y-auto">
           <h3 className="flex items-center gap-3 text-2xl uppercase"><InvestigationIcon className="size-11" name="room" /><span className="min-w-0 break-words">{currentRoom?.name ?? "Entrance"}</span></h3>
-          <FirstTimeTip id="place" title="Searching a place">Pick a spot to search it (4 min). Anything there flips up as a card: look closer, bag it, or pin it. Tap a room on the floor plan to walk there. Press N any time for the notebook.</FirstTimeTip>
-          {place.action ? (
+          <FirstTimeTip id="place" title="Searching a place">Pick a spot to search it (4 min). Anything there flips up as a card: bag it for the lab, or pin it. Tap a room on the floor plan to walk there. Press N any time for the notebook.</FirstTimeTip>
+          {place.action && place.action.kind !== "search" ? (
             <div className="mt-4 border border-[#e8ac51]/45 bg-[#211d15] p-3" role="status">
               <p className="text-sm uppercase text-[#f1c987]">{actionLabel}</p>
               <progress aria-label={actionLabel} className="mt-2 h-2 w-full accent-[#e8ac51]" max={place.action.completeGameTime - place.action.startGameTime} value={Math.max(0, gameTime - place.action.startGameTime)} />
@@ -274,7 +273,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
                       {!spot.searched ? (
                         <HoldButton className="mt-2" disabled={busy} label={searching ? "Searching..." : "Hold to search"} onDone={() => run(searchSpot({ roomCode, spot: spot.key }))} />
                       ) : found.length ? (
-                        <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />)}</div>
+                        <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />)}</div>
                       ) : <p className="mt-2 text-sm text-[#c8d8d2]/55">Nothing here.</p>}
                     </li>
                   );
@@ -286,7 +285,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
           <details className="mt-8 border-t border-[#6f9f98]/25 pt-4">
             <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/70">Carried evidence · {inventory.length}</summary>
             {inventory.length ? <div className="mt-3 grid gap-2 sm:grid-cols-2">{inventory.map((item) => (
-              <ItemCard busy={busy} fresh={false} item={item} key={item.id} onInspect={() => run(inspectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />
+              <ItemCard busy={busy} fresh={false} item={item} key={item.id} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />
             ))}</div> : <p className="mt-3 text-sm text-[#c8d8d2]/55">Collected objects travel with both of you.</p>}
           </details>
         </div>
@@ -295,12 +294,11 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   );
 }
 
-function ItemCard({ item, busy, pinned, fresh, onInspect, onRead, onOpenDevice, onCollect, onPin }: {
+function ItemCard({ item, busy, pinned, fresh, onRead, onOpenDevice, onCollect, onPin }: {
   item: Item;
   busy: boolean;
   pinned: boolean;
   fresh: boolean;
-  onInspect: () => void;
   onRead: (code?: string, crack?: boolean) => void;
   onOpenDevice: () => void;
   onCollect?: () => void;
@@ -311,11 +309,7 @@ function ItemCard({ item, busy, pinned, fresh, onInspect, onRead, onOpenDevice, 
   return (
     <article className={`border-l-2 border-[#e8ac51] bg-[#0b1a1c]/90 p-3 ${fresh ? "reveal-card" : ""}`} draggable onDragStart={(event) => startCardDrag(event, { kind: "item", referenceId: item.id, label: item.name })}>
       <h5 className="flex items-center gap-2 text-sm uppercase text-[#f1c987]"><InvestigationIcon className="size-8" name={item.device ? "device" : "evidence"} /><span className="min-w-0 break-words">{item.name}</span></h5>
-      {item.inspected ? <p className="mt-2 text-sm leading-relaxed text-[#c8d8d2]/75">{item.description}</p> : (
-        <ScrubPad className="mt-2 border border-dashed border-[#6f9f98]/50 p-3" disabled={busy} needed={500} onDone={onInspect} tool="lens">
-          <p className="text-sm leading-relaxed text-[#c8d8d2]/60">Run the magnifier over it to look closer · 2 min</p>
-        </ScrubPad>
-      )}
+      <p className="mt-2 text-sm leading-relaxed text-[#c8d8d2]/75">{item.description}</p>
       {locked ? (
         <form className="mt-3 flex flex-wrap items-center gap-2" onSubmit={(event) => { event.preventDefault(); if (code.length === 4) onRead(code); }}>
           <label className="sr-only" htmlFor={`code-${item.id}`}>Unlock code</label>

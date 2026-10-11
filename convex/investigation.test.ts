@@ -63,7 +63,7 @@ test("partners search, inspect, and collect shared items without revealing hidde
   vi.advanceTimersByTime(4 * GAME_MINUTE_MS);
   await one.mutation(api.investigation.finishAction, { roomCode });
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.items[0]).toMatchObject({ name: "Note", collected: false });
-  expect((await one.query(api.investigation.getPlace, { roomCode }))?.items[0]?.description).toBeUndefined();
+  expect((await one.query(api.investigation.getPlace, { roomCode }))?.items[0]?.description).toBe("A handwritten appointment.");
   await one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "item", referenceId: ids.itemId, x: 0, y: 0 });
   expect((await two.query(api.clueBoard.getNodes, { roomCode }))![0].text).toBe("Note\nFound object");
   await expect(one.mutation(api.investigation.searchSpot, { roomCode, spot: "desk" })).rejects.toThrow("already been searched");
@@ -81,7 +81,7 @@ test("partners search, inspect, and collect shared items without revealing hidde
   await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "device_file", referenceId: "file/laptop/0", x: 0, y: 0 })).rejects.toThrow("Read this device");
   await expect(one.mutation(api.investigation.readDevice, { roomCode, itemId: ids.itemId })).rejects.toThrow("no readable records");
   await expect(two.mutation(api.investigation.readDevice, { roomCode, itemId: ids.deviceItemId, code: "nope" })).rejects.toThrow("Wrong code");
-  expect(await two.mutation(api.investigation.readDevice, { roomCode, itemId: ids.deviceItemId, code: deviceCode(ids.deviceId) })).toEqual({ completeGameTime: 12 });
+  expect(await two.mutation(api.investigation.readDevice, { roomCode, itemId: ids.deviceItemId, code: deviceCode((await t.run((ctx) => ctx.db.get(ids.deviceId)))!) })).toEqual({ completeGameTime: 12 });
   await expect(one.mutation(api.investigation.readDevice, { roomCode, itemId: ids.deviceItemId })).rejects.toThrow("partner is already reading");
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.items.find((item) => item.id === ids.deviceItemId)?.device?.files).toEqual([]);
   vi.advanceTimersByTime(5 * GAME_MINUTE_MS);

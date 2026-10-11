@@ -158,7 +158,7 @@ investigation.collectItem({ roomCode, itemId })
 investigation.getInventory({ roomCode })
 ```
 
-Searching one spot takes 4 game minutes and reveals only that spot's pre-existing items in the player's current room. Every found object can be collected. Inspection takes 2 game minutes and reveals the item's stored description. Collection requires physical access to a discovered collectible item; collected items are shared with both players. The player decides whether an item matters to the case.
+Searching one spot takes 4 game minutes and reveals only that spot's pre-existing items in the player's current room. Every found object can be collected. The stored description is shown once found; the game no longer calls inspection. Collection requires physical access to a discovered collectible item; collected items are shared with both players. The player decides whether an item matters to the case.
 Discovered objects may be pinned through `clueBoard.createReferenceNode({ roomCode, type: "item", referenceId: itemId, x, y })`; undiscovered IDs are refused.
 Final-report weapon item IDs must come from the shared collected inventory; text remains available for weapons that are not physical case items.
 
@@ -193,7 +193,7 @@ forensics.request({ roomCode, sourceKey, testType })   // sourceKey: "victim" | 
 forensics.markViewed({ roomCode, requestId })
 ```
 
-`request` records `readyAtGameTime` after 5 minutes of submission plus the frozen turnaround, or 30 minutes when the test has nothing stored ("No usable result"); it does not call an LLM. `getLab` lists sources (collected objects, searched rooms, the victim) and the full test menu without revealing which tests will find something. Results are omitted until ready and explicitly viewed. Requests and result viewing require visiting the forensic lab.
+`request` costs the detective 5 bench minutes and records the result as ready and viewed at once ("No usable result" when nothing is stored); the frozen turnaround is no longer used. It does not call an LLM. `getLab` lists sources (collected objects, searched rooms, the victim) and the full test menu without revealing which tests will find something. Results are shown once viewed; older pending requests still use ready-then-view. Requests and result viewing require visiting the forensic lab.
 
 ### NPC messages
 

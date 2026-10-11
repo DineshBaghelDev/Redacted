@@ -99,7 +99,8 @@ export function ScrubPad({ tool, needed = 900, disabled, onDone, children, class
       aria-label="Rub across the evidence to work on it. Press Enter to do it at once."
       className={`relative touch-none select-none overflow-hidden ${disabled ? "opacity-50" : "cursor-crosshair"} ${className}`}
       onKeyDown={(event) => { if (event.key === "Enter" && !disabled && !done.current) { done.current = true; onDone(); } }}
-      onPointerDown={(event) => { last.current = point(event); (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId); }}
+      onDragStart={(event) => { event.preventDefault(); event.stopPropagation(); }}
+      onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); last.current = point(event); (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId); }}
       onPointerLeave={() => { last.current = null; setLamp(null); }}
       onPointerMove={move}
       onPointerUp={() => { last.current = null; }}

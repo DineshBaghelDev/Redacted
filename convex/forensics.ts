@@ -4,10 +4,9 @@ import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/s
 import { getPlayingRoomMember, requireInvestigationOpen } from "./lib/auth";
 import { entranceRoomId, GAME_MINUTE_MS, settleActions } from "./world";
 
-/** The full test menu. Detectives choose; a test that finds nothing still costs its time. */
+/** The full test menu. Detectives choose; a test that finds nothing still costs its bench time. */
 export const TEST_TYPES = ["fingerprint", "footprint", "dna", "blood", "toxicology", "fiber", "ballistics", "autopsy"] as const;
 const testType = v.union(...TEST_TYPES.map((type) => v.literal(type)));
-const NO_RESULT_TURNAROUND = 30;
 const NO_RESULT = "No usable result. The examination found nothing to report.";
 
 async function labMember(ctx: QueryCtx | MutationCtx, roomCode: string) {
@@ -116,8 +115,9 @@ export const request = mutation({
     const currentRoomId = member.player.currentRoomId ?? await entranceRoomId(ctx, member.place._id);
     if (!currentRoomId) throw new Error("The lab room is unavailable.");
     if (settled.activeCount === 0) await ctx.db.patch(member.session._id, { gameTime: settled.gameTime, clockStartedAt: now });
-    const readyAtGameTime = settled.gameTime + 5 + (output?.turnaroundMinutes ?? NO_RESULT_TURNAROUND);
-    await ctx.db.insert("forensicRequests", { sessionId: member.session._id, ...(output ? { forensicOutputId: output._id } : {}), sourceKey, testType: type, requestedAtGameTime: settled.gameTime, readyAtGameTime });
+    // The detective runs the test at the bench, so the result is read on the spot; only the bench time is spent.
+    const readyAtGameTime = settled.gameTime;
+    await ctx.db.insert("forensicRequests", { sessionId: member.session._id, ...(output ? { forensicOutputId: output._id } : {}), sourceKey, testType: type, requestedAtGameTime: settled.gameTime, readyAtGameTime, viewedAt: now });
     await ctx.db.insert("roomActions", { sessionId: member.session._id, playerId: member.player._id, kind: "forensic", roomId: currentRoomId, startGameTime: settled.gameTime, completeGameTime: settled.gameTime + 5, createdAt: now });
     return { readyAtGameTime };
   },

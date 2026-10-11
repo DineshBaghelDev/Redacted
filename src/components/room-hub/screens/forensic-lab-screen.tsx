@@ -11,21 +11,21 @@ import { cardDropTarget, startCardDrag } from "../../../lib/evidence-drag";
 import { formatDuration, formatGameMinute } from "../../../lib/game-time";
 import { play } from "../../../lib/sound";
 import { FirstTimeTip } from "../first-time-tip";
-import { ScrubPad } from "../gestures";
+import { LabTask, type LabTest } from "../lab-tasks";
 import { InvestigationIcon } from "../investigation-icon";
 
-type TestType = "fingerprint" | "footprint" | "dna" | "blood" | "toxicology" | "fiber" | "ballistics" | "autopsy";
+type TestType = LabTest;
 
-/** The bench tools. Each is a physical action on the evidence, not a menu choice. */
-const tools: { test: TestType; name: string; verb: string; gesture: "brush" | "lamp" | "swab" | "tape" | "lens"; colour: string }[] = [
-  { test: "fingerprint", name: "Powder brush", verb: "Dust it for prints", gesture: "brush", colour: "#d8cdb4" },
-  { test: "blood", name: "UV lamp", verb: "Sweep the lamp over it", gesture: "lamp", colour: "#a782ff" },
-  { test: "dna", name: "DNA swab", verb: "Swab the surface", gesture: "swab", colour: "#e9e6da" },
-  { test: "toxicology", name: "Tox kit", verb: "Take a sample for the tox screen", gesture: "swab", colour: "#9fd1c4" },
-  { test: "fiber", name: "Lifting tape", verb: "Press tape across it for fibres", gesture: "tape", colour: "#bcd3ff" },
-  { test: "footprint", name: "Casting kit", verb: "Work the cast over the marks", gesture: "brush", colour: "#c9b38f" },
-  { test: "ballistics", name: "Comparison scope", verb: "Scan it under the scope", gesture: "lens", colour: "#e8ac51" },
-  { test: "autopsy", name: "Autopsy", verb: "Go over the body with the pathologist", gesture: "lens", colour: "#e5a18e" },
+/** The bench tools. Each one is its own hands-on task (see lab-tasks), not a menu choice. */
+const tools: { test: TestType; name: string; colour: string }[] = [
+  { test: "fingerprint", name: "Powder brush", colour: "#d8cdb4" },
+  { test: "blood", name: "UV lamp", colour: "#a782ff" },
+  { test: "dna", name: "DNA swab", colour: "#e9e6da" },
+  { test: "toxicology", name: "Tox kit", colour: "#9fd1c4" },
+  { test: "fiber", name: "Lifting tape", colour: "#bcd3ff" },
+  { test: "footprint", name: "Casting kit", colour: "#c9b38f" },
+  { test: "ballistics", name: "Comparison scope", colour: "#e8ac51" },
+  { test: "autopsy", name: "Autopsy", colour: "#e5a18e" },
 ];
 
 function sourceIcon(key: string) {
@@ -104,7 +104,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
         </div>
         <button className="min-h-11 shrink-0 border border-[#6f9f98]/70 px-4 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">Leave the lab</button>
       </header>
-      <FirstTimeTip id="lab" title="Forensic lab">Drag evidence onto the bench (or tap it), pick a tool, then rub over the evidence to run the test. Results come back later, and not every test finds something.</FirstTimeTip>
+      <FirstTimeTip id="lab" title="Forensic lab">Drag evidence onto the bench (or tap it), pick a tool, then do the job it asks for: dust, sweep a lamp, swab, pipette, peel tape, stir a cast, line up a scope. The result shows as soon as you finish, and not every test finds something.</FirstTimeTip>
       <main className="game-station-main min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
           <aside>
@@ -139,11 +139,10 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
               })}
             >
               {!source ? <p className="text-sm uppercase tracking-widest text-[#c8d8d2]/50">Drag evidence onto the bench</p> : chosen && !alreadyDone ? (
-                <ScrubPad className="flex min-h-48 w-full flex-col items-center justify-center" disabled={Boolean(lab.action) || Boolean(working)} key={`${source.key}:${chosen.test}`} needed={chosen.test === "autopsy" ? 1100 : 800} onDone={() => run(chosen.test, requestTest({ roomCode, sourceKey: source.key, testType: chosen.test }))} tool={chosen.gesture}>
-                  <InvestigationIcon className="size-20" name={sourceIcon(source.key)} />
-                  <p className="mt-2 text-lg uppercase">{source.name}</p>
-                  <p className="mt-1 text-xs uppercase tracking-widest" style={{ color: chosen.colour }}>{chosen.verb} · 5 min</p>
-                </ScrubPad>
+                <LabTask disabled={Boolean(lab.action) || Boolean(working)} key={`${source.key}:${chosen.test}`} onDone={() => run(chosen.test, requestTest({ roomCode, sourceKey: source.key, testType: chosen.test }))} seed={source.key} test={chosen.test}>
+                  <p className="flex min-w-0 items-center gap-2 text-sm uppercase"><InvestigationIcon className="size-8" name={sourceIcon(source.key)} /><span className="break-words">{source.name}</span></p>
+                  <p className="shrink-0 text-xs uppercase" style={{ color: chosen.colour }}>{chosen.name}</p>
+                </LabTask>
               ) : (
                 <>
                   <InvestigationIcon className="size-20" name={sourceIcon(source.key)} />

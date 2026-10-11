@@ -1,5 +1,13 @@
 # Design Decisions
 
+## 2026-10-11 — Code clues belong to the owner
+
+- Each lab tool asks for a different action so tests don't all feel the same. A task can be failed and retried but never changes the stored result; it only stands in for doing the work.
+- The player runs each lab test by hand at the bench, so the result shows as soon as the rub finishes. No turnaround wait; only the 5 bench minutes are spent. This replaces the 2026-10-07 lab turnaround decision.
+
+- A code clue lives where the owner would keep it: the device's own room. It is sometimes personal (a birthday, an engraved date) so the player has to make the link, never a labeled password.
+- Looking at a found object is free and instant. Hands-on effort is reserved for the lab, where it stands in for real analysis.
+
 ## 2026-10-11 — Do it, don't click it
 
 - The game should not list what to ask, search, or check. Type-ahead only completes names already known, after the player starts typing.

@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-10-11 — Code clues and plain descriptions
+
+- A device's code clue now sits in the same room as the device, in another spot when the room has one. Older cases are moved on the next session start.
+- The clue varies by device (seeded): a plain sticky note, a scrap with the digits written backwards, the owner's birthday card (day + month), or an engraved keyring date. None says what it unlocks.
+- Found objects show their description straight away; the magnifier sweep is gone. Real analysis stays at the lab bench.
+- Every lab tool is its own small task instead of the same rub: powder brush (dust until a print shows), UV lamp (sweep in the dark, click each glowing spot), DNA swab (stay on a drifting circle), tox kit (hold to fill, let go in the green band), lifting tape (pull from the tab across in one stroke), casting kit (stir circles), comparison scope (slide the lower bullet until its grooves match), autopsy (tap the marks in order). Layouts are seeded per evidence; Enter finishes any of them for keyboard players.
+- Lab tests show their result as soon as you finish the task: no turnaround wait or progress bar, only 5 bench minutes.
+- The extra progress bar under a spot after hold-to-search is gone. Rubbing at the lab no longer selects page text or drags the card.
+
 ## 2026-10-11 — Hands-on investigation
 
 - Removed suggestions that did the thinking: interview topic chips, records name chips, and the "check cameras at this time" link. Names you already know are finished only once you start typing them.

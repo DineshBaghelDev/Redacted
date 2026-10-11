@@ -582,7 +582,7 @@ One active journey per player. Rows store the destination place, starting and co
 
 ### `roomActions`, `searchedRooms`, and `sessionItems`
 
-`roomActions` stores a player's timed move, search, inspection, device read, interview question, lab submission, CCTV review, or public-record search. A player can have only one active travel or room action. Optional `npcTurnId`, `cctvReviewId`, and `recordSearchId` references identify pending work to cancel when its owner leaves. A device action refers to either a physical `itemId` or a handed-over `deviceId`. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, collection, and device-read timestamps. Item description is returned to clients only after inspection; device files only after reading; undiscovered items are not returned.
+`roomActions` stores a player's timed move, search, inspection, device read, interview question, lab submission, CCTV review, or public-record search. A player can have only one active travel or room action. Optional `npcTurnId`, `cctvReviewId`, and `recordSearchId` references identify pending work to cancel when its owner leaves. A device action refers to either a physical `itemId` or a handed-over `deviceId`. `searchedRooms` records one completed search per room in the shared session. `sessionItems` records a case item's shared discovery, inspection, collection, and device-read timestamps. Item description is returned once the item is discovered; device files only after reading; undiscovered items are not returned.
 Clueboard item references store only the item's ID and a discovery-safe label; creating them requires a matching `sessionItems` row.
 
 ### `sessionState`
@@ -813,7 +813,7 @@ Player claims must remain claims, not canonical facts.
 - `accusations.submittedGameTime`: case time when the report was filed, used for the result's time taken.
 - `caseItems` with `scatter/` evidence IDs: everyday objects placed by seeded code in every searchable room.
 - `cctvLabels` (`by_sessionId_and_recordEvidenceId`): who the team thinks a sighting shows; reasoning only.
-- `caseItems` with `code/` evidence IDs: the sticky note holding a found device's code, placed by seeded code.
+- `caseItems` with `code/` evidence IDs: the clue to a found device's code (note, backwards scrap, birthday card, or keyring), placed in the device's room by seeded code.
 - `caseItems.collectible` is no longer used as a gate; every found object can be collected.
 
 ## LLM telemetry
