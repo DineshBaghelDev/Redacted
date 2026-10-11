@@ -40,7 +40,8 @@ function readItems(evidenceOutput: unknown, storyOutput: unknown): ItemDraft[] |
       roomSourceId: access.roomId,
       slot: access.slot,
       itemType: sourceId ? itemTypes.get(sourceId) ?? "other" : "other",
-      collectible: data.clutter !== true,
+      // Everyday clutter can be bagged too, so "Bag it" never marks the real evidence.
+      collectible: true,
     });
   }
   return items;

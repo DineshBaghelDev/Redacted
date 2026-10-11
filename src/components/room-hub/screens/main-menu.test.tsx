@@ -16,6 +16,8 @@ test("distinguishes submitted reports from ongoing rooms", () => {
       onJoin={() => {}}
       onPrevious={() => {}}
       onSettings={() => {}}
+      onHistory={() => {}}
+      onHowToPlay={() => {}}
     />,
   );
   expect(html).toContain("Open case report");

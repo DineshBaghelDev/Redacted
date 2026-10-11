@@ -3,7 +3,7 @@ import { useRef } from "react";
 const CODE_LENGTH = 6;
 
 const otpInputClass =
-  "h-12 min-w-0 flex-1 border border-cyan-300 bg-[#020817]/90 text-center text-xl uppercase text-cyan-100 outline-none placeholder:text-cyan-100/45";
+  "h-11 min-w-0 flex-1 border border-[#6f9f98] bg-[#071014]/90 text-center text-lg uppercase text-[#c8d8d2] outline-none placeholder:text-[#c8d8d2]/65 sm:h-12 sm:text-xl";
 
 type RoomCodeInputProps = {
   value: string;
@@ -57,7 +57,7 @@ export function RoomCodeInput({ value, onChange }: RoomCodeInputProps) {
   }
 
   return (
-    <div className="flex w-full gap-2" onPaste={handlePaste}>
+    <div className="flex w-full gap-1 sm:gap-2" onPaste={handlePaste}>
       {Array.from({ length: CODE_LENGTH }, (_, index) => (
         <input
           aria-label={`Room code character ${index + 1}`}

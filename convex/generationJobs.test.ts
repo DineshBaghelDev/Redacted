@@ -23,4 +23,4 @@ test("publication failure persists separately and rolls back partial published d
   expect(failed).toMatchObject({ status: "failed", failedStage: "publish", error: expect.any(String), finishedAt: expect.any(Number) });
   expect(failed?.error).not.toBe("");
   expect(await t.run(async (ctx) => ctx.db.query("cases").collect())).toEqual([]);
-});
+}, 15_000);

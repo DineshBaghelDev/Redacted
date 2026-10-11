@@ -1,4 +1,8 @@
+import { ArrowRight } from "lucide-react";
 import { menuOptionButton } from "../constants";
+import { GameIcon } from "../game-icon";
+import { GameLogo } from "../game-logo";
+import { play } from "../../../lib/sound";
 
 type MainMenuScreenProps = {
   activeRooms?: Array<{
@@ -12,6 +16,8 @@ type MainMenuScreenProps = {
   onJoin: () => void;
   onPrevious: () => void;
   onSettings: () => void;
+  onHistory: () => void;
+  onHowToPlay: () => void;
   isLoaded: boolean | undefined;
   isSignedIn: boolean | undefined;
   error: string;
@@ -23,46 +29,57 @@ export function MainMenuScreen({
   onJoin,
   onPrevious,
   onSettings,
+  onHistory,
+  onHowToPlay,
   isLoaded,
   isSignedIn,
   error,
 }: MainMenuScreenProps) {
   return (
-    <div className="flex w-full max-w-sm flex-col gap-8">
-      <h1 className="text-5xl leading-none text-cyan-50 drop-shadow-[0_3px_0_rgba(236,72,153,0.9)] sm:text-7xl">
-        REDACTED
-      </h1>
-      <div className="flex w-full flex-col gap-3">
+    <div className="flex max-h-full w-full max-w-md flex-col gap-5 overflow-y-auto py-1">
+      <GameLogo />
+      <nav aria-label="Main menu" className="flex w-full flex-col items-start gap-2">
         {activeRooms?.map((room) => (
           <button
-            className="mb-1 min-h-16 border border-yellow-200/70 bg-[#06142d]/90 px-5 py-3 text-left text-cyan-50 shadow-[0_0_18px_rgba(250,204,21,0.16)] transition hover:border-yellow-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-200"
+            className="game-menu-button mb-2 min-h-20 w-full max-w-80 border-[#e8ac51]"
             key={room.roomCode}
-            onClick={() => onContinue(room.roomCode, room.status, room.reportSubmitted)}
+            onClick={() => { play("open"); onContinue(room.roomCode, room.status, room.reportSubmitted); }}
             type="button"
           >
-            <span className="block text-xs uppercase tracking-[0.18em] text-yellow-200">
-              {room.reportSubmitted ? "Open case report" : room.status === "playing" ? "Continue investigation" : "Return to lobby"}
+            <GameIcon name="case" className="size-10" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs uppercase tracking-[0.12em] text-[#e8ac51]">{room.reportSubmitted ? "Open case report" : room.status === "playing" ? "Continue investigation" : "Return to lobby"}</span>
+              <span className="mt-1 block break-words text-lg uppercase leading-tight">{room.caseTitle}</span>
+              <span className="block text-xs text-[#adbbb1]">Room {room.roomCode} · {room.playerCount}/2 connected</span>
             </span>
-            <span className="mt-1 block truncate text-lg uppercase">{room.caseTitle}</span>
-            <span className="mt-1 block text-xs uppercase text-cyan-100/55">
-              Room {room.roomCode} · {room.playerCount}/2 connected
-            </span>
+            <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
           </button>
         ))}
-        <button className={`${menuOptionButton} text-yellow-200`} onClick={onPrevious} type="button">
-          Play a previous case
+        <button className={menuOptionButton} onClick={() => { play("page"); onPrevious(); }} type="button">
+          <GameIcon name="case" />
+          Play a case
         </button>
-        <button className={menuOptionButton} onClick={onJoin} type="button">
+        <button className={menuOptionButton} onClick={() => { play("page"); onHistory(); }} type="button">
+          <GameIcon name="records" />
+          Case history
+        </button>
+        <button className={menuOptionButton} onClick={() => { play("open"); onJoin(); }} type="button">
+          <GameIcon name="badge" />
           Join room
         </button>
-        <button className={menuOptionButton} onClick={onSettings} type="button">
+        <button className={menuOptionButton} onClick={() => { play("page"); onHowToPlay(); }} type="button">
+          <GameIcon name="clueboard" />
+          How to play
+        </button>
+        <button className={menuOptionButton} onClick={() => { play("open"); onSettings(); }} type="button">
+          <GameIcon name="records" />
           Settings
         </button>
         {isLoaded && !isSignedIn ? (
-          <p className="text-center text-sm text-cyan-100">Still signing in.</p>
+          <p className="text-sm text-[#c5d2c8]">Still signing in.</p>
         ) : null}
-        {error ? <p className="text-center text-sm text-yellow-200">{error}</p> : null}
-      </div>
+        {error ? <p className="text-sm text-[#e8ac51]" role="alert">{error}</p> : null}
+      </nav>
     </div>
   );
 }

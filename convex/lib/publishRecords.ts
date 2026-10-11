@@ -14,6 +14,26 @@ function recordType(kind: unknown) {
   return "other" as const;
 }
 
+/** "Day 2 at 07:40": the time a card payment went through. */
+function paidAt(time: unknown) {
+  if (typeof time !== "number" || !Number.isFinite(time)) return "";
+  const minute = Math.max(0, Math.floor(time));
+  return ` Paid on Day ${Math.floor(minute / 1440) + 1} at ${String(Math.floor((minute % 1440) / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}.`;
+}
+
+/** Older cases stored card payments without their time; copy it from the frozen evidence once. */
+export async function ensurePaymentTimes(ctx: MutationCtx, caseId: Id<"cases">, generationJobId: Id<"generationJobs">) {
+  const cards = await ctx.db.query("publicRecords").withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", caseId).gte("evidenceId", "card/").lt("evidenceId", "card/￿")).take(100);
+  if (!cards.some((record) => record.type !== "payment")) return;
+  const draft = await ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId).eq("stage", "evidence")).unique();
+  const evidence = isObject(draft?.output) && Array.isArray(draft.output.evidence) ? draft.output.evidence : [];
+  for (const record of cards) {
+    if (record.type === "payment") continue;
+    const source = evidence.find((value): value is Record<string, unknown> => isObject(value) && value.id === record.evidenceId);
+    await ctx.db.patch(record._id, { type: "payment", content: `${record.content}${paidAt(source?.time)}` });
+  }
+}
+
 export async function ensureCaseRecords(ctx: MutationCtx, caseId: Id<"cases">, generationJobId: Id<"generationJobs">) {
   if (await ctx.db.query("publicRecords").withIndex("by_caseId", (q) => q.eq("caseId", caseId)).first()) return;
   const draft = await ctx.db.query("generationDrafts").withIndex("by_job_stage", (q) => q.eq("jobId", generationJobId).eq("stage", "evidence")).unique();
@@ -32,10 +52,10 @@ export async function ensureCaseRecords(ctx: MutationCtx, caseId: Id<"cases">, g
     await ctx.db.insert("publicRecords", {
       caseId,
       evidenceId: value.id,
-      type: value.type === "card" ? "other" : recordType(data.kind),
+      type: value.type === "card" ? "payment" : recordType(data.kind),
       subjectNpcId,
       title: value.title,
-      content: value.summary,
+      content: value.type === "card" ? `${value.summary}${paidAt(value.time)}` : value.summary,
     });
   }
 }

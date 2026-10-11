@@ -1,5 +1,5 @@
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 
 type AnyCtx = QueryCtx | MutationCtx | ActionCtx;
 type DbCtx = QueryCtx | MutationCtx;
@@ -18,6 +18,11 @@ export async function requireUserId(ctx: AnyCtx) {
   return identity.subject;
 }
 
+/** A scored or given-up room stays readable for good: it is the team's case history. */
+export function isClosed(session: Doc<"sessions">) {
+  return session.closedAt !== undefined || session.gaveUpAt !== undefined;
+}
+
 /** Returns a room and the signed-in member, or null when the room is unavailable to them. */
 export async function getRoomMember(ctx: DbCtx, roomCode: string) {
   const authUserId = await requireUserId(ctx);
@@ -25,7 +30,7 @@ export async function getRoomMember(ctx: DbCtx, roomCode: string) {
     .query("sessions")
     .withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase()))
     .unique();
-  if (!session || session.expiresAt < Date.now()) return null;
+  if (!session || (session.expiresAt < Date.now() && !isClosed(session))) return null;
   const player = await ctx.db
     .query("sessionPlayers")
     .withIndex("by_sessionId_authUserId", (q) => q.eq("sessionId", session._id).eq("authUserId", authUserId))
@@ -43,6 +48,7 @@ export async function getPlayingRoomMember(ctx: DbCtx, roomCode: string) {
 export async function requireInvestigationOpen(ctx: MutationCtx, sessionId: Id<"sessions">) {
   const report = await ctx.db.query("accusations").withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId)).unique();
   if (report) throw new Error("The final report is submitted. This room is review-only.");
+  if ((await ctx.db.get(sessionId))?.gaveUpAt !== undefined) throw new Error("This case was given up. The room is review-only.");
 }
 
 /** Bureau terminals are available only to a detective physically at the bureau. */
@@ -55,6 +61,23 @@ export async function getBureauRoomMember(ctx: DbCtx, roomCode: string, allowedA
   if (!member.player.currentPlaceId) return member; // Pre-clock rooms began at the bureau.
   const place = await ctx.db.get(member.player.currentPlaceId);
   return place?.kind === "bureau" ? member : null;
+}
+
+/** A building camera is used in its room; street cameras use the bureau terminal. */
+export async function getCameraAccess(ctx: DbCtx, roomCode: string, allowedActionKind?: "cctv") {
+  const member = await getPlayingRoomMember(ctx, roomCode);
+  if (!member) return null;
+  if (await ctx.db.query("travelActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique()) return null;
+  const action = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique();
+  if (action && action.kind !== allowedActionKind) return null;
+  const place = member.player.currentPlaceId ? await ctx.db.get(member.player.currentPlaceId) : null;
+  return { member, place };
+}
+
+export function cameraAtAccessPoint(camera: Doc<"cctvCameras">, access: NonNullable<Awaited<ReturnType<typeof getCameraAccess>>>) {
+  // The security desk watches the streets. The bureau's own cameras never bear on a case, so they stay off the wall.
+  if (access.place?.kind === "bureau" || !access.member.player.currentPlaceId) return !camera.placeId;
+  return camera.placeId === access.member.player.currentPlaceId && camera.roomId === access.member.player.currentRoomId;
 }
 
 /**

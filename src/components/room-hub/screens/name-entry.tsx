@@ -1,4 +1,6 @@
 import { input, menuButton, panel } from "../constants";
+import { CharacterPortrait } from "../character-portrait";
+import { GameLogo } from "../game-logo";
 
 type NameEntryScreenProps = {
   detectiveName: string;
@@ -16,10 +18,8 @@ export function NameEntryScreen({
   canSubmit,
 }: NameEntryScreenProps) {
   return (
-    <div className="flex w-full max-w-sm flex-col gap-8">
-      <h1 className="text-5xl leading-none text-cyan-50 drop-shadow-[0_3px_0_rgba(236,72,153,0.9)] sm:text-7xl">
-        REDACTED
-      </h1>
+    <div className="relative z-10 flex w-full max-w-sm flex-col gap-8 px-5 sm:px-0">
+      <GameLogo />
       <form
         className={panel}
         onSubmit={(event) => {
@@ -27,19 +27,20 @@ export function NameEntryScreen({
           onSubmit();
         }}
       >
-        <label className="mb-3 block text-xl uppercase text-cyan-100" htmlFor="detective-name">
-          Detective name
-        </label>
+        <div className="mb-4 flex items-center gap-4">
+          <CharacterPortrait className="w-16" id={detectiveName.trim() || fallbackName} />
+          <label className="text-xl uppercase text-[#e4e6d8]" htmlFor="detective-name">Detective name</label>
+        </div>
         <input
           autoFocus
-          className={input}
+          className={`${input} w-full`}
           id="detective-name"
           onChange={(event) => onChange(event.target.value)}
           placeholder={fallbackName}
           value={detectiveName}
         />
         <button
-          className={`${menuButton} mt-4 w-full text-yellow-200`}
+          className={`${menuButton} mt-4 w-full text-[#e8ac51]`}
           disabled={!canSubmit}
           type="submit"
         >

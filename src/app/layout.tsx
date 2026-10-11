@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { shadcn } from "@clerk/ui/themes";
+import { dark, shadcn } from "@clerk/ui/themes";
 import { Geist_Mono, Pixelify_Sans } from "next/font/google";
 import { AppConvexProvider } from "@/components/convex-provider";
 import "@xyflow/react/dist/style.css";
@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Redacted",
-  description: "A Next.js app with shadcn/ui and Convex ready.",
+  description: "A cooperative cyberpunk detective game.",
 };
 
 /**
@@ -33,7 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${pixelifySans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full vsc-initialized">
-        <ClerkProvider appearance={{ theme: shadcn }}>
+        <ClerkProvider appearance={{ theme: [shadcn, dark], variables: { colorPrimary: "#e8ac51", colorBackground: "#0b1a1c", borderRadius: "0" }, elements: { footer: { backgroundColor: "#0b1a1c", color: "#c8d8d2" } } }}>
           <AppConvexProvider>{children}</AppConvexProvider>
         </ClerkProvider>
       </body>

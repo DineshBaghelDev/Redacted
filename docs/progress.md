@@ -1,5 +1,309 @@
 # Progress
 
+## 2026-10-12 — Grabbable clueboard string pins, no tie dropdown
+
+- The string handle on each card was rendering as React Flow's default 6px dot: the pushpin style sat in a Tailwind layer, which loses to React Flow's unlayered stylesheet. Moved it out of the layer; it now shows as the 28px pushpin and is easy to grab.
+- Removed the "Tie string without dragging" From/To card dropdowns (added 2026-10-09). Strings are tied only by dragging one pin to another.
+
+## 2026-10-12 — Phone filler no longer contradicts the story
+
+- Phone filler no longer includes "Mum" or "Sis". On the Ines Castellano case, a separate "Sis" contact appeared next to her real sister Tamsin, and a casual "Mum" text contradicted Tamsin's message about their mother's care-home bills. Filler now only uses neutral contacts (dentist, takeaway, parcel, landlord, unknown number).
+- Filler messages and calls the victim sends are now timed at or before the victim's last real send, so a dead victim never appears to text.
+- Existing cases are fixed in place on their next open (filler version 3). Family entries become neutral ones and late victim sends are moved earlier. Message IDs stay the same, so notes and pins still work.
+- Checked: the reported "too many people" in the notebook was not leftover data. All 7 came from the brief (victim, Aisha Osei) and the victim's phone, which names 5 people, so it is working as intended.
+
+## 2026-10-12 — Case moment art and share packaging
+
+- The brief uses a compact dossier emblem and less vertical space. The close and give-up results use blank ink stamps; five-star results and Case history use filled/empty raster stars, with accessible live labels retained.
+- A live result-screen check found that the first multi-asset result sheet cropped into partial borders. Replaced it with individually generated frame and star files; the given-up stamp now renders as one complete, readable mark.
+- Added inspected two-detective key art for the Open Graph and Twitter share images, plus a high-resolution square app emblem. Next.js static image metadata supplies the share tags. The banner is 1730×909, the same wide ratio as the requested 1200×630 size.
+
+## 2026-10-12 — Device lock and call details
+
+- Locked phones and laptops now open a compact illustrated keypad with live digits, clear and delete controls, and the existing keyboard input. Unlock duration and code rules are unchanged. Recovered phone call rows and details show incoming/outgoing sprites.
+- Rejected a generated per-task forensic sheet because the UV and footprint cells had visible halos and stray pixels. The existing legible task graphics remain until clean replacements are ready.
+
+## 2026-10-11 — Interior navigation art and lab documentation
+
+- Added clean room-control sprites for doors, stairs, lifts and wall cameras, and neutral covered-body/shed search sprites. Door controls now sit on their own art without a solid box; room names and travel times remain live text.
+- Corrected the forensic workflow in `GAME_SYSTEMS.md`: the hands-on bench task takes 5 game minutes and immediately shows the stored report. The old turnaround steps no longer describe the game.
+
+## 2026-10-11 — Clueboard and device shells
+
+- Replaced the rejected light cork and dark grid with a restrained petrol felt board. Pinned cards now use four blank paper variants for people, records, lab reports, and notes; board controls and connection pins use raster icon art. Generated paper with visible halos was rejected before use.
+- Added inspected phone and laptop shell art around the live device apps and files. The laptop keeps its existing compact layout on small screens, where the full keyboard illustration would leave too little room to read.
+
+## 2026-10-11 — Lab equipment and bench art
+
+- Added inspected transparent sprites for all eight existing lab tools and sealed/open evidence bags, plus a restrained bench surface and blank report sheet. The selected task, tool picker, bench state, and completed reports now show the matching art. Results remain live text and the test actions and timings are unchanged.
+
+## 2026-10-11 — Interview art and expressions
+
+- Replaced the dark conversation slab with a generated blank transcript-paper frame and readable live text. Added a restrained table/chair foreground beneath the desktop portrait. Existing deterministic portraits now change eyes, brows, and mouth for nervous, angry, and caught states when the interview warrants it.
+- Added text-free raster frames for Contradiction, failed proof, and Statement taken; the words remain accessible live text.
+
+## 2026-10-11 — Floor materials and named map art
+
+- Added 12 restrained floor textures for the generated room kinds and used them behind the furniture sprites. The map now has distinct silhouettes for the missing named houses, bank, clinic, pier, bureau, lab, shop, bar, and diner. Travel and detective positions use small car/character tokens instead of a glowing square and boxed diamond.
+
+## 2026-10-11 — Room furniture and found-object art
+
+- Added inspected, transparent pixel-art atlases for 16 furniture/search-spot types with matching searched appearances and 25 found-object categories. Room search now puts the furniture in the scene, keeps short labels visible, and preserves hold-to-search and discovered-item navigation. Found objects and lab bags use the matching category art; unknown names keep a neutral object icon.
+- Rejected a room-control sheet that carried a dark generated backdrop. Kept doors and floor graphics unchanged until clean artwork is ready.
+
+## 2026-10-11 — Real music, separate volumes, softer clicks, page turns
+
+- **Music you can hear:** the old score was soft sines at 110–330 Hz, below what laptop speakers reproduce, so only the rain came through. The new score (Am–F–Dm–E) has a slow triangle pad, a sawtooth bass whose overtones carry on small speakers, and a sparse piano-like melody at 440–880 Hz. The rain sits under it.
+- **Separate volumes:** music (score and rain) and effects now have their own buses and their own sliders in Settings and the pause menu (default 80% each; the old single volume setting is no longer read).
+- **Softer button press:** the generic click is a short wooden knock (sine, no noise) instead of the square snap and hiss that sounded like a shot.
+- **Page turns:** a rising paper rustle for the notebook and its tabs, the case file and clueboard, the archive, Case history and How to play, laptop files, and the report steps.
+- **Measured in Chrome at default volume:** music and rain average -22 dBFS RMS (peaks -5); hover peaks at -20 dBFS, a button click at -7.5, and action cues just under full scale behind the limiter. 174 tests and lint pass.
+
+## 2026-10-11 — Audible sound and a fuller cue set
+
+- **Why nothing was heard:** the synthesized mix was about 30 dB below normal game levels (score notes at ~1% amplitude, rain ~2%, clicks ~3%), so it was effectively silent on laptop speakers. Not a mute or unlock bug.
+- **Mix:** score, rain and effects raised to game levels behind a limiter (a compressor on the master); default volume 80%. The score now skips ahead instead of firing a backlog after the tab was suspended.
+- **New cues (all synthesized, no audio files):** hover tick (mouse only) and a generic click on every control, installed once by the shell; the click stays silent when a specific cue already played for that press. Notebook page turn, footsteps when walking, car on travel, bagging, unlock (and an error buzz on a wrong code or failed action), success chime when a lab task finishes, and one sound per bench tool: brush swish, UV hum, swab dab, pipette bubbles, tape rip, plaster scrape, scope ratchet, autopsy tap. Wrong moves in lab tasks buzz. Continuous gestures are rate-limited so they read as texture.
+- **Verified in Chrome:** the audio context is running after the first gesture; the score schedules notes (40 in two seconds); hover and button clicks start their sounds. 174 tests and lint pass.
+
+## 2026-10-11 — The report is written, not chosen
+
+- The case-close form no longer lays out every known person, bagged object and pinned card. The killer and the weapon are typed. A name suggestion appears only after part of an already-known name is typed, and an unknown name says "No one by that name in your files". The typed name is matched to the person for exact scoring; a weapon matching a bagged object is scored exactly, otherwise it is judged on meaning. Proof is cited through the notebook picker ("Cite evidence from the notebook") and pinned automatically. Opening the form no longer requires a pin first.
+- Type-ahead hides once a whole known name is in the text.
+- Checked in Chrome on ZYZTSR (filled in, not submitted). 174 tests and lint pass.
+
+## 2026-10-11 — One way to confront
+
+- Fixed: confronting with evidence picked from the notebook failed with a server validation error (an extra `label` field was sent).
+- Interviews now have one path to catch a lie: **Show evidence** → pick it in the notebook → **Confront**. Removed the clickable reply sentences (Press / Show evidence per line) and dropping evidence on the portrait. While picking, the notebook shows only evidence, your notes as plain text, and "Show this". The table line reads "Showing · … Press Confront." and the box invites an optional remark.
+- Checked in Chrome on ZYZTSR: the debt record that caused the error now confronts cleanly ("They don't budge", since it disproves nothing). 174 tests and lint pass.
+
+## 2026-10-11 — Show evidence from the notebook
+
+- "Show evidence" in an interview opens the shared notebook in a picking mode instead of the small tray: evidence only, the same groups and notes, search focused, items already on the clueboard marked, and a "Show this" button on each entry. Picking puts it on the table; if a reply line was chosen first, it confronts straight away. Dragging evidence onto the portrait still works.
+- The notebook now renders above the game's top bar wherever it opens from. Search treats every kind of space alike (generated text used narrow spaces, so "7 pm" found nothing) and says when nothing matches.
+- Checked in Chrome on room ZYZTSR: "7 pm" finds both phones' copies of the meeting text, "Show this" puts it on the table, and the button changes to "Confront · 3 min". 174 tests and lint pass.
+
+## 2026-10-11 — Autopsy task, crowd safety, phone pass
+
+- **Autopsy:** the pathologist now dictates four body regions in a seeded order ("the neck, then the body's left arm…"). You examine each on an unlabelled body; left and right are the body's own. A wrong region gets a correction, not a reset. The task shows no findings.
+- **Camera crowd:** passers-by never use a height or clothing word from any cast member's public description, so they can't be mistaken for a character. They are linked to nobody and never break a lie or count for the score. Cases that already had filler get the crowd redone on their next replay (filler version 2, same record IDs). On Whitlock, the cast spans 5'5"–6'1" and the crowd uses only 5'2", 5'4", 5'10" and 6'2".
+- **Phone pass (390×844 frame, signed in):** menu, How to play, Case history, archive, solo lobby, brief, scene, bureau, security desk, interview with the evidence tray, notebook, pause menu, case file, clueboard, and the given-up result with its buttons. No page-wide sideways scroll anywhere. Fixed: How to play scrolled inside its frame and the frame's seam crossed the text (now a plain reading panel). The pause menu's title and bottom touched the frame (more padding; keyboard controls hidden on phones). "Close the file" wrapped (icon-only on phones).
+- 174 tests, TypeScript and lint pass.
+
+## 2026-10-11 — Final audit fixes
+
+- **Interviews:** statements are taken by any whereabouts or "what did you see" question, and the first-time tip explains it. Only "your phone" triggers a handover. Proof that disproves nothing shows a grey "They don't budge" stamp. NPCs may lie only about scripted topics and know the current case time. The transcript drops the repeated "Name asks:" prefix and shows presented evidence on its own line. Statement titles read "Statement of …". "Tag clue" and "Prove it wrong" are now "Show evidence".
+- **Evidence matching:** either phone's copy of a call or message counts as the same evidence for lies and the evidence star (`convex/lib/evidenceIds.ts`). Checked live: showing the victim's copy of the 7 pm text now stamps Contradiction.
+- **Noise:** phones, laptops and cameras get seeded filler on case open (`convex/lib/publishFiller.ts`). The Whitlock street camera went from 1 sighting to 9; the victim's phone from 1 message to 6 plus 3 calls. Clutter descriptions were rewritten to full sentences, refreshed on existing cases, and never duplicated in a room. The reversed code clue no longer says "backwards!".
+- **Records:** searches need 2+ characters (no browse-all). Card payments are a "Card payment" type with their time, backfilled on case open. Record types show plain labels.
+- **Brief:** known details include the victim's home and workplace.
+- **Cameras:** the bureau's own cameras are hidden from the security desk; the fake "▶ Play" label is gone.
+- **Lab:** removed the dead turnaround UI (pending bar, "Tear open the report", "The lab called" notice and its query). The victim's bag uses the evidence icon.
+- **Result:** detective rank (stars + on-time), badges, "You said / The truth" beside What really happened, Share result, and Main menu / Another case / Replay this case.
+- **Menus:** Case history with stats (closed rooms no longer expire; `caseClose.backfillClosedRooms` marked 2 older rooms on dev), How to play (menu and pause), Main menu and Report a problem in pause, played/solved/in-progress stamps and a case of the day in the archive, a replay warning on solved cases, and suspect counts per difficulty. The archive's deadline text now matches the real ×1.5 default.
+- **Rooms:** solo lobby shows only Start; Start counts as the starter's ready; invite links (/join/CODE); started rooms can be rejoined by code while a seat is free.
+- **Notebook and settings:** notebook search, one-line team notes per entry, a message box to the partner, Large text, and the detective name saved to the account.
+- **Checks:** 173 tests across 37 files, TypeScript and lint pass. Backend pushed to the dev deployment. A signed-in Chrome run on a fresh Whitlock room covered: solo lobby, brief leads, clutter and code clue text, phone filler, street camera filler, records with payment times, interview statement, no accidental handover, "They don't budge", Contradiction on the victim's copy of the text, give up, after-case buttons, Main menu, and Case history. Not run: `next build` (the dev server was using `.next`).
+
+## 2026-10-11 — Final pre-ship audit
+
+- Wrote `docs/audit/FINAL_AUDIT.md` (game, design, and developer review with a ship order) and `docs/audit/ARTWORK_NEEDED.md` (artwork list by priority), now in `docs/audit/` with `MISSING_FEATURES.md` (player features the game lacks, such as case history and a non-destructive way back to the menu). No code changed.
+
+## 2026-10-11 — Lighter menu controls and site icon
+
+- The existing raster button plate now supplies both its frame and its face, with no CSS color fill. Main menu actions use a compact, consistent width and shorter padding while keeping their labels readable on mobile.
+- Replaced the starter favicon with a small PNG derived from the existing REDACTED dossier emblem.
+
+## 2026-10-11 — Pin toggles, raster plate fit, and archive summaries
+
+- Removed the boxes around icon-only pin, close, and bag controls, plus station returns, the bureau HUD, and the note control when their labels hide on mobile. The pin uses two appearances from the existing pixel icon atlas and flips immediately on press. Pressing an attached pin deletes that shared clueboard card using the existing mutation; a failed write restores the prior appearance.
+- Trimmed only transparent padding from the original generated button plate and used its raster edges as a scalable frame. Checked complete top, bottom, and end caps on short and wide buttons.
+- Previous-case descriptions are shown directly instead of behind “Read case brief.”
+
+## 2026-10-11 — Button alignment and clueboard pin states
+
+- Centered labels within the existing illustrated menu and control plates, and applied those plates to map travel/entry, interview, lab report, device opening, and other primary station actions.
+- Replaced repeated clueboard pin text and inconsistent icons in records, CCTV, map, interiors, devices, interviews, lab reports, and the notebook with one accessible icon control. Unpinned, pinning, and pinned states have distinct labels; pinned evidence remains visibly marked.
+- Verified menu plate alignment and zero page overflow at 320px, 390px, and 1440px; the full 172-test suite, TypeScript, lint, and production build pass. Four backend tests timed out during a parallel run and passed when rerun with one test worker.
+
+## 2026-10-11 — Logo, controls, and audio pass
+
+- Added an inspected transparent case-file emblem, a restrained metal button plate, and an eight-symbol control atlas. The live REDACTED title stays as readable text beside the emblem on signed-out, sign-in, loading, and signed-in screens. Main menu, archive replay, opening brief, pause, station returns, device return, and interview evidence controls now use the shared asset language.
+- Added a quiet four-chord synthesized score beneath the rain, plus search, open, and close cues. The shared game shell starts music on the title menu and continues it through navigation; pointer or keyboard input resumes browser-suspended audio. Mute stops both loops immediately; unmuting restarts them and plays a confirmation ping. Music, effects, and volume are available in both menu settings and the pause menu.
+- The archive now keeps full public summaries under “Read case brief” on each card, putting replay actions in view sooner. First-time tips across investigation stations have been shortened to one or two control hints.
+- At 320px, the interview header uses an icon return, the portrait is smaller, appearance is disclosed on demand, and the evidence tray opens above the composer. Pinned clueboard evidence is listed first and marked in the tray. Menu, archive, and interview had no document-wide horizontal overflow in a signed-in Playwright pass.
+- Browser audio instrumentation saw score oscillators and rain sources start; muting stopped new score notes and unmuting restarted them. All 171 tests across 35 files, TypeScript, focused lint, and the production build pass. Signed-in 320px captures of archive, interview, map, CCTV, and records show no document-wide horizontal overflow.
+
+## 2026-10-11 — Smoother building navigation
+
+- Doors always name the room behind them; no more "Unexplored" doors or "?" rooms. The map shows every room on a floor by name (explored ones inked solid) and any room can be tapped to walk there.
+- Stairs and lifts are floor buttons ("Lift: G 1 2 3"), not a pile of stair doors; one tap takes you to that floor's corridor. Doors between floors in houses say "upstairs"/"downstairs".
+- An empty search says "✓ Nothing here" once, on the furniture; the list under the room only shows spots where something was found.
+- Arriving at a place no longer shows the "Step inside" card; a short toast names the place and its mood instead.
+
+## 2026-10-11 — Exploring buildings
+
+- Inside a building you stand in one room seen from above: furniture you press and hold to search, and doors cut into the walls to the rooms next door (stairs lead to other floors). Doors to rooms nobody has entered say "Unexplored".
+- A small paper map beside the room fills in as either detective walks the building ("Explored 4/9"); unentered rooms next to explored ones show as "?". Tap an explored room on the map to walk back.
+- Entering a room fades it in with a door sound; walking shows "Walking to …" over the room.
+- New shared `visitedRooms` record (arrival, cold open, finished moves). What was found in the room is listed under it.
+
+## 2026-10-11 — Clutter pass
+
+- Places: the floor plan is now a thin strip of rooms across the top (ordered by doors from the entrance), so the search area gets the full width. Each spot card is itself the press-and-hold target; no separate buttons.
+- The "Carried evidence" dropdown is gone from search screens; bagged objects stay on their spot card marked "Bagged".
+- Found objects: Bag and Pin are small icons in the card's header; "No code? Have the lab crack it" is a quiet link under the keypad.
+- Notebook: Pin and Show partner appear only when you point at an entry (always shown on touch screens); pinned entries keep a small mark.
+- Interviews: the "What did you see?" and "Hand me your phone" chips are gone. Asking in your own words ("where were you", "what happened", "can I see your phone") does the same.
+- Tips: only the first tip of a visit opens; later ones arrive as a one-line pill you can tap open.
+- Cameras: the hour log is folded away by default; the monitor has its own small pin button next to the face slot.
+
+## 2026-10-11 — Faces on camera sightings
+
+- Each camera sighting has a photo slot. Drag a face from the notebook or the "Compare with people" panel onto a sighting (on the monitor or in the hour log), or tap "Who is it?" and pick a face. The slot shows the portrait and name; ✕ clears it.
+- The mark is shared with the partner and synced everywhere: the notebook entry for the sighting, the person's People card ("You placed them on camera: …"), and a pinned clueboard card ("You think: …"), even if it was pinned before marking.
+- Any drop zone now glows while a card is dragged over it.
+
+## 2026-10-11 — Code clues and plain descriptions
+
+- A device's code clue now sits in the same room as the device, in another spot when the room has one. Older cases are moved on the next session start.
+- The clue varies by device (seeded): a plain sticky note, a scrap with the digits written backwards, the owner's birthday card (day + month), or an engraved keyring date. None says what it unlocks.
+- Found objects show their description straight away; the magnifier sweep is gone. Real analysis stays at the lab bench.
+- Every lab tool is its own small task instead of the same rub: powder brush (dust until a print shows), UV lamp (sweep in the dark, click each glowing spot), DNA swab (stay on a drifting circle), tox kit (hold to fill, let go in the green band), lifting tape (pull from the tab across in one stroke), casting kit (stir circles), comparison scope (slide the lower bullet until its grooves match), autopsy (tap the marks in order). Layouts are seeded per evidence; Enter finishes any of them for keyboard players.
+- Lab tests show their result as soon as you finish the task: no turnaround wait or progress bar, only 5 bench minutes.
+- The extra progress bar under a spot after hold-to-search is gone. Rubbing at the lab no longer selects page text or drags the card.
+
+## 2026-10-11 — Hands-on investigation
+
+- Removed suggestions that did the thinking: interview topic chips, records name chips, and the "check cameras at this time" link. Names you already know are finished only once you start typing them.
+- Found phones and laptops are locked with a 4-digit code derived from the device ID. A sticky note with the digits is hidden in the same building (seeded code, no generation); typing it unlocks in 5 minutes, or the lab cracks it in 60.
+- Spots are searched by pressing and holding; objects are examined by running a magnifier over them.
+- The lab is a bench: drag (or tap) a bag onto it, pick a tool (powder brush, UV lamp, DNA swab, tox kit, lifting tape, casting kit, comparison scope, autopsy), and rub over the evidence to run that test.
+- Interviews keep free chat. Any line of a reply can be pressed ("Press · 3 min") or proved wrong with evidence, and evidence can be dropped straight onto the portrait.
+- Camera sightings can be marked "looks like …" by choosing or dropping a person. The mark is shared, shown on the tape and in the notebook, and never checked.
+- The final report is a sentence with blanks: drop or tap people, bagged objects, and evidence; motive and method stay in your own words. Evidence dropped from the notebook is pinned automatically.
+- Notebook entries can be dragged onto the clueboard, a portrait, the lab bench, and the report; the notebook fades out while you drag.
+- Server error text is cleaned to its plain sentence everywhere (no Convex request wrapper).
+- Checked in a signed-in Playwright run: hold-to-search, magnifier, wrong code, bench brushing, press/prove menu, type-ahead, and the report. 169 tests, TypeScript, and lint pass.
+
+## 2026-10-11 — Audit follow-ups
+
+- Everyday objects are scattered through every searchable room in the city (seeded code, no generation) when a case is published or replayed, so finding something no longer means a room matters. Existing cases get the scatter on their next replay.
+- The scored result shows case time from discovery to filing and how far that was from the deadline. No penalty.
+- People named aloud in an interview join the People file ("First seen in: Interview with …").
+- Interview replies stream word by word; if streaming fails the reply falls back to a whole message.
+- First-time tips on the bureau, place, map, interview, camera, lab, and notebook screens, plus "Show tips again" and a volume slider in the pause menu. Animations honor the system reduce-motion setting.
+- A notice tells the team when a lab result is ready while they are elsewhere. Arrival cards add building size, time-of-day atmosphere, and where the partner is.
+- Exploring the bureau as a building returns to the bureau scene. A full reload shows a branded loading screen instead of a blank page. The map has a "Find a place" list for phones.
+- An empty clueboard explains how to pin from the notebook. The dark grid board stays (the cork plate was tried and reverted at the player's request). Person cards no longer repeat "Person".
+- The laptop is now a laptop: bezel and webcam, a Files window with the list beside the open document on paper, and a keyboard deck.
+- Checked with a two-browser Playwright session: partner status and floor-plan markers, notebook "Show partner" pings, the map finder, streaming replies, the clueboard, and tips. 169 tests, TypeScript, and lint pass.
+
+## 2026-10-10 — From app to game: loop, time, and discovery pass
+
+- Cold open: Begin investigation now places both detectives in the crime-scene room (frozen `sceneRoomId`) with an arrival card instead of the bureau menu. The case clock starts at the story's discovery minute, so the clock, CCTV, calls, and messages share one calendar.
+- Time: one game minute is now 100 ms (was 1 s); a spot search resolves in under half a second. The default deadline is the best-route estimate plus 50% after discovery. At the deadline all new timed work stops server-side and the bureau asks for the report; reading, the notebook, the clueboard, and the report stay available.
+- People: the roster lists only people the team has come across: the victim, people named in the brief, anyone called in, and anyone named in uncovered evidence. Each shows "First seen in". Role labels (suspect/witness) are gone everywhere, including clueboard cards. Calling someone in, pinning them, and naming them as culprit all require that they are known.
+- Buildings: a clickable floor plan replaces room lists. Walking to any reachable room costs the shortest path (1 per door, 2 across floors). Rooms are searched spot by spot (4 min each); template and generated spot names are normalized, which removed duplicate spots like "On the body" / "The body". Found objects flip in as reveal cards.
+- CCTV: hour-of-tape blocks replace the minute slider (each review covers the full hour). The log prints line by line in a terminal. "Compare with people" opens known descriptions beside the log, and calls and messages link to "Check street cameras at this time".
+- Interviews: portrait-led layout, topic chips from the team's own discoveries, "Show evidence" from anything discovered (not just pins), and a stamped "Contradiction" with a sting when proof breaks a lie. Quick asks read as spoken lines.
+- Lab: detectives choose any test for any collected object, searched room, or the victim. Tests with nothing stored return "No usable result" after a 30-minute turnaround. The lab no longer reveals which tests apply.
+- Shell: corner clock with part of day and time left, partner location and activity, a shared notebook overlay (N), an Esc pause menu holding sound and Leave, M/B/C shortcuts, notices for new discoveries and partner pings, synthesized sound (no audio files), a night tint, a swipeable bureau panorama on phones instead of the tab bar, and in-world exit labels.
+- Co-op: partner markers on the map and floor plan, and "Show partner" pings from the notebook. Travel shows a moving marker and walks straight into the destination on arrival.
+- Ending: after scoring, the case file shows "What really happened" with the culprit, motive, method, explanation, and the frozen event timeline.
+- Checks: 168 tests, TypeScript, and lint pass. Signed-in Playwright playthroughs at 1440×900 and 390×844 covered brief → scene → spot search → notebook → pause → map travel → bureau → people → CCTV → interview → case file, with no console errors.
+- Follow-up the same day: CCTV is now a scrubbable tape (drag, wheel, or swipe under a fixed playhead; sighting marks; last/next sighting), and watching is instant and free. The deadline no longer stops play; it shows Overdue. A "Give up and see the solution" action in the case file ends the room for both detectives and shows the epilogue.
+- Camera choice is a wall of monitor tiles grouped by area (Streets, Police Bureau…) with short names and "No signal" tiles; picking one opens its tape, "Change camera" returns to the wall.
+- Bug fix: asking for a phone in your own words ("can I see your phone?") now triggers the same handover as the quick button, so the read/open phone actions appear. People with no phone in the case say so instead of pretending to hand one over.
+- Speed: in-game screen changes use the native history API instead of `router.push`, removing a server round trip per move (≈1 s → 0.1–0.3 s measured). Live queries go through `convex-helpers`' query cache, so returning to a screen is instant, and station code is preloaded while the brief is open. A full page reload still spends ≈1.2 s on page start and sign-in and ≈1.3 s on the live-data connection handshake, measured on a production build.
+- Every found object can be bagged, including everyday clutter, so "Bag it" no longer marks the real evidence.
+- The map's side panel is gone. Tapping a place opens a small card above it with Travel / Go inside / Pin, and a status line under the map shows where you are or the journey in progress.
+- Not done: a lab-ready notice while away from the lab, and a "time saved by splitting up" summary.
+
+## 2026-10-10 — Player flow refinements
+
+- Case roster portraits now read the stored cast's public gender and written build/clothing to guide hair, face, and outfit layers. The person ID still chooses stable palette and unused details. Existing published cases get the same metadata from their frozen cast draft; no live evidence or portrait generation is added.
+- The case archive uses one full-screen scroll area, including its header and case cards. A signed-in 390px Playwright check scrolled from the header into later cases. The custom shared game-time deadline is a disclosed option with an explanation of the default and Overdue behavior.
+- The initial case brief is narrower and uses smaller reading type and padding. Its repeated initial-facts list is available under “Known details,” leaving the case summary and Begin investigation action in the first phone viewport.
+
+## 2026-10-10 — Investigation surface asset pass
+
+- A signed-in local Playwright walkthrough reached an existing case, lobby, bureau, city map, street/bureau camera desk, roster, records, and a building room. The room screen exposed a flat dark backdrop; it now uses a sparse object-free pixel wall behind the existing room controls, preserving generated-case truth. The local walkthrough also confirmed the room's camera action is on site.
+- A room with a single camera now opens directly on that camera's title and time controls, without repeating its name in a one-item chooser. Empty unsearchable rooms say nothing was found instead of asking for an impossible search.
+- Moved the five-finding final theory form, confirmation, and interrupted-review state onto the same illustrated dossier as the opening and scored result. Evidence choices use paper rules instead of separate boxes. A 390px tall-form capture shows the entire form and actions inside the printed border; a desktop capture confirms the top layout.
+- Place loading/unavailable states now use the exploration room backdrop, a room symbol, and the established terminal frame with one return route. This completes the plain fallback-box sweep across map, camera, lab, interview, and place screens.
+- Replaced the plain interview and forensic loading/unavailable boxes with their room scenes, station icons, and the existing paper/terminal frames. A 390px capture of both and a desktop interview capture show the messages and return action inside the illustrated safe area. The lab fallback correctly labels its return to the map.
+- An eight-person portrait capture at actual roster size showed the original layers reading as one suit and face. Added distinct long, close-cut, and short hair silhouettes, four upper-body outfits, and three face outlines while keeping the same deterministic ID-based portrait. The new capture reads as varied people without adding small decorative noise.
+- Captured the six-camera written-log screen at 390px and 1440px. Its time controls now sit further inside the illustrated terminal frame on wide screens. Loading, unavailable, and no-camera camera/map states use the same scene and icon language as the active stations; the no-camera state was checked on phone and desktop.
+- Added a second inspected six-symbol city atlas for flats, parks, shops, stations, hotels, and garages. The live map selects these silhouettes by stable V1 place ID and falls back to the existing kind art for other places; routes, coordinates, and travel stay unchanged.
+- A 390px capture found the location panel starting over the map because its grid row could shrink below the wide canvas. The map row now keeps its full height before the panel, and the icon art is larger at phone and desktop sizes. Fresh 390px and 1440px captures show separated panels and clearer symbols.
+- The case-file opening and scored-result dossiers now keep their text inside the printed paper border at 320px. The opening title drops one size on phones so long generated names wrap by word.
+- Traced the repeated development `MaxListenersExceededWarning` to Next's external proxy for Sentry's `/monitoring` rewrite. The development tunnel is disabled; the production rewrite remains in the built route manifest. `/sw.js` continues to return its intentional 404 without Clerk middleware errors.
+- A 320px case-brief capture exposed the room badge compressing a long generated title into single letters. The brief now gives the title full width on phones and starts its content inside the illustrated paper border; desktop still keeps the room stamp beside the title.
+- A narrow phone capture exposed the Join room title, Close control, and six code cells colliding with the illustrated frame. The dialog now gives the frame clear inner space, uses a compact icon Close control, and keeps all six code cells readable at 320px.
+- The waiting room now shows both detectives as portrait ID strips, gives the case title a clear reading band, and keeps Ready/Start as the main actions with Leave room quieter below. Long names and titles wrap inside the terminal frame; the room code and copy action remain available.
+- Tightened the clueboard's phone toolbar so Back, title, and Add note sit above the string colors, and shortened the help overlay. Interview detail now places the public description beneath the portrait and name, giving long case text the full dossier width.
+- Bureau stations now have visible pixel icon labels over their corresponding room objects on desktop. The compact station menu remains available through tablet widths, where the scene crops too much for reliable hotspot placement.
+- Station hotspots leave the focus order while a station or the away notice covers the bureau scene.
+- Kept the 20-place map at a readable minimum width through tablet and small desktop sizes; the place picker stays available while the map needs horizontal scrolling.
+- The detective name and profile screens now show the same deterministic layered upper-body portrait language used by the case roster, with one small portrait beside the name field.
+- Styled fixture captures exposed a phone map overflow, clustered Midtown labels, and a camera list that pushed the time control below the first phone viewport. The map now contains its own sideways scroll, hides only crowded labels until focus or selection, and shows travel minutes in the direct-routes list instead of over place names. The camera list is two columns and height-limited on phones, with a shorter station header.
+- Removed repeated camera instructions and shortened the time-window explanation; the 20-minute range on either side and 5-minute action are unchanged.
+- A font-accurate capture prompted larger desktop map symbols and labels and more inner padding for the illustrated camera time panel.
+- Menu captures found and fixed a detective-name input that extended beyond the metal frame and a mobile scene scrim that dimmed the new detective screen. Settings and case archive layouts were checked at phone and desktop sizes.
+- A nine-room phone capture showed the current room and its building-camera action pushed below the entire room list. Phones now start with a compact room chooser; opening it shows the same rooms, and entering a room returns to the current-room actions. The mobile grid no longer stretches the closed chooser into empty space. Desktop keeps the visible sidebar.
+- Records and case-file reading captures showed the paper layout stays legible with a long title. The records search field had collapsed inside its mobile flex column; it now retains full input height and uses the clearer “Browse files” label for an empty query.
+- Added an inspected six-symbol pixel atlas for rooms, search, physical evidence, devices, lab work, and files. The sprites have transparent backgrounds and stay readable at their small in-game sizes.
+- Replaced repeated room-button boxes and the oversized lab frame with quieter, icon-led rows. Evidence records now use a file symbol inside the existing dossier treatment; all actions, states, durations, and location rules remain the same.
+- Improved long generated text handling on clueboard cards, report forms, room names, lab sources, and record titles. Final-report scoring rows use ruled paper lines instead of five heavy boxes.
+- Checked the player map against all 20 stored fixture places and 25 streets. Increased desktop marker and label size, added small district-color underlines beneath the artwork, and replaced boxed place and route rows with simpler dividers. On phones the map keeps its readable scale and scrolls horizontally; selecting a place centers it.
+- Finished a narrow-width text pass on the lobby, case brief, interview, camera, place, and lab headers. A camera access point with no local cameras now shows a clear empty state instead of trying to open a missing camera.
+- Latest check: 166 tests across 33 files, TypeScript, focused lint, and the production build pass. Map, camera, menu, archive, place, lab, records, and case-file layouts were captured with actual components, fixture data, and production CSS at desktop or phone sizes. Signed-in gameplay screens still need a live visual check.
+
+## 2026-10-10 — Local camera access and larger map art
+
+- Replaced the city marker squares with larger transparent place icons and kept a clear focus state. Long case titles and generated text wrap inside menus, dossiers, and station panels.
+- Split CCTV by physical access point: street and bureau cameras at the bureau, building cameras in their actual camera room. The room list marks camera rooms and opens the same written log there. The server now filters the list, reads, reviews, and pins by location; the long dropdown is gone.
+- Added stable pixel upper-body portraits assembled from face, hair, skin, clothing, and accessory variations in the people roster and interview record. Portrait art is illustrative; public descriptions remain the source for investigative appearance details.
+- Reduced the station-wide dark overlay so generated room art remains visible, and removed redundant borders behind mobile bureau station icons.
+
+## 2026-10-10 — Player map legibility pass
+
+- Replaced the numbered square markers with generated pixel place icons for homes, workplaces, public buildings, the bureau, and the lab. A restrained generated drafting-paper plate sits behind the live city graph; it contains no invented streets, places, or labels.
+- Brought the useful tester-map cues into play: district-colored markers, visible names on wide screens, direct-route travel times, and dashed camera streets with a compact legend. The SVG now scales on the same percentage coordinates as the clickable markers, so route lines meet their destinations.
+- Kept the actual case graph, travel action, location gating, and mobile place selector unchanged.
+
+## 2026-10-10 — Initial camera log navigation (superseded by local access above)
+
+- Replaced the long nested camera-button scroller with a named camera picker and previous/next controls. The screen now gives the existing action a clear order: choose camera, choose time, review written activity.
+- Kept the same stored camera windows, 20-minute range either side of the selected time, 5-minute review cost, and pin actions. Offline, pending, ready, and empty states now sit next to the action they explain. No camera imagery was added.
+
+
+## 2026-10-10 — Illustrated game interface, in progress
+
+- Generated and inspected a restrained eight-icon pixel atlas, a reusable metal terminal frame, a paper dossier frame, and separate archive, records, lab, interview, and report-desk scenes. All plates are text-free; the CCTV icon is a terminal symbol and no screen includes camera imagery.
+- Integrated framed menu actions, station icons, case archive and interview dossiers, and scene-backed records, CCTV, lab, interview, and report screens. The live city graph remains the map; its frame is decorative.
+- Added a blank generated cork surface behind the editable clueboard and framed the live exploration room list, forensic work area, and case-report paper. Repeated item and test rows stay simple to keep dense cases readable. The illustrations do not depict case-specific rooms, people, or evidence.
+- Kept routes, room actions, timers, queries, and case data untouched. TypeScript and focused TSX lint pass. Local Playwright desktop and mobile signed-out captures were inspected; signed-in station captures still need verification.
+- The sign-in and sign-up routes now use the menu scene and game navigation. A Playwright capture caught a white Clerk footer with unreadable text; the Clerk appearance footer now matches the dark card, verified on desktop sign-in and mobile sign-up.
+- Full suite: 158 tests passed with a 20-second test timeout after updating a brittle archive test index for the new heading. The unrelated generation-publication test exceeded its default 5-second limit twice but passed alone and in the full suite with the higher limit. Production build, TypeScript, and focused lint passed. The generated panel and dossier frames were also rendered at desktop and mobile sizes in a local surface preview; this does not replace an authenticated gameplay capture.
+
+
+## 2026-10-10 — Missing service-worker request
+
+- `/sw.js` is not an app asset, but requests for it fell through to the Clerk-wrapped catch-all page while the default proxy matcher skipped `.js` files. That produced repeated Clerk middleware errors and HTTP 500 responses.
+- An explicit `/sw.js` route now answers 404 without rendering the app. Authentication and the proxy matcher remain unchanged.
+- Live local checks: `/sw.js` changed from HTTP 500 to 404 with an empty response, `/` remained HTTP 200, and TypeScript plus focused lint passed.
+
+## 2026-10-10 — Pixel-noir player UI refresh
+
+- Replaced the player menu and bureau backgrounds with inspected, deliberately sparse pixel-art scenes. The bureau art contains text-only terminals, not CCTV footage, and its six click targets were aligned to the visible objects.
+- Reworked the title menu into icon-led game actions. Case archive and settings now take their own focused screen instead of sitting beside the persistent menu; the archive alone scrolls through cases.
+- Applied a shared charcoal, petrol-teal, and amber palette across the lobby, brief, map, exploration, records, CCTV, lab, interviews, clueboard, and case report. Dossier surfaces remain muted paper against dark surroundings. Raised micro-labels to a 12px minimum and kept keyboard focus visible.
+- No Convex functions, routes, action durations, evidence rules, or game mechanics changed. The generated UI concept frames were references only; fictional records and extra navigation in those frames were not implemented.
+- Verification: TypeScript, focused lint, all 158 tests, and the production build passed. A signed-in visual playtest remains unverified because neither available browser surface could open the local app.
+
 ## 2026-10-09 — Review corrections
 
 - Clueboard reads return null when the playing room is unavailable; records searches report an active action before the bureau-location error.

@@ -4,12 +4,497 @@
 @import "@clerk/ui/themes/shadcn.css";
 
 @layer components {
+  .game-title {
+    font-family: var(--font-pixelify-sans), sans-serif;
+    color: #e8ac51;
+    text-shadow: 3px 3px 0 #081013;
+    letter-spacing: 0.055em;
+  }
+
+  .game-panel {
+    border: 24px solid transparent;
+    border-image: url('/assets/terminal-frame.png') 120 fill / 24px / 0 stretch;
+    background: rgb(9 23 26 / 96%);
+    filter: drop-shadow(5px 6px 0 rgb(0 0 0 / 40%));
+  }
+
+  .game-dossier {
+    border: 28px solid transparent;
+    border-image: url('/assets/dossier-frame.png') 130 fill / 28px / 0 stretch;
+    background: #bcae91;
+    color: #211d17;
+    filter: drop-shadow(6px 8px 0 rgb(0 0 0 / 35%));
+  }
+
+  .game-station-main, .game-dossier, .game-panel {
+    overflow-wrap: anywhere;
+  }
+
+  .game-icon {
+    display: inline-block;
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    background-image: url('/assets/station-icons.png');
+    background-repeat: no-repeat;
+    background-size: 400% 200%;
+    image-rendering: pixelated;
+  }
+  .game-icon--badge { background-position: 0 0; }
+  .game-icon--cctv { background-position: 33.333% 0; }
+  .game-icon--clueboard { background-position: 66.667% 0; }
+  .game-icon--records { background-position: 100% 0; }
+  .game-icon--map { background-position: 0 100%; }
+  .game-icon--case { background-position: 33.333% 100%; }
+  .game-icon--lab { background-position: 66.667% 100%; }
+  .game-icon--interview { background-position: 100% 100%; }
+
+  .investigation-icon {
+    display: inline-block;
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    background: url('/assets/investigation-icons.png') no-repeat 0 0 / 300% 200%;
+    image-rendering: pixelated;
+  }
+  .investigation-icon--room { background-position: 0 0; }
+  .investigation-icon--search { background-position: 50% 0; }
+  .investigation-icon--evidence { background-position: 100% 0; }
+  .investigation-icon--device { background-position: 0 100%; }
+  .investigation-icon--lab { background-position: 50% 100%; }
+  .investigation-icon--file { background-position: 100% 100%; }
+
+  .object-icon {
+    display: inline-block;
+    flex: none;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+  }
+
+  .furniture-sprite {
+    display: block;
+    width: 4rem;
+    height: 4rem;
+    margin-inline: auto;
+    background-size: 400% 400%;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+  }
+
+  .device-app-icon {
+    display: inline-block;
+    width: 3.5rem;
+    height: 3.5rem;
+    background: url('/assets/device-app-icons.png') no-repeat 0 0 / 300% 100%;
+    image-rendering: pixelated;
+  }
+  .device-app-icon--calls { background-position: 50% 0; }
+  .device-app-icon--files { background-position: 100% 0; }
+
+  .phone-shell {
+    width: 100%;
+    min-height: 40rem;
+    padding: 4.8rem clamp(2.8rem, 10vw, 4rem) 4.4rem;
+    background: #0a1619 url('/assets/phone-shell.png') center / 100% 100% no-repeat;
+    image-rendering: pixelated;
+  }
+
+  .device-keypad {
+    aspect-ratio: 2 / 3;
+    background: url('/assets/device-keypad.png') center / 100% 100% no-repeat;
+    image-rendering: pixelated;
+  }
+
+  .call-direction {
+    display: inline-block;
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: url('/assets/call-directions.png') no-repeat 0 50% / 300% 120%;
+    image-rendering: pixelated;
+  }
+  .call-direction--outgoing { background-position: 50% 50%; }
+
+  .case-star {
+    display: inline-block;
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: url('/assets/case-star-filled.png') center / contain no-repeat;
+    image-rendering: pixelated;
+  }
+  .case-star--empty { background-image: url('/assets/case-star-empty.png'); }
+  .case-stamp {
+    display: inline-flex;
+    width: 10rem;
+    height: 6rem;
+    align-items: center;
+    justify-content: center;
+    background: url('/assets/case-stamp-frame.png') center / contain no-repeat;
+    image-rendering: pixelated;
+  }
+  .case-stamp--given-up { filter: grayscale(1) opacity(.8); }
+
+  .case-opened-icon {
+    display: inline-block;
+    flex: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: url('/assets/case-opened.png') center / contain no-repeat;
+    image-rendering: pixelated;
+  }
+
+  @media (min-width: 768px) {
+    .laptop-art-shell {
+      aspect-ratio: 3 / 2;
+      border: 0;
+      border-radius: 0;
+      background: #0a1619 url('/assets/laptop-shell.png') center / 100% 100% no-repeat;
+      box-shadow: none;
+      image-rendering: pixelated;
+    }
+    .laptop-art-shell > span, .laptop-css-deck { display: none; }
+    .laptop-art-screen {
+      position: absolute;
+      inset: 8% 13% 32%;
+      min-height: 0;
+      overflow: auto;
+    }
+  }
+
+  .control-icon {
+    display: inline-block;
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: url('/assets/control-icons.png') no-repeat 0 0 / 400% 200%;
+    image-rendering: pixelated;
+  }
+  .control-icon--notebook { background-position: 33.333% 0; }
+  .control-icon--pause { background-position: 66.667% 0; }
+  .control-icon--speaker { background-position: 100% 0; }
+  .control-icon--play { background-position: 0 100%; }
+  .control-icon--search { background-position: 33.333% 100%; }
+  .control-icon--pin { background-position: 66.667% 100%; }
+  .control-icon--close { background-position: 100% 100%; }
+
+  .game-control-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 8px solid transparent;
+    border-image: url('/assets/control-plate-trim.png') 90 120 fill / 8px / 0 stretch;
+    color: #e4e6d8;
+    line-height: 1.15;
+    padding-top: 0.3rem;
+    transition: filter 120ms, transform 120ms;
+  }
+  .game-control-button:hover, .game-control-button:focus-visible { filter: brightness(1.2); transform: translateY(-1px); }
+  .game-control-button:active { transform: translateY(1px); }
+
+  .game-icon-button {
+    display: inline-flex;
+    flex: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    transition: filter 120ms, transform 120ms;
+  }
+  .game-icon-button:hover:not(:disabled) { filter: brightness(1.2); transform: translateY(-2px); }
+  .game-icon-button:disabled:not([aria-pressed="true"]) { opacity: 0.55; }
+  .game-icon-button .control-icon { width: 2rem; height: 2rem; }
+  .game-pin-art { display: block; width: 2.75rem; height: 2.75rem; background: url('/assets/control-icons.png') no-repeat 66.667% 100% / 400% 200%; image-rendering: pixelated; filter: grayscale(1) brightness(1.2); transform: rotate(-24deg); }
+  .game-icon-button[aria-pressed="true"] .game-pin-art { filter: none; transform: none; }
+
+  .character-portrait {
+    display: block;
+    flex: none;
+    aspect-ratio: 4 / 5;
+    height: auto;
+    image-rendering: pixelated;
+    box-shadow: 3px 4px 0 rgb(0 0 0 / 28%);
+  }
+
+  .game-archive-scene {
+    background: #071014 url('/assets/archive-room.png') center / cover no-repeat;
+  }
+
+  .game-lab-scene {
+    background: #071014 url('/assets/lab-room.png') center / cover no-repeat;
+  }
+
+  .game-interview-scene {
+    background: #071014 url('/assets/interview-room.png') center / cover no-repeat;
+  }
+
+  .interview-transcript {
+    border: 18px solid transparent;
+    border-image: url('/assets/interview-transcript.png') 120 fill / 18px / 0 stretch;
+    scrollbar-color: #8b7355 #e9dcc0;
+  }
+  .interview-foreground {
+    background: url('/assets/interview-foreground.png') center bottom / 100% auto no-repeat;
+    image-rendering: pixelated;
+  }
+  .lab-bench {
+    background: #10262a url('/assets/lab-bench.png') center / 100% 100% no-repeat;
+    box-shadow: 0 8px 18px rgb(0 0 0 / 45%);
+    text-shadow: 1px 2px #061013;
+  }
+  .lab-tool-icon {
+    display: inline-block;
+    flex: none;
+    background: url('/assets/lab-tools.png') no-repeat 0 0 / 400% 200%;
+    image-rendering: pixelated;
+  }
+  .lab-tool-icon--blood { background-position: 33.333% 0; }
+  .lab-tool-icon--dna { background-position: 66.667% 0; }
+  .lab-tool-icon--toxicology { background-position: 100% 0; }
+  .lab-tool-icon--fiber { background-position: 0 100%; }
+  .lab-tool-icon--footprint { background-position: 33.333% 100%; }
+  .lab-tool-icon--ballistics { background-position: 66.667% 100%; }
+  .lab-tool-icon--autopsy { background-position: 100% 100%; }
+  .lab-prop {
+    display: inline-block;
+    flex: none;
+    background: url('/assets/lab-props.png') no-repeat 0 0 / 300% 100%;
+    image-rendering: pixelated;
+  }
+  .lab-prop--open { background-position: 50% 0; }
+  .lab-prop--report { background-position: 100% 0; }
+
+  .game-records-scene {
+    background: #071014 url('/assets/records-room.png') center / cover no-repeat;
+  }
+
+  .game-report-scene {
+    background: #17100d url('/assets/report-desk.png') center / cover no-repeat;
+  }
+
+  .game-place-scene {
+    background: #071014 url('/assets/exploration-wall.png') center / cover no-repeat;
+  }
+
+  .game-station-header {
+    background: linear-gradient(90deg, rgb(7 18 21 / 96%), rgb(17 36 37 / 94%));
+    box-shadow: inset 0 -2px #6b7157, 0 4px 0 rgb(0 0 0 / 35%);
+    gap: 0.75rem;
+  }
+
+  .game-station-header > div:first-of-type { margin-right: auto; }
+  .game-station-header::before {
+    content: '';
+    display: block;
+    flex: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: url('/assets/station-icons.png') no-repeat 0 0 / 400% 200%;
+    image-rendering: pixelated;
+  }
+  .game-lab-scene .game-station-header::before { background-position: 66.667% 100%; }
+  .game-interview-scene .game-station-header::before { background-position: 100% 100%; }
+  .game-evidence-scene .game-station-header::before { background-position: 100% 0; }
+  .game-cctv-scene .game-station-header::before { background-position: 33.333% 0; }
+  .game-map-scene .game-station-header::before { background-position: 0 100%; }
+  .game-place-scene .game-station-header::before { background-position: 0 100%; }
+
+  .game-station-main {
+    background: rgb(5 15 18 / 38%);
+  }
+
+  .game-menu-button {
+    font-family: var(--font-pixelify-sans), sans-serif;
+    display: flex;
+    min-height: 3.25rem;
+    align-items: center;
+    gap: 0.65rem;
+    border: 8px solid transparent;
+    border-image: url('/assets/control-plate-trim.png') 90 120 fill / 8px / 0 stretch;
+    padding: 0.35rem 0.8rem 0.25rem;
+    line-height: 1.15;
+    text-align: left;
+    color: #e4e6d8;
+    text-shadow: 1px 1px #041013;
+    transition: background-color 120ms, border-color 120ms, color 120ms;
+  }
+
+  .game-menu-button:hover,
+  .game-menu-button:focus-visible {
+    color: #f5c87f;
+    filter: brightness(1.2);
+  }
+
+  .game-menu-scene {
+    position: relative;
+    background-position: center;
+  }
+
+  @media (max-width: 639px) {
+    .game-menu-scene { background-position: 52% center; }
+    .game-menu-scene::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgb(4 12 15 / 68%);
+      pointer-events: none;
+    }
+  }
+
+  .game-menu-button:focus-visible,
+  .game-ui :focus-visible {
+    outline: 2px solid #f5c87f;
+    outline-offset: 2px;
+  }
+
+  .game-menu-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .game-menu-scene nav[aria-label="Main menu"] > button {
+    animation: menu-enter 280ms steps(5) both;
+  }
+  .game-menu-scene nav[aria-label="Main menu"] > button:nth-child(2) { animation-delay: 60ms; }
+  .game-menu-scene nav[aria-label="Main menu"] > button:nth-child(3) { animation-delay: 120ms; }
+  .game-menu-scene nav[aria-label="Main menu"] > button:nth-child(4) { animation-delay: 180ms; }
+  @keyframes menu-enter {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .game-ui {
+    font-family: var(--font-geist-mono), monospace;
+    color: #e4e6d8;
+    background-color: #071014;
+  }
+
+  .game-ui h1,
+  .game-ui h2,
+  .game-ui h3,
+  .game-ui button {
+    font-family: var(--font-pixelify-sans), sans-serif;
+  }
+
+  .game-ui ::selection {
+    color: #071014;
+    background: #e8ac51;
+  }
+
+  .city-map {
+    background: #07181d url('/assets/city-grid.png') center / 100% 100% no-repeat;
+    border: 3px solid #65756c;
+    box-shadow: inset 0 0 0 4px #071014, 6px 7px 0 rgb(0 0 0 / 40%);
+  }
+
+  .map-place-icon {
+    display: block;
+    width: 3rem;
+    height: 3rem;
+    background: url('/assets/map-places.png') no-repeat 0 0 / 300% 200%;
+    image-rendering: pixelated;
+    filter: drop-shadow(2px 3px 0 #061013);
+  }
+  .map-place-icon--home { background-position: 0 0; }
+  .map-place-icon--work { background-position: 50% 0; }
+  .map-place-icon--public { background-position: 100% 0; }
+  .map-place-icon--bureau { background-position: 0 100%; }
+  .map-place-icon--lab { background-position: 50% 100%; }
+  .map-place-icon--current { background-position: 100% 100%; }
+  .map-place-icon--apartment, .map-place-icon--park, .map-place-icon--cafe,
+  .map-place-icon--station, .map-place-icon--hotel, .map-place-icon--garage {
+    background-image: url('/assets/map-places-extra.png');
+  }
+  .map-place-icon--apartment { background-position: 0 0; }
+  .map-place-icon--park { background-position: 50% 0; }
+  .map-place-icon--cafe { background-position: 100% 0; }
+  .map-place-icon--station { background-position: 0 100%; }
+  .map-place-icon--hotel { background-position: 50% 100%; }
+  .map-place-icon--garage { background-position: 100% 100%; }
+  .map-place-icon--keel-14, .map-place-icon--harlow-3, .map-place-icon--marlow-27,
+  .map-place-icon--gable-row, .map-place-icon--civic-bank, .map-place-icon--st-clare-clinic,
+  .map-place-icon--pier-9, .map-place-icon--police-bureau, .map-place-icon--forensic-lab,
+  .map-place-icon--quik-stop, .map-place-icon--blue-lantern, .map-place-icon--route-9-diner {
+    background-image: url('/assets/map-places-named.png');
+    background-size: 400% 300%;
+  }
+  .map-place-icon--keel-14 { background-position: 0 0; }
+  .map-place-icon--harlow-3 { background-position: 33.333% 0; }
+  .map-place-icon--marlow-27 { background-position: 66.667% 0; }
+  .map-place-icon--gable-row { background-position: 100% 0; }
+  .map-place-icon--civic-bank { background-position: 0 50%; }
+  .map-place-icon--st-clare-clinic { background-position: 33.333% 50%; }
+  .map-place-icon--pier-9 { background-position: 66.667% 50%; }
+  .map-place-icon--police-bureau { background-position: 100% 50%; }
+  .map-place-icon--forensic-lab { background-position: 0 100%; }
+  .map-place-icon--quik-stop { background-position: 33.333% 100%; }
+  .map-place-icon--blue-lantern { background-position: 66.667% 100%; }
+  .map-place-icon--route-9-diner { background-position: 100% 100%; }
+  .map-token {
+    display: inline-block;
+    flex: none;
+    background: url('/assets/map-tokens.png') no-repeat 0 0 / 300% 100%;
+    image-rendering: pixelated;
+    filter: drop-shadow(1px 2px 1px #061013);
+  }
+  .map-token--player { background-position: 50% 0; }
+  .map-token--partner { background-position: 100% 0; }
+
+  .map-marker {
+    border: 0;
+    background: transparent;
+  }
+  @media (min-width: 640px) {
+    .map-marker .map-place-icon { width: 3.5rem; height: 3.5rem; }
+  }
+  @media (min-width: 1280px) {
+    .map-marker .map-place-icon { width: 4rem; height: 4rem; }
+  }
+  .map-marker::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 1rem;
+    height: 2px;
+    background: var(--district-color);
+  }
+  .map-marker--northside { --district-color: #69b8c0; }
+  .map-marker--midtown { --district-color: #d6ae65; }
+  .map-marker--eastside { --district-color: #ca947c; }
+  .map-marker[aria-pressed='true'] .map-place-icon,
+  .map-marker:hover .map-place-icon { filter: drop-shadow(0 0 4px #ffd287) drop-shadow(2px 3px 0 #061013); }
+  .map-marker:focus-visible { outline: 2px solid #ffd287; outline-offset: 1px; }
+  .map-marker-current { clip-path: polygon(50% 100%, 0 0, 100% 0); filter: drop-shadow(1px 2px 0 #061013); }
+  .map-marker-label {
+    display: none;
+    position: absolute;
+    top: calc(100% + 3px);
+    left: 50%;
+    width: max-content;
+    max-width: 9rem;
+    transform: translateX(-50%);
+    font-size: 0.875rem;
+    line-height: 1.15;
+    color: #e6e7d8;
+    text-shadow: 1px 1px #071014, -1px -1px #071014, 1px -1px #071014, -1px 1px #071014;
+    pointer-events: none;
+  }
+  .map-marker-label--above { top: auto; bottom: calc(100% + 3px); }
+  .map-marker-label--right { left: auto; right: 0; transform: none; text-align: right; }
+  .map-marker[aria-pressed='true'] .map-marker-label,
+  .map-marker:focus-visible .map-marker-label,
+  .map-marker:hover .map-marker-label { display: block; }
+  @media (min-width: 1280px) { .map-marker-label:not(.map-marker-label--crowded) { display: block; } }
   .case-close-label {
     @apply text-xs uppercase tracking-[0.16em] text-red-800;
   }
 
   .case-close-input {
-    @apply mt-2 min-h-12 w-full border-2 border-[#6d5138] bg-[#f7edcf] px-3 py-2 text-base text-[#2b2118] outline-none focus:border-red-900;
+    @apply mt-2 min-h-12 w-full border-2 border-[#6d5138] bg-[#d6c7a7] px-3 py-2 text-base text-[#2b2118] outline-none focus:border-red-900;
   }
 }
 
@@ -134,6 +619,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-color: #071014;
   }
   html {
     @apply font-sans;
@@ -142,25 +628,32 @@
 
 @layer components {
   .clue-board {
-    background-color: #6f4a32;
-    background-image:
-      radial-gradient(circle at 18% 24%, rgb(255 255 255 / 5%) 0 1px, transparent 2px),
-      radial-gradient(circle at 74% 67%, rgb(30 15 8 / 16%) 0 1px, transparent 2px),
-      linear-gradient(115deg, rgb(255 239 194 / 5%), transparent 35%, rgb(39 18 8 / 9%));
-    background-size: 17px 19px, 23px 29px, 100% 100%;
+    background: #102b2b url('/assets/clueboard-felt.png') center / cover no-repeat;
   }
+
+  .board-icon {
+    display: inline-block;
+    flex: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    background: url('/assets/clueboard-controls.png') no-repeat 0 50% / 500% 200%;
+    image-rendering: pixelated;
+  }
+  .board-icon--link { background-position: 25% 50%; }
+  .board-icon--remove { background-position: 50% 50%; }
+  .board-icon--inspect { background-position: 75% 50%; }
+  .board-icon--close { background-position: 100% 50%; }
+
+  .board-card {
+    background: #eee2c8 url('/assets/clueboard-cards.png') no-repeat 0 0 / 200% 200%;
+    image-rendering: pixelated;
+  }
+  .board-card--record { background-position: 100% 0; }
+  .board-card--lab { background-position: 0 100%; }
+  .board-card--note { background-position: 100% 100%; }
 
   .clue-board-button {
     @apply flex items-center gap-2 border border-[#a97a4f] bg-[#332219] px-3 py-2 text-sm uppercase text-[#f4e8c8] shadow-[2px_2px_0_#080605] hover:border-[#e8c98e] focus-visible:outline-2 focus-visible:outline-[#fff1c9];
-  }
-
-  .clue-pin.react-flow__handle {
-    top: -13px;
-    width: 18px;
-    height: 18px;
-    border: 3px solid #e8cba4;
-    background: radial-gradient(circle at 35% 30%, #ff8276 0 18%, #a8201a 45% 70%, #5f100d 72%);
-    box-shadow: 0 3px 3px rgb(31 14 8 / 55%);
   }
 
   .clue-string {
@@ -172,4 +665,297 @@
     background: #2b1d16;
     color: #f4e8c8;
   }
+}
+
+@layer components {
+  /* Heads-up clock: a small pixel watch face beside the case time. */
+  .hud-watch {
+    display: inline-block;
+    flex: none;
+    width: 0.9rem;
+    height: 0.9rem;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    background: linear-gradient(currentColor, currentColor) 50% 15% / 2px 40% no-repeat,
+      linear-gradient(currentColor, currentColor) 70% 50% / 35% 2px no-repeat;
+  }
+
+  .game-toast {
+    border-left: 3px solid #e8ac51;
+    background: rgb(7 16 20 / 95%);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: #e4e6d8;
+    box-shadow: 4px 4px 0 rgb(0 0 0 / 45%);
+  }
+
+  .game-panorama { scrollbar-width: none; }
+  .game-panorama::-webkit-scrollbar { display: none; }
+
+  /* Rubber stamp that lands when proof breaks a lie. */
+  .contradiction-stamp {
+    border: 0;
+    color: #b91c1c;
+    font-family: var(--font-pixelify-sans), sans-serif;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transform: rotate(-8deg);
+    animation: stamp-in 380ms cubic-bezier(.2, 1.6, .4, 1) both;
+    background: rgb(244 234 210 / 92%) url('/assets/stamps/contradiction.png') center / 100% 100% no-repeat;
+  }
+  /* Proof that proves nothing: a grey stamp, so the team knows it didn't land. */
+  .contradiction-stamp--missed {
+    color: #374151;
+    transform: rotate(5deg);
+    background-image: url('/assets/stamps/missed.png');
+  }
+  .statement-stamp {
+    display: inline-block;
+    background: url('/assets/stamps/statement.png') center / 100% 100% no-repeat;
+    padding: 0.45rem 0.8rem;
+    color: #185357;
+    font-family: var(--font-pixelify-sans), sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  @keyframes stamp-in {
+    from { transform: rotate(-8deg) scale(2.4); opacity: 0; }
+    to { transform: rotate(-8deg) scale(1); opacity: 1; }
+  }
+
+  /* Camera logs print line by line like a terminal. */
+  .terminal-line {
+    animation: terminal-in 260ms steps(6) both;
+  }
+  @keyframes terminal-in {
+    from { clip-path: inset(0 100% 0 0); }
+    to { clip-path: inset(0 0 0 0); }
+  }
+
+  /* Something found: the card flips into view. */
+  .reveal-card {
+    animation: reveal-in 420ms ease-out both;
+  }
+  @keyframes reveal-in {
+    from { transform: perspective(600px) rotateX(70deg); opacity: 0; }
+    to { transform: perspective(600px) rotateX(0); opacity: 1; }
+  }
+
+  /* Room tiles in the building's room strip. */
+  .plan-room {
+    display: flex;
+    min-height: 2.75rem;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    border: 2px solid rgb(111 159 152 / 55%);
+    background: rgb(11 26 28 / 92%);
+    padding: 4px 8px;
+    text-align: left;
+    font-size: 0.72rem;
+    line-height: 1.15;
+    text-transform: uppercase;
+    color: #e4e6d8;
+  }
+  .plan-room:hover:not(:disabled), .plan-room:focus-visible { border-color: #e8ac51; color: #f1c987; }
+  .plan-room[data-current="true"] { border-color: #e8ac51; background: rgb(56 42 20 / 92%); color: #f1c987; }
+  .plan-room[data-done="true"] { background-image: repeating-linear-gradient(135deg, transparent 0 6px, rgb(111 159 152 / 12%) 6px 8px); }
+}
+
+@layer components {
+  /* CCTV monitor: faint scanlines over the text-only feed. */
+  .cctv-monitor::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgb(127 209 174 / 4%) 0 1px, transparent 1px 3px);
+  }
+  .cctv-static { animation: cctv-flicker 600ms steps(3) infinite; }
+  @keyframes cctv-flicker {
+    0%, 100% { opacity: .55; }
+    50% { opacity: .9; }
+  }
+  .cctv-tape { cursor: ew-resize; scrollbar-width: thin; scrollbar-color: #2f4a47 transparent; }
+}
+
+@layer components {
+  .game-tip {
+    border: 2px solid rgb(232 172 81 / 55%);
+    border-left-width: 4px;
+    background: rgb(7 16 20 / 96%);
+    padding: 0.75rem 0.9rem;
+    box-shadow: 4px 4px 0 rgb(0 0 0 / 45%);
+    max-width: 30rem;
+  }
+}
+
+/* Respect the system "reduce motion" setting for the game's own animations. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-card, .terminal-line, .contradiction-stamp, .cctv-static, .game-toast, .game-tip,
+  .game-menu-scene nav[aria-label="Main menu"] > button { animation: none !important; }
+  .game-control-button { transition: none !important; transform: none !important; }
+  .game-panorama, .cctv-tape { scroll-behavior: auto; }
+}
+
+@layer components {
+  /* A typed blank inside the final report sentence. */
+  .case-close-blank {
+    border: 0;
+    border-bottom: 2px dashed #6d5138;
+    background: rgb(239 227 196 / 55%);
+    padding: 0.2rem 0.4rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #211d17;
+    outline: none;
+  }
+  .case-close-blank:focus { border-bottom-color: #7f1d1d; background: rgb(239 227 196 / 90%); }
+}
+
+/* A drop zone under a dragged card. */
+[data-drop-over] {
+  outline: 2px dashed #e8ac51;
+  outline-offset: 2px;
+  background-color: rgb(232 172 81 / 0.08);
+}
+
+/* A room seen from above: material floor inside thick walls. */
+.room-floor {
+  --floor-art: url('/assets/floors/corridor.png');
+  border: 10px solid #1b2a2c;
+  outline: 2px solid rgb(111 159 152 / 35%);
+  background-color: #2a1f15;
+  background-image: linear-gradient(rgb(4 12 15 / 24%), rgb(4 12 15 / 24%)), var(--floor-art);
+  background-size: auto, 181px 181px;
+  image-rendering: pixelated;
+  box-shadow: inset 0 0 40px rgb(0 0 0 / 70%);
+}
+.room-floor[data-room-type="living"] { --floor-art: url('/assets/floors/living.png'); }
+.room-floor[data-room-type="kitchen"] { --floor-art: url('/assets/floors/kitchen.png'); }
+.room-floor[data-room-type="bedroom"] { --floor-art: url('/assets/floors/bedroom.png'); }
+.room-floor[data-room-type="bathroom"] { --floor-art: url('/assets/floors/bathroom.png'); }
+.room-floor[data-room-type="garage"] { --floor-art: url('/assets/floors/garage.png'); }
+.room-floor[data-room-type="yard"] { --floor-art: url('/assets/floors/yard.png'); }
+.room-floor[data-room-type="unit"] { --floor-art: url('/assets/floors/unit.png'); }
+.room-floor[data-room-type="office"] { --floor-art: url('/assets/floors/office.png'); }
+.room-floor[data-room-type="storage"] { --floor-art: url('/assets/floors/storage.png'); }
+.room-floor[data-room-type="shopfloor"] { --floor-art: url('/assets/floors/shopfloor.png'); }
+.room-floor[data-room-type="outdoor"] { --floor-art: url('/assets/floors/outdoor.png'); }
+.room-floor[data-room-type="special"] { --floor-art: url('/assets/floors/office.png'); }
+.room-furniture {
+  border-width: 2px;
+  padding: 0.5rem 0.6rem;
+  box-shadow: 0 6px 14px rgb(0 0 0 / 45%);
+}
+.room-spot {
+  display: block;
+  min-height: 6.5rem;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0.25rem;
+  text-align: center;
+  text-decoration: none;
+}
+.room-spot:hover, .room-spot:focus-visible { border-color: #e8ac51; background: rgb(7 20 22 / 45%); }
+.room-spot-label {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  background: rgb(7 20 22 / 82%);
+  padding: 0.1rem 0.3rem;
+  color: #e4e6d8;
+  font-size: 0.7rem;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+/* A doorway cut into the wall. Unexplored doors stay dark. */
+.room-door {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #f1c987;
+  max-width: 10rem;
+  text-align: center;
+  text-shadow: 1px 2px #061013;
+}
+.room-door:hover:not(:disabled) { color: #fff; }
+.room-door:disabled { opacity: 0.5; }
+.room-control-sprite {
+  display: inline-block;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: url('/assets/room-controls.png') no-repeat 0 50% / 500% 200%;
+  image-rendering: pixelated;
+}
+.room-control-sprite--open { background-position: 25% 50%; }
+.room-control-sprite--stairs { background-position: 50% 50%; }
+.room-control-sprite--lift { background-position: 75% 50%; }
+.room-control-sprite--camera { background-position: 100% 50%; }
+.room-special-spot {
+  display: block;
+  width: 4rem;
+  height: 4rem;
+  margin-inline: auto;
+  background: url('/assets/room-special-spots.png') no-repeat 0 0 / 200% 100%;
+  image-rendering: pixelated;
+}
+.room-special-spot--shed { background-position: 100% 0; }
+
+/* The small paper map of the building that fills in as you explore. */
+.building-map {
+  background: #e9dcc0;
+  border: 2px solid #6d5138;
+  box-shadow: 0 8px 18px rgb(0 0 0 / 45%);
+}
+.map-room {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed #8b7355;
+  background: rgb(233 220 192 / 70%);
+  padding: 2px 4px;
+  font-size: 0.6rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-align: center;
+  color: #8b7355;
+}
+.map-room[data-known="true"] { border-style: solid; border-color: #573821; background: #f4ead2; color: #3a2a1b; }
+.map-room[data-current="true"] { border-color: #8b1d1d; background: #f1d9a8; color: #8b1d1d; font-weight: 700; }
+.map-room:hover:not(:disabled) { border-color: #8b1d1d; }
+
+@media (max-width: 639px) {
+  .game-icon-mobile.game-control-button, .game-icon-mobile.clue-board-button {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    min-height: 2.75rem;
+    border: 0;
+    border-image: none;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+  }
+}
+
+/* Outside any layer: React Flow's own unlayered handle style would otherwise win and shrink this to a 6px dot. */
+.clue-pin.react-flow__handle {
+  top: -10px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 0;
+  background: url('/assets/control-icons.png') no-repeat 66.667% 100% / 400% 200%;
+  image-rendering: pixelated;
+  cursor: crosshair;
 }

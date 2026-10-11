@@ -1,13 +1,13 @@
 export const menuButton =
-  "h-12 border border-cyan-300 bg-[#06142d]/85 px-5 text-left text-xl uppercase text-cyan-100 shadow-[0_0_16px_rgba(34,211,238,0.25)] transition hover:border-yellow-200 hover:text-yellow-200 disabled:opacity-60";
+  "game-menu-button text-lg uppercase disabled:opacity-60";
 
 export const menuOptionButton =
-  "h-12 px-5 text-left text-xl uppercase text-cyan-100 outline-none transition hover:border hover:border-cyan-300 hover:bg-[#06142d]/85 hover:text-yellow-200 hover:shadow-[0_0_16px_rgba(34,211,238,0.25)] focus-visible:border focus-visible:border-cyan-300 focus-visible:bg-[#06142d]/85 focus-visible:text-yellow-200 focus-visible:shadow-[0_0_16px_rgba(34,211,238,0.25)] disabled:opacity-60";
+  "game-menu-button w-full max-w-80 text-lg uppercase disabled:opacity-60";
 
 export const panel =
-  "border border-cyan-300 bg-[#06142d]/90 p-5 shadow-[0_0_28px_rgba(34,211,238,0.22)]";
+  "game-panel p-5";
 
 export const input =
-  "h-12 min-w-0 border border-cyan-300 bg-[#020817]/90 px-4 text-xl uppercase text-cyan-100 outline-none placeholder:text-cyan-100/45";
+  "h-12 min-w-0 border border-[#52716a] bg-[#071014] px-4 text-xl uppercase text-[#e4e6d8] outline-none placeholder:text-[#a8b8ae]/60 focus-visible:border-[#e8ac51]";
 
-export type Screen = "menu" | "join" | "previous" | "settings" | "brief" | "bureau";
+export type Screen = "menu" | "join" | "previous" | "settings" | "history" | "how" | "brief" | "bureau";

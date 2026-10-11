@@ -1,5 +1,244 @@
 # Design Decisions
 
+## 2026-10-12 — Result and share art
+
+- Keep the words and score live over blank stamp and star artwork so dynamic results stay correct and accessible. The share banner shows no case-specific evidence or characters; the square app emblem matches the existing favicon.
+
+## 2026-10-12 — Device code entry
+
+- Keep code entry collapsed inside each found device card so a room with many objects stays readable. The art is a blank keypad under live accessible buttons and the same four-digit text input; it does not change the unlock rule or reveal codes.
+
+## 2026-10-11 — Interior controls
+
+- Door, stair, lift and camera art is a navigation aid; the room graph, floor stops, camera access and travel time do not change. Keep short live labels next to sprites for readable navigation.
+
+## 2026-10-11 — Board and device artwork
+
+- The clueboard uses dark felt with light paper cards for reading; each card's meaning remains live text. Phone and laptop shells are blank hardware frames around the existing interactive content. The laptop uses its compact reading layout below tablet width.
+
+## 2026-10-11 — Lab work surfaces
+
+- Lab art is equipment and blank stationery only. The bench and report sheet contain no case findings, and the existing hands-on tests still reveal the stored result only after completion.
+
+## 2026-10-11 — Interview as a record
+
+- Keep all dialogue as selectable text on a light transcript surface. The portrait remains deterministic from identity, description, gender, and age; temporary expressions change only its face during the interview. Stamp assets carry no baked lettering.
+
+## 2026-10-11 — Material and map art
+
+- Keep floors subtle under search targets; each generated room kind selects a repeating pixel material. Named map buildings may have their own art, with generic kind icons as a fallback for future places. Player and travel tokens stay small enough to preserve map labels.
+
+## 2026-10-11 — Searchable objects as sprites
+
+- Search spots use deterministic furniture sprites and a separate searched-state atlas; generated case facts remain live text and are never painted into art. A short label stays with every sprite for clarity and accessibility. Found-object icons come from public item names only, with a neutral fallback, so icon selection does not disclose hidden evidence.
+
+## 2026-10-11 — Sound levels and channels
+
+- Music and effects have separate volume controls. Loudness order: hover (faint) < button press (soft knock) < actions (door, page, stamp, bag). The score is voiced above 220 Hz, with overtones on the bass, so it plays on laptop and phone speakers.
+- Paper interactions (notebook, case file, clueboard, archive, reports, files) use the page-turn sound; rooms and terminals use the door.
+
+## 2026-10-11 — Sound is synthesized and every control answers
+
+- All sound stays synthesized in the browser (no downloaded files, no licensing, nothing to load), mixed at normal game loudness behind a limiter.
+- Every control gives feedback: a soft hover tick for mouse users and a click on press, unless a specific cue (door, page, stamp, bag, unlock) already answered. Bench tools each have their own sound; failures buzz.
+
+## 2026-10-11 — The report is written, not chosen
+
+- The final report has no option tray: the detective writes who, with what, why and how, and cites proof from the notebook. A list of every person and object turned the ending into multiple choice. Scoring is unchanged: a typed name must match someone the team has uncovered, and a weapon matching a bagged object is matched exactly. This replaces "the final report reads as one sentence with blanks" (drop or tap cards).
+
+## 2026-10-11 — One way to confront
+
+- Interviews keep free typing and exactly one way to present proof: Show evidence → pick → Confront. Line-by-line pressing and portrait drops were removed (player feedback: too many overlapping ways, confusing). This replaces the Ace Attorney-style "press a line" layer from the 2026-10-11 "Do it, don't click it" entry.
+
+## 2026-10-11 — Pick proof from the notebook
+
+- Presenting evidence uses the notebook itself, so there is one place to find what the team knows, with the same search, groups and notes. The separate evidence tray is removed.
+
+## 2026-10-11 — Autopsy and crowd
+
+- The autopsy is a dictation: find the named regions in order, with left and right from the body's point of view. It stays a stand-in for doing the work and never shows findings; the stored report is the result.
+- Camera passers-by are crowd, not characters. They may not share a height or clothing word with anyone in the case, so a description that seems to match a suspect is always a real sighting.
+- Reading-heavy menu pages (How to play) use a plain panel; the illustrated frame is kept for short panels, because its seams cross long text.
+
+## 2026-10-11 — Final audit fixes
+
+- **Time has a stake:** the five stars are unchanged, but stars plus one step for filing by the deadline give a detective rank (Rookie, Detective, Inspector, Chief Inspector), shown on the result and in Case history. This replaces "time is cosmetic" while keeping the score rule.
+- **Wrong proof gets an answer:** proof that disproves none of a person's lies shows a grey "They don't budge" stamp to both detectives, and the person is told it didn't land. No time penalty (player choice).
+- **No browse-everything:** records need a name or address. A single empty search used to return every file.
+- **One communication, one piece of evidence:** a call or message stored on two phones counts as the same evidence for breaking lies and for the evidence star. Showing the victim's copy of a text used to "miss".
+- **NPCs don't improvise lies:** they may only lie about their scripted topics, never drop an unexposed lie on their own, and know the current case time. The game and the dialogue no longer disagree about caught lies.
+- **Plain-language triggers, explained:** statements are taken by any question about whereabouts or what they saw, and the interview tip says so. Only "your phone" is a handover request.
+- **Noise everywhere evidence lives:** phones, laptops and cameras get seeded ordinary filler (delivery alerts, dentist reminders, never family since the story owns relatives, and never a victim send after their last real one, passers-by in the same appearance format), and clutter descriptions read as fully as real evidence, so sparseness and short text no longer give the answer away. Seeded code, never generated.
+- **Starting leads:** the brief's known details include the victim's home and workplace, from the frozen cast. Police would know them at minute one; no suspect is named.
+- **The bureau's own cameras are hidden** from the security desk; "▶ Play" is a plain "Recorded tape" label.
+- **Keep finished cases:** a scored or given-up room never expires and lives in Case history. "Main menu" in pause and on the result returns home without leaving; Leave stays the destructive option, and a started room can be rejoined by code while a seat is free.
+- **Solo is first-class:** alone in the lobby, Start is the only button; Start counts as the starter's own ready. Invites are links (/join/CODE).
+- **One name per thing:** Interview room, Security desk, Records room, City map, Clueboard, Case file; "Show evidence" everywhere for presenting proof. Arrival notes use the one notification stack.
+- **Player-owned extras:** one-line team notes on notebook entries (reasoning only), notebook search, a short message box to the partner, Large text, the detective name kept on the account, How to play, Report a problem (Sentry feedback), Share result, case of the day, and played/solved stamps with a replay warning on solved cases.
+
+## 2026-10-11 — Image-backed controls
+
+- The original trimmed raster plate supplies both the button edges and center. CSS adds no separate color fill. Main menu actions use a compact shared width, and long case titles can wrap inside it. The site icon uses the existing dossier emblem.
+
+## 2026-10-11 — Open pin controls and complete button plates
+
+- Icon-only actions have no backing box, including controls whose labels hide on narrow screens. The clueboard pin uses the existing raster icon in two states: tilted silver when loose, upright gold when attached. Pressing it changes the visible state immediately; pressing the attached pin again removes the shared card and its strings through the existing board deletion action. A rejected action restores the shared state.
+- Button frames use a copy of the original generated plate with only transparent padding trimmed. Its raster edge is sliced around the content so the top, bottom, and end caps stay visible at different button sizes.
+- Previous-case descriptions appear directly on their cards; the archive list remains scrollable.
+
+## 2026-10-11 — Control alignment and pin language
+
+- Keep primary action labels optically centered on the illustrated metal plate. Use the plate for destination and commitment actions; leave lists, tabs, and evidence text as lighter surfaces so the game stays scannable.
+- Every clueboard pin is an icon action with a title and accessible name. The newer open pin control above replaces the earlier boxed, disabled pinned state.
+
+## 2026-10-11 — Logo, audio, and lighter controls
+
+- The brand mark is one simple pixel dossier with a redaction bar; the REDACTED wordmark stays live text so it remains sharp and cannot contain generated lettering artifacts. Generated art is reserved for prominent controls and symbols, while long case text remains selectable DOM text.
+- A quiet synthesized minor progression and rain form the menu and investigation bed. The shared game shell owns audio across route changes. Browsers may block audio until interaction, so pointer and keyboard input both unlock it. Menu settings and pause expose the same mute and volume preference for music, ambience, and effects.
+- Use illustrated plates and clear icon silhouettes for primary actions and exits. Keep accessible names and visible labels where space permits; mobile icon-only returns have titles and accessible names. Do not add an illustrated box around every evidence row or object.
+- Full case summaries are visible within each archive card. First-time tips describe gestures in short lines, with deeper case information opened intentionally.
+- On narrow interviews, keep the portrait identity visible, fold appearance text, and anchor the evidence tray above the question composer. Evidence already on the clueboard appears first and is labeled; other discovered proof remains usable under the existing game rule.
+
+## 2026-10-11 — Navigation is about the case, not the maze
+
+- Players are solving a case, not a maze: room names are always shown, the map is fully labelled, and any room is one tap away. Walking still costs the shortest-path minutes.
+- Stairs and lifts read as floor buttons because they are hubs joined to every floor in the building templates.
+- Arrival is a toast, not a card to dismiss.
+
+## 2026-10-11 — Buildings are explored, not picked from a list
+
+- Moving is through doors to neighbouring rooms, so the layout is discovered by walking it. The fogged map is shared, matching the rule that both players share all case state.
+- Room names behind unentered doors stay hidden; this is presentation only (no locked rooms), and explored rooms on the map stay one tap away so backtracking isn't tedious.
+
+## 2026-10-11 — One control per job
+
+- Where dragging or pressing already does the job, extra buttons are hidden or shrunk (spot cards, notebook entries, item cards). Touch screens still see every button because they cannot hover.
+- Statements and phone handovers are asked for in the player's own words; the game recognises the request instead of offering a chip that gives the move away.
+
+## 2026-10-11 — Faces on sightings are the player's guess
+
+- A face on a sighting is the team's own claim, never checked or used for scoring. It replaces the "Looks like…" dropdown because matching a description to a face is the deduction, so it should feel like pinning a photo.
+- The mark is one shared record (`cctvLabels`); every place that shows it (tape, notebook, People, clueboard) reads it live instead of copying it, so they can't drift apart.
+
+## 2026-10-11 — Code clues belong to the owner
+
+- Each lab tool asks for a different action so tests don't all feel the same. A task can be failed and retried but never changes the stored result; it only stands in for doing the work.
+- The player runs each lab test by hand at the bench, so the result shows as soon as the rub finishes. No turnaround wait; only the 5 bench minutes are spent. This replaces the 2026-10-07 lab turnaround decision.
+
+- A code clue lives where the owner would keep it: the device's own room. It is sometimes personal (a birthday, an engraved date) so the player has to make the link, never a labeled password.
+- Looking at a found object is free and instant. Hands-on effort is reserved for the lab, where it stands in for real analysis.
+
+## 2026-10-11 — Do it, don't click it
+
+- The game should not list what to ask, search, or check. Type-ahead only completes names already known, after the player starts typing.
+- Device codes are derived from the device ID and planted as an unlabeled sticky note in the same building by seeded code. Cracking in 60 minutes keeps a player from getting stuck.
+- Lab tests are tools used on the evidence (rub to apply); the stored result is unchanged. Searching is a press-and-hold; examining is a magnifier sweep. Keyboard Enter does each instantly.
+- Interviews keep free chat; pressing a line or proving it wrong layers Ace Attorney-style moves on top. Dropping evidence on the portrait is the same as showing it.
+- Camera "looks like" marks are player reasoning only, shared with the partner and never graded.
+- The final report reads as one sentence with blanks; scoring is unchanged (motive and method are still the player's own words).
+
+## 2026-10-11 — Audit follow-ups
+
+- Clutter is seeded code placed in every searchable room, never generated by a model. Finding an object must not say anything about the room.
+- Time taken is shown on the result, without changing the five-star score.
+- A person named in an interview reply joins People. It reveals existence only; dialogue still never becomes evidence.
+- Tips explain controls the first time a screen opens; they never point at the case. They float as a corner card over the game (never in the page flow), fade after 12 seconds or on close, and can be brought back from the pause menu.
+- Laptops read as laptops (file list beside the open document); phones keep the app-launcher layout.
+
+## 2026-10-10 — Game feel over app feel
+
+- Evidence stays unlinked: the game never turns a find into a lead, map pin, or conclusion. The one exception is the People file, which grows when a person's name appears in something the team has uncovered. This replaces the full roster at minute zero.
+- Role labels are hidden. Only "Victim" is shown; everyone else is a name, a description, and where they were first seen.
+- The case starts at the crime scene, on the story's own clock. Actions resolve fast. Passing the deadline shows Overdue but never stops play (player decision). Instead, the case file offers "Give up and see the solution", which ends the room for both detectives and shows the epilogue.
+- Rooms are searched spot by spot so choosing where to look is the decision. Walking is by floor plan, never by repeated door hopping.
+- CCTV is a scrubbable tape: drag or scroll a timeline under a fixed playhead and read what is in frame. Watching costs no time and never waits (player asked to remove the rewind button and loading delay). Matching written descriptions to people is the intended deduction.
+- The lab offers the full test menu for every legitimate source; it never reveals which tests will find something.
+- Notebook entries are facts the team found, logged automatically for both detectives. The clueboard remains the only place for reasoning, and pinning stays a deliberate choice. Once something is discovered it can be pinned from anywhere; location gates apply to discovering, not to pinning.
+- Cameras are chosen from a security-desk wall of screens grouped by area, not a long list of names.
+- A typed request for someone's phone is treated as the handover request. The NPC reply is told whether a handover actually happened so dialogue never contradicts game state.
+- Found objects are all baggable; a missing action must never be the tell for what matters.
+- The city map is the whole screen. Place actions live in a card above the tapped marker; there is no side panel or place list.
+- Interview topic chips come only from the team's own discoveries. They are a typing shortcut, not a hint system.
+- Navigation and terminal chrome: no app tab bar, no plain "Back". Exits are named in-world; Leave and sound live in the Esc menu.
+- After the report is scored or the team gives up, "What really happened" shows the canonical account and timeline. This is the only release of hidden truth and happens only once nothing can change the result.
+
+## 2026-10-10 — Archive and case opening
+
+- Portraits stay decorative but should reflect known written appearance: use the frozen cast's gender, public clothing and build where available, then deterministic ID-based variation for unspecified details. Do not derive gender from a name or expose private cast data.
+- Let the whole archive screen scroll so touch, mouse wheel, and keyboard users can reach every case from any starting point. Keep the custom deadline behind a disclosure because most replays use the frozen default.
+- The opening case file leads with the public summary and a visible Begin investigation action. The initial facts remain available on demand when they repeat the summary.
+
+## 2026-10-10 — Investigation symbols and quieter lists
+
+- Exploration may use an abstract pixel architectural backdrop with no furniture, doors, people, or clues. It adds scene depth without implying a generated room's contents; actual room data and camera access remain in the interactive foreground.
+- Hide the camera picker when a room has only one camera; start its time and activity steps at one and two. Keep the multi-camera bureau list visible.
+- Keep the whole case-close flow on one paper dossier material, including the editable five-finding form and final confirmation. Use ruled evidence rows so a long pinned list remains scannable without a wall of boxes; retain clear input borders for editable fields.
+- The place screen uses its room scene and a room icon for loading/unavailable states, matching the other investigation station fallbacks. Keep the return path to the map.
+- Fallback states for interviews and lab work use their actual room backdrop and the established dossier or terminal frame. Keep one short status line and one return action; interviews return to the bureau and lab work returns to the map.
+- Character portraits combine a few strongly different silhouettes at roster size: hair length/cut, face outline, coat/shirt shape, palette, and occasional glasses. Keep each portrait deterministic from its ID and illustrative only; investigative appearance still comes from the written case description.
+- Camera time controls need extra horizontal clearance inside the wide terminal illustration; keep the narrow panel compact. Camera and map loading/empty states should use their station scene, existing icon, and one return action instead of a generic floating box.
+- Give stable V1 places recognizable pixel silhouettes beyond the five broad place kinds. Use a six-cell transparent companion atlas for flats, park, cafe, station, hotel, and garage; unknown place IDs retain a kind-based symbol. Keep the marker background transparent and names readable on selection or focus.
+- The phone map and place panel occupy content-sized grid rows. The map canvas may scroll sideways, but it must finish before the panel begins; enlarging its symbols must not collapse that vertical space.
+- Use the dossier art's inner paper area for both the final case-file opening and the scored result. Long opening titles use a smaller phone size; findings, scoring, and submission behavior stay the same.
+- Keep Sentry's tunnel in production, where it avoids ad blockers. In development, send events directly so Next's external rewrite proxy does not emit repeated response-listener warnings.
+- In the case brief, a long generated title takes the full paper width on phones. The room stamp moves below it, and generous top and bottom space keeps text and actions inside the dossier's printed border.
+- Keep the Join room code entry as six direct character cells. At narrow widths, use smaller gaps and type while preserving full-size cells from the small breakpoint upward; use an accessible icon Close action to preserve title space.
+- Use the same deterministic portrait language for connected detectives in the waiting room. Keep player status under each name and give the illustrated terminal frame enough inner vertical space so its metal seams never cross text or controls. Treat Leave room as a secondary action.
+- On phones, keep the clueboard's navigation and note action in the first toolbar row, with string colors below. Keep the board hint short so it does not cover the working canvas. In an interview file, reserve the portrait row for identity and let the public description span the dossier width.
+- Show the bureau's station icons and names directly on the room art, with no enclosing icon tiles. Keep broad hotspots for pointer use and the icon menu at narrow/tablet widths.
+- Use one six-cell transparent pixel atlas for common investigation verbs and objects. At small sizes, each symbol has one recognizable silhouette and no written detail. These symbols are navigation cues, never evidence representations.
+- Room navigation and lab examinations use thin dividers and a restrained dark backing instead of a box around every entry. Keep the dossier frame where players need to read long immutable record text.
+- Let long generated names and evidence text wrap inside fixed-width clueboard and report surfaces. The full wording remains available; cards do not truncate case data.
+- Match map marker size to the real 20-place fixture, keeping mobile controls compact and enlarging desktop silhouettes. The mobile map scrolls horizontally instead of compressing all 20 places into a narrow viewport; the named place picker recenters it. Districts are a small colored underline beneath each icon, with no icon backing plate.
+- Keep the map canvas at least 44rem on phones and 50rem from tablet size upward. Small desktop windows can scroll the map while the route list and place picker still provide direct selection.
+- The scrollable map must not enlarge its parent grid; let its viewport contain the wide canvas. Show names for uncrowded markers on large screens, while crowded names appear on selection, hover, or focus. Keep travel minutes in the direct-routes list so place names stay clear.
+- At wide desktop sizes, enlarge map symbols and place names enough for the pixel font to remain legible at normal viewing distance. Leave enough inner space inside the illustrated camera time frame for controls and instructions.
+- On narrow camera screens, use a compact two-column local camera list with its own short scroll area so the written-log time control remains in reach.
+- In a building on phones, show the current room and its actions first. Keep all rooms in an explicit chooser above it and close that chooser after movement; retain the always-visible sidebar on desktop.
+- Keep the records search field full height on phones. An empty term reads as browsing files, including when a shared general browse was saved earlier.
+- Let room titles, player names, and case brief titles wrap within their flex rows so generated text remains readable at narrow widths.
+- A camera access point can have zero cameras after location filtering; show an empty state with a way back to the previous location.
+
+## 2026-10-10 — Cameras belong to their places
+
+- The bureau security desk lists only street and bureau cameras. A building camera appears as a room action in its own building, with that room marked in the room list. Review, window reads, and pins are location-gated on the server.
+- Camera choices are a short, visible icon list at each access point. The long camera dropdown is removed. Each camera still uses the same text-only time review and five-minute action.
+- Map icons use the generated silhouettes at a larger size without backing squares. Select and focus states use a restrained glow; place names remain readable without clipping case data.
+- Character files combine stable pixel hair, face, skin, clothing, and accessory layers from a person ID. These portraits identify a file visually; the public case description remains the authoritative appearance evidence.
+- The detective profile uses the same layered portrait component, keyed to the entered name. It is cosmetic and adds no saved avatar or gameplay state.
+- The new detective form stays above the mobile menu scrim, and its name field fills only the inner frame width.
+- Station artwork is kept visible through a lighter content scrim. Mobile bureau navigation uses the generated station symbols without individual card borders; the whole button remains a touch target.
+
+## 2026-10-10 — City map visual language
+
+- The map background is a blank drafting texture; only stored place coordinates and street connections draw the geography. Place icons communicate kind, dashed red routes communicate cameras, and selected streets remain highlighted. Travel minutes appear in the direct-routes list.
+- On narrow screens, the named place selector remains the reliable touch path. Marker labels surface on selection or focus; wide screens can show them all. The map preserves its existing travel and pin actions.
+
+## 2026-10-10 — Camera records as an ordered log
+
+- The CCTV desk presents one accessible camera at a time. Time selection, the five-minute review, and the written results appear in order on one scroll surface; there is no visual footage or thumbnail. Camera access is localized in the newer decision above.
+
+
+## 2026-10-10 — Physical interface surfaces
+
+- Use the generated metal frame for major terminal actions and control panels and the paper frame for case files and records. One illustrated environment per station group establishes place; the data remains a real interactive layer above it.
+- Reuse the eight-object pixel atlas for navigation and station headers. Keep environmental plates sparse, with quiet center space and no generated writing, clues, people, or CCTV footage. Use the live graph and actual case data for all information-bearing visuals.
+- Use a blank cork plate under the real shared clueboard nodes. Exploration uses a neutral terminal layout because a fixed room illustration could imply places or objects absent from the generated case.
+- On narrow screens, crop the menu scene to the city and dim it behind controls. Keep large touch targets and visible Back actions on full-screen stations.
+- Authentication remains Clerk-owned; the game supplies the scene, title, Back path, and a dark appearance footer so the existing sign-in and sign-up controls are readable.
+
+
+## 2026-10-10 — No service worker in V1
+
+- The game does not register or serve a service worker. Requests for `/sw.js` receive a plain 404 outside the Clerk-wrapped page tree.
+
+## 2026-10-10 — Pixel-noir interface direction
+
+- Use charcoal, petrol teal, and aged amber for the player UI, with red reserved for warnings and irreversible actions. Avoid purple or white app-like surfaces.
+- Keep environment art sparse and text-free so actual controls and case data stay readable. The bureau scene has a text-only CCTV terminal; no visual footage, stills, or thumbnails appear in generated art.
+- Use Pixelify Sans for titles and actions, Geist Mono for longer reading, and a clear keyboard focus outline. Keep physical paper surfaces only where the game is presenting a dossier, statement, or clueboard note.
+- The main menu appears by itself. The archive and settings occupy their own screen, while desktop bureau hotspots and a compact mobile station menu retain the existing navigation paths.
+
 ## 2026-10-09 — Replay deadline and submitted-room behavior
 
 - Offer an optional custom shared deadline when creating a replay room. Blank uses the frozen case estimate plus one day. It cannot change after room creation.
@@ -141,7 +380,7 @@
 ## 2026-10-08 — Camera records require a deliberate review
 
 - Choosing a camera and time does not reveal records. A 5-minute review covers 20 minutes either side of that time and is shared after completion.
-- Reopening the exact reviewed window is free. CCTV reference cards still require bureau access and now require the record to fall inside a completed review.
+- Reopening the exact reviewed window is free. CCTV reference cards require access at the camera's location and the record must fall inside a completed review.
 - The terminal keeps its textual timeline; CCTV has no footage, stills, or thumbnails.
 
 ## 2026-10-07 — Lab turnaround on the shared clock
@@ -156,7 +395,7 @@
 - Explore shows the current building's connected rooms; moving across a room edge costs 1 game minute, or 2 across floors. A room can be searched once per shared session for 15 game minutes.
 - Finding an object does not declare it a clue. Its stored description appears only after a 2-minute inspection, and collectible objects enter shared inventory only after a player chooses Collect.
 - Pinning a found object is an explicit player choice; its clueboard card names the object but does not reveal uninspected details or infer a connection.
-- Public-record and CCTV cards require bureau-terminal access when first pinned, matching the underlying records' location gate. Existing shared pins remain readable elsewhere.
+- Public-record cards require bureau-terminal access when first pinned. CCTV cards require the camera's access point. Existing shared pins remain readable elsewhere.
 - The same shared clock runs travel, movement, search, and inspection. Free reading and collecting do not advance it.
 
 ## 2026-10-07 — Investigation time is continuous and action-driven
@@ -390,3 +629,4 @@ Generated character IDs are stored as case-scoped `npcs.sourceId` values only to
 - Leaving cancels unfinished interview, CCTV, and record-search actions. Shared record access keeps other searches and any earlier access intact.
 - Publication runs separately after generation passes; publication errors mark the job failed at the publish stage.
 - Replay deadline overrides must be at least one hour and are rounded to whole minutes.
+- Clueboard strings are tied only by dragging pin to pin; the card dropdown alternative was removed by user request. Pins are large enough to grab by touch.

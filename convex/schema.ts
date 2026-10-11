@@ -13,6 +13,12 @@ export default defineSchema({
     summary: v.string(),
     initialFacts: v.array(v.string()),
     estimatedOptimalMinutes: v.optional(v.number()),
+    /** Story minute the crime was discovered; a replay's clock starts here. */
+    discoveryMinute: v.optional(v.number()),
+    /** Room where the detectives arrive at the start of a replay. */
+    sceneRoomId: v.optional(v.id("rooms")),
+    /** Which version of the seeded phone, laptop, and camera filler this case has received. */
+    fillerVersion: v.optional(v.number()),
     publicationVersion: v.optional(v.number()),
     createdAt: v.number(),
   })
@@ -245,6 +251,7 @@ export default defineSchema({
       v.literal("business"),
       v.literal("criminal"),
       v.literal("employment"),
+      v.literal("payment"),
       v.literal("other"),
     ),
     subjectNpcId: v.optional(v.id("npcs")),
@@ -352,6 +359,8 @@ export default defineSchema({
     promptMessageId: v.string(),
     canceled: v.optional(v.boolean()),
     proofEvidenceId: v.optional(v.string()),
+    /** The shown proof disproves none of this person's lies: they don't budge. */
+    proofMissed: v.optional(v.boolean()),
     requestedPhoneId: v.optional(v.id("devices")),
     requestedStatements: v.optional(v.boolean()),
     status: v.union(v.literal("waiting"), v.literal("queued"), v.literal("processing"), v.literal("complete"), v.literal("failed")),
@@ -371,11 +380,21 @@ export default defineSchema({
     gameTime: v.optional(v.number()),
     clockStartedAt: v.optional(v.number()),
     deadline: v.optional(v.number()),
+    /** Set when the detectives give up and ask to see the solution; the room becomes review-only. */
+    gaveUpAt: v.optional(v.number()),
+    /** Set when the report is scored or the case is given up. A closed room never expires: it is the team's case history. */
+    closedAt: v.optional(v.number()),
     createdAt: v.number(),
     expiresAt: v.number(),
   })
     .index("by_roomCode", ["roomCode"])
     .index("by_expiresAt", ["expiresAt"]),
+  /** A detective's one-line note on a notebook entry, shared by the team. Player reasoning only. */
+  notebookNotes: defineTable({
+    sessionId: v.id("sessions"),
+    referenceId: v.string(),
+    text: v.string(),
+  }).index("by_sessionId_and_referenceId", ["sessionId", "referenceId"]),
   sessionPlayers: defineTable({
     sessionId: v.id("sessions"),
     authUserId: v.string(),
@@ -408,6 +427,7 @@ export default defineSchema({
     npcTurnId: v.optional(v.id("npcPendingMessages")),
     cctvReviewId: v.optional(v.id("cctvReviews")),
     recordSearchId: v.optional(v.id("publicRecordSearches")),
+    slot: v.optional(v.string()),
     startGameTime: v.number(),
     completeGameTime: v.number(),
     createdAt: v.number(),
@@ -439,21 +459,40 @@ export default defineSchema({
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_sessionId_and_statementId", ["sessionId", "statementId"]),
+  /** Rooms either detective has stood in; the building map stays fogged until a room is entered. */
+  visitedRooms: defineTable({
+    sessionId: v.id("sessions"),
+    roomId: v.id("rooms"),
+  })
+    .index("by_sessionId_and_roomId", ["sessionId", "roomId"]),
   searchedRooms: defineTable({
     sessionId: v.id("sessions"),
     roomId: v.id("rooms"),
     searchedAt: v.number(),
   })
     .index("by_sessionId_and_roomId", ["sessionId", "roomId"]),
+  /** One searched spot (normalized slot key) in a room. */
+  searchedSpots: defineTable({
+    sessionId: v.id("sessions"),
+    roomId: v.id("rooms"),
+    spot: v.string(),
+    searchedAt: v.number(),
+  })
+    .index("by_sessionId_and_roomId_and_spot", ["sessionId", "roomId", "spot"]),
   forensicRequests: defineTable({
     sessionId: v.id("sessions"),
-    forensicOutputId: v.id("forensicOutputs"),
+    /** Absent when the chosen test has nothing to find on that source. */
+    forensicOutputId: v.optional(v.id("forensicOutputs")),
+    /** "item:<id>", "room:<id>" or "victim"; set on requests made from the test menu. */
+    sourceKey: v.optional(v.string()),
+    testType: v.optional(v.string()),
     requestedAtGameTime: v.number(),
     readyAtGameTime: v.number(),
     viewedAt: v.optional(v.number()),
   })
     .index("by_sessionId", ["sessionId"])
-    .index("by_sessionId_and_forensicOutputId", ["sessionId", "forensicOutputId"]),
+    .index("by_sessionId_and_forensicOutputId", ["sessionId", "forensicOutputId"])
+    .index("by_sessionId_and_sourceKey_and_testType", ["sessionId", "sourceKey", "testType"]),
   cctvReviews: defineTable({
     sessionId: v.id("sessions"),
     cameraId: v.id("cctvCameras"),
@@ -475,6 +514,25 @@ export default defineSchema({
     sourceSearchId: v.optional(v.id("publicRecordSearches")),
     previousCompleteGameTime: v.optional(v.number()),
   }).index("by_sessionId_and_recordId", ["sessionId", "recordId"]),
+  /** Who the detectives think a camera sighting shows. Their reasoning only; never checked. */
+  cctvLabels: defineTable({
+    sessionId: v.id("sessions"),
+    recordEvidenceId: v.string(),
+    npcId: v.id("npcs"),
+  }).index("by_sessionId_and_recordEvidenceId", ["sessionId", "recordEvidenceId"]),
+  /** People named aloud in an interview; they join the People file. */
+  sessionKnownPeople: defineTable({
+    sessionId: v.id("sessions"),
+    npcId: v.id("npcs"),
+    firstSeenIn: v.string(),
+  }).index("by_sessionId_and_npcId", ["sessionId", "npcId"]),
+  /** A detective pointing their partner at something. */
+  pings: defineTable({
+    sessionId: v.id("sessions"),
+    fromPlayerId: v.id("sessionPlayers"),
+    text: v.string(),
+    createdAt: v.number(),
+  }).index("by_sessionId", ["sessionId"]),
   clueBoardNodes: defineTable({
     sessionId: v.id("sessions"),
     type: v.union(v.literal("note"), v.literal("npc"), v.literal("cctv"), v.literal("place"), v.literal("public_record"), v.literal("item"), v.literal("forensic"), v.literal("device_file"), v.literal("call"), v.literal("message"), v.literal("statement")),
@@ -509,6 +567,8 @@ export default defineSchema({
     evidenceExplanation: v.string(),
     methodExplanation: v.string(),
     status: v.union(v.literal("pending"), v.literal("judging"), v.literal("complete")),
+    /** Shared case time when the report was filed. */
+    submittedGameTime: v.optional(v.number()),
     result: v.optional(v.object({
       killer: v.object({ star: v.boolean() }),
       motive: v.object({ star: v.boolean(), feedback: v.optional(v.string()) }),

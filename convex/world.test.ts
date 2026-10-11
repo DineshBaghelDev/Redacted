@@ -3,6 +3,7 @@
 import { convexTest } from "convex-test";
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
+import { GAME_MINUTE_MS } from "./lib/clock";
 import schema from "./schema";
 import { settleActions } from "./world";
 
@@ -43,7 +44,7 @@ test("partners travel in parallel and the shared clock pauses after the last jou
   const one = t.withIdentity({ subject: "one" });
   const two = t.withIdentity({ subject: "two" });
   await one.mutation(api.sessions.start, { roomCode: "ABC123" });
-  expect((await one.query(api.world.getMap, { roomCode: "ABC123" }))?.deadline).toBe(1560);
+  expect((await one.query(api.world.getMap, { roomCode: "ABC123" }))?.deadline).toBe(180);
   await expect(one.mutation(api.sessions.start, { roomCode: "ABC123" })).rejects.toThrow("Investigation already started");
   expect((await one.query(api.world.getMap, { roomCode: "ABC123" }))?.currentPlaceId).toBe("bureau");
   expect(await one.query(api.publicRecords.search, { roomCode: "ABC123", search: "" })).toEqual({ status: "available", records: [], savedTerms: [] });
@@ -51,24 +52,24 @@ test("partners travel in parallel and the shared clock pauses after the last jou
   expect(await one.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "hospital" })).toEqual({ completeGameTime: 8 });
   expect(await one.query(api.publicRecords.search, { roomCode: "ABC123", search: "" })).toBeNull();
   expect(await one.query(api.cases.getCctv, { roomCode: "ABC123" })).toBeNull();
-  await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "public_record", referenceId: "record/test", x: 0, y: 0 })).rejects.toThrow("Use the bureau terminal");
+  await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode: "ABC123", type: "public_record", referenceId: "record/test", x: 0, y: 0 })).rejects.toThrow("Find this record");
   expect(await two.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "station" })).toEqual({ completeGameTime: 5 });
   await expect(one.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "station" })).rejects.toThrow("Finish your current action");
-  vi.advanceTimersByTime(5_000);
+  vi.advanceTimersByTime(5 * GAME_MINUTE_MS);
   expect(await two.mutation(api.world.finishTravel, { roomCode: "ABC123" })).toEqual({ gameTime: 5, traveling: false });
   expect((await two.query(api.world.getMap, { roomCode: "ABC123" }))?.currentPlaceId).toBe("station");
   expect(await two.query(api.publicRecords.search, { roomCode: "ABC123", search: "" })).toBeNull();
-  vi.advanceTimersByTime(3_000);
+  vi.advanceTimersByTime(3 * GAME_MINUTE_MS);
   expect(await one.mutation(api.world.finishTravel, { roomCode: "ABC123" })).toEqual({ gameTime: 8, traveling: false });
   expect((await one.query(api.world.getMap, { roomCode: "ABC123" }))?.clock).toMatchObject({ gameTime: 8, clockStartedAt: null });
-  vi.advanceTimersByTime(20_000);
+  vi.advanceTimersByTime(20 * GAME_MINUTE_MS);
   expect((await one.query(api.world.getMap, { roomCode: "ABC123" }))?.clock.gameTime).toBe(8);
   expect(await two.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "hospital" })).toEqual({ completeGameTime: 11 });
-  vi.advanceTimersByTime(3_000);
+  vi.advanceTimersByTime(3 * GAME_MINUTE_MS);
   expect(await two.mutation(api.world.finishTravel, { roomCode: "ABC123" })).toEqual({ gameTime: 11, traveling: false });
   expect((await two.query(api.world.getMap, { roomCode: "ABC123" }))?.currentPlaceId).toBe("hospital");
   expect(await one.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "bureau" })).toEqual({ completeGameTime: 19 });
-  vi.advanceTimersByTime(30_000);
+  vi.advanceTimersByTime(30 * GAME_MINUTE_MS);
   expect(await one.mutation(api.world.finishTravel, { roomCode: "ABC123" })).toEqual({ gameTime: 19, traveling: false });
   expect((await one.query(api.world.getMap, { roomCode: "ABC123" }))?.clock.gameTime).toBe(19);
   expect(await two.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "bureau" })).toEqual({ completeGameTime: 27 });
@@ -95,12 +96,12 @@ test("a completed lab request advances the clock baseline while another remains 
 
   await t.run(async (ctx) => {
     const session = await ctx.db.get(sessionId);
-    expect(await settleActions(ctx, session!, 66_500)).toEqual({ gameTime: 65, activeCount: 1 });
+    expect(await settleActions(ctx, session!, 1_000 + 65.5 * GAME_MINUTE_MS)).toEqual({ gameTime: 65, activeCount: 1 });
   });
   expect((await t.withIdentity({ subject: "one" }).query(api.world.getMap, { roomCode: "LAB123" }))?.nextCompletionGameTime).toBe(125);
   await t.run(async (ctx) => {
     const session = await ctx.db.get(sessionId);
-    expect(await settleActions(ctx, session!, 126_000)).toEqual({ gameTime: 125, activeCount: 0 });
+    expect(await settleActions(ctx, session!, 1_000 + 125 * GAME_MINUTE_MS)).toEqual({ gameTime: 125, activeCount: 0 });
   });
   expect((await t.withIdentity({ subject: "one" }).query(api.world.getMap, { roomCode: "LAB123" }))?.clock).toMatchObject({ gameTime: 125, clockStartedAt: null });
 });

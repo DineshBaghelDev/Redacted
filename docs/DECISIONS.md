@@ -163,6 +163,10 @@ Five independent stars:
 - Procedurally generated city per case: superseded by one ready-made city for V1.
 - Seed-varied building interiors per case: rejected; buildings are fixed so the city is identical in every case.
 - Free city simulation to produce the story: rejected; cannot guarantee a solvable clue trail or difficulty control.
+- Deadline hard stop (briefly tried 2026-10-10): rejected. Overdue never stops play; a give-up action reveals the solution instead.
+- Full case roster with suspect/witness labels at minute zero: superseded 2026-10-10 by people discovered through the brief and uncovered evidence, with roles hidden.
+- Whole-room 15-minute search and timed CCTV windows: superseded 2026-10-10 by 4-minute spot searches and a free, instantly scrubbable CCTV tape.
+- Location gates on pinning already-discovered records: superseded 2026-10-10. Discovery stays location-gated; pinning a discovery works anywhere.
 
 
 ## Gameplay access semantics

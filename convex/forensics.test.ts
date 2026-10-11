@@ -3,6 +3,7 @@
 import { convexTest } from "convex-test";
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
+import { GAME_MINUTE_MS } from "./lib/clock";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -36,36 +37,31 @@ test("lab tests need collected evidence and reveal stored results only after sha
   const two = t.withIdentity({ subject: "two" });
   const outsider = t.withIdentity({ subject: "outsider" });
   const roomCode = "LAB123";
-  expect((await one.query(api.forensics.getLab, { roomCode }))?.tests.map((row) => row.testType)).toEqual(["autopsy", "toxicology"]);
-  expect((await one.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.bodyOutputId)).toMatchObject({ sourceName: "Victim", status: "available" });
-  await expect(one.mutation(api.forensics.request, { roomCode, forensicOutputId: ids.outputId })).rejects.toThrow("Bring the source evidence");
+  const item = `item:${ids.itemId}`;
+  const lab = async () => (await two.query(api.forensics.getLab, { roomCode }))!;
+  const find = async (sourceKey: string, testType: string) => (await lab()).requests.find((row) => row.sourceKey === sourceKey && row.testType === testType);
+  expect((await one.query(api.forensics.getLab, { roomCode }))?.sources).toEqual([{ key: "victim", name: "Victim's body" }]);
+  await expect(one.mutation(api.forensics.request, { roomCode, sourceKey: item, testType: "fingerprint" })).rejects.toThrow("Bring the source evidence");
   expect(await outsider.query(api.forensics.getLab, { roomCode })).toBeNull();
   await t.run(async (ctx) => {
     await ctx.db.insert("sessionItems", { sessionId: ids.sessionId, itemId: ids.itemId, discoveredAt: 1, collectedAt: 2 });
     await ctx.db.insert("searchedRooms", { sessionId: ids.sessionId, roomId: ids.roomId, searchedAt: 1 });
   });
-  expect(await one.mutation(api.forensics.request, { roomCode, forensicOutputId: ids.outputId })).toEqual({ readyAtGameTime: 65 });
-  await expect(two.mutation(api.forensics.request, { roomCode, forensicOutputId: ids.outputId })).rejects.toThrow("already been requested");
-  expect((await two.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.outputId)?.status).toBe("pending");
-  expect((await two.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.outputId)?.result).toBeUndefined();
-  await expect(two.mutation(api.forensics.markViewed, { roomCode, forensicOutputId: ids.outputId })).rejects.toThrow("not ready");
-  await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "forensic", referenceId: ids.outputId, x: 0, y: 0 })).rejects.toThrow("View this lab result");
-  vi.advanceTimersByTime(5_000);
+  expect((await lab()).sources.map((source) => source.key)).toEqual(["victim", item, `room:${ids.roomId}`]);
+  // The detective runs the test at the bench, so the result is read at once; only the 5-minute bench time is spent.
+  expect(await one.mutation(api.forensics.request, { roomCode, sourceKey: item, testType: "fingerprint" })).toEqual({ readyAtGameTime: 0 });
+  await expect(two.mutation(api.forensics.request, { roomCode, sourceKey: item, testType: "fingerprint" })).rejects.toThrow("already been requested");
+  expect(await find(item, "fingerprint")).toMatchObject({ status: "viewed", outputId: ids.outputId, result: "One set of prints." });
+  vi.advanceTimersByTime(5 * GAME_MINUTE_MS);
   await one.mutation(api.investigation.finishAction, { roomCode });
-  expect((await one.query(api.world.getMap, { roomCode }))?.clock.clockStartedAt).not.toBeNull();
-  vi.advanceTimersByTime(60_000);
-  await one.mutation(api.investigation.finishAction, { roomCode });
-  expect((await one.query(api.world.getMap, { roomCode }))?.clock).toMatchObject({ gameTime: 65, clockStartedAt: null });
-  expect((await two.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.outputId)?.status).toBe("ready");
-  expect((await two.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.outputId)?.result).toBeUndefined();
-  await two.mutation(api.forensics.markViewed, { roomCode, forensicOutputId: ids.outputId });
-  expect((await one.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.outputId)).toMatchObject({ status: "viewed", result: "One set of prints." });
+  expect((await one.query(api.world.getMap, { roomCode }))?.clock).toMatchObject({ gameTime: 5, clockStartedAt: null });
   await one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "forensic", referenceId: ids.outputId, x: 0, y: 0 });
   expect((await two.query(api.clueBoard.getNodes, { roomCode }))![0].text).toBe("fingerprint report\nOne set of prints.");
-  expect(await one.mutation(api.forensics.request, { roomCode, forensicOutputId: ids.bodyOutputId })).toEqual({ readyAtGameTime: 80 });
-  expect((await two.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.bodyOutputId)?.result).toBeUndefined();
-  vi.advanceTimersByTime(15_000);
+  expect(await one.mutation(api.forensics.request, { roomCode, sourceKey: "victim", testType: "toxicology" })).toEqual({ readyAtGameTime: 5 });
+  expect(await find("victim", "toxicology")).toMatchObject({ status: "viewed", result: "Frozen body result." });
+  vi.advanceTimersByTime(5 * GAME_MINUTE_MS);
   await one.mutation(api.investigation.finishAction, { roomCode });
-  await two.mutation(api.forensics.markViewed, { roomCode, forensicOutputId: ids.bodyOutputId });
-  expect((await one.query(api.forensics.getLab, { roomCode }))?.tests.find((row) => row.id === ids.bodyOutputId)).toMatchObject({ status: "viewed", result: "Frozen body result." });
+  // A test with nothing to find still costs its bench time and comes back empty.
+  expect(await one.mutation(api.forensics.request, { roomCode, sourceKey: "victim", testType: "dna" })).toEqual({ readyAtGameTime: 10 });
+  expect((await find("victim", "dna"))?.result).toMatch(/No usable result/);
 }, 15_000);

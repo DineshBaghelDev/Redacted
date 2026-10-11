@@ -20,7 +20,7 @@ test("room partners share notes, positions, and colored strings", async () => {
       generationJobId,
       difficulty: "easy",
       title: "Test case",
-      summary: "Test summary",
+      summary: "Test summary naming Mara Vale.",
       initialFacts: [],
       publicationVersion: 1,
       createdAt: 1,
@@ -152,7 +152,7 @@ test("room partners share notes, positions, and colored strings", async () => {
     expect.objectContaining({ _id: first, x: 80, y: 90 }),
     expect.objectContaining({ _id: record, type: "public_record", referenceId: "record/address", text: "Address record\nLives on Keel Street." }),
     expect.objectContaining({ _id: cctv, type: "cctv", referenceId: "cctv/station/1", text: "Station camera\nA person crossed the concourse." }),
-    expect.objectContaining({ _id: person, type: "npc", referenceId: npcId, text: "Mara Vale\nsuspect · Conductor" }),
+    expect.objectContaining({ _id: person, type: "npc", referenceId: npcId, text: "Mara Vale\nConductor" }),
     expect.objectContaining({ _id: place, type: "place", referenceId: "union-station", text: "Union Station\nMidtown · Public place" }),
   ]));
   await expect(player.mutation(api.clueBoard.updateNode, { nodeId: record, text: "Changed" })).rejects.toThrow("cannot be edited");
@@ -163,6 +163,11 @@ test("room partners share notes, positions, and colored strings", async () => {
 
   await player.mutation(api.clueBoard.deleteNode, { nodeId: first });
   expect(await player.query(api.clueBoard.getEdges, { roomCode: "ABC123" })).toEqual([]);
+  await player.mutation(api.clueBoard.deleteNode, { nodeId: record });
+  expect((await player.query(api.clueBoard.getNodes, { roomCode: "ABC123" }))?.some((node) => node._id === record)).toBe(false);
+  expect(await player.mutation(api.clueBoard.createReferenceNode, {
+    roomCode: "ABC123", type: "public_record", referenceId: "record/address", x: 20, y: 220,
+  })).not.toBe(record);
 
   const stranger = t.withIdentity({ subject: "player-2" });
   expect(await stranger.query(api.clueBoard.getNodes, { roomCode: "ABC123" })).toBeNull();

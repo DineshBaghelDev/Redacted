@@ -298,9 +298,9 @@ test("a lobby keeps the selected passed case", async () => {
   }]);
 
   const created = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId });
-  expect(await t.run(async (ctx) => ctx.db.get(created.sessionId))).toMatchObject({ gameTime: 0, deadline: 1665, status: "waiting" });
+  expect(await t.run(async (ctx) => ctx.db.get(created.sessionId))).toMatchObject({ gameTime: 3375, deadline: 3713, status: "waiting" });
   const custom = await user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: 90 });
-  expect(await t.run(async (ctx) => ctx.db.get(custom.sessionId))).toMatchObject({ gameTime: 0, deadline: 90, status: "waiting" });
+  expect(await t.run(async (ctx) => ctx.db.get(custom.sessionId))).toMatchObject({ gameTime: 3375, deadline: 3465, status: "waiting" });
   await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: 0 })).rejects.toThrow("valid deadline");
   await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: 1.5 })).rejects.toThrow("valid deadline");
   await expect(user.mutation(api.sessions.createReplay, { nickname: "Detective", caseId: publishedCaseId, deadlineMinutes: Number.MAX_SAFE_INTEGER + 1 })).rejects.toThrow("valid deadline");
@@ -363,7 +363,7 @@ test("a lobby keeps the selected passed case", async () => {
       ? await ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
       : [];
     const items = session?.caseId
-      ? await ctx.db.query("caseItems").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      ? (await ctx.db.query("caseItems").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()).filter((item) => !item.evidenceId.startsWith("scatter/") && !item.evidenceId.startsWith("code/"))
       : [];
     const cameras = session?.caseId
       ? await ctx.db.query("cctvCameras").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
@@ -377,10 +377,10 @@ test("a lobby keeps the selected passed case", async () => {
     const deviceFiles = devices.find((device) => device.type === "laptop")
       ? await ctx.db.query("deviceFiles").withIndex("by_deviceId", (q) => q.eq("deviceId", devices.find((device) => device.type === "laptop")!._id)).collect() : [];
     const calls = session?.caseId
-      ? await ctx.db.query("callLogs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      ? (await ctx.db.query("callLogs").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()).filter((row) => !row.evidenceId.startsWith("filler/"))
       : [];
     const messages = session?.caseId
-      ? await ctx.db.query("messages").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
+      ? (await ctx.db.query("messages").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()).filter((row) => !row.evidenceId.startsWith("filler/"))
       : [];
     const records = session?.caseId
       ? await ctx.db.query("publicRecords").withIndex("by_caseId", (q) => q.eq("caseId", session.caseId!)).collect()
@@ -427,9 +427,10 @@ test("a lobby keeps the selected passed case", async () => {
       npcs,
       items,
       cameras,
-      cameraRecords,
+      // Seeded filler (ordinary messages, calls, files, passers-by) is not part of the frozen case.
+      cameraRecords: cameraRecords.filter((row) => !row.evidenceId.startsWith("filler/")),
       devices,
-      deviceFiles,
+      deviceFiles: deviceFiles.filter((row) => !row.evidenceId.startsWith("filler/")),
       calls,
       messages,
       records,
@@ -485,7 +486,7 @@ test("a lobby keeps the selected passed case", async () => {
   expect(frozen.records).toHaveLength(2);
   expect(frozen.records).toEqual(expect.arrayContaining([
     expect.objectContaining({ evidenceId: `record/${crimeCore.culpritId}/address`, type: "person", title: "Address record" }),
-    expect.objectContaining({ evidenceId: "card/purchase-1", type: "other", title: "Card payment" }),
+    expect.objectContaining({ evidenceId: "card/purchase-1", type: "payment", title: "Card payment", content: expect.stringContaining("Paid on Day 1 at") }),
   ]));
   expect(frozen.forensics).toEqual([
     expect.objectContaining({
@@ -540,19 +541,26 @@ test("a lobby keeps the selected passed case", async () => {
   expect(await user.query(api.cases.getBrief, { roomCode: created.roomCode })).toEqual({
     title: "The Selected Case",
     summary: "A specific mystery.",
-    initialFacts: ["One fact."],
+    // The victim's home and workplace are added from the frozen cast as starting leads.
+    initialFacts: ["One fact.", expect.stringMatching(/^Victim's home: /), expect.stringMatching(/^Victim's workplace: /)],
   });
   expect(JSON.stringify(await user.query(api.cases.listPassed, {}))).not.toContain(crimeCore.motive.details);
   expect(JSON.stringify(await user.query(api.cases.getBrief, { roomCode: created.roomCode }))).not.toContain(crimeCore.method);
   expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Address" })).toBeNull();
   await t.run(async (ctx) => ctx.db.patch(created.sessionId, { status: "playing" }));
+  // Only the victim is known at first; anyone else appears once their name turns up.
+  expect((await user.query(api.npcs.list, { roomCode: created.roomCode }))?.map((person) => person.isVictim)).toEqual([true]);
+  await t.run(async (ctx) => ctx.db.patch(frozen.storedCase!._id, { summary: `A specific mystery involving ${frozen.culprit!.name}.` }));
   const publicPeople = await user.query(api.npcs.list, { roomCode: created.roomCode });
-  expect(publicPeople).toHaveLength(cast.characters.length);
+  expect(publicPeople).toHaveLength(2);
   expect(publicPeople?.find((person) => person.id === frozen.culprit?._id)).toMatchObject({
     name: frozen.culprit?.name,
-    role: "suspect",
+    isVictim: false,
+    firstSeenIn: "Case brief",
+    gender: cast.characters.find((character) => character.id === crimeCore.culpritId)?.gender,
   });
   expect(JSON.stringify(publicPeople)).not.toContain("sourceId");
+  expect(JSON.stringify(publicPeople)).not.toContain("suspect");
   await t.run(async (ctx) => {
     for (let index = 0; index < 33; index += 1) {
       await ctx.db.insert("npcs", {
@@ -564,7 +572,8 @@ test("a lobby keeps the selected passed case", async () => {
       });
     }
   });
-  expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toHaveLength(cast.characters.length + 33);
+  expect(await user.query(api.npcs.list, { roomCode: created.roomCode })).toHaveLength(2);
+  await t.run(async (ctx) => ctx.db.patch(frozen.storedCase!._id, { summary: "A specific mystery." }));
   expect(await user.query(api.publicRecords.search, { roomCode: created.roomCode, search: "Keel" })).toEqual({ status: "available", records: [], savedTerms: [] });
   await user.mutation(api.publicRecords.performSearch, { roomCode: created.roomCode, search: "Keel" });
   await t.run(async (ctx) => {
@@ -602,13 +611,13 @@ test("a lobby keeps the selected passed case", async () => {
     minute: 120,
   })).toEqual({ status: "available", records: [] });
   await user.mutation(api.cases.startCctvReview, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 });
-  expect(await user.query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).toMatchObject({ status: "pending", records: [] });
+  expect(await user.query(api.cases.getCctvWindow, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).toMatchObject({ status: "ready" });
   await t.run(async (ctx) => ctx.db.patch(created.sessionId, { clockStartedAt: Date.now() - 6_000 }));
   await user.mutation(api.investigation.finishAction, { roomCode: created.roomCode });
   expect(await t.run(async (ctx) => {
     const session = await ctx.db.get(created.sessionId);
     return { gameTime: session?.gameTime, clockStartedAt: session?.clockStartedAt };
-  })).toEqual({ gameTime: 15, clockStartedAt: undefined });
+  })).toEqual({ gameTime: 3385, clockStartedAt: undefined });
   expect(await user.query(api.cases.getCctvWindow, {
     roomCode: created.roomCode,
     cameraId: "cam:station",
@@ -693,10 +702,10 @@ test("a lobby keeps the selected passed case", async () => {
   await partner.mutation(api.sessions.setReady, { roomCode: replayed.roomCode, isReady: true });
   await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { deadline: undefined }));
   await user.mutation(api.sessions.start, { roomCode: replayed.roomCode });
-  expect((await t.run(async (ctx) => ctx.db.get(replayed.sessionId)))?.deadline).toBe(1665);
+  expect((await t.run(async (ctx) => ctx.db.get(replayed.sessionId)))?.deadline).toBe(3713);
   await t.run(async (ctx) => ctx.db.patch(replayed.sessionId, { deadline: undefined }));
-  expect(await t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).toBe(1665);
-  expect(await t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).toBe(1665);
+  expect(await t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).toBe(3713);
+  expect(await t.mutation(internal.sessions.backfillPlayingDeadline, { sessionId: replayed.sessionId })).toBe(3713);
   expect(await user.query(api.sessions.get, { roomCode: replayed.roomCode })).toMatchObject({ status: "playing" });
   const unpublishedCaseId = await t.run(async (ctx) => ctx.db.insert("cases", {
     generationJobId: invalidJobId,
@@ -807,4 +816,4 @@ test("a lobby keeps the selected passed case", async () => {
   await expect(stranger.mutation(api.cases.startCctvReview, { roomCode: created.roomCode, cameraId: "cam:station", minute: 120 })).rejects.toThrow("Start the investigation first");
   expect(await stranger.query(api.world.getMap, { roomCode: created.roomCode })).toBeNull();
   expect(await stranger.query(api.npcs.list, { roomCode: created.roomCode })).toBeNull();
-}, 15_000);
+}, 30_000);

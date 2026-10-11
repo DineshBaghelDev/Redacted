@@ -1,20 +1,43 @@
 "use client";
 
+import { errorText } from "../../../lib/error-text";
 import { useAuth } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
 import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import { cardDropTarget, startCardDrag } from "../../../lib/evidence-drag";
 import { formatGameMinute } from "../../../lib/game-time";
+import { play } from "../../../lib/sound";
+import { ControlIcon } from "../control-icon";
+import { PinButton } from "../pin-button";
+import { FirstTimeTip } from "../first-time-tip";
+import { LabTask, type LabTest } from "../lab-tasks";
+import { InvestigationIcon } from "../investigation-icon";
+import { ObjectIcon } from "../object-icon";
+
+type TestType = LabTest;
+
+/** The bench tools. Each one is its own hands-on task (see lab-tasks), not a menu choice. */
+const tools: { test: TestType; name: string; colour: string }[] = [
+  { test: "fingerprint", name: "Powder brush", colour: "#d8cdb4" },
+  { test: "blood", name: "UV lamp", colour: "#a782ff" },
+  { test: "dna", name: "DNA swab", colour: "#e9e6da" },
+  { test: "toxicology", name: "Tox kit", colour: "#9fd1c4" },
+  { test: "fiber", name: "Lifting tape", colour: "#bcd3ff" },
+  { test: "footprint", name: "Casting kit", colour: "#c9b38f" },
+  { test: "ballistics", name: "Comparison scope", colour: "#e8ac51" },
+  { test: "autopsy", name: "Autopsy", colour: "#e5a18e" },
+];
 
 export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const lab = useQuery(api.forensics.getLab, isLoaded && isSignedIn ? { roomCode } : "skip");
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
   const requestTest = useMutation(api.forensics.request);
-  const markViewed = useMutation(api.forensics.markViewed);
-  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const finishAction = useMutation(api.investigation.finishAction);
+  const [sourceKey, setSourceKey] = useState<string | null>(null);
+  const [tool, setTool] = useState<TestType | null>(null);
   const [working, setWorking] = useState("");
   const [now, setNow] = useState(0);
   const [error, setError] = useState("");
@@ -30,120 +53,129 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
       finishing = true;
       void finishAction({ roomCode }).catch((caught: unknown) => {
         finishing = false;
-        setError(caught instanceof Error ? caught.message : "Could not finish the lab work.");
+        setError(errorText(caught, "Could not finish the lab work."));
       });
     };
     update();
-    const interval = window.setInterval(update, 250);
+    const interval = window.setInterval(update, 100);
     return () => window.clearInterval(interval);
   }, [lab, finishAction, roomCode]);
 
   if (lab === undefined) return <LabMessage message="Opening the forensic lab..." onBack={onBack} />;
   if (!lab) return <LabMessage message="The forensic lab is not available here." onBack={onBack} />;
-
   const gameTime = lab.clock.gameTime + (lab.clock.clockStartedAt === null || now === 0
     ? 0 : Math.max(0, Math.floor((now - lab.clock.clockStartedAt) / lab.clock.minuteMs)));
-  const actionRemaining = lab.action ? Math.max(0, lab.action.completeGameTime - gameTime) : 0;
+  const source = lab.sources.find((item) => item.key === sourceKey) ?? null;
+  const chosen = tools.find((item) => item.test === tool) ?? null;
+  const requests = lab.requests.filter((row) => row.sourceKey === source?.key);
+  const alreadyDone = Boolean(chosen && requests.some((row) => row.testType === chosen.test));
 
-  function run(id: Id<"forensicOutputs">, action: Promise<unknown>) {
+  function placeOnBench(key: string) {
+    play("click");
+    setSourceKey(key);
+    setTool(null);
+    setError("");
+  }
+
+  function run(id: string, action: Promise<unknown>, cue: "click" | "stamp" = "click") {
     setWorking(id);
     setError("");
+    play(cue);
     void action.catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "That lab action could not be completed.");
+      setError(errorText(caught, "That lab action could not be completed."));
     }).finally(() => setWorking(""));
   }
 
   return (
-    <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#080b12] text-cyan-50">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-cyan-300/30 bg-[#07111b] px-4 py-3 sm:px-6">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-cyan-200/55">Evidence analysis</p>
+    <section className="game-lab-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#e4e6d8]">
+      <header className="game-station-header flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">{lab.placeName} · {formatGameMinute(gameTime)}</p>
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">Forensic lab</h2>
-          <p className="mt-1 text-xs text-cyan-100/50">{lab.placeName}</p>
         </div>
-        <button className="min-h-11 border border-cyan-300/70 px-4 py-2 text-sm uppercase hover:border-yellow-200 hover:text-yellow-200" onClick={onBack} type="button">Back</button>
+        <button aria-label="Leave the lab" className="game-control-button game-icon-mobile flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase" onClick={onBack} title="Leave the lab" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Leave the lab</span></button>
       </header>
-
-      <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-5xl">
-          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-cyan-300/20 pb-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/45">Available examinations</p>
-              <h3 className="mt-1 text-2xl uppercase sm:text-3xl">Case evidence</h3>
-            </div>
-            <p className="font-mono text-sm text-yellow-200">{formatGameMinute(gameTime)}</p>
-          </div>
-
-          {lab.action ? (
-            <div className="mt-5 border border-yellow-200/45 bg-[#211d15] p-4" role="status">
-              <p className="text-sm uppercase text-yellow-100">Processing lab request</p>
-              <p className="mt-1 text-xs text-yellow-100/70">{actionRemaining} game min remaining</p>
-              <progress aria-label="Lab request progress" className="mt-3 h-2 w-full accent-yellow-200" max={Math.max(1, lab.action.completeGameTime - lab.action.startGameTime)} value={Math.max(0, gameTime - lab.action.startGameTime)} />
-            </div>
-          ) : null}
-
-          {error ? <p className="mt-4 border border-red-300/60 bg-red-950/70 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
-
-          {lab.tests.length ? (
-            <ul className="mt-5 grid gap-3 md:grid-cols-2">
-              {lab.tests.map((test) => {
-                const remaining = test.readyAtGameTime === undefined ? 0 : Math.max(0, test.readyAtGameTime - gameTime);
-                const pinned = boardNodes?.some((node) => node.type === "forensic" && node.referenceId === test.id) ?? false;
-                return (
-                  <li className="border border-cyan-300/25 bg-[#0b1822] p-4 sm:p-5" key={test.id}>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-100/45">{test.testType.replaceAll("_", " ")}</p>
-                        <h4 className="mt-1 text-lg uppercase">{test.sourceName}</h4>
-                      </div>
-                      <span className={`border px-2 py-1 text-[10px] uppercase tracking-wider ${test.status === "viewed" ? "border-emerald-300/50 text-emerald-200" : test.status === "ready" ? "border-yellow-200/60 text-yellow-100" : "border-cyan-300/30 text-cyan-100/55"}`}>
-                        {test.status === "available" ? "Not requested" : test.status}
-                      </span>
-                    </div>
-
-                    {test.status === "pending" ? (
-                      <div className="mt-4">
-                        <div className="flex justify-between text-xs text-cyan-100/55"><span>In progress</span><span>{remaining} game min left</span></div>
-                        <progress aria-label={`${test.testType} processing`} className="mt-2 h-2 w-full accent-cyan-300" />
-                      </div>
-                    ) : null}
-
-                    {test.status === "viewed" ? <p className="mt-4 border-l-2 border-yellow-200/70 bg-[#17170f] p-3 text-sm leading-relaxed text-yellow-50">{test.result}</p> : null}
-
-                    {test.status === "available" ? (
-                      <button
-                        className="mt-4 min-h-11 border border-yellow-200/70 bg-yellow-200/10 px-4 text-xs uppercase text-yellow-100 hover:bg-yellow-200/20 disabled:cursor-wait disabled:opacity-45"
-                        disabled={Boolean(lab.action) || Boolean(working)}
-                        onClick={() => run(test.id, requestTest({ roomCode, forensicOutputId: test.id }))}
-                        type="button"
-                      >{working === test.id ? "Submitting..." : "Request examination"}</button>
-                    ) : null}
-                    {test.status === "ready" ? (
-                      <button
-                        className="mt-4 min-h-11 border border-yellow-200/70 bg-yellow-200/10 px-4 text-xs uppercase text-yellow-100 hover:bg-yellow-200/20 disabled:opacity-45"
-                        disabled={Boolean(working)}
-                        onClick={() => run(test.id, markViewed({ roomCode, forensicOutputId: test.id }))}
-                        type="button"
-                      >{working === test.id ? "Opening result..." : "View result"}</button>
-                    ) : null}
-                    {test.status === "viewed" ? (
-                      <button
-                        className="mt-4 min-h-11 border border-cyan-300/60 px-4 text-xs uppercase hover:border-yellow-200 hover:text-yellow-200 disabled:opacity-45"
-                        disabled={Boolean(working) || pinned}
-                        onClick={() => {
-                          const count = boardNodes?.length ?? 0;
-                          run(test.id, createReference({ roomCode, type: "forensic", referenceId: test.id, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 }));
-                        }}
-                        type="button"
-                      >{pinned ? "Pinned to clueboard" : "Pin to clueboard"}</button>
-                    ) : null}
-                  </li>
-                );
-              })}
+      <FirstTimeTip id="lab" title="Forensic lab">Put evidence on the bench, pick a tool, and follow its action. Results appear when you finish.</FirstTimeTip>
+      <main className="game-station-main min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
+          <aside>
+            <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/65">Evidence bags</p>
+            <ul className="mt-2 grid grid-cols-2 gap-2 lg:grid-cols-1">
+              {lab.sources.map((item) => (
+                <li key={item.key}>
+                  <button
+                    aria-pressed={item.key === source?.key}
+                    className="flex min-h-12 w-full cursor-grab items-center gap-2 border border-[#6f9f98]/30 bg-[#0b1a1c]/80 px-2 py-2 text-left text-xs uppercase hover:border-[#e8ac51] aria-pressed:border-[#e8ac51] aria-pressed:text-[#f1c987] active:cursor-grabbing"
+                    draggable
+                    onClick={() => placeOnBench(item.key)}
+                    onDragStart={(event) => startCardDrag(event, { kind: item.key.startsWith("item:") ? "item" : "place", referenceId: item.key, label: item.name })}
+                    type="button"
+                  >
+                    {item.key.startsWith("room:") ? <InvestigationIcon className="size-8" name="room" /> : <ObjectIcon className="size-8" name={item.name} />}
+                    <span className="min-w-0 break-words">{item.name}</span>
+                  </button>
+                </li>
+              ))}
             </ul>
-          ) : (
-            <p className="mt-6 border border-dashed border-cyan-300/25 p-6 text-center text-sm text-cyan-100/55">No evidence is ready for examination yet. Bring collected evidence or search rooms to uncover available tests.</p>
-          )}
+            <p className="mt-3 text-xs leading-relaxed text-[#c8d8d2]/60">Bag objects at a scene to bring them here. Searched rooms can be sampled too.</p>
+          </aside>
+
+          <div>
+            <div
+              className="lab-bench relative flex min-h-56 flex-col items-center justify-center p-4 text-center"
+              {...cardDropTarget((card) => {
+                const key = card.kind === "item" && !card.referenceId.includes(":") ? `item:${card.referenceId}` : card.referenceId;
+                if (lab.sources.some((item) => item.key === key)) placeOnBench(key);
+                else setError("Bag that at the scene first, then bring it here.");
+              })}
+            >
+              {!source ? <div className="flex flex-col items-center"><span aria-hidden="true" className="lab-prop size-16" /><p className="mt-2 text-sm uppercase tracking-widest text-[#c8d8d2]">Drag evidence onto the bench</p></div> : chosen && !alreadyDone ? (
+                <LabTask disabled={Boolean(lab.action) || Boolean(working)} key={`${source.key}:${chosen.test}`} onDone={() => run(chosen.test, requestTest({ roomCode, sourceKey: source.key, testType: chosen.test }))} seed={source.key} test={chosen.test}>
+                  <p className="flex min-w-0 items-center gap-2 text-sm uppercase"><span aria-hidden="true" className={`lab-tool-icon lab-tool-icon--${chosen.test} size-8`} /><span className="break-words">{source.name}</span></p>
+                  <p className="shrink-0 text-xs uppercase" style={{ color: chosen.colour }}>{chosen.name}</p>
+                </LabTask>
+              ) : (
+                <>
+                  <span aria-hidden="true" className="lab-prop lab-prop--open size-12" />
+                  {source.key.startsWith("room:") ? <InvestigationIcon className="size-16" name="room" /> : <ObjectIcon className="size-16" name={source.name} />}
+                  <p className="mt-2 text-lg uppercase">{source.name}</p>
+                  <p className="mt-1 text-xs uppercase tracking-widest text-[#c8d8d2]/60">{chosen ? "That test is already done on this" : "Pick a tool"}</p>
+                </>
+              )}
+            </div>
+            {lab.action ? <p className="mt-2 text-sm uppercase text-[#f1c987]" role="status">Sealing the sample and filling in the form...</p> : null}
+            {error ? <p className="mt-2 border border-red-300/60 bg-red-950/70 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
+
+            {source ? (
+              <div className="mt-4 flex flex-wrap gap-2" role="radiogroup" aria-label="Tools">
+                {tools.map((item) => {
+                  const done = requests.some((row) => row.testType === item.test);
+                  return (
+                    <button aria-checked={tool === item.test} className="flex min-h-11 items-center gap-2 border-b-2 border-transparent px-2 text-xs uppercase hover:text-[#f1c987] aria-checked:border-[#e8ac51] aria-checked:text-[#f1c987]" key={item.test} onClick={() => { play("click"); setTool(item.test); }} role="radio" type="button">
+                      <span aria-hidden="true" className={`lab-tool-icon lab-tool-icon--${item.test} size-9`} />
+                      {item.name}{done ? " ✓" : ""}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {requests.length ? (
+              <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+                {/* Bench work shows its result the moment the task is done, so every request here is a report. */}
+                {requests.map((request) => {
+                  const name = tools.find((item) => item.test === request.testType)?.name ?? request.testType;
+                  return (
+                    <li className="game-dossier p-3 text-[#211d17] sm:col-span-2" key={request.id}>
+                      <p className="flex items-center justify-between gap-2 text-sm uppercase"><span className="flex items-center gap-2"><span aria-hidden="true" className="lab-prop lab-prop--report size-8" />{name}</span><span className="text-xs">Report</span></p>
+                      <p className="mt-2 whitespace-pre-wrap border-t border-[#8b7355] pt-2 text-sm leading-relaxed">{request.result}</p>
+                      {request.outputId ? <PinButton className="mt-2" disabled={Boolean(working)} nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={request.outputId} roomCode={roomCode} type="forensic" /> : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
+          </div>
         </div>
       </main>
     </section>
@@ -152,10 +184,11 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
 
 function LabMessage({ message, onBack }: { message: string; onBack: () => void }) {
   return (
-    <section className="absolute inset-0 z-20 flex items-center justify-center bg-[#080b12] p-4 text-cyan-50">
-      <div className="w-full max-w-lg border border-cyan-300/30 bg-[#07111b] p-6 text-center">
-        <p className="text-lg uppercase">{message}</p>
-        <button className="mt-5 min-h-11 border border-cyan-300/70 px-4 py-2 uppercase hover:border-yellow-200 hover:text-yellow-200" onClick={onBack} type="button">Back</button>
+    <section className="game-lab-scene absolute inset-0 z-20 flex items-center justify-center p-4 text-[#e4e6d8]">
+      <div className="game-panel w-full max-w-lg px-7 py-9 text-center sm:px-12">
+        <InvestigationIcon className="mx-auto size-12" name="lab" />
+        <p className="mt-4 text-lg uppercase leading-snug">{message}</p>
+        <button className="game-control-button mt-6 min-h-11 w-full px-4 uppercase sm:w-auto" onClick={onBack} type="button"><ControlIcon name="back" />Open the city map</button>
       </div>
     </section>
   );

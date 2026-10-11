@@ -1,8 +1,9 @@
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import { getBureauRoomMember, getPlayingRoomMember, getRoomMember, requireInvestigationOpen } from "./lib/auth";
+import { getPlayingRoomMember, getRoomMember, requireInvestigationOpen } from "./lib/auth";
 import { hasReadDevice } from "./lib/deviceAccess";
+import { CCTV_HALF_WINDOW, knownPeople } from "./lib/discoveries";
 
 const MAX_NODES = 100;
 const MAX_EDGES = 200;
@@ -56,7 +57,14 @@ export const getNodes = query({
       .query("clueBoardNodes")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
       .take(MAX_NODES);
-    return nodes.map(({ _id, type, referenceId, text, x, y }) => ({ _id, type, referenceId, text, x, y }));
+    // A pinned sighting shows the team's current "looks like" mark, so marking after pinning stays in sync.
+    const marked = new Map<string, string>();
+    for await (const label of ctx.db.query("cctvLabels").withIndex("by_sessionId_and_recordEvidenceId", (q) => q.eq("sessionId", session._id))) {
+      const person = await ctx.db.get(label.npcId);
+      if (person) marked.set(label.recordEvidenceId, person.name);
+    }
+    return nodes.map(({ _id, type, referenceId, text, x, y }) => ({ _id, type, referenceId, x, y,
+      text: type === "cctv" && referenceId && marked.has(referenceId) ? `${text}\nYou think: ${marked.get(referenceId)}` : text }));
   },
 });
 
@@ -125,10 +133,6 @@ export const createReferenceNode = mutation({
     if (existing) return existing._id;
     if (nodes.length >= MAX_NODES) throw new Error("This board is full.");
 
-    if ((type === "public_record" || type === "cctv") && !(await getBureauRoomMember(ctx, roomCode))) {
-      throw new Error("Use the bureau terminal to pin this record.");
-    }
-
     let text: string;
     if (type === "forensic") {
       const outputId = ctx.db.normalizeId("forensicOutputs", referenceId);
@@ -164,7 +168,9 @@ export const createReferenceNode = mutation({
       const npcId = ctx.db.normalizeId("npcs", referenceId);
       const person = npcId ? await ctx.db.get(npcId) : null;
       if (!person || person.caseId !== session.caseId) throw new Error("That person is not part of this case.");
-      text = `${person.name}\n${person.role}${person.occupation ? ` · ${person.occupation}` : ""}`;
+      if (!(await knownPeople(ctx, session)).has(person._id)) throw new Error("You have not come across this person yet.");
+      const detail = person.role === "victim" ? "Victim" : person.occupation;
+      text = detail ? `${person.name}\n${detail}` : person.name;
     } else if (type === "place") {
       const playableCase = await ctx.db.get(session.caseId);
       const place = playableCase?.cityId
@@ -196,7 +202,7 @@ export const createReferenceNode = mutation({
       if (!camera || camera.caseId !== session.caseId) throw new Error("That camera record is unavailable.");
       let reviewed = false;
       for await (const window of ctx.db.query("cctvReviews")
-        .withIndex("by_sessionId_and_cameraId_and_minute", (q) => q.eq("sessionId", session._id).eq("cameraId", camera._id).gte("minute", record.startTime - 20).lte("minute", record.endTime + 20))) {
+        .withIndex("by_sessionId_and_cameraId_and_minute", (q) => q.eq("sessionId", session._id).eq("cameraId", camera._id).gte("minute", record.startTime - CCTV_HALF_WINDOW).lte("minute", record.endTime + CCTV_HALF_WINDOW))) {
         if (window.completeGameTime <= (session.gameTime ?? 0)) { reviewed = true; break; }
       }
       if (!reviewed) throw new Error("Review this camera record before pinning it.");

@@ -1,10 +1,20 @@
 "use client";
 
+import { errorText } from "../../../lib/error-text";
 import { useAuth } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
 import { useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
+import { formatDuration, formatGameMinute } from "../../../lib/game-time";
+import { cardDropTarget, type DragCard } from "../../../lib/evidence-drag";
+import { TypeAhead } from "../type-ahead";
+import { NotebookOverlay } from "../notebook-overlay";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { ControlIcon } from "../control-icon";
+import { ResultStars } from "../result-stars";
+import { go } from "../../../lib/game-nav";
+import { play } from "../../../lib/sound";
 
 const MAX_EVIDENCE = 12;
 const fields = [
@@ -23,16 +33,22 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
   const boardNodes = useQuery(api.clueBoard.getNodes, ready ? { roomCode } : "skip");
   const inventory = useQuery(api.investigation.getInventory, ready ? { roomCode } : "skip");
   const closeState = useQuery(api.caseClose.getResult, ready ? { roomCode } : "skip");
+  const epilogue = useQuery(api.caseClose.getEpilogue, ready ? { roomCode } : "skip");
+  const giveUp = useMutation(api.caseClose.giveUp);
+  const [confirmGiveUp, setConfirmGiveUp] = useState(false);
   const submitCase = useMutation(api.caseClose.submit);
+  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const retryJudge = useMutation(api.caseClose.retry);
+  const replay = useMutation(api.sessions.replay);
+  const [shared, setShared] = useState("");
   const [closing, setClosing] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [culpritNpcId, setCulpritNpcId] = useState("");
+  const [culpritName, setCulpritName] = useState("");
+  const [citing, setCiting] = useState(false);
   const [motiveExplanation, setMotiveExplanation] = useState("");
   const [weaponDescription, setWeaponDescription] = useState("");
-  const [weaponItemId, setWeaponItemId] = useState("");
   const [evidenceIds, setEvidenceIds] = useState<string[]>([]);
   const [evidenceExplanation, setEvidenceExplanation] = useState("");
   const [methodExplanation, setMethodExplanation] = useState("");
@@ -41,6 +57,12 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
     (node): node is typeof node & { referenceId: string } =>
       (node.type === "cctv" || node.type === "public_record" || node.type === "item" || node.type === "forensic" || node.type === "device_file" || node.type === "call" || node.type === "message" || node.type === "statement") && !!node.referenceId,
   );
+  const victimName = people?.find((person) => person.isVictim)?.name ?? "the victim";
+  // The report is written, not chosen: the typed name is matched to someone the team has uncovered.
+  const same = (a: string, b: string) => a.trim().toLowerCase().replace(/\s+/g, " ") === b.trim().toLowerCase().replace(/\s+/g, " ");
+  const accused = people?.find((person) => !person.isVictim && same(person.name, culpritName));
+  const culpritNpcId = accused?.id ?? "";
+  const weaponItemId = inventory?.find((item) => same(item.name, weaponDescription))?.id ?? "";
   const canReview = !!culpritNpcId
     && motiveExplanation.trim().length >= 10
     && weaponDescription.trim().length > 0
@@ -62,9 +84,21 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
     setError("");
   }
 
+  /** Evidence dropped from the notebook is pinned first, since the report cites the clueboard. */
+  function addProof(card: DragCard) {
+    if (evidence.some((item) => item.referenceId === card.referenceId)) {
+      if (!evidenceIds.includes(card.referenceId)) toggleEvidence(card.referenceId);
+      return;
+    }
+    const count = boardNodes?.length ?? 0;
+    void createReference({ roomCode, type: card.kind as "item", referenceId: card.referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 })
+      .then(() => setEvidenceIds((current) => current.includes(card.referenceId) || current.length >= MAX_EVIDENCE ? current : [...current, card.referenceId]))
+      .catch((caught: unknown) => setError(errorText(caught, "Could not add that evidence.")));
+  }
+
   function review(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (canReview) setReviewing(true);
+    if (canReview) { play("page"); setReviewing(true); }
   }
 
   function submit() {
@@ -80,87 +114,140 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
       evidenceExplanation,
       methodExplanation,
     }).catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "Could not submit the case.");
+      setError(errorText(caught, "Could not submit the case."));
       setReviewing(false);
     }).finally(() => setSubmitting(false));
   }
+
+  /** A fresh room on the same case, for another go. */
+  function replayCase() {
+    setError("");
+    const nickname = window.localStorage.getItem("redacted.detectiveName") ?? "Detective";
+    void replay({ roomCode, nickname }).then((created) => go(`/lobby/${created.roomCode}`)).catch((caught: unknown) => setError(errorText(caught, "Could not start a new room.")));
+  }
+
+  /** A spoiler-free line about the result: title, stars, rank, and time. */
+  function shareResult() {
+    if (!closeState?.result || !brief) return;
+    const stars = closeState.result.totalStars;
+    const text = `I closed "${brief.title}" in Redacted: ${"★".repeat(stars)}${"☆".repeat(5 - stars)}${closeState.rank ? `, ranked ${closeState.rank}` : ""}${closeState.tookMinutes !== undefined ? `, case time ${formatDuration(closeState.tookMinutes)}` : ""}.`;
+    const done = () => setShared("Copied to share.");
+    if (navigator.share) void navigator.share({ text }).catch(() => {});
+    else void navigator.clipboard.writeText(text).then(done).catch(() => setShared(text));
+  }
+
+  const afterCase = (
+    <div className="mt-8 flex flex-col gap-2 border-t-2 border-[#6d5138] pt-5 sm:flex-row sm:flex-wrap">
+      <button className="game-control-button min-h-11 px-4 text-sm uppercase text-[#f1c987]" onClick={() => go("/")} type="button"><ControlIcon name="back" />Main menu</button>
+      <button className="game-control-button min-h-11 px-4 text-sm uppercase text-[#f1c987]" onClick={() => go("/previous")} type="button">Another case</button>
+      <button className="min-h-11 border-2 border-[#573821] px-4 text-sm uppercase" onClick={replayCase} type="button">Replay this case</button>
+      {closeState?.result ? <button className="min-h-11 border-2 border-[#573821] px-4 text-sm uppercase" onClick={shareResult} type="button">Share result</button> : null}
+      {shared ? <p className="basis-full text-sm text-[#5b4635]" role="status">{shared}</p> : null}
+    </div>
+  );
 
   function retry() {
     setSubmitting(true);
     setError("");
     void retryJudge({ roomCode })
-      .catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Could not retry judging."))
+      .catch((caught: unknown) => setError(errorText(caught, "Could not retry judging.")))
       .finally(() => setSubmitting(false));
   }
 
   return (
-    <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#0d0a08] text-[#2b2118]">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b-4 border-[#63452e] bg-[#d8c8a7] px-4 py-3 sm:px-6">
+    <section className="game-report-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#2b2118]">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b-4 border-[#63452e] bg-[#ad9e80] px-4 py-3 sm:px-6">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.24em] text-red-900/70">Final investigation file</p>
+          <p className="text-xs uppercase tracking-[0.24em] text-red-900/70">Final investigation file</p>
           <h2 className="mt-1 text-xl uppercase sm:text-2xl">Case file</h2>
         </div>
-        <button className="min-h-11 border-2 border-[#573821] px-4 text-sm uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">Back</button>
+        <button aria-label="Close the file" className="game-control-button game-icon-mobile min-h-11 px-4 text-sm uppercase" onClick={onBack} title="Close the file" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Close the file</span></button>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto bg-[#cbb993] p-4 sm:p-6 lg:p-8">
+      <main className="min-h-0 flex-1 overflow-y-auto bg-[#160f0b]/60 p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-4xl">
           {error ? <p className="mb-4 border-2 border-red-800 bg-red-950 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
 
           {closeState?.status === "complete" && closeState.result ? (
-            <section className="border-2 border-[#6d5138] bg-[#eee2bd] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] sm:p-8" aria-live="polite">
-              <p className="text-xs uppercase tracking-[0.2em] text-red-800">Case closed</p>
+            <section className="game-dossier px-5 pb-20 pt-20 sm:px-8 sm:pb-16" aria-live="polite">
+              <p className="case-stamp case-stamp--closed -rotate-3 text-center text-sm uppercase tracking-wide text-red-900">Case closed</p>
               <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#6d5138] pb-5">
                 <h3 className="text-3xl uppercase sm:text-4xl">Your final report</h3>
-                <p className="font-mono text-2xl text-red-900" aria-label={`${closeState.result.totalStars} out of 5 stars`}>
-                  {"★".repeat(closeState.result.totalStars)}{"☆".repeat(5 - closeState.result.totalStars)}
-                </p>
+                <ResultStars count={closeState.result.totalStars} />
               </div>
+              {closeState.rank ? <p className="case-stamp case-stamp--closed mt-4 -rotate-2 text-center text-sm uppercase tracking-wide text-red-900">{closeState.rank}</p> : null}
+              {closeState.badges.length ? <ul aria-label="Badges" className="mt-3 flex flex-wrap gap-2">{closeState.badges.map((badge) => <li className="border border-[#6d5138] bg-[#efe3c4] px-2 py-0.5 text-xs uppercase" key={badge}>{badge}</li>)}</ul> : null}
+              {closeState.tookMinutes !== undefined ? (
+                <p className="mt-3 font-mono text-sm text-[#5b4635]">
+                  Case time {formatDuration(closeState.tookMinutes)}
+                  {closeState.deadlineDelta !== undefined ? ` · ${formatDuration(Math.abs(closeState.deadlineDelta))} ${closeState.deadlineDelta <= 0 ? "before" : "after"} the deadline` : ""}
+                </p>
+              ) : null}
               <ul className="mt-5 grid gap-3 sm:grid-cols-2">
                 {fields.map(([key, label]) => {
                   const category = closeState.result![key];
                   return (
-                    <li className={`border-2 p-4 ${category.star ? "border-emerald-800 bg-emerald-50" : "border-red-900/60 bg-red-50"}`} key={key}>
-                      <p className="flex items-center justify-between gap-3 uppercase"><span>{label}</span><span aria-hidden="true">{category.star ? "★" : "☆"}</span></p>
+                    <li className={`border-b-2 p-4 ${category.star ? "border-emerald-800 bg-[#bac5aa]/55" : "border-red-900/60 bg-[#cdb09b]/55"}`} key={key}>
+                      <p className="flex items-center justify-between gap-3 uppercase"><span>{label}</span><span aria-hidden="true" className={`case-star ${category.star ? "case-star--filled" : "case-star--empty"}`} /></p>
                       {"feedback" in category && category.feedback ? <p className="mt-2 text-sm leading-relaxed text-[#5b4635]">{category.feedback}</p> : null}
                     </li>
                   );
                 })}
               </ul>
+              {epilogue ? <Epilogue answer={closeState.answer} epilogue={epilogue} /> : null}
+              {afterCase}
             </section>
           ) : closeState?.status === "judging" || (closeState?.status === "pending" && !closeState.error) ? (
-            <section className="border-2 border-[#6d5138] bg-[#eee2bd] p-8 text-center shadow-[7px_7px_0_rgba(55,34,20,0.3)]" aria-live="polite">
+            <section className="game-dossier px-5 pb-20 pt-20 text-center sm:px-8 sm:pb-16" aria-live="polite">
               <p className="text-xs uppercase tracking-[0.2em] text-red-800">Report submitted</p>
               <h3 className="mt-3 text-3xl uppercase">Reviewing your theory...</h3>
               <p className="mt-4 text-sm leading-relaxed text-[#5b4635]">Both detectives will see the result here when the review is complete.</p>
             </section>
           ) : closeState?.error ? (
-            <section className="border-2 border-red-900 bg-[#eee2bd] p-6 text-center">
+            <section className="game-dossier px-5 pb-20 pt-20 text-center sm:px-8 sm:pb-16">
               <h3 className="text-2xl uppercase">Review interrupted</h3>
               <p className="mt-3 text-sm">{closeState.error}</p>
               <button className="mt-5 min-h-11 border-2 border-red-900 px-5 uppercase hover:bg-red-900 hover:text-white disabled:opacity-50" disabled={submitting} onClick={retry} type="button">
                 {submitting ? "Retrying..." : "Retry review"}
               </button>
             </section>
+          ) : epilogue ? (
+            <section className="game-dossier px-5 pb-20 pt-24 sm:px-8 sm:pb-16" aria-live="polite">
+              <p className="case-stamp case-stamp--given-up -rotate-3 text-center text-sm uppercase tracking-wide text-[#38332e]">Case given up</p>
+              <h3 className="mt-2 text-3xl uppercase">No report was filed</h3>
+              <Epilogue epilogue={epilogue} />
+              {afterCase}
+            </section>
           ) : !closing ? (
-            <section className="border-2 border-[#6d5138] bg-[#eee2bd] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] sm:p-8">
+            <section className="game-dossier px-5 pb-20 pt-20 sm:px-8 sm:pb-16">
               {brief === undefined ? <p className="uppercase">Loading case file...</p> : !brief ? <p className="uppercase text-red-800">No completed case is available.</p> : (
                 <>
                   <p className="text-xs uppercase tracking-[0.18em] text-red-800">Public brief</p>
-                  <h3 className="mt-2 text-3xl uppercase">{brief.title}</h3>
+                  <h3 className="mt-2 text-2xl uppercase sm:text-3xl">{brief.title}</h3>
                   <p className="mt-4 leading-relaxed">{brief.summary}</p>
                   <ul className="mt-5 list-disc space-y-2 border-t border-[#6d5138]/40 pt-4 pl-5 text-sm leading-relaxed">
                     {brief.initialFacts.map((fact) => <li key={fact}>{fact}</li>)}
                   </ul>
-                  <button className="mt-7 min-h-12 w-full border-2 border-red-900 bg-red-950 px-5 uppercase text-red-50 hover:bg-red-900 disabled:opacity-50 sm:w-auto" disabled={!people?.length || evidence.length === 0} onClick={() => setClosing(true)} type="button">
+                  <button className="game-control-button mt-7 min-h-12 w-full px-5 uppercase text-[#f1c987] disabled:opacity-50 sm:w-auto" disabled={!people?.length} onClick={() => { play("page"); setClosing(true); }} type="button">
+                    <ControlIcon name="play" />
                     Close this case
                   </button>
-                  {!evidence.length ? <p className="mt-3 text-sm text-red-900">Pin at least one piece of evidence to the clueboard before closing the case.</p> : null}
+                  <div className="mt-8 border-t border-[#6d5138]/40 pt-4">
+                    {confirmGiveUp ? (
+                      <div>
+                        <p className="text-sm">Give up and see what really happened? The case ends for both detectives and no report can be filed.</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button className="min-h-11 border-2 border-[#573821] px-4 text-sm uppercase" onClick={() => setConfirmGiveUp(false)} type="button">Keep investigating</button>
+                          <button className="min-h-11 border-2 border-red-900 px-4 text-sm uppercase text-red-900 hover:bg-red-900 hover:text-red-50" onClick={() => { setError(""); void giveUp({ roomCode }).catch((caught: unknown) => setError(errorText(caught, "Could not give up."))); }} type="button">Give up</button>
+                        </div>
+                      </div>
+                    ) : <button className="min-h-10 text-sm uppercase text-[#5b4635] underline-offset-4 hover:text-red-900 hover:underline" onClick={() => setConfirmGiveUp(true)} type="button">Give up and see the solution</button>}
+                  </div>
                 </>
               )}
             </section>
           ) : reviewing ? (
-            <section className="border-2 border-red-900 bg-[#eee2bd] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] sm:p-8">
+            <section className="game-dossier px-5 pb-20 pt-20 sm:px-8 sm:pb-16">
               <p className="text-xs uppercase tracking-[0.2em] text-red-800">Final check</p>
               <h3 className="mt-2 text-3xl uppercase">Submit this theory?</h3>
               <p className="mt-4 text-sm leading-relaxed text-[#5b4635]">This closes the case for both detectives. Your report cannot be replaced after submission.</p>
@@ -172,41 +259,87 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               </dl>
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <button className="min-h-11 border-2 border-[#573821] px-5 uppercase" disabled={submitting} onClick={() => setReviewing(false)} type="button">Keep editing</button>
-                <button className="min-h-11 border-2 border-red-900 bg-red-950 px-5 uppercase text-red-50 disabled:opacity-50" disabled={submitting} onClick={submit} type="button">{submitting ? "Submitting..." : "Submit final report"}</button>
+                <button className="game-control-button min-h-11 px-5 uppercase text-[#f1c987] disabled:opacity-50" disabled={submitting} onClick={submit} type="button"><ControlIcon name="play" />{submitting ? "Submitting..." : "Submit final report"}</button>
               </div>
             </section>
           ) : (
-            <form className="space-y-5 border-2 border-[#6d5138] bg-[#eee2bd] p-5 shadow-[7px_7px_0_rgba(55,34,20,0.3)] sm:p-8" onSubmit={review}>
-              <div className="border-b-2 border-[#6d5138] pb-4"><p className="text-xs uppercase tracking-[0.2em] text-red-800">Five findings · five stars</p><h3 className="mt-2 text-3xl uppercase">Your final theory</h3></div>
-              <label className="block"><span className="case-close-label">1 · Who did it?</span><select className="case-close-input" onChange={(event) => setCulpritNpcId(event.target.value)} required value={culpritNpcId}><option value="">Choose a person</option>{people?.filter((person) => person.role !== "victim").map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
-              <label className="block"><span className="case-close-label">2 · Why did they do it?</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setMotiveExplanation(event.target.value)} required value={motiveExplanation} /></label>
-              <div>
-                <p className="case-close-label">3 · What was the weapon?</p>
-                {inventory?.length ? <label className="mt-2 block text-sm"><span>Choose a collected item, if you have it</span><select className="case-close-input" onChange={(event) => { const id = event.target.value; setWeaponItemId(id); if (id) setWeaponDescription(inventory.find((item) => item.id === id)?.name ?? ""); }} value={weaponItemId}><option value="">Describe another weapon</option>{inventory.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : null}
-                <label className="mt-2 block text-sm"><span>Describe the weapon</span><input className="case-close-input" maxLength={200} onChange={(event) => { setWeaponDescription(event.target.value); setWeaponItemId(""); }} required type="text" value={weaponDescription} /></label>
-              </div>
-              <fieldset>
-                <legend className="case-close-label">4 · Which pinned evidence proves it?</legend>
-                <p className="mt-1 text-xs text-[#6d5138]">Choose up to {MAX_EVIDENCE}. Selected: {evidenceIds.length}.</p>
-                <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {evidence.map((item) => {
-                    const selected = evidenceIds.includes(item.referenceId);
-                    return (
-                      <label className={`flex min-h-12 items-start gap-3 border border-[#6d5138]/50 p-3 text-sm ${!selected && evidenceIds.length >= MAX_EVIDENCE ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`} key={`${item.type}:${item.referenceId}`}>
-                        <input checked={selected} className="mt-1 size-4 accent-red-900" disabled={!selected && evidenceIds.length >= MAX_EVIDENCE} onChange={() => toggleEvidence(item.referenceId)} type="checkbox" />
-                        <span><strong className="block uppercase text-red-800">{item.type === "cctv" ? "Camera record" : item.type === "public_record" ? "Public record" : item.type === "forensic" ? "Lab report" : item.type === "device_file" ? "Device file" : item.type === "call" ? "Call" : item.type === "message" ? "Message" : item.type === "statement" ? "Statement" : "Found object"}</strong>{item.text.split("\n")[0]}</span>
-                      </label>
-                    );
-                  })}
+            <form className="game-dossier space-y-5 px-5 pb-20 pt-20 sm:px-8 sm:pb-16" onSubmit={review}>
+              {citing ? <NotebookOverlay onClose={() => setCiting(false)} onPick={(entry) => { setCiting(false); addProof({ kind: entry.type, referenceId: entry.referenceId, label: entry.label }); }} pickTitle="Cite evidence" roomCode={roomCode} /> : null}
+              <div className="border-b-2 border-[#6d5138] pb-4"><p className="text-xs uppercase tracking-[0.2em] text-red-800">Five findings · five stars</p><h3 className="mt-2 text-3xl uppercase">Tell it like it happened</h3><p className="mt-2 text-sm text-[#5b4635]">Write it in your own words. Name the killer and the weapon, say why and how, and cite the evidence that proves it.</p></div>
+              <div className="space-y-4 text-lg leading-[2.6rem]">
+                <div>
+                  <p>The killer is</p>
+                  <input aria-label="Who did it?" className="case-close-blank block w-full" maxLength={120} onChange={(event) => setCulpritName(event.target.value)} placeholder="their full name" value={culpritName} />
+                  <TypeAhead names={(people ?? []).filter((person) => !person.isVictim).map((person) => person.name)} onPick={setCulpritName} value={culpritName} />
+                  {culpritName.trim() && !accused ? <p className="text-sm leading-normal text-red-900">No one by that name in your files.</p> : null}
                 </div>
-              </fieldset>
-              <label className="block"><span className="case-close-label">Explain how the evidence proves your theory</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setEvidenceExplanation(event.target.value)} required value={evidenceExplanation} /></label>
-              <label className="block"><span className="case-close-label">5 · How was it done?</span><textarea className="case-close-input min-h-28" maxLength={2000} minLength={10} onChange={(event) => setMethodExplanation(event.target.value)} required value={methodExplanation} /></label>
-              <div className="flex flex-col-reverse gap-3 border-t border-[#6d5138]/40 pt-5 sm:flex-row sm:justify-end"><button className="min-h-11 border-2 border-[#573821] px-5 uppercase" onClick={() => setClosing(false)} type="button">Cancel</button><button className="min-h-11 border-2 border-red-900 bg-red-950 px-5 uppercase text-red-50 disabled:opacity-50" disabled={!canReview} type="submit">Review final theory</button></div>
+                <div>
+                  <p>who killed {victimName} with</p>
+                  <input aria-label="What was the weapon?" className="case-close-blank block w-full" maxLength={200} onChange={(event) => setWeaponDescription(event.target.value)} placeholder="the weapon, in your words" value={weaponDescription} />
+                  <TypeAhead names={(inventory ?? []).map((item) => item.name)} onPick={setWeaponDescription} value={weaponDescription} />
+                </div>
+                <p>They did it because <textarea aria-label="Why did they do it?" className="case-close-blank block min-h-16 w-full" maxLength={2000} onChange={(event) => setMotiveExplanation(event.target.value)} placeholder="the reason, in your words" value={motiveExplanation} /></p>
+                <p>This is how it was done: <textarea aria-label="How was it done?" className="case-close-blank block min-h-16 w-full" maxLength={2000} onChange={(event) => setMethodExplanation(event.target.value)} placeholder="step by step, in your words" value={methodExplanation} /></p>
+                <div>
+                  <p>And here is the proof:</p>
+                  <div className="min-h-16 border-2 border-dashed border-[#6d5138]/60 p-2 leading-normal" {...cardDropTarget(addProof, (kind) => kind !== "person" && kind !== "place")}>
+                    {evidenceIds.length ? (
+                      <ul className="flex flex-wrap gap-2">
+                        {evidenceIds.map((id) => <li className="flex items-center gap-2 border border-red-900/60 bg-[#efe3c4] px-2 py-1 text-sm" key={id}>{evidence.find((item) => item.referenceId === id)?.text.split("\n")[0] ?? "Evidence"}<button aria-label="Remove" className="text-red-900" onClick={() => toggleEvidence(id)} type="button">✕</button></li>)}
+                      </ul>
+                    ) : <p className="text-sm text-[#6d5138]">Nothing cited yet.</p>}
+                  </div>
+                  <button className="mt-2 min-h-10 border-2 border-[#573821] px-4 text-sm uppercase disabled:opacity-50" disabled={evidenceIds.length >= MAX_EVIDENCE} onClick={() => setCiting(true)} type="button">Cite evidence from the notebook</button>
+                  <textarea aria-label="Explain how the evidence proves it" className="case-close-blank mt-2 block min-h-16 w-full" maxLength={2000} onChange={(event) => setEvidenceExplanation(event.target.value)} placeholder="because this evidence shows..." value={evidenceExplanation} />
+                </div>
+              </div>
+              <div className="flex flex-col-reverse gap-3 border-t border-[#6d5138]/40 pt-5 sm:flex-row sm:justify-end"><button className="min-h-11 border-2 border-[#573821] px-5 uppercase" onClick={() => setClosing(false)} type="button">Cancel</button><button className="game-control-button min-h-11 px-5 uppercase text-[#f1c987] disabled:opacity-50" disabled={!canReview} type="submit"><ControlIcon name="play" />Review final theory</button></div>
             </form>
           )}
         </div>
       </main>
     </section>
+  );
+}
+
+type EpilogueData = { culprit: string; motive: string; method: string; explanation: string; events: { time: number; place: string; text: string }[] };
+
+type Answer = { culprit: string; weapon: string; motive: string; method: string; evidence: string };
+
+function Epilogue({ epilogue, answer }: { epilogue: EpilogueData; answer?: Answer }) {
+  return (
+    <div className="mt-10 border-t-2 border-[#6d5138] pt-6">
+      <p className="text-xs uppercase tracking-[0.2em] text-red-800">What really happened</p>
+      <h3 className="mt-2 text-2xl uppercase">{epilogue.culprit}</h3>
+      {answer ? (
+        <dl className="mt-4 grid gap-x-4 gap-y-3 border-y border-[#6d5138]/40 py-4 text-sm leading-relaxed sm:grid-cols-[auto_1fr_1fr]">
+          <dt className="hidden sm:block" />
+          <dd className="hidden text-xs uppercase text-red-900 sm:block">You said</dd>
+          <dd className="hidden text-xs uppercase text-red-900 sm:block">The truth</dd>
+          {([["Who", answer.culprit, epilogue.culprit], ["Why", answer.motive, epilogue.motive], ["How", answer.method, epilogue.method]] as const).map(([label, yours, truth]) => (
+            <div className="contents" key={label}>
+              <dt className="uppercase text-red-900">{label}</dt>
+              <dd><span className="text-xs uppercase text-[#8b7355] sm:hidden">You said · </span>{yours || "–"}</dd>
+              <dd><span className="text-xs uppercase text-[#8b7355] sm:hidden">The truth · </span>{truth}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <>
+          <p className="mt-3 text-sm leading-relaxed"><span className="uppercase text-red-900">Why · </span>{epilogue.motive}</p>
+          <p className="mt-2 text-sm leading-relaxed"><span className="uppercase text-red-900">How · </span>{epilogue.method}</p>
+        </>
+      )}
+      <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed">{epilogue.explanation}</p>
+      <ol className="mt-6 border-l-2 border-red-900/60 pl-4">
+        {epilogue.events.map((event, index) => (
+          <li className="reveal-card relative mb-4" key={`${event.time}-${index}`} style={{ animationDelay: `${Math.min(index, 20) * 120}ms` }}>
+            <span aria-hidden="true" className="absolute -left-[1.4rem] top-1 size-2 bg-red-900" />
+            <p className="font-mono text-xs text-[#5b4635]">{formatGameMinute(event.time)} · {event.place}</p>
+            <p className="text-sm leading-relaxed">{event.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }

@@ -1,194 +1,254 @@
 "use client";
 
+import { errorText } from "../../../lib/error-text";
+import { FirstTimeTip } from "../first-time-tip";
 import { useAuth } from "@clerk/nextjs";
 import { useUIMessages } from "@convex-dev/agent/react";
-import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
+import type { FunctionReturnType } from "convex/server";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { play } from "../../../lib/sound";
+import { CharacterPortrait } from "../character-portrait";
+import { GameIcon } from "../game-icon";
+import { ControlIcon } from "../control-icon";
+import { PinButton } from "../pin-button";
+import { DeviceViewer } from "./device-viewer";
+import { TypeAhead } from "../type-ahead";
+import { NotebookOverlay } from "../notebook-overlay";
 
-const roleLabels = {
-  victim: "Victim",
-  suspect: "Person of interest",
-  witness: "Witness",
-} as const;
+type Person = NonNullable<FunctionReturnType<typeof api.npcs.list>>[number];
+type Proof = FunctionReturnType<typeof api.npcConversations.listAvailableProof>[number];
 
 export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const people = useQuery(api.npcs.list, isLoaded && isSignedIn ? { roomCode } : "skip");
   const boardNodes = useQuery(api.clueBoard.getNodes, isLoaded && isSignedIn ? { roomCode } : "skip");
-  const createReference = useMutation(api.clueBoard.createReferenceNode);
-  const [pinning, setPinning] = useState("");
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState<Id<"npcs"> | null>(null);
-
-  function pinPerson(referenceId: string) {
-    const count = boardNodes?.length ?? 0;
-    setPinning(referenceId);
-    setError("");
-    void createReference({
-      roomCode,
-      type: "npc",
-      referenceId,
-      x: 80 + (count % 4) * 220,
-      y: 90 + Math.floor(count / 4) * 180,
-    }).catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "Could not pin this person.");
-    }).finally(() => setPinning(""));
-  }
 
   if (people === undefined) return <Message message="Opening interview files..." onBack={onBack} />;
   if (!people) return <Message message="Interview files are unavailable for this room." onBack={onBack} />;
   const selected = people.find((person) => person.id === selectedId);
 
   return (
-    <section className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-[#090807] text-[#211d17]">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b-4 border-[#573821] bg-[#d8c8a7] px-4 py-3 sm:px-6">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-red-900/70">Bureau interview desk</p>
-          <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">{selected ? selected.name : "People in this case"}</h2>
+    <section className="game-interview-scene absolute inset-0 z-20 flex flex-col overflow-hidden text-[#e4e6d8]">
+      <header className="game-station-header flex shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-[0.25em] text-[#e8ac51]">Interview room</p>
+          <h2 className="mt-1 break-words text-xl uppercase tracking-wide sm:text-2xl">{selected ? selected.name : "People we know of"}</h2>
         </div>
-        <button className="min-h-11 border-2 border-[#573821] px-3 py-2 text-sm uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">
-          Back
+        <button aria-label={selected ? "End interview" : "Leave the room"} className="game-control-button game-icon-mobile flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase" onClick={selected ? () => setSelectedId(null) : onBack} title={selected ? "End interview" : "Leave the room"} type="button">
+          <ControlIcon name="back" /><span className="hidden sm:inline">{selected ? "End interview" : "Leave the room"}</span>
         </button>
       </header>
-
-      <main className="min-h-0 flex-1 overflow-y-auto bg-[linear-gradient(rgba(35,27,20,0.06)_1px,transparent_1px)] bg-[size:100%_2rem] p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-6xl">
+      <main className={`game-station-main min-h-0 flex-1 p-3 sm:p-6 lg:p-8 ${selected ? "overflow-hidden" : "overflow-y-auto"}`}>
+        <div className={`mx-auto max-w-6xl ${selected ? "h-full" : ""}`}>
           {error ? <p className="mb-4 border-2 border-red-800 bg-red-950/90 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
-          {selected ? <InterviewPanel key={selected.id} roomCode={roomCode} person={selected} onBack={() => setSelectedId(null)} /> : <div className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#573821] pb-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-red-900">Case roster</p>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#3e342a]">
-                Review the known people before arranging an interview. A person must be present before questions can begin.
+          {selected ? <InterviewPanel key={selected.id} people={people} person={selected} roomCode={roomCode} /> : (
+            <>
+              <p className="max-w-2xl text-sm leading-relaxed text-[#c8d8d2]">
+                Only people your investigation has come across are on file. Find names in messages, records, and statements to add more. Interviews happen here at the bureau.
               </p>
-            </div>
-            <span className="border border-[#8b5b38] bg-[#e9dfc5] px-3 py-1 font-mono text-xs uppercase">{people.length} files</span>
-          </div>}
-
-          {!selected && people.length ? (
-            <ul className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {people.map((person, index) => (
-                <li className="relative min-h-48 rotate-[0.15deg] border-2 border-[#8b7355] bg-[#e9dfc5] p-5 shadow-[5px_5px_0_rgba(38,26,17,0.22)]" key={person.id}>
-                  <span className="absolute right-3 top-3 font-mono text-xs text-[#725f42]">#{String(index + 1).padStart(2, "0")}</span>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-red-800">{roleLabels[person.role]}</p>
-                  <h3 className="mt-2 pr-10 text-2xl uppercase leading-none">{person.name}</h3>
-                  <p className="mt-3 text-sm uppercase text-[#5d4d3d]">
-                    {[person.age ? `Age ${person.age}` : null, person.occupation].filter(Boolean).join(" · ") || "No public occupation"}
-                  </p>
-                  <p className="mt-5 border-t border-[#8b7355]/50 pt-4 text-sm leading-relaxed text-[#3e342a]">{person.publicDescription}</p>
-                  <button
-                    className="mt-4 min-h-11 border-2 border-[#573821] px-3 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2] disabled:cursor-default disabled:opacity-55"
-                    disabled={pinning === person.id || boardNodes?.some((node) => node.type === "npc" && node.referenceId === person.id)}
-                    onClick={() => pinPerson(person.id)}
-                    type="button"
-                  >
-                    {pinning === person.id ? "Pinning..." : boardNodes?.some((node) => node.type === "npc" && node.referenceId === person.id) ? "Pinned to clueboard" : "Pin to clueboard"}
-                  </button>
-                  {person.role !== "victim" ? <button className="ml-2 mt-4 min-h-11 border-2 border-red-900 bg-red-950 px-3 text-xs uppercase text-red-50 hover:bg-red-900" onClick={() => setSelectedId(person.id)} type="button">Interview</button> : null}
-                </li>
-              ))}
-            </ul>
-          ) : !selected ? (
-            <div className="mt-5 border-2 border-dashed border-[#8b7355] bg-[#e9dfc5]/70 p-8 text-center uppercase text-[#5d4d3d]">
-              No interview files are available yet.
-            </div>
-          ) : null}
+              <ul className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {people.map((person) => {
+                  return (
+                    <li className="game-dossier min-w-0 p-4 text-[#211d17]" key={person.id}>
+                      <div className="flex min-w-0 gap-4">
+                        <CharacterPortrait age={person.age} className="w-20" description={person.publicDescription} gender={person.gender} id={person.id} />
+                        <div className="min-w-0 flex-1">
+                          {person.isVictim ? <p className="text-xs uppercase tracking-[0.12em] text-red-800">Victim</p> : null}
+                          <h3 className="mt-1 break-words text-xl uppercase leading-tight">{person.name}</h3>
+                          <p className="mt-1 break-words text-xs uppercase text-[#5d4d3d]">{[person.age ? `Age ${person.age}` : null, person.occupation].filter(Boolean).join(" · ")}</p>
+                        </div>
+                      </div>
+                      <p className="mt-3 break-words border-t border-[#8b7355]/50 pt-3 text-sm leading-relaxed text-[#3e342a]">{person.publicDescription}</p>
+                      <p className="mt-2 text-xs italic text-[#5d4d3d]">First seen in: {person.firstSeenIn}</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <PinButton nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={person.id} roomCode={roomCode} type="npc" />
+                        {!person.isVictim ? <button className="game-control-button min-h-11 px-3 text-xs uppercase text-[#f1c987]" onClick={() => { play("door"); setSelectedId(person.id); }} type="button">Interview</button> : null}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
         </div>
       </main>
     </section>
   );
 }
 
-function InterviewPanel({ roomCode, person, onBack }: { roomCode: string; person: { id: Id<"npcs">; name: string; publicDescription: string }; onBack: () => void }) {
+function InterviewPanel({ roomCode, person, people }: { roomCode: string; person: Person; people: Person[] }) {
   const interview = useQuery(api.npcConversations.getInterview, { roomCode, npcId: person.id });
-  const availableProof = useQuery(api.npcConversations.listAvailableProof, { roomCode });
+  const proof = useQuery(api.npcConversations.listAvailableProof, { roomCode });
   const boardNodes = useQuery(api.clueBoard.getNodes, { roomCode });
   const callToBureau = useMutation(api.npcConversations.callToBureau);
   const sendQuestion = useMutation(api.npcConversations.sendQuestion);
   const readPhone = useMutation(api.npcConversations.readPhone);
-  const createReference = useMutation(api.clueBoard.createReferenceNode);
   const retryFailed = useMutation(api.npcConversations.retryFailed);
   const [question, setQuestion] = useState("");
-  const [proofKey, setProofKey] = useState("");
+  const [shown, setShown] = useState<Proof | null>(null);
+  const [trayOpen, setTrayOpen] = useState(false);
+  const [phoneOpen, setPhoneOpen] = useState(false);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
+  const [stamp, setStamp] = useState<"caught" | "missed" | null>(null);
+  const lastExposed = useRef<number | null>(null);
+  const lastMissed = useRef<number | null>(null);
+
+  // A lie broken by proof gets its moment: stamp and sting.
+  useEffect(() => {
+    if (!interview) return;
+    if (lastExposed.current !== null && interview.exposedLies > lastExposed.current) {
+      play("sting");
+      window.setTimeout(() => play("stamp"), 150);
+      setStamp("caught");
+      window.setTimeout(() => setStamp(null), 2600);
+    }
+    lastExposed.current = interview.exposedLies;
+    // Proof that proves nothing gets its own answer once the reply is in: they don't budge.
+    const missed = interview.turns.filter((turn) => turn.proofMissed && turn.status === "complete").at(-1)?.sequence ?? -1;
+    if (lastMissed.current !== null && missed > lastMissed.current) {
+      play("stamp");
+      setStamp("missed");
+      window.setTimeout(() => setStamp(null), 2200);
+    }
+    lastMissed.current = missed;
+  }, [interview]);
 
   function run(action: Promise<unknown>, after?: () => void) {
     setWorking(true);
     setError("");
-    void action.then(after).catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Could not complete that interview action.")).finally(() => setWorking(false));
+    play("click");
+    void action.then(after).catch((caught: unknown) => setError(errorText(caught, "Could not complete that interview action."))).finally(() => setWorking(false));
   }
 
-  function pinRecord(type: "call" | "message" | "statement", referenceId: string) {
-    const count = boardNodes?.length ?? 0;
-    run(createReference({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 }));
-  }
+  if (phoneOpen && interview?.phone?.read) return <DeviceViewer roomCode={roomCode} title={`${person.name}'s phone`} data={{ type: "phone", files: [], calls: interview.phone.calls, messages: interview.phone.messages }} nodes={boardNodes} onBack={() => setPhoneOpen(false)} onPinError={(caught) => setError(errorText(caught, "Could not update this pin."))} busy={working} error={error} />;
 
-  return <div className="mx-auto max-w-3xl">
-    <button className="min-h-11 border-2 border-[#573821] px-4 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">← All people</button>
-    <div className="mt-4 border-2 border-[#8b7355] bg-[#e9dfc5] p-4 sm:p-6">
-      <p className="text-xs uppercase tracking-[0.2em] text-red-800">Interview record</p>
-      <h3 className="mt-2 text-2xl uppercase">{person.name}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-[#4b3b2d]">{person.publicDescription}</p>
-      {!interview?.bureauPresent ? <div className="mt-5 border-t border-[#8b7355] pt-4"><p className="text-sm">Bring this person to the bureau before asking questions.</p><button className="mt-3 min-h-11 border-2 border-red-900 bg-red-950 px-4 text-xs uppercase text-red-50 hover:bg-red-900 disabled:opacity-50" disabled={working || !interview?.canTalkHere} onClick={() => run(callToBureau({ roomCode, npcId: person.id }))} type="button">Call to bureau</button>{interview && !interview.canTalkHere ? <p className="mt-2 text-sm text-red-800">Return to the bureau to make the call.</p> : null}</div> : null}
-      {interview?.threadId ? <ConversationMessages roomCode={roomCode} threadId={interview.threadId} /> : null}
-      {interview?.bureauPresent ? <div className="mt-5 border-t border-[#8b7355] pt-4">
-        <p className="text-xs uppercase tracking-widest text-red-800">Recorded statement</p>
-        {interview.statementStatus === null ? <button className="mt-3 min-h-11 border-2 border-[#573821] px-4 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2] disabled:opacity-50" disabled={working || interview.busy || !interview.canTalkHere} onClick={() => run(sendQuestion({ roomCode, npcId: person.id, question: "What did you witness?", requestStatements: true }))} type="button">Ask what they witnessed · 3 min</button> : null}
-        {interview.statementStatus === "requested" ? <p className="mt-2 text-sm" role="status">Statement question in progress.</p> : null}
-        {interview.statementStatus === "ready" && !interview.statements.length ? <p className="mt-2 text-sm text-[#725f42]">No statement was recorded.</p> : null}
-        {interview.statements.map((statement) => <div className="mt-3 border-l-2 border-[#8b7355] pl-3" key={statement.id}><p className="text-sm font-semibold">{statement.title}</p><p className="mt-1 whitespace-pre-wrap text-sm text-[#4b3b2d]">{statement.text}</p><button className="mt-2 min-h-10 border border-[#573821] px-3 text-xs uppercase disabled:opacity-50" disabled={working || boardNodes?.some(node => node.type === "statement" && node.referenceId === statement.id)} onClick={() => pinRecord("statement", statement.id)} type="button">{boardNodes?.some(node => node.type === "statement" && node.referenceId === statement.id) ? "Pinned to clueboard" : "Pin statement to clueboard"}</button></div>)}
-      </div> : null}
-      {interview?.bureauPresent && interview.phone ? <div className="mt-5 border-t border-[#8b7355] pt-4">
-        <p className="text-xs uppercase tracking-widest text-red-800">{person.name}&apos;s phone</p>
-        {!interview.phone.acquired && interview.phone.requesting ? <p className="mt-2 text-sm" role="status">Phone request in progress.</p> : null}
-        {!interview.phone.acquired && !interview.phone.requesting ? <><p className="mt-2 text-sm">Ask to examine the phone. This takes 3 game minutes.</p><button className="mt-3 min-h-11 border-2 border-[#573821] px-4 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2] disabled:opacity-50" disabled={working || interview.busy || !interview.canTalkHere} onClick={() => run(sendQuestion({ roomCode, npcId: person.id, question: "May I examine your phone?", requestPhone: true }))} type="button">Ask to see phone · 3 min</button></> : null}
-        {interview.phone.acquired && !interview.phone.read ? <><p className="mt-2 text-sm">The phone has been handed over. Read its records to share them with your partner.</p><button className="mt-3 min-h-11 border-2 border-[#573821] px-4 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2] disabled:opacity-50" disabled={working || interview.busy || !interview.canTalkHere} onClick={() => run(readPhone({ roomCode, npcId: person.id }))} type="button">Read phone · 5 min</button></> : null}
-        {interview.phone.read ? <div className="mt-3 space-y-3"><p className="text-sm">Phone records are shared with both detectives.</p>
-          {interview.phone.calls.map((call) => <div className="border-l-2 border-[#8b7355] pl-3" key={call.id}><p className="text-sm">{call.direction === "incoming" ? "Call from" : "Call to"} {call.otherParty} · {formatCaseTime(call.time)} · {Math.ceil(call.durationSeconds / 60)} min</p><button className="mt-2 min-h-10 border border-[#573821] px-3 text-xs uppercase disabled:opacity-50" disabled={working || boardNodes?.some(node => node.type === "call" && node.referenceId === call.id)} onClick={() => pinRecord("call", call.id)} type="button">{boardNodes?.some(node => node.type === "call" && node.referenceId === call.id) ? "Pinned to clueboard" : "Pin call to clueboard"}</button></div>)}
-          {interview.phone.messages.map((message) => <div className="border-l-2 border-[#8b7355] pl-3" key={message.id}><p className="text-sm">{message.direction === "incoming" ? "Message from" : "Message to"} {message.otherParty} · {formatCaseTime(message.time)}</p><p className="mt-1 whitespace-pre-wrap text-sm text-[#4b3b2d]">{message.body}</p><button className="mt-2 min-h-10 border border-[#573821] px-3 text-xs uppercase disabled:opacity-50" disabled={working || boardNodes?.some(node => node.type === "message" && node.referenceId === message.id)} onClick={() => pinRecord("message", message.id)} type="button">{boardNodes?.some(node => node.type === "message" && node.referenceId === message.id) ? "Pinned to clueboard" : "Pin message to clueboard"}</button></div>)}
-          {!interview.phone.calls.length && !interview.phone.messages.length ? <p className="text-sm text-[#725f42]">No calls or messages on this phone.</p> : null}
-        </div> : null}
-      </div> : null}
-      {interview?.bureauPresent ? <form className="mt-5 border-t border-[#8b7355] pt-4" onSubmit={(event) => { event.preventDefault(); const body = question.trim(); if (!body) return; const proofReference = availableProof?.find((proof) => `${proof.type}:${proof.referenceId}` === proofKey); if (proofKey && !proofReference) { setError("That proof is no longer available. Choose another item."); return; } run(sendQuestion({ roomCode, npcId: person.id, question: body, proofReference: proofReference ? { type: proofReference.type, referenceId: proofReference.referenceId } : undefined }), () => { setQuestion(""); setProofKey(""); }); }}>
-        <label className="block text-xs uppercase tracking-widest text-red-800" htmlFor="interview-question">Ask a question · 3 game min</label>
-        <textarea className="mt-2 min-h-24 w-full resize-y border-2 border-[#8b7355] bg-[#f7efdc] p-3 text-base outline-none focus:border-red-900" id="interview-question" maxLength={500} onChange={(event) => setQuestion(event.target.value)} placeholder="What were you doing that night?" value={question} />
-        <label className="mt-3 block text-xs uppercase tracking-widest text-red-800" htmlFor="interview-proof">Show proof (optional)</label>
-        <select className="mt-2 min-h-11 w-full border-2 border-[#8b7355] bg-[#f7efdc] px-3 text-sm" id="interview-proof" onChange={(event) => setProofKey(event.target.value)} value={proofKey}>
-          <option value="">No proof</option>
-          {availableProof?.map((proof) => <option key={`${proof.type}:${proof.referenceId}`} value={`${proof.type}:${proof.referenceId}`}>{proof.label}</option>)}
-        </select>
-        {!availableProof?.length ? <p className="mt-2 text-xs text-[#725f42]">Find evidence to show it here.</p> : null}
-        <button className="mt-2 min-h-11 border-2 border-red-900 bg-red-950 px-5 text-xs uppercase text-red-50 hover:bg-red-900 disabled:opacity-50" disabled={working || interview.busy || !interview.canTalkHere || !question.trim()} type="submit">{interview.busy ? "Finish current action" : "Ask question"}</button>
-        {!interview.canTalkHere ? <p className="mt-2 text-sm text-red-800">Return to the bureau to continue this interview.</p> : null}
-      </form> : null}
-      {interview?.turns.some((turn) => turn.status === "waiting" || turn.status === "queued" || turn.status === "processing") ? <p className="mt-3 text-sm text-[#6d4a26]" role="status">The next answer is on its way.</p> : null}
-      {interview?.turns.at(-1)?.status === "failed" ? <div className="mt-3 text-sm text-red-800" role="alert"><p>That answer could not be delivered. Retrying costs no game time.</p><button className="mt-2 min-h-10 border border-red-900 px-3 text-xs uppercase disabled:opacity-50" disabled={working} onClick={() => run(retryFailed({ roomCode, npcId: person.id }))} type="button">Retry answer</button></div> : null}
-      {error ? <p className="mt-3 border border-red-900 bg-red-950 p-3 text-sm text-red-50" role="alert">{error}</p> : null}
+  const present = interview?.bureauPresent ?? false;
+  const canAsk = Boolean(present && interview && !interview.busy && interview.canTalkHere && !working);
+  // Names the type-ahead may finish: only people and objects you already know of, and only once you start typing.
+  const knownNames = [
+    ...people.filter((other) => other.id !== person.id).map((other) => other.name),
+    ...(proof ?? []).filter((entry) => entry.type === "item").map((entry) => entry.label),
+  ];
+
+  const waiting = interview?.turns.some((turn) => turn.status === "waiting" || turn.status === "queued" || turn.status === "processing");
+
+  return (
+    <div className="relative grid h-full min-h-0 grid-rows-[max-content_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:grid-rows-1 lg:gap-5">
+      {/* The one way to catch a lie: Show evidence → pick it in the notebook → Confront. */}
+      {trayOpen ? <NotebookOverlay onClose={() => setTrayOpen(false)} onPick={(entry) => { setTrayOpen(false); setShown(entry); }} pickTitle={`Show ${person.name.split(" ")[0]}…`} roomCode={roomCode} /> : null}
+      {stamp ? <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"><p className={`contradiction-stamp px-6 py-3 text-3xl sm:text-5xl ${stamp === "missed" ? "contradiction-stamp--missed" : ""}`}>{stamp === "caught" ? "Contradiction" : "They don't budge"}</p></div> : null}
+      <aside className="game-dossier min-h-0 overflow-y-auto p-3 text-[#211d17] lg:p-5">
+        <div className="flex items-center gap-3 lg:flex-col lg:items-start">
+          <div className="relative w-16 shrink-0 sm:w-20 lg:w-full lg:max-w-[14rem]">
+            <CharacterPortrait age={person.age} className="w-full transition" description={person.publicDescription} expression={stamp === "caught" ? "caught" : stamp === "missed" ? "angry" : interview && interview.exposedLies > 0 ? "nervous" : "neutral"} gender={person.gender} id={person.id} />
+            <span aria-hidden="true" className="interview-foreground pointer-events-none absolute inset-x-0 bottom-0 hidden h-[36%] lg:block" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="break-words text-lg uppercase leading-tight">{person.name}</h3>
+            <p className="mt-1 text-xs italic text-[#5d4d3d]">
+              {!present ? "Not here yet." : interview && interview.exposedLies > 0 ? `Shifting in the chair. Caught out ${interview.exposedLies === 1 ? "once" : `${interview.exposedLies} times`}.` : "Sitting across the table."}
+            </p>
+          </div>
+        </div>
+        <details className="mt-3 border-t border-[#8b7355] pt-2 text-sm leading-relaxed text-[#4b3b2d] sm:hidden"><summary className="cursor-pointer text-xs uppercase text-red-800">Appearance</summary><p className="mt-2">{person.publicDescription}</p></details>
+        <p className="mt-3 hidden border-t border-[#8b7355] pt-3 text-sm leading-relaxed text-[#4b3b2d] sm:block">{person.publicDescription}</p>
+        {!present ? (
+          <div className="mt-4">
+            <button className="game-control-button min-h-11 w-full px-3 text-xs uppercase text-[#f1c987] disabled:opacity-50" disabled={working || !interview?.canTalkHere} onClick={() => run(callToBureau({ roomCode, npcId: person.id }), () => play("door"))} type="button">Have them brought in</button>
+            {interview && !interview.canTalkHere ? <p className="mt-2 text-xs">Interviews happen at the bureau. Travel back first.</p> : null}
+          </div>
+        ) : null}
+        {present && interview?.statements.length ? (
+          <details className="mt-4 border-t border-[#8b7355] pt-3" open>
+            <summary className="cursor-pointer text-xs uppercase tracking-widest text-red-800">Their statement</summary>
+            <span className="statement-stamp mt-2">Statement taken</span>
+            {interview.statements.map((statement) => (
+              <div className="mt-3 border-l-2 border-[#8b7355] pl-3" key={statement.id}>
+                <p className="text-sm font-semibold">{statement.title}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm">{statement.text}</p>
+                <PinButton className="mt-2" disabled={Boolean(working)} nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={statement.id} roomCode={roomCode} type="statement" />
+              </div>
+            ))}
+          </details>
+        ) : null}
+      </aside>
+
+      <section aria-label={`Interview with ${person.name}`} className="flex min-h-0 flex-col border border-[#6f9f98]/30 bg-[#09191c]/95 text-[#e4e6d8]">
+        <FirstTimeTip id="interview" title="Questioning">Type a question; each takes 3 minutes. Ask where they were to take their statement. To catch a lie: Show evidence, pick what proves them wrong, then Confront.</FirstTimeTip>
+        {interview?.threadId ? <ConversationMessages name={person.name} roomCode={roomCode} threadId={interview.threadId} /> : <div className="flex min-h-0 flex-1 items-center justify-center p-4 text-center text-sm text-[#c8d8d2]/60">{present ? `${person.name} is shown in and sits down.` : "The chair across the table is empty."}</div>}
+        {waiting ? <p className="px-4 py-2 text-sm italic text-[#e8ac51]" role="status">{person.name} is thinking<span className="animate-pulse">...</span></p> : null}
+        {interview?.turns.at(-1)?.status === "failed" ? <div className="px-4 py-2 text-sm text-red-200" role="alert"><p>That answer was lost. Asking again costs no time.</p><button className="mt-2 min-h-10 border border-red-400 px-3 text-xs uppercase disabled:opacity-50" disabled={working} onClick={() => run(retryFailed({ roomCode, npcId: person.id }))} type="button">Ask again</button></div> : null}
+        {present && interview ? (
+          <form className="relative border-t border-[#6f9f98]/45 p-3 sm:p-4" onSubmit={(event) => {
+            event.preventDefault();
+            const body = question.trim() || (shown ? "How do you explain this?" : "");
+            if (!body) return;
+            run(sendQuestion({ roomCode, npcId: person.id, question: body, ...(shown ? { proofReference: { type: shown.type, referenceId: shown.referenceId } } : {}) }), () => { setQuestion(""); setShown(null); setTrayOpen(false); });
+          }}>
+            <div className="mb-2 flex flex-wrap gap-2">
+              {interview.phone?.acquired && !interview.phone.read ? <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={!canAsk} onClick={() => run(readPhone({ roomCode, npcId: person.id }))} type="button">Go through their phone · 5 min</button> : null}
+              {interview.phone?.read ? <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987]" onClick={() => setPhoneOpen(true)} type="button">Open their phone</button> : null}
+            </div>
+            {shown ? <div className="mb-2 flex items-start justify-between gap-2 border-l-2 border-[#e8ac51] bg-[#1c2d2d] px-3 py-2 text-xs"><span className="min-w-0 break-words"><span className="uppercase text-[#e8ac51]">Showing · </span>{shown.label}. Press Confront.</span><button className="shrink-0 text-[#e8ac51]" onClick={() => setShown(null)} type="button">Take back</button></div> : null}
+            <label className="sr-only" htmlFor="interview-question">Ask a question</label>
+            <textarea className="min-h-16 w-full resize-y border border-[#45635d] bg-[#102326] p-3 text-base text-[#e4e6d8] outline-none focus:border-[#e8ac51]" id="interview-question" maxLength={500} onChange={(event) => setQuestion(event.target.value)} placeholder={shown ? "Add what you want to say (optional)..." : `Ask ${person.name.split(" ")[0]} anything...`} value={question} />
+            <TypeAhead names={knownNames} onPick={setQuestion} value={question} />
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button aria-expanded={trayOpen} className="game-control-button flex min-h-11 items-center gap-2 px-4 text-xs uppercase text-[#f1c987]" onClick={() => { play("open"); setTrayOpen(!trayOpen); }} title="Show something you found" type="button"><GameIcon className="size-6" name="records" />Show evidence</button>
+              <button className="game-control-button min-h-11 px-4 text-xs uppercase text-[#f1c987] disabled:opacity-50" disabled={!canAsk || (!question.trim() && !shown)} type="submit"><ControlIcon name="play" />{shown ? "Confront · 3 min" : "Ask · 3 min"}</button>
+              {!interview.canTalkHere ? <p className="text-xs text-red-200">Return to the bureau to continue.</p> : null}
+            </div>
+          </form>
+        ) : null}
+        {error ? <p className="mx-3 mb-3 border border-red-400 bg-red-950 p-3 text-sm text-red-50" role="alert">{error}</p> : null}
+      </section>
     </div>
-  </div>;
+  );
 }
 
-function formatCaseTime(minutes: number) {
-  const withinDay = ((minutes % 1440) + 1440) % 1440;
-  return `Day ${Math.floor(minutes / 1440) + 1} · ${String(Math.floor(withinDay / 60)).padStart(2, "0")}:${String(withinDay % 60).padStart(2, "0")}`;
+/** A saved question reads "Name asks: …" plus an optional shown-evidence block; split it for a clean transcript. */
+function detectiveLine(text: string) {
+  const match = text.match(/^(.+?) asks: ([\s\S]*?)(?:\nShows evidence from the shared case file: ([\s\S]*))?$/);
+  return match ? { speaker: match[1], question: match[2], shown: match[3]?.split("\n")[0] } : { speaker: "Detective", question: text, shown: undefined };
 }
 
-function ConversationMessages({ roomCode, threadId }: { roomCode: string; threadId: string }) {
+function ConversationMessages({ roomCode, threadId, name }: { roomCode: string; threadId: string; name: string }) {
   const { results, status, loadMore } = useUIMessages(api.npcConversations.listMessages, { roomCode, threadId }, { initialNumItems: 30, stream: true });
-  return <div aria-label="Shared interview conversation" className="mt-5 max-h-80 space-y-3 overflow-y-auto border-y border-[#8b7355] py-4">
-    {status === "CanLoadMore" ? <button className="min-h-10 border border-[#8b7355] px-3 text-xs uppercase" onClick={() => loadMore(30)} type="button">Earlier conversation</button> : null}
-    {results.length ? results.map((message) => <div className={`max-w-[92%] border-l-4 p-3 text-sm leading-relaxed ${message.role === "user" ? "ml-auto border-red-800 bg-[#f5eddb]" : "border-[#8b7355] bg-[#e0d3b7]"}`} key={message.key}><p className="mb-1 text-[10px] uppercase tracking-widest text-[#725f42]">{message.role === "user" ? "Detective" : "Reply"}{message.status === "streaming" ? " · speaking" : ""}</p><p className="whitespace-pre-wrap">{message.text}</p></div>) : <p className="text-sm text-[#725f42]">No questions asked yet.</p>}
-  </div>;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [results.length]);
+  return (
+    <div aria-label="Shared interview conversation" className="interview-transcript min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-6 text-[#31271f] sm:px-8" ref={scrollRef}>
+      {status === "CanLoadMore" ? <button className="min-h-10 border border-[#8b7355] px-3 text-xs uppercase" onClick={() => loadMore(30)} type="button">Earlier conversation</button> : null}
+      {results.length ? results.map((message) => {
+        const asked = message.role === "user" ? detectiveLine(message.text) : null;
+        return (
+        <div className={`border-b border-[#8b7355]/30 py-3 text-sm leading-relaxed ${message.role === "user" ? "pl-0 text-[#6e3529]" : "pl-4"}`} key={message.key}>
+          <p className="mb-1 text-xs uppercase tracking-widest text-[#8a6043]">{asked ? `${asked.speaker} asks` : name}{message.status === "streaming" ? " · speaking" : ""}</p>
+          {asked ? <>
+            <p className="whitespace-pre-wrap">{asked.question}</p>
+            {asked.shown ? <p className="mt-2 border-l-2 border-[#9a573e] pl-2 text-xs text-[#5d4d3d]"><span className="uppercase text-[#8b1d1d]">Shows · </span>{asked.shown}</p> : null}
+          </> : <p className="whitespace-pre-wrap">{message.text}</p>}
+        </div>
+        );
+      }) : <p className="text-sm italic text-[#5d4d3d]">{name} is shown in and sits down, waiting.</p>}
+    </div>
+  );
 }
 
 function Message({ message, onBack }: { message: string; onBack: () => void }) {
   return (
-    <section className="absolute inset-0 z-20 flex items-center justify-center bg-[#090807] p-4 text-[#211d17]">
-      <div className="w-full max-w-lg border-4 border-[#8b5b38] bg-[#e9dfc5] p-6 text-center shadow-[8px_8px_0_rgba(0,0,0,0.45)]">
-        <p className="text-lg uppercase">{message}</p>
-        <button className="mt-5 border-2 border-[#573821] px-4 py-2 uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">Back to bureau</button>
+    <section className="game-interview-scene absolute inset-0 z-20 flex items-center justify-center p-4 text-[#211d17]">
+      <div className="game-dossier w-full max-w-lg px-6 pb-20 pt-20 text-center sm:px-10">
+        <GameIcon className="mx-auto size-12" name="interview" />
+        <p className="mt-4 text-lg uppercase leading-snug">{message}</p>
+        <button className="game-control-button mt-6 min-h-11 w-full px-4 uppercase sm:w-auto" onClick={onBack} type="button"><ControlIcon name="back" />Leave the room</button>
       </div>
     </section>
   );

@@ -1,7 +1,7 @@
 "use client";
 
+import { errorText } from "../../../lib/error-text";
 import {
-  Background,
   ConnectionMode,
   Controls,
   Handle,
@@ -11,13 +11,20 @@ import {
   type Edge,
   type Node,
   type NodeProps,
+  type ReactFlowInstance,
   useNodesState,
 } from "@xyflow/react";
-import { Link2, Maximize2, Plus, Trash2, X } from "lucide-react";
-import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { GameIcon } from "../game-icon";
+import { ControlIcon } from "../control-icon";
+import { cardDropTarget } from "../../../lib/evidence-drag";
+
+/** Last pointer position during a drag, used to place a dropped card where it was let go. */
+const dropPoint = { x: 0, y: 0 };
 
 type StringColor = "red" | "gold" | "blue" | "green";
 type BoardData = {
@@ -47,17 +54,16 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
   const createEdge = useMutation(api.clueBoard.createEdge);
   const updateEdge = useMutation(api.clueBoard.updateEdge);
   const deleteEdge = useMutation(api.clueBoard.deleteEdge);
+  const createReference = useMutation(api.clueBoard.createReferenceNode);
+  const [flow, setFlow] = useState<ReactFlowInstance<BoardNode, Edge> | null>(null);
   const [stringColor, setStringColor] = useState<StringColor>("red");
   const [selectedEdge, setSelectedEdge] = useState<Id<"clueBoardEdges"> | null>(null);
   const [inspectingNode, setInspectingNode] = useState<Id<"clueBoardNodes"> | null>(null);
-  const [sourceId, setSourceId] = useState("");
-  const [targetId, setTargetId] = useState("");
-  const [tying, setTying] = useState(false);
   const [error, setError] = useState("");
   const [nodes, setNodes, onNodesChange] = useNodesState<BoardNode>([]);
 
   const showError = useCallback((caught: unknown) => {
-    setError(caught instanceof Error ? caught.message : "Could not update the board.");
+    setError(errorText(caught, "Could not update the board."));
   }, []);
   const saveText = useCallback((id: Id<"clueBoardNodes">, text: string) => {
     void updateNode({ nodeId: id, text }).catch(showError);
@@ -113,22 +119,6 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
     }).catch(showError);
   }
 
-  function tieSelected(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!sourceId || !targetId || sourceId === targetId) return;
-    setTying(true);
-    setError("");
-    void createEdge({
-      roomCode,
-      sourceNodeId: sourceId as Id<"clueBoardNodes">,
-      targetNodeId: targetId as Id<"clueBoardNodes">,
-      color: stringColor,
-    }).then(() => {
-      setSourceId("");
-      setTargetId("");
-    }).catch(showError).finally(() => setTying(false));
-  }
-
   function chooseColor(color: StringColor) {
     setStringColor(color);
     if (selectedEdge) void updateEdge({ edgeId: selectedEdge, color }).catch(showError);
@@ -143,19 +133,20 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
 
   return (
     <section className="absolute inset-0 z-40 flex flex-col bg-[#15100d] text-[#f4e8c8]" aria-label="Clue board">
-      <header className="z-10 flex flex-wrap items-center gap-3 border-b-2 border-[#5e3e29] bg-[#241812] px-4 py-3 shadow-lg">
+      <header className="z-10 flex flex-wrap items-center gap-2 border-b-2 border-[#5e3e29] bg-[#241812] px-3 py-2 shadow-lg sm:gap-3 sm:px-4 sm:py-3">
         <button className="clue-board-button" onClick={onBack} type="button">
-          <X aria-hidden="true" size={18} /> Back
+          <ControlIcon name="back" /> Step back
         </button>
-        <div className="mr-auto">
-          <p className="text-[10px] uppercase tracking-[0.22em] text-[#c99b63]">Shared case workspace</p>
-          <h1 className="text-xl uppercase text-[#fff1c9]">Clueboard</h1>
+        <GameIcon name="clueboard" className="size-7 sm:size-9" />
+        <div className="mr-auto min-w-0">
+          <p className="hidden text-xs uppercase tracking-[0.22em] text-[#c99b63] sm:block">Shared case workspace</p>
+          <h1 className="text-lg uppercase text-[#fff1c9] sm:text-xl">Clueboard</h1>
         </div>
-        <button className="clue-board-button" onClick={addNote} type="button">
-          <Plus aria-hidden="true" size={18} /> Add note
+        <button aria-label="Add note" className="clue-board-button game-icon-mobile ml-auto sm:ml-0" onClick={addNote} type="button">
+          <BoardIcon name="add" /> <span className="hidden sm:inline">Add note</span>
         </button>
-        <div className="flex items-center gap-2" aria-label="String color" role="group">
-          <Link2 aria-hidden="true" size={17} />
+        <div className="flex w-full items-center justify-end gap-2 border-t border-[#5e3e29] pt-2 sm:w-auto sm:border-0 sm:pt-0" aria-label="String color" role="group">
+          <BoardIcon name="link" />
           {Object.entries(colors).map(([name, color]) => (
             <button
               aria-label={color.label}
@@ -181,32 +172,25 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
               placeholder="Label string"
             />
             <button className="clue-board-button text-[#ffd3c6]" onClick={removeSelectedString} type="button">
-              <Trash2 aria-hidden="true" size={17} /> Remove
+              <BoardIcon name="remove" /> Remove
             </button>
           </div>
         ) : null}
-        {(savedNodes?.length ?? 0) >= 2 ? <details className="order-last w-full border-t border-[#5e3e29] pt-2">
-          <summary className="w-fit cursor-pointer text-xs uppercase tracking-wide text-[#fff1c9]">Tie string without dragging</summary>
-          <form className="mt-2 flex flex-wrap items-end gap-2 text-sm" onSubmit={tieSelected}>
-            <label className="min-w-40 flex-1">From card
-              <select className="mt-1 min-h-11 w-full border border-[#c99b63] bg-[#15100d] px-2 text-[#fff1c9]" onChange={(event) => setSourceId(event.target.value)} required value={sourceId}>
-                <option value="">Choose card</option>
-                {savedNodes?.map((node, index) => <option key={node._id} value={node._id}>#{index + 1} {node.text.split("\n")[0]}</option>)}
-              </select>
-            </label>
-            <label className="min-w-40 flex-1">To card
-              <select className="mt-1 min-h-11 w-full border border-[#c99b63] bg-[#15100d] px-2 text-[#fff1c9]" onChange={(event) => setTargetId(event.target.value)} required value={targetId}>
-                <option value="">Choose card</option>
-                {savedNodes?.map((node, index) => <option key={node._id} value={node._id}>#{index + 1} {node.text.split("\n")[0]}</option>)}
-              </select>
-            </label>
-            <button className="clue-board-button min-h-11" disabled={tying || !sourceId || !targetId || sourceId === targetId} type="submit">{tying ? "Tying..." : "Tie string"}</button>
-          </form>
-        </details> : null}
       </header>
 
-      <div className="clue-board relative min-h-0 flex-1">
+      <div
+        className="clue-board relative min-h-0 flex-1"
+        {...cardDropTarget((card) => {
+          // A notebook entry dropped on the board becomes a pinned card where it lands.
+          if (card.referenceId.includes(":") || card.referenceId === "victim") return;
+          const position = flow?.screenToFlowPosition({ x: dropPoint.x, y: dropPoint.y }) ?? { x: 80, y: 90 };
+          void createReference({ roomCode, type: card.kind === "person" ? "npc" : card.kind, referenceId: card.referenceId, x: position.x, y: position.y }).catch(showError);
+        })}
+        onDragOverCapture={(event) => { dropPoint.x = event.clientX; dropPoint.y = event.clientY; }}
+      >
         <ReactFlow<BoardNode, Edge>
+          style={{ background: "transparent" }}
+          onInit={setFlow}
           colorMode="dark"
           connectionLineStyle={{ stroke: colors[stringColor].value, strokeWidth: 3 }}
           connectionMode={ConnectionMode.Loose}
@@ -227,11 +211,18 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
           onNodesChange={onNodesChange}
           onPaneClick={() => setSelectedEdge(null)}
         >
-          <Background color="#8a6246" gap={28} size={1} />
           <Controls position="bottom-right" showInteractive={false} />
         </ReactFlow>
-        <p className="pointer-events-none absolute bottom-4 left-4 max-w-xs border border-[#69452e] bg-[#1b120e]/90 px-3 py-2 text-xs text-[#e3c997] shadow-md">
-          Drag notes to arrange them. Drag between pins or use Tie string above to connect cards.
+        {savedNodes?.length === 0 ? (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
+            <div className="max-w-sm rotate-[-1.5deg] bg-[#f3e6c4] p-5 text-center text-[#2b1d16] shadow-[4px_6px_0_rgb(0_0_0/45%)]">
+              <p className="text-xs uppercase tracking-[0.2em] text-red-800">The board is empty</p>
+              <p className="mt-2 text-sm leading-relaxed">Open the notebook (N) and pin the people and evidence that matter. Then tie strings between them to build your theory.</p>
+            </div>
+          </div>
+        ) : null}
+        <p className="pointer-events-none absolute bottom-2 left-2 max-w-[15rem] border border-[#69452e] bg-[#1b120e]/90 px-2 py-1 text-xs text-[#e3c997] shadow-md sm:bottom-4 sm:left-4 sm:max-w-xs sm:px-3 sm:py-2">
+          Drag notes to move them. Connect pins to tie a string.
         </p>
         {error ? (
           <p className="absolute left-1/2 top-4 -translate-x-1/2 border border-red-300 bg-red-950/95 px-4 py-2 text-sm text-red-100 shadow-lg" role="alert">
@@ -240,10 +231,10 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
         ) : null}
         {inspected ? (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#080605]/75 p-4">
-            <section aria-labelledby="board-detail-title" aria-modal="true" className="max-h-[80vh] w-full max-w-lg overflow-y-auto border-2 border-[#b4a06d] bg-[#eee2bd] p-5 text-[#292014] shadow-[8px_10px_0_rgba(0,0,0,0.55)]" role="dialog">
+            <section aria-labelledby="board-detail-title" aria-modal="true" className="max-h-[80vh] w-full max-w-lg overflow-y-auto border-2 border-[#b4a06d] bg-[#cbbd9d] p-5 text-[#292014] shadow-[8px_10px_0_rgba(0,0,0,0.55)] [overflow-wrap:anywhere]" role="dialog">
               <div className="flex items-start justify-between gap-4 border-b border-[#7a5636]/35 pb-3">
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#7a5636]">{boardLabel(inspected.type)}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#7a5636]">{boardLabel(inspected.type)}</p>
                   <h2 className="mt-1 text-xl uppercase" id="board-detail-title">Board item</h2>
                 </div>
                 <button
@@ -257,7 +248,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
                   }}
                   type="button"
                 >
-                  <X aria-hidden="true" size={20} />
+                  <BoardIcon name="close" />
                 </button>
               </div>
               <p className="mt-4 whitespace-pre-wrap text-base leading-6">{inspected.text}</p>
@@ -271,19 +262,20 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
 
 function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
   const label = boardLabel(data.kind);
+  const paper = data.kind === "npc" ? "person" : data.kind === "forensic" ? "lab" : data.kind === "note" ? "note" : "record";
   return (
-    <article className={`relative w-48 rotate-[-1deg] border border-[#b4a06d] bg-[#eee2bd] p-3 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(20,10,5,0.45)] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
+    <article className={`board-card board-card--${paper} relative w-52 rotate-[-1deg] p-3 pb-9 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(0,0,0,0.45)] [overflow-wrap:anywhere] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
       <Handle
         className="clue-pin"
         position={Position.Top}
         title="Drag to another pin"
         type="source"
       />
-      <p className="mb-2 text-[9px] uppercase tracking-[0.16em] text-[#7a5636]">{label}</p>
+      <p className="mb-2 text-xs uppercase tracking-[0.16em] text-[#7a5636]">{label}</p>
       {data.kind === "note" ? (
         <textarea
           aria-label="Note text"
-          className="nodrag nowheel min-h-24 w-full resize-none bg-transparent text-base leading-5 outline-none placeholder:text-[#725f42]"
+          className="nodrag nowheel min-h-24 w-full resize-none bg-transparent text-base leading-5 outline-none placeholder:text-[#4b3b2d]"
           defaultValue={data.text}
           key={data.text}
           maxLength={500}
@@ -301,7 +293,7 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
         title="Inspect board item"
         type="button"
       >
-        <Maximize2 aria-hidden="true" size={15} />
+        <BoardIcon name="inspect" />
       </button>
       <button
         aria-label="Remove board item"
@@ -310,7 +302,7 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
         title="Remove board item"
         type="button"
       >
-        <Trash2 aria-hidden="true" size={15} />
+        <BoardIcon name="remove" />
       </button>
     </article>
   );
@@ -318,4 +310,8 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
 
 function boardLabel(kind: BoardData["kind"]) {
   return kind === "npc" ? "Person" : kind === "cctv" ? "Camera record" : kind === "place" ? "Place" : kind === "public_record" ? "Public record" : kind === "item" ? "Found object" : kind === "forensic" ? "Lab report" : kind === "device_file" ? "Device file" : kind === "call" ? "Call" : kind === "message" ? "Message" : kind === "statement" ? "Statement" : "Note";
+}
+
+function BoardIcon({ name }: { name: "add" | "link" | "remove" | "inspect" | "close" }) {
+  return <span aria-hidden="true" className={`board-icon board-icon--${name}`} />;
 }

@@ -13,6 +13,7 @@ const publicRecord = v.object({
     v.literal("business"),
     v.literal("criminal"),
     v.literal("employment"),
+    v.literal("payment"),
     v.literal("other"),
   ),
   title: v.string(),
@@ -71,6 +72,8 @@ export const performSearch = mutation({
     if (!playing?.session.caseId) throw new Error("Start the investigation first.");
     await requireInvestigationOpen(ctx, playing.session._id);
     const term = searchTerm(search);
+    // A name or address is the lead; there is no "show me every file" search.
+    if (term.length < 2) throw new Error("Type a name or address to search for.");
     const now = Date.now();
     const settled = await settleActions(ctx, playing.session, now);
     const activeAction = await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", playing.player._id)).unique();

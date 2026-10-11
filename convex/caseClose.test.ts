@@ -117,12 +117,12 @@ test("case close grades privately from session-owned evidence", async () => {
   await t.finishAllScheduledFunctions(vi.runAllTimers);
   vi.useRealTimers();
 
-  expect(await player.query(api.caseClose.getResult, { roomCode: "ABC123" })).toEqual({
+  expect(await player.query(api.caseClose.getResult, { roomCode: "ABC123" })).toMatchObject({
     status: "complete",
     result: {
       killer: { star: true }, motive: { star: true }, weapon: { star: true }, evidence: { star: true }, method: { star: true }, totalStars: 5,
     },
-    error: undefined,
+    tookMinutes: expect.any(Number),
   });
   expect(JSON.stringify(await player.query(api.caseClose.getResult, { roomCode: "ABC123" }))).not.toContain("Private answer");
   await expect(player.mutation(api.caseClose.submit, {
