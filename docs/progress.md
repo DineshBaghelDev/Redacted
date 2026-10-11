@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-11 — Clueboard and device shells
+
+- Replaced the rejected light cork and dark grid with a restrained petrol felt board. Pinned cards now use four blank paper variants for people, records, lab reports, and notes; board controls and connection pins use raster icon art. Generated paper with visible halos was rejected before use.
+- Added inspected phone and laptop shell art around the live device apps and files. The laptop keeps its existing compact layout on small screens, where the full keyboard illustration would leave too little room to read.
+
 ## 2026-10-11 — Lab equipment and bench art
 
 - Added inspected transparent sprites for all eight existing lab tools and sealed/open evidence bags, plus a restrained bench surface and blank report sheet. The selected task, tool picker, bench state, and completed reports now show the matching art. Results remain live text and the test actions and timings are unchanged.

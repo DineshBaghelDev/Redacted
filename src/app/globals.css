@@ -91,6 +91,32 @@
   .device-app-icon--calls { background-position: 50% 0; }
   .device-app-icon--files { background-position: 100% 0; }
 
+  .phone-shell {
+    width: 100%;
+    min-height: 40rem;
+    padding: 4.8rem clamp(2.8rem, 10vw, 4rem) 4.4rem;
+    background: #0a1619 url('/assets/phone-shell.png') center / 100% 100% no-repeat;
+    image-rendering: pixelated;
+  }
+
+  @media (min-width: 768px) {
+    .laptop-art-shell {
+      aspect-ratio: 3 / 2;
+      border: 0;
+      border-radius: 0;
+      background: #0a1619 url('/assets/laptop-shell.png') center / 100% 100% no-repeat;
+      box-shadow: none;
+      image-rendering: pixelated;
+    }
+    .laptop-art-shell > span, .laptop-css-deck { display: none; }
+    .laptop-art-screen {
+      position: absolute;
+      inset: 8% 13% 32%;
+      min-height: 0;
+      overflow: auto;
+    }
+  }
+
   .control-icon {
     display: inline-block;
     flex: none;
@@ -557,8 +583,29 @@
 
 @layer components {
   .clue-board {
-    background: #704b31 url('/assets/clueboard-cork.png') center / 100% 100% no-repeat;
+    background: #102b2b url('/assets/clueboard-felt.png') center / cover no-repeat;
   }
+
+  .board-icon {
+    display: inline-block;
+    flex: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    background: url('/assets/clueboard-controls.png') no-repeat 0 50% / 500% 200%;
+    image-rendering: pixelated;
+  }
+  .board-icon--link { background-position: 25% 50%; }
+  .board-icon--remove { background-position: 50% 50%; }
+  .board-icon--inspect { background-position: 75% 50%; }
+  .board-icon--close { background-position: 100% 50%; }
+
+  .board-card {
+    background: #eee2c8 url('/assets/clueboard-cards.png') no-repeat 0 0 / 200% 200%;
+    image-rendering: pixelated;
+  }
+  .board-card--record { background-position: 100% 0; }
+  .board-card--lab { background-position: 0 100%; }
+  .board-card--note { background-position: 100% 100%; }
 
   .clue-board-button {
     @apply flex items-center gap-2 border border-[#a97a4f] bg-[#332219] px-3 py-2 text-sm uppercase text-[#f4e8c8] shadow-[2px_2px_0_#080605] hover:border-[#e8c98e] focus-visible:outline-2 focus-visible:outline-[#fff1c9];
@@ -568,9 +615,10 @@
     top: -13px;
     width: 18px;
     height: 18px;
-    border: 3px solid #e8cba4;
-    background: radial-gradient(circle at 35% 30%, #ff8276 0 18%, #a8201a 45% 70%, #5f100d 72%);
-    box-shadow: 0 3px 3px rgb(31 14 8 / 55%);
+    border: 0;
+    border-radius: 0;
+    background: url('/assets/control-icons.png') no-repeat 66.667% 100% / 400% 200%;
+    image-rendering: pixelated;
   }
 
   .clue-string {

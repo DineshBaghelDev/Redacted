@@ -54,8 +54,7 @@ export function DeviceViewer({ roomCode, title, data, nodes, onBack, onPinError,
     {error ? <p className="mx-3 mt-3 border border-red-400 bg-red-950 p-3 text-sm text-red-50" role="alert">{error}</p> : null}
     {data.type === "laptop" ? <Laptop busy={busy} files={data.files} nodes={nodes} onPinError={onPinError} roomCode={roomCode} title={title} /> : (
     <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-6">
-      <div className={`mx-auto flex min-h-[30rem] flex-col border-[10px] border-[#20383a] bg-[#09191b] shadow-[8px_10px_0_#0008] ${data.type === "phone" ? "max-w-[25rem] rounded-[1.5rem]" : "max-w-4xl"}`}>
-        {data.type === "phone" ? <div aria-hidden="true" className="mx-auto mt-2 h-1 w-14 rounded-full bg-[#446269]" /> : null}
+      <div className="phone-shell mx-auto flex max-w-[25rem] flex-col">
         <div className="flex items-center justify-between border-b border-[#45635d] px-4 py-3 text-xs uppercase text-[#a5c6bb]"><span>{data.type === "phone" ? "Phone" : "Laptop"}</span><span>Case records</span></div>
         <div className="flex-1 p-4 sm:p-6">
           {app === "home" ? <>
@@ -80,7 +79,6 @@ export function DeviceViewer({ roomCode, title, data, nodes, onBack, onPinError,
             </div>}
           </>}
         </div>
-        {data.type === "phone" ? <div aria-hidden="true" className="mx-auto mb-3 h-1 w-20 bg-[#446269]" /> : null}
       </div>
     </div>
     )}
@@ -94,9 +92,9 @@ function Laptop({ roomCode, title, files, nodes, busy, onPinError }: { roomCode:
   return (
     <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-8">
       <div className="mx-auto max-w-5xl">
-        <div className="relative rounded-t-xl border-[14px] border-b-[18px] border-[#1a2729] bg-[#0b1a1c] shadow-[8px_10px_0_#0008] sm:border-[18px] sm:border-b-[22px]">
+        <div className="laptop-art-shell relative rounded-t-xl border-[14px] border-b-[18px] border-[#1a2729] bg-[#0b1a1c] shadow-[8px_10px_0_#0008] sm:border-[18px] sm:border-b-[22px]">
           <span aria-hidden="true" className="absolute -top-[11px] left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-[#3c5a5c] sm:-top-[13px]" />
-          <div className="laptop-desktop flex min-h-[26rem] flex-col">
+          <div className="laptop-art-screen laptop-desktop flex min-h-[26rem] flex-col">
             <div className="flex items-center gap-2 border-b border-[#2c4446] bg-[#13282a] px-3 py-2 text-xs">
               <span aria-hidden="true" className="flex gap-1.5"><i className="size-2.5 rounded-full bg-[#b85c4c]" /><i className="size-2.5 rounded-full bg-[#d0a35a]" /><i className="size-2.5 rounded-full bg-[#5f9a7c]" /></span>
               <span className="ml-2 truncate font-mono text-[#a5c6bb]">Files — {title}</span>
@@ -126,7 +124,7 @@ function Laptop({ roomCode, title, files, nodes, busy, onPinError }: { roomCode:
             </div>
           </div>
         </div>
-        <div aria-hidden="true" className="mx-auto h-5 w-[calc(100%+3rem)] -translate-x-6 bg-[#2a3b3d] [clip-path:polygon(2%_0,98%_0,100%_100%,0_100%)]">
+        <div aria-hidden="true" className="laptop-css-deck mx-auto h-5 w-[calc(100%+3rem)] -translate-x-6 bg-[#2a3b3d] [clip-path:polygon(2%_0,98%_0,100%_100%,0_100%)]">
           <span className="mx-auto block h-1.5 w-24 translate-y-1 rounded-b bg-[#1a2729]" />
         </div>
       </div>

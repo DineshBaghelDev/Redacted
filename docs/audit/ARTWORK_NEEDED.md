@@ -11,6 +11,8 @@ bureau-noir, menu-noir, archive-room, interview-room, lab-room, records-room, re
 
 **Lab update:** all eight tool sprites, the bench, sealed/open evidence bags, and a blank report sheet are now in use. Per-task visuals remain open.
 
+**Board/device update:** dark felt, four blank card variants, raster board controls, image pin, and phone/laptop shells are in use. Keypad and call-log details remain open.
+
 ## Priority 1 — the screens players spend most time on
 
 ### A. Room interiors (biggest "app vs game" gap)

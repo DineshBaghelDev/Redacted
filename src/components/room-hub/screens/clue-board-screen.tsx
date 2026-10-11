@@ -15,7 +15,6 @@ import {
   type ReactFlowInstance,
   useNodesState,
 } from "@xyflow/react";
-import { Link2, Maximize2, Plus, Trash2, X } from "lucide-react";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
@@ -164,10 +163,10 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
           <h1 className="text-lg uppercase text-[#fff1c9] sm:text-xl">Clueboard</h1>
         </div>
         <button aria-label="Add note" className="clue-board-button game-icon-mobile ml-auto sm:ml-0" onClick={addNote} type="button">
-          <Plus aria-hidden="true" size={18} /> <span className="hidden sm:inline">Add note</span>
+          <BoardIcon name="add" /> <span className="hidden sm:inline">Add note</span>
         </button>
         <div className="flex w-full items-center justify-end gap-2 border-t border-[#5e3e29] pt-2 sm:w-auto sm:border-0 sm:pt-0" aria-label="String color" role="group">
-          <Link2 aria-hidden="true" size={17} />
+          <BoardIcon name="link" />
           {Object.entries(colors).map(([name, color]) => (
             <button
               aria-label={color.label}
@@ -193,7 +192,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
               placeholder="Label string"
             />
             <button className="clue-board-button text-[#ffd3c6]" onClick={removeSelectedString} type="button">
-              <Trash2 aria-hidden="true" size={17} /> Remove
+              <BoardIcon name="remove" /> Remove
             </button>
           </div>
         ) : null}
@@ -287,7 +286,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
                   }}
                   type="button"
                 >
-                  <X aria-hidden="true" size={20} />
+                  <BoardIcon name="close" />
                 </button>
               </div>
               <p className="mt-4 whitespace-pre-wrap text-base leading-6">{inspected.text}</p>
@@ -301,8 +300,9 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
 
 function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
   const label = boardLabel(data.kind);
+  const paper = data.kind === "npc" ? "person" : data.kind === "forensic" ? "lab" : data.kind === "note" ? "note" : "record";
   return (
-    <article className={`relative w-48 rotate-[-1deg] border border-[#b4a06d] bg-[#cbbd9d] p-3 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(20,10,5,0.45)] [overflow-wrap:anywhere] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
+    <article className={`board-card board-card--${paper} relative w-48 rotate-[-1deg] p-3 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(0,0,0,0.45)] [overflow-wrap:anywhere] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
       <Handle
         className="clue-pin"
         position={Position.Top}
@@ -331,7 +331,7 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
         title="Inspect board item"
         type="button"
       >
-        <Maximize2 aria-hidden="true" size={15} />
+        <BoardIcon name="inspect" />
       </button>
       <button
         aria-label="Remove board item"
@@ -340,7 +340,7 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
         title="Remove board item"
         type="button"
       >
-        <Trash2 aria-hidden="true" size={15} />
+        <BoardIcon name="remove" />
       </button>
     </article>
   );
@@ -348,4 +348,8 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
 
 function boardLabel(kind: BoardData["kind"]) {
   return kind === "npc" ? "Person" : kind === "cctv" ? "Camera record" : kind === "place" ? "Place" : kind === "public_record" ? "Public record" : kind === "item" ? "Found object" : kind === "forensic" ? "Lab report" : kind === "device_file" ? "Device file" : kind === "call" ? "Call" : kind === "message" ? "Message" : kind === "statement" ? "Statement" : "Note";
+}
+
+function BoardIcon({ name }: { name: "add" | "link" | "remove" | "inspect" | "close" }) {
+  return <span aria-hidden="true" className={`board-icon board-icon--${name}`} />;
 }
