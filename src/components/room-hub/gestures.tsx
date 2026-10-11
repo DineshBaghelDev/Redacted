@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /** Press and hold to commit (search a spot, send a sample). Releasing early cancels. Enter/Space also work. */
-export function HoldButton({ label, ms = 700, disabled, onDone, className = "" }: { label: string; ms?: number; disabled?: boolean; onDone: () => void; className?: string }) {
+export function HoldButton({ label, ms = 700, disabled, onDone, className = "", children }: { label: string; ms?: number; disabled?: boolean; onDone: () => void; className?: string; children?: ReactNode }) {
   const [progress, setProgress] = useState(0);
   const frame = useRef<number | null>(null);
   const started = useRef(0);
@@ -38,7 +38,7 @@ export function HoldButton({ label, ms = 700, disabled, onDone, className = "" }
       type="button"
     >
       <span aria-hidden="true" className="absolute inset-y-0 left-0 bg-[#e8ac51]/25" style={{ width: `${progress * 100}%` }} />
-      <span className="relative">{progress > 0 ? "Keep holding..." : label}</span>
+      {children ? <span className="relative block">{children}<span className="mt-1 block text-[0.65rem] text-[#c8d8d2]/60">{progress > 0 ? "Keep holding..." : label}</span></span> : <span className="relative">{progress > 0 ? "Keep holding..." : label}</span>}
     </button>
   );
 }

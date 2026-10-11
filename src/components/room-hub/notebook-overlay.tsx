@@ -76,16 +76,14 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
             people === undefined ? <p className="uppercase">Opening files...</p> : (
               <ul className="space-y-3">
                 {(people ?? []).map((person) => (
-                  <li className="flex cursor-grab gap-3 border-b border-[#8b7355]/60 pb-3" draggable key={person.id} onDragEnd={() => setDragging(false)} onDragStart={(event) => { startCardDrag(event, { kind: "person", referenceId: person.id, label: person.name }); setDragging(true); }}>
+                  <li className="group flex cursor-grab gap-3 border-b border-[#8b7355]/60 pb-3" draggable key={person.id} onDragEnd={() => setDragging(false)} onDragStart={(event) => { startCardDrag(event, { kind: "person", referenceId: person.id, label: person.name }); setDragging(true); }}>
                     <CharacterPortrait age={person.age} className="w-14" description={person.publicDescription} gender={person.gender} id={person.id} />
                     <div className="min-w-0 flex-1">
                       <p className="text-base uppercase">{person.name}{person.isVictim ? <span className="ml-2 text-xs text-red-800">Victim</span> : null}</p>
                       <p className="text-xs text-[#5d4d3d]">{[person.age ? `Age ${person.age}` : null, person.occupation].filter(Boolean).join(" · ")}</p>
                       <p className="mt-1 text-xs italic text-[#5d4d3d]">First seen in: {person.firstSeenIn}</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <button className="min-h-9 border border-[#573821] px-2 text-xs uppercase disabled:opacity-50" disabled={pinned("npc", person.id)} onClick={() => pinEntry("npc", person.id)} type="button">{pinned("npc", person.id) ? "Pinned" : "Pin"}</button>
-                        <button className="min-h-9 border border-[#573821] px-2 text-xs uppercase" onClick={() => share(`Look at ${person.name}`)} type="button">Show partner</button>
-                      </div>
+                      {person.spotted.length ? <p className="mt-1 text-xs text-[#5d4d3d]">You placed them on camera: {person.spotted.join("; ")}</p> : null}
+                      <EntryActions onPin={() => pinEntry("npc", person.id)} onShare={() => share(`Look at ${person.name}`)} pinned={pinned("npc", person.id)} />
                     </div>
                   </li>
                 ))}
@@ -102,14 +100,11 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
                   <h3 className="border-b border-red-900/50 pb-1 text-xs uppercase tracking-[0.18em] text-red-800">{label} · {rows.length}</h3>
                   <ul>
                     {rows.map((entry) => (
-                      <li className="cursor-grab border-b border-[#8b7355]/40 py-3" draggable key={`${entry.type}:${entry.referenceId}`} onDragEnd={() => setDragging(false)} onDragStart={(event) => { startCardDrag(event, { kind: entry.type, referenceId: entry.referenceId, label: entry.title }); setDragging(true); }}>
+                      <li className="group cursor-grab border-b border-[#8b7355]/40 py-3" draggable key={`${entry.type}:${entry.referenceId}`} onDragEnd={() => setDragging(false)} onDragStart={(event) => { startCardDrag(event, { kind: entry.type, referenceId: entry.referenceId, label: entry.title }); setDragging(true); }}>
                         <p className="text-sm font-semibold">{entry.title}</p>
                         {entry.time !== undefined ? <p className="font-mono text-xs text-[#5d4d3d]">{formatGameMinute(entry.time)}</p> : null}
                         <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{entry.body}</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <button className="min-h-9 border border-[#573821] px-2 text-xs uppercase disabled:opacity-50" disabled={pinned(entry.type, entry.referenceId)} onClick={() => pinEntry(entry.type, entry.referenceId)} type="button">{pinned(entry.type, entry.referenceId) ? "Pinned" : "Pin"}</button>
-                          <button className="min-h-9 border border-[#573821] px-2 text-xs uppercase" onClick={() => share(`Look at: ${entry.title}`)} type="button">Show partner</button>
-                        </div>
+                        <EntryActions onPin={() => pinEntry(entry.type, entry.referenceId)} onShare={() => share(`Look at: ${entry.title}`)} pinned={pinned(entry.type, entry.referenceId)} />
                       </li>
                     ))}
                   </ul>
@@ -119,6 +114,22 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
           )}
         </div>
       </aside>
+    </div>
+  );
+}
+
+/**
+ * Pin and Show partner for one entry. Hidden until you point at or focus the entry (dragging covers most uses);
+ * always shown on touch screens, which cannot hover. A pinned entry keeps a small "Pinned" mark either way.
+ */
+function EntryActions({ pinned, onPin, onShare }: { pinned: boolean; onPin: () => void; onShare: () => void }) {
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      {pinned ? <span className="text-xs uppercase text-red-800">Pinned</span> : null}
+      <span className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100">
+        {pinned ? null : <button className="min-h-8 border border-[#573821] px-2 text-xs uppercase" onClick={onPin} type="button">Pin</button>}
+        <button className="min-h-8 border border-[#573821] px-2 text-xs uppercase" onClick={onShare} type="button">Show partner</button>
+      </span>
     </div>
   );
 }

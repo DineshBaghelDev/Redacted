@@ -25,16 +25,16 @@ vi.mock("convex/react", () => ({
 }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/lobby/ABC123/place", useSearchParams: () => new URLSearchParams() }));
 
-test("arrives with the place description, then shows spots to search and a clickable floor plan", () => {
+test("arrives with the place description, then shows spots to search and a strip of rooms to walk to", () => {
   query.calls = 0;
   const html = renderToStaticMarkup(<PlaceScreen roomCode="ABC123" onBack={() => {}} />);
   expect(html).toContain("A tired apartment block.");
   expect(html).toContain("Step inside");
   expect(html).toContain("Where to look");
   expect(html).toContain("Front desk");
-  expect(html).toContain("Hold to search");
+  expect(html).toContain("Press and hold to search");
   expect(html).toContain("Check this room&#x27;s camera");
-  expect(html).toContain('aria-label="Floor plan"');
+  expect(html).toContain('aria-label="Rooms"');
   expect(html).toContain("◆ Sam");
   expect(html).toContain("1 min");
 });

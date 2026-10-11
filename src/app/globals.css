@@ -503,10 +503,10 @@
     to { transform: perspective(600px) rotateX(0); opacity: 1; }
   }
 
-  /* Building floor plan tiles. */
+  /* Room tiles in the building's room strip. */
   .plan-room {
-    position: absolute;
     display: flex;
+    min-height: 2.75rem;
     flex-direction: column;
     justify-content: center;
     gap: 2px;
@@ -571,4 +571,11 @@
     outline: none;
   }
   .case-close-blank:focus { border-bottom-color: #7f1d1d; background: rgb(239 227 196 / 90%); }
+}
+
+/* A drop zone under a dragged card. */
+[data-drop-over] {
+  outline: 2px dashed #e8ac51;
+  outline-offset: 2px;
+  background-color: rgb(232 172 81 / 0.08);
 }

@@ -1,5 +1,20 @@
 # Progress
 
+## 2026-10-11 — Clutter pass
+
+- Places: the floor plan is now a thin strip of rooms across the top (ordered by doors from the entrance), so the search area gets the full width. Each spot card is itself the press-and-hold target; no separate buttons.
+- Found objects: Bag and Pin are small icons in the card's header; "No code? Have the lab crack it" is a quiet link under the keypad.
+- Notebook: Pin and Show partner appear only when you point at an entry (always shown on touch screens); pinned entries keep a small mark.
+- Interviews: the "What did you see?" and "Hand me your phone" chips are gone. Asking in your own words ("where were you", "what happened", "can I see your phone") does the same.
+- Tips: only the first tip of a visit opens; later ones arrive as a one-line pill you can tap open.
+- Cameras: the hour log is folded away by default; the monitor has its own small pin button next to the face slot.
+
+## 2026-10-11 — Faces on camera sightings
+
+- Each camera sighting has a photo slot. Drag a face from the notebook or the "Compare with people" panel onto a sighting (on the monitor or in the hour log), or tap "Who is it?" and pick a face. The slot shows the portrait and name; ✕ clears it.
+- The mark is shared with the partner and synced everywhere: the notebook entry for the sighting, the person's People card ("You placed them on camera: …"), and a pinned clueboard card ("You think: …"), even if it was pinned before marking.
+- Any drop zone now glows while a card is dragged over it.
+
 ## 2026-10-11 — Code clues and plain descriptions
 
 - A device's code clue now sits in the same room as the device, in another spot when the room has one. Older cases are moved on the next session start.

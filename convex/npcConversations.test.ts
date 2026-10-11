@@ -72,7 +72,7 @@ test("only a bureau detective can start a shared, timed NPC interview", async ()
   const guessedNodeId = await t.run(async ctx => await ctx.db.insert("clueBoardNodes", { sessionId: ids.sessionId, type: "item", referenceId: ids.itemId, text: "Ticket", x: 0, y: 0, createdByPlayerId: (await ctx.db.query("sessionPlayers").withIndex("by_sessionId", q => q.eq("sessionId", ids.sessionId)).first())!._id, createdAt: 1, updatedAt: 1 }));
   await expect(one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Explain this", proofNodeId: guessedNodeId })).rejects.toThrow("Find this item");
   expect((await two.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId }))?.bureauPresent).toBe(true);
-  expect(await one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Where were you?" })).toEqual({ completeGameTime: 3 });
+  expect(await one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "How did you know her?" })).toEqual({ completeGameTime: 3 });
   expect(await two.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Who saw you?" })).toEqual({ completeGameTime: 3 });
   await expect(one.mutation(api.npcConversations.sendQuestion, { roomCode: "ABC123", npcId: ids.npcId, question: "Again?" })).rejects.toThrow("Finish your current action");
   expect((await one.query(api.npcConversations.getInterview, { roomCode: "ABC123", npcId: ids.npcId }))?.turns.map((turn) => turn.status)).toEqual(["waiting", "waiting"]);

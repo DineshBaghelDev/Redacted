@@ -1,5 +1,15 @@
 # Design Decisions
 
+## 2026-10-11 — One control per job
+
+- Where dragging or pressing already does the job, extra buttons are hidden or shrunk (spot cards, notebook entries, item cards). Touch screens still see every button because they cannot hover.
+- Statements and phone handovers are asked for in the player's own words; the game recognises the request instead of offering a chip that gives the move away.
+
+## 2026-10-11 — Faces on sightings are the player's guess
+
+- A face on a sighting is the team's own claim, never checked or used for scoring. It replaces the "Looks like…" dropdown because matching a description to a face is the deduction, so it should feel like pinning a photo.
+- The mark is one shared record (`cctvLabels`); every place that shows it (tape, notebook, People, clueboard) reads it live instead of copying it, so they can't drift apart.
+
 ## 2026-10-11 — Code clues belong to the owner
 
 - Each lab tool asks for a different action so tests don't all feel the same. A task can be failed and retried but never changes the stored result; it only stands in for doing the work.

@@ -20,13 +20,20 @@ export function readCardDrop(event: React.DragEvent): DragCard | null {
   }
 }
 
-/** Props that make an element accept dropped cards; `accepts` filters by kind. */
+/** Props that make an element accept dropped cards; `accepts` filters by kind. It glows while a card hovers over it. */
 export function cardDropTarget(onCard: (card: DragCard) => void, accepts?: (card: DragKind) => boolean) {
   return {
     onDragOver: (event: React.DragEvent) => {
-      if (event.dataTransfer.types.includes(MIME)) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }
+      if (!event.dataTransfer.types.includes(MIME)) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+      event.currentTarget.setAttribute("data-drop-over", "");
+    },
+    onDragLeave: (event: React.DragEvent) => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) event.currentTarget.removeAttribute("data-drop-over");
     },
     onDrop: (event: React.DragEvent) => {
+      event.currentTarget.removeAttribute("data-drop-over");
       const card = readCardDrop(event);
       if (!card || (accepts && !accepts(card.kind))) return;
       event.preventDefault();

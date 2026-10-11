@@ -47,6 +47,11 @@ export function asksForPhone(text: string) {
   return /\b(phone|mobile|cell)\b/i.test(text) && /\b(hand|give|see|show|check|look|examine|take|borrow|search|unlock|over|need|let me|can i|may i)\b/i.test(text);
 }
 
+/** "What did you see?", "where were you that night?", "tell me what happened", "did you hear anything?". */
+export function asksForStatement(text: string) {
+  return /\b(what (did|have) you (see|seen|hear|heard|notice|noticed)|where were you|what happened|tell me (what|about that)|statements?|did you (see|hear|notice) anything|walk me through)\b/i.test(text);
+}
+
 async function resolveProof(ctx: MutationCtx, session: Doc<"sessions">, reference: ProofReference) {
   if (!session.caseId) throw new Error("This room has no case.");
   const { type, referenceId: id } = reference;
@@ -190,6 +195,8 @@ export const sendQuestion = mutation({
       || await ctx.db.query("roomActions").withIndex("by_playerId", (q) => q.eq("playerId", member.player._id)).unique()) throw new Error("Finish your current action first.");
     const roomId = await bureauRoomId(ctx, member.session.caseId, member.player);
     if (!roomId) throw new Error("Enter the bureau interview room first.");
+    // Asking what they saw in your own words takes their statement, the first time.
+    if (!requestStatements && !conversation.statementStatus && asksForStatement(body)) requestStatements = true;
     let requestedPhoneId: Id<"devices"> | undefined;
     // Asking for the phone in your own words counts the same as the quick button, when there is a phone to hand over.
     if (!requestPhone && asksForPhone(body)) {

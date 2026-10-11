@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 
 const KEY = "redacted.tips.seen";
 const SHOW_MS = 12_000;
+// Only the first tip of a visit opens fully; later ones arrive as a one-line pill you can tap open.
+let openedThisVisit = false;
 
 function seenTips(): string[] {
   try {
@@ -37,15 +39,24 @@ export function resetTips() {
  */
 export function FirstTimeTip({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   const [visible, setVisible] = useState(() => typeof window !== "undefined" && !seenTips().includes(id));
+  const [open, setOpen] = useState(() => {
+    if (openedThisVisit) return false;
+    if (typeof window !== "undefined" && !seenTips().includes(id)) openedThisVisit = true;
+    return true;
+  });
 
   useEffect(() => {
     if (!visible) return;
     markSeen(id);
     const timer = window.setTimeout(() => setVisible(false), SHOW_MS);
     return () => window.clearTimeout(timer);
-  }, [id, visible]);
+  }, [id, visible, open]);
 
   if (!visible || typeof document === "undefined") return null;
+  if (!open) return createPortal(
+    <button className="game-tip pointer-events-auto fixed bottom-4 left-4 z-[65] max-w-[calc(100%-2rem)] px-3 py-2 text-left text-xs uppercase tracking-[0.18em] text-[#e8ac51] animate-in fade-in" onClick={() => setOpen(true)} type="button">Tip · {title} ▸</button>,
+    document.body,
+  );
   return createPortal(
     <aside className="game-tip pointer-events-auto fixed bottom-4 left-4 z-[65] w-[min(24rem,calc(100%-2rem))] animate-in fade-in slide-in-from-bottom-2" role="status">
       <div className="flex items-start gap-2">

@@ -57,7 +57,14 @@ export const getNodes = query({
       .query("clueBoardNodes")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
       .take(MAX_NODES);
-    return nodes.map(({ _id, type, referenceId, text, x, y }) => ({ _id, type, referenceId, text, x, y }));
+    // A pinned sighting shows the team's current "looks like" mark, so marking after pinning stays in sync.
+    const marked = new Map<string, string>();
+    for await (const label of ctx.db.query("cctvLabels").withIndex("by_sessionId_and_recordEvidenceId", (q) => q.eq("sessionId", session._id))) {
+      const person = await ctx.db.get(label.npcId);
+      if (person) marked.set(label.recordEvidenceId, person.name);
+    }
+    return nodes.map(({ _id, type, referenceId, text, x, y }) => ({ _id, type, referenceId, x, y,
+      text: type === "cctv" && referenceId && marked.has(referenceId) ? `${text}\nYou think: ${marked.get(referenceId)}` : text }));
   },
 });
 

@@ -29,13 +29,8 @@ const atmosphere = {
   Night: "It is dark and still. Your torch picks out the doorway.",
 } as const;
 
-const CELL_W = 168;
-const CELL_H = 64;
-const GAP_X = 40;
-const GAP_Y = 18;
-
-/** Lays one floor out as columns by distance from its first room, so doors read left to right. */
-function floorLayout(rooms: Room[], connections: Place["connections"]) {
+/** Orders one floor's rooms by how many doors they are from its first room, so the strip reads like walking in. */
+function walkOrder(rooms: Room[], connections: Place["connections"]) {
   const ids = new Set(rooms.map((room) => room.id));
   const edges = connections.filter((edge) => ids.has(edge.a) && ids.has(edge.b));
   const start = rooms.find((room) => room.isEntrance) ?? rooms[0];
@@ -48,19 +43,7 @@ function floorLayout(rooms: Room[], connections: Place["connections"]) {
       if (next && !depth.has(next)) { depth.set(next, depth.get(current)! + 1); queue.push(next); }
     }
   }
-  const maxDepth = Math.max(0, ...depth.values());
-  for (const room of rooms) if (!depth.has(room.id)) depth.set(room.id, maxDepth + 1);
-  const rows = new Map<number, number>();
-  const positions = new Map<string, { x: number; y: number }>();
-  for (const room of rooms) {
-    const column = depth.get(room.id)!;
-    const row = rows.get(column) ?? 0;
-    rows.set(column, row + 1);
-    positions.set(room.id, { x: column * (CELL_W + GAP_X), y: row * (CELL_H + GAP_Y) });
-  }
-  const width = Math.max(...[...positions.values()].map((point) => point.x)) + CELL_W;
-  const height = Math.max(...[...positions.values()].map((point) => point.y)) + CELL_H;
-  return { positions, edges, width, height };
+  return [...rooms].sort((a, b) => (depth.get(a.id) ?? 99) - (depth.get(b.id) ?? 99));
 }
 
 export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
@@ -77,7 +60,6 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   const [now, setNow] = useState(0);
   const [error, setError] = useState("");
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [planOpen, setPlanOpen] = useState(false);
   const [floor, setFloor] = useState<number | null>(null);
   const [arrivedAt, setArrivedAt] = useState<string | null>(() => {
     try {
@@ -153,8 +135,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
     ? 0 : Math.max(0, Math.floor((now - place.clock.clockStartedAt) / place.clock.minuteMs)));
   const floors = [...new Set(place.rooms.map((room) => room.floor))].sort((a, b) => a - b);
   const shownFloor = floor ?? currentRoom?.floor ?? floors[0] ?? 0;
-  const floorRooms = place.rooms.filter((room) => room.floor === shownFloor);
-  const layout = floorLayout(floorRooms, place.connections);
+  const floorRooms = walkOrder(place.rooms.filter((room) => room.floor === shownFloor), place.connections);
   const stairs = new Set(place.connections.flatMap((edge) => {
     const a = place.rooms.find((room) => room.id === edge.a);
     const b = place.rooms.find((room) => room.id === edge.b);
@@ -198,59 +179,40 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
         </div>
       ) : null}
 
-      <div className="grid min-h-0 flex-1 content-start overflow-y-auto lg:content-normal lg:grid-cols-[minmax(0,1.1fr)_minmax(22rem,1fr)] lg:overflow-hidden">
-        <nav aria-label="Floor plan" className="order-2 border-t border-[#6f9f98]/25 bg-[#071619]/80 p-4 lg:order-1 lg:overflow-auto lg:border-r lg:border-t-0 lg:p-5">
-          <button aria-expanded={planOpen} className="flex min-h-11 w-full items-center gap-3 text-left text-sm uppercase text-[#f1c987] lg:hidden" onClick={() => setPlanOpen(!planOpen)} type="button"><InvestigationIcon className="size-8" name="room" /><span>Floor plan · {place.rooms.length} rooms</span><span className="ml-auto text-xs">{planOpen ? "Hide" : "Show"}</span></button>
-          <div className={planOpen ? "block" : "hidden lg:block"}>
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="mr-auto text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Floor plan · tap a room to walk there</p>
-              {floors.length > 1 ? floors.map((number) => <button aria-pressed={number === shownFloor} className="min-h-9 border border-[#6f9f98]/50 px-3 text-xs uppercase aria-pressed:border-[#e8ac51] aria-pressed:text-[#f1c987]" key={number} onClick={() => setFloor(number)} type="button">{number === 0 ? "Ground" : `Floor ${number}`}</button>) : null}
-            </div>
-            <div className="mt-4 overflow-x-auto pb-2">
-              <div className="relative" style={{ width: layout.width, height: layout.height }}>
-                <svg aria-hidden="true" className="absolute inset-0" height={layout.height} width={layout.width}>
-                  {layout.edges.map((edge) => {
-                    const a = layout.positions.get(edge.a)!;
-                    const b = layout.positions.get(edge.b)!;
-                    return <line key={`${edge.a}-${edge.b}`} stroke="#6f9f98" strokeDasharray="4 3" strokeOpacity=".6" strokeWidth="2" x1={a.x + CELL_W / 2} x2={b.x + CELL_W / 2} y1={a.y + CELL_H / 2} y2={b.y + CELL_H / 2} />;
-                  })}
-                </svg>
-                {floorRooms.map((room) => {
-                  const point = layout.positions.get(room.id)!;
-                  const current = room.id === place.currentRoomId;
-                  const done = room.spots.length > 0 && room.spots.every((spot) => spot.searched);
-                  const partner = place.partners.find((item) => item.roomId === room.id);
-                  return (
-                    <button
-                      className="plan-room"
-                      data-current={current}
-                      data-done={done}
-                      disabled={busy || current || room.walkMinutes === undefined}
-                      key={room.id}
-                      onClick={() => { setPlanOpen(false); run(moveToRoom({ roomCode, roomId: room.id })); }}
-                      style={{ left: point.x, top: point.y, width: CELL_W, height: CELL_H }}
-                      title={current ? "You are here" : room.walkMinutes !== undefined ? `Walk here · ${room.walkMinutes} min` : "No way through"}
-                      type="button"
-                    >
-                      <span className="line-clamp-2 break-words">{room.name}</span>
-                      <span className="flex items-center gap-1 text-[0.65rem] normal-case text-[#c8d8d2]/70">
-                        {current ? <span className="text-[#f1c987]">● You</span> : room.walkMinutes !== undefined ? `${room.walkMinutes} min` : null}
-                        {partner ? <span className="text-[#9fd1c4]">◆ {partner.name}</span> : null}
-                        {stairs.has(room.id) ? <span>↕</span> : null}
-                        {room.hasCamera ? <span title="Camera">◉</span> : null}
-                        {done ? <span>✓</span> : null}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </nav>
+      <nav aria-label="Rooms" className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-[#6f9f98]/25 bg-[#071619]/85 px-4 py-2 sm:px-6">
+        {floors.length > 1 ? floors.map((number) => <button aria-pressed={number === shownFloor} className="min-h-9 shrink-0 border border-[#6f9f98]/50 px-2 text-xs uppercase aria-pressed:border-[#e8ac51] aria-pressed:text-[#f1c987]" key={number} onClick={() => setFloor(number)} type="button">{number === 0 ? "Ground" : `Floor ${number}`}</button>) : null}
+        {floorRooms.map((room) => {
+          const current = room.id === place.currentRoomId;
+          const done = room.spots.length > 0 && room.spots.every((spot) => spot.searched);
+          const partner = place.partners.find((item) => item.roomId === room.id);
+          return (
+            <button
+              className="plan-room relative shrink-0"
+              data-current={current}
+              data-done={done}
+              disabled={busy || current || room.walkMinutes === undefined}
+              key={room.id}
+              onClick={() => run(moveToRoom({ roomCode, roomId: room.id }))}
+              title={current ? "You are here" : room.walkMinutes !== undefined ? `Walk here · ${room.walkMinutes} min` : "No way through"}
+              type="button"
+            >
+              <span className="whitespace-nowrap">{room.name}</span>
+              <span className="flex items-center gap-1 text-[0.65rem] normal-case text-[#c8d8d2]/70">
+                {current ? <span className="text-[#f1c987]">● You</span> : room.walkMinutes !== undefined ? `${room.walkMinutes} min` : null}
+                {partner ? <span className="text-[#9fd1c4]">◆ {partner.name}</span> : null}
+                {stairs.has(room.id) ? <span>↕</span> : null}
+                {room.hasCamera ? <span title="Camera">◉</span> : null}
+                {done ? <span>✓</span> : null}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
 
-        <div className="game-station-main order-1 min-h-0 p-4 sm:p-6 lg:order-2 lg:overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="game-station-main mx-auto min-h-0 max-w-5xl p-4 sm:p-6">
           <h3 className="flex items-center gap-3 text-2xl uppercase"><InvestigationIcon className="size-11" name="room" /><span className="min-w-0 break-words">{currentRoom?.name ?? "Entrance"}</span></h3>
-          <FirstTimeTip id="place" title="Searching a place">Pick a spot to search it (4 min). Anything there flips up as a card: bag it for the lab, or pin it. Tap a room on the floor plan to walk there. Press N any time for the notebook.</FirstTimeTip>
+          <FirstTimeTip id="place" title="Searching a place">Press and hold a spot to search it (4 min). Anything there flips up as a card: bag it for the lab, or pin it. Tap a room in the strip at the top to walk there. Press N any time for the notebook.</FirstTimeTip>
           {place.action && place.action.kind !== "search" ? (
             <div className="mt-4 border border-[#e8ac51]/45 bg-[#211d15] p-3" role="status">
               <p className="text-sm uppercase text-[#f1c987]">{actionLabel}</p>
@@ -263,24 +225,25 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
           {currentRoom?.spots.length ? (
             <>
               <p className="mt-6 text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Where to look · 4 min each</p>
-              <ul className="mt-2 grid gap-3 sm:grid-cols-2">
+              <ul className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {currentRoom.spots.map((spot) => {
                   const searching = place.action?.kind === "search" && place.action.slot === spot.key;
                   const found = here.filter((item) => item.spot === spot.key);
                   return (
-                    <li className={`border p-3 ${spot.searched ? "border-[#6f9f98]/30 bg-[#071619]/70" : "border-[#e8ac51]/40 bg-[#14140e]/70"}`} key={spot.key}>
-                      <p className="flex items-center gap-2 text-sm uppercase"><InvestigationIcon className="size-7" name="search" />{spot.name}</p>
+                    <li key={spot.key}>
                       {!spot.searched ? (
-                        <HoldButton className="mt-2" disabled={busy} label={searching ? "Searching..." : "Hold to search"} onDone={() => run(searchSpot({ roomCode, spot: spot.key }))} />
-                      ) : found.length ? (
+                        <HoldButton className="min-h-20 border-[#e8ac51]/40 bg-[#14140e]/70 p-3 text-left normal-case" disabled={busy} label={searching ? "Searching..." : "Press and hold to search"} onDone={() => run(searchSpot({ roomCode, spot: spot.key }))}>
+                          <span className="flex items-center gap-2 text-sm uppercase text-[#e4e6d8]"><InvestigationIcon className="size-7" name="search" />{spot.name}</span>
+                        </HoldButton>
+                      ) : <div className="border border-[#6f9f98]/30 bg-[#071619]/70 p-3"><p className="flex items-center gap-2 text-sm uppercase"><InvestigationIcon className="size-7" name="search" />{spot.name}</p>{found.length ? (
                         <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />)}</div>
-                      ) : <p className="mt-2 text-sm text-[#c8d8d2]/55">Nothing here.</p>}
+                      ) : <p className="mt-2 text-sm text-[#c8d8d2]/55">Nothing here.</p>}</div>}
                     </li>
                   );
                 })}
               </ul>
             </>
-          ) : <p className="mt-6 text-sm text-[#c8d8d2]/60">Nothing to search here. Use the floor plan to move on.</p>}
+          ) : <p className="mt-6 text-sm text-[#c8d8d2]/60">Nothing to search here. Pick another room at the top.</p>}
 
           <details className="mt-8 border-t border-[#6f9f98]/25 pt-4">
             <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/70">Carried evidence · {inventory.length}</summary>
@@ -308,21 +271,22 @@ function ItemCard({ item, busy, pinned, fresh, onRead, onOpenDevice, onCollect, 
   const locked = item.device && !item.device.read;
   return (
     <article className={`border-l-2 border-[#e8ac51] bg-[#0b1a1c]/90 p-3 ${fresh ? "reveal-card" : ""}`} draggable onDragStart={(event) => startCardDrag(event, { kind: "item", referenceId: item.id, label: item.name })}>
-      <h5 className="flex items-center gap-2 text-sm uppercase text-[#f1c987]"><InvestigationIcon className="size-8" name={item.device ? "device" : "evidence"} /><span className="min-w-0 break-words">{item.name}</span></h5>
+      <div className="flex items-start gap-2">
+        <h5 className="flex min-w-0 flex-1 items-center gap-2 text-sm uppercase text-[#f1c987]"><InvestigationIcon className="size-8" name={item.device ? "device" : "evidence"} /><span className="min-w-0 break-words">{item.name}</span></h5>
+        {onCollect && item.collectible && !item.collected ? <button aria-label="Bag it for the lab" className="shrink-0 border border-[#e8ac51]/50 p-1 hover:border-[#e8ac51] disabled:opacity-45" disabled={busy} onClick={onCollect} title="Bag it for the lab" type="button"><InvestigationIcon className="size-6" name="lab" /></button> : null}
+        {item.collected ? <span className="shrink-0 text-[0.65rem] uppercase text-[#9fd1c4]" title="In the evidence bag">Bagged</span> : null}
+        <button aria-label={pinned ? "Pinned to the clueboard" : "Pin to the clueboard"} className="shrink-0 border border-[#6f9f98]/50 p-1 hover:border-[#e8ac51] disabled:opacity-35" disabled={busy || pinned} onClick={onPin} title={pinned ? "Pinned" : "Pin to the clueboard"} type="button"><GameIcon className="size-6" name="clueboard" /></button>
+      </div>
       <p className="mt-2 text-sm leading-relaxed text-[#c8d8d2]/75">{item.description}</p>
       {locked ? (
         <form className="mt-3 flex flex-wrap items-center gap-2" onSubmit={(event) => { event.preventDefault(); if (code.length === 4) onRead(code); }}>
           <label className="sr-only" htmlFor={`code-${item.id}`}>Unlock code</label>
           <input autoComplete="off" className="h-9 w-24 border border-[#45635d] bg-[#071014] text-center font-mono text-lg tracking-[0.4em] text-[#f1c987] outline-none focus:border-[#e8ac51]" id={`code-${item.id}`} inputMode="numeric" maxLength={4} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="····" value={code} />
           <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={busy || code.length !== 4} type="submit">Unlock · 5 min</button>
-          <button className="min-h-9 px-1 text-xs uppercase text-[#c8d8d2]/70 underline-offset-4 hover:text-[#e8ac51] hover:underline disabled:opacity-45" disabled={busy} onClick={() => onRead(undefined, true)} type="button">Have the lab crack it · 60 min</button>
+          <button className="basis-full text-left text-[0.7rem] normal-case text-[#c8d8d2]/55 underline-offset-4 hover:text-[#e8ac51] hover:underline disabled:opacity-45" disabled={busy} onClick={() => onRead(undefined, true)} type="button">No code? Have the lab crack it (60 min)</button>
         </form>
       ) : null}
-      <div className="mt-3 flex flex-wrap gap-2">
-        {item.device?.read ? <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987]" onClick={onOpenDevice} type="button">Open {item.device.type}</button> : null}
-        {onCollect && item.collectible && !item.collected ? <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={busy} onClick={onCollect} type="button">Bag it</button> : null}
-        <button className="min-h-9 border border-[#6f9f98]/60 px-2 text-xs uppercase disabled:opacity-45" disabled={busy || pinned} onClick={onPin} type="button">{pinned ? "Pinned" : "Pin"}</button>
-      </div>
+      {item.device?.read ? <button className="mt-3 min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987]" onClick={onOpenDevice} type="button">Open {item.device.type}</button> : null}
     </article>
   );
 }

@@ -255,7 +255,7 @@ Submission stores the report and schedules private grading. If grading fails, th
 
 ```ts
 notebook.get({ roomCode })                 // everything the session has uncovered, as readable entries
-npcs.list({ roomCode })                    // only people the team has come across; isVictim + firstSeenIn, no roles
+npcs.list({ roomCode })                    // only people the team has come across; isVictim + firstSeenIn, no roles; spotted = camera sightings the team marked as them (unchecked)
 coop.get({ roomCode })                     // partner place/activity + recent pings
 coop.ping({ roomCode, text })              // "look at this" to the partner
 caseClose.giveUp({ roomCode })             // ends the room for both, reveals the epilogue
