@@ -12,6 +12,7 @@ import { TypeAhead } from "../type-ahead";
 import { NotebookOverlay } from "../notebook-overlay";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { ControlIcon } from "../control-icon";
+import { ResultStars } from "../result-stars";
 import { go } from "../../../lib/game-nav";
 import { play } from "../../../lib/sound";
 
@@ -169,14 +170,12 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
 
           {closeState?.status === "complete" && closeState.result ? (
             <section className="game-dossier px-5 pb-20 pt-20 sm:px-8 sm:pb-16" aria-live="polite">
-              <p className="text-xs uppercase tracking-[0.2em] text-red-800">Case closed</p>
+              <p className="case-stamp case-stamp--closed -rotate-3 text-center text-sm uppercase tracking-wide text-red-900">Case closed</p>
               <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#6d5138] pb-5">
                 <h3 className="text-3xl uppercase sm:text-4xl">Your final report</h3>
-                <p className="font-mono text-2xl text-red-900" aria-label={`${closeState.result.totalStars} out of 5 stars`}>
-                  {"★".repeat(closeState.result.totalStars)}{"☆".repeat(5 - closeState.result.totalStars)}
-                </p>
+                <ResultStars count={closeState.result.totalStars} />
               </div>
-              {closeState.rank ? <p className="mt-4 inline-block -rotate-2 border-4 border-double border-red-900 px-3 py-1 text-xl uppercase tracking-widest text-red-900">{closeState.rank}</p> : null}
+              {closeState.rank ? <p className="case-stamp case-stamp--closed mt-4 -rotate-2 text-center text-sm uppercase tracking-wide text-red-900">{closeState.rank}</p> : null}
               {closeState.badges.length ? <ul aria-label="Badges" className="mt-3 flex flex-wrap gap-2">{closeState.badges.map((badge) => <li className="border border-[#6d5138] bg-[#efe3c4] px-2 py-0.5 text-xs uppercase" key={badge}>{badge}</li>)}</ul> : null}
               {closeState.tookMinutes !== undefined ? (
                 <p className="mt-3 font-mono text-sm text-[#5b4635]">
@@ -189,7 +188,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   const category = closeState.result![key];
                   return (
                     <li className={`border-b-2 p-4 ${category.star ? "border-emerald-800 bg-[#bac5aa]/55" : "border-red-900/60 bg-[#cdb09b]/55"}`} key={key}>
-                      <p className="flex items-center justify-between gap-3 uppercase"><span>{label}</span><span aria-hidden="true">{category.star ? "★" : "☆"}</span></p>
+                      <p className="flex items-center justify-between gap-3 uppercase"><span>{label}</span><span aria-hidden="true" className={`case-star ${category.star ? "case-star--filled" : "case-star--empty"}`} /></p>
                       {"feedback" in category && category.feedback ? <p className="mt-2 text-sm leading-relaxed text-[#5b4635]">{category.feedback}</p> : null}
                     </li>
                   );
@@ -214,7 +213,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
             </section>
           ) : epilogue ? (
             <section className="game-dossier px-5 pb-20 pt-24 sm:px-8 sm:pb-16" aria-live="polite">
-              <p className="text-xs uppercase tracking-[0.2em] text-red-800">Case given up</p>
+              <p className="case-stamp case-stamp--given-up -rotate-3 text-center text-sm uppercase tracking-wide text-[#38332e]">Case given up</p>
               <h3 className="mt-2 text-3xl uppercase">No report was filed</h3>
               <Epilogue epilogue={epilogue} />
               {afterCase}

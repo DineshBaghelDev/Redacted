@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-12 — Case moment art and share packaging
+
+- The brief uses a compact dossier emblem and less vertical space. The close and give-up results use blank ink stamps; five-star results and Case history use filled/empty raster stars, with accessible live labels retained.
+- Added inspected two-detective key art for the Open Graph and Twitter share images, plus a high-resolution square app emblem. Next.js static image metadata supplies the share tags. The banner is 1730×909, the same wide ratio as the requested 1200×630 size.
+
 ## 2026-10-12 — Device lock and call details
 
 - Locked phones and laptops now open a compact illustrated keypad with live digits, clear and delete controls, and the existing keyboard input. Unlock duration and code rules are unchanged. Recovered phone call rows and details show incoming/outgoing sprites.

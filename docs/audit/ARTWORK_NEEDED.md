@@ -13,6 +13,8 @@ bureau-noir, menu-noir, archive-room, interview-room, lab-room, records-room, re
 
 **Board/device update:** dark felt, four blank card variants, raster board controls, image pin, phone/laptop shells, illustrated keypad, and incoming/outgoing call icons are in use. No missed-call type exists in stored phone data.
 
+**Moment/packaging update:** compact case-opened dossier, blank result stamps, star art, two-detective key art, social share images, and square app emblem are in use. Arrival notices remain text in the shared notification stack. The current result timeline has only free-text events, so specific event-type icons would guess at case facts; it retains a neutral marker.
+
 ## Priority 1 — the screens players spend most time on
 
 ### A. Room interiors (biggest "app vs game" gap)

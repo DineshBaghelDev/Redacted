@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "convex-helpers/react/cache";
 import { api } from "../../../../convex/_generated/api";
 import { formatDuration } from "../../../lib/game-time";
+import { ResultStars } from "../result-stars";
 import { menuButton } from "../constants";
 import { ControlIcon } from "../control-icon";
 
@@ -38,7 +39,7 @@ export function CaseHistoryScreen({ onBack, onOpen }: { onBack: () => void; onOp
             <button className="game-dossier block w-full p-4 text-left text-[#211d17] sm:p-5" onClick={() => onOpen(entry.roomCode)} type="button">
               <p className="flex items-center justify-between gap-3 text-xs uppercase text-red-800">
                 <span>{entry.difficulty} case · {new Date(entry.closedAt).toLocaleDateString()}</span>
-                <span className="font-mono text-base">{entry.outcome === "solved" ? `${"★".repeat(entry.stars ?? 0)}${"☆".repeat(5 - (entry.stars ?? 0))}` : entry.outcome === "judging" ? "Under review" : "Given up"}</span>
+                <span className="text-base">{entry.outcome === "solved" ? <ResultStars count={entry.stars ?? 0} /> : entry.outcome === "judging" ? "Under review" : "Given up"}</span>
               </p>
               <h2 className="mt-2 break-words text-xl uppercase leading-tight">{entry.caseTitle}</h2>
               <p className="mt-2 text-sm text-[#5d4d3d]">

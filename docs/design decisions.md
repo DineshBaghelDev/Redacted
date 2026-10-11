@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-12 — Result and share art
+
+- Keep the words and score live over blank stamp and star artwork so dynamic results stay correct and accessible. The share banner shows no case-specific evidence or characters; the square app emblem matches the existing favicon.
+
 ## 2026-10-12 — Device code entry
 
 - Keep code entry collapsed inside each found device card so a room with many objects stays readable. The art is a blank keypad under live accessible buttons and the same four-digit text input; it does not change the unlock rule or reveal codes.
