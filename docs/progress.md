@@ -1,8 +1,8 @@
 # Progress
 
-## 2026-10-12 — Bigger clueboard pins, no tie dropdown
+## 2026-10-12 — Grabbable clueboard string pins, no tie dropdown
 
-- Card pins doubled to 36px so they are easy to grab when tying strings.
+- The string handle on each card was rendering as React Flow's default 6px dot: the pushpin style sat in a Tailwind layer, which loses to React Flow's unlayered stylesheet. Moved it out of the layer; it now shows as the 28px pushpin and is easy to grab.
 - Removed the "Tie string without dragging" From/To card dropdowns (added 2026-10-09). Strings are tied only by dragging one pin to another.
 
 ## 2026-10-12 — Phone filler no longer contradicts the story

@@ -656,16 +656,6 @@
     @apply flex items-center gap-2 border border-[#a97a4f] bg-[#332219] px-3 py-2 text-sm uppercase text-[#f4e8c8] shadow-[2px_2px_0_#080605] hover:border-[#e8c98e] focus-visible:outline-2 focus-visible:outline-[#fff1c9];
   }
 
-  .clue-pin.react-flow__handle {
-    top: -26px;
-    width: 36px;
-    height: 36px;
-    border: 0;
-    border-radius: 0;
-    background: url('/assets/control-icons.png') no-repeat 66.667% 100% / 400% 200%;
-    image-rendering: pixelated;
-  }
-
   .clue-string {
     filter: drop-shadow(1px 2px 1px rgb(25 10 5 / 65%));
   }
@@ -956,4 +946,16 @@
     padding: 0;
     box-shadow: none;
   }
+}
+
+/* Outside any layer: React Flow's own unlayered handle style would otherwise win and shrink this to a 6px dot. */
+.clue-pin.react-flow__handle {
+  top: -10px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 0;
+  background: url('/assets/control-icons.png') no-repeat 66.667% 100% / 400% 200%;
+  image-rendering: pixelated;
+  cursor: crosshair;
 }
