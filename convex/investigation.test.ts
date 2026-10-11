@@ -49,12 +49,15 @@ test("partners search, inspect, and collect shared items without revealing hidde
   await expect(one.mutation(api.investigation.collectItem, { roomCode, itemId: ids.itemId })).rejects.toThrow("not available");
   await expect(one.mutation(api.investigation.readDevice, { roomCode, itemId: ids.deviceItemId })).rejects.toThrow("Find that device");
   await expect(one.mutation(api.clueBoard.createReferenceNode, { roomCode, type: "call", referenceId: ids.callId, x: 0, y: 0 })).rejects.toThrow("Read this phone");
+  // The building map is fogged until someone walks in.
+  expect((await one.query(api.investigation.getPlace, { roomCode }))?.rooms.find((room) => room.id === ids.office)?.visited).toBe(false);
   expect(await one.mutation(api.investigation.moveToRoom, { roomCode, roomId: ids.office })).toEqual({ completeGameTime: 1 });
   expect(await two.mutation(api.investigation.moveToRoom, { roomCode, roomId: ids.office })).toEqual({ completeGameTime: 1 });
   await expect(one.mutation(api.investigation.searchSpot, { roomCode, spot: "desk" })).rejects.toThrow("Finish your current action");
   vi.advanceTimersByTime(1 * GAME_MINUTE_MS);
   await one.mutation(api.investigation.finishAction, { roomCode });
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.currentRoomId).toBe(ids.office);
+  expect((await one.query(api.investigation.getPlace, { roomCode }))?.rooms.find((room) => room.id === ids.office)?.visited).toBe(true);
   expect((await one.query(api.investigation.getPlace, { roomCode }))?.rooms.find((room) => room.id === ids.office)?.spots).toEqual([{ key: "desk", name: "desk", searched: false }, { key: "body", name: "on the body", searched: false }]);
   await expect(one.mutation(api.investigation.searchSpot, { roomCode, spot: "attic" })).rejects.toThrow("no such spot");
   expect(await one.mutation(api.investigation.searchSpot, { roomCode, spot: "desk" })).toEqual({ completeGameTime: 5 });

@@ -46,7 +46,7 @@ export const getPlace = query({
     placeName: v.string(),
     placeDescription: v.string(),
     currentRoomId: v.union(v.null(), v.id("rooms")),
-    rooms: v.array(v.object({ id: v.id("rooms"), name: v.string(), floor: v.number(), searchable: v.boolean(), searched: v.boolean(), walkMinutes: v.optional(v.number()), hasCamera: v.boolean(), isEntrance: v.boolean(),
+    rooms: v.array(v.object({ id: v.id("rooms"), name: v.string(), floor: v.number(), searchable: v.boolean(), searched: v.boolean(), visited: v.boolean(), walkMinutes: v.optional(v.number()), hasCamera: v.boolean(), isEntrance: v.boolean(),
       spots: v.array(v.object({ key: v.string(), name: v.string(), searched: v.boolean() })) })),
     connections: v.array(v.object({ a: v.id("rooms"), b: v.id("rooms") })),
     partners: v.array(v.object({ name: v.string(), roomId: v.id("rooms") })),
@@ -70,10 +70,12 @@ export const getPlace = query({
     const connections = await ctx.db.query("roomConnections").withIndex("by_buildingId_and_order", (q) => q.eq("buildingId", place.buildingId!)).collect();
     const walk = currentRoomId ? walkMinutes(currentRoomId, rooms, connections) : new Map<Id<"rooms">, number>();
     const searched = new Set<string>();
+    const visited = new Set<string>();
     const searchedSpotKeys = new Set<string>();
     const roomItems = new Map<Id<"rooms">, Doc<"caseItems">[]>();
     for (const room of rooms) {
       if (await ctx.db.query("searchedRooms").withIndex("by_sessionId_and_roomId", (q) => q.eq("sessionId", member.session._id).eq("roomId", room._id)).unique()) searched.add(room._id);
+      if (room._id === currentRoomId || await ctx.db.query("visitedRooms").withIndex("by_sessionId_and_roomId", (q) => q.eq("sessionId", member.session._id).eq("roomId", room._id)).unique()) visited.add(room._id);
       for await (const spot of ctx.db.query("searchedSpots").withIndex("by_sessionId_and_roomId_and_spot", (q) => q.eq("sessionId", member.session._id).eq("roomId", room._id))) searchedSpotKeys.add(`${room._id}:${spot.spot}`);
       const items = [];
       for await (const item of ctx.db.query("caseItems").withIndex("by_roomId", (q) => q.eq("roomId", room._id))) if (item.caseId === member.session.caseId) items.push(item);
@@ -81,7 +83,10 @@ export const getPlace = query({
     }
     const partners = [];
     for await (const other of ctx.db.query("sessionPlayers").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id))) {
-      if (other._id !== member.player._id && other.currentPlaceId === place._id && other.currentRoomId) partners.push({ name: other.nickname, roomId: other.currentRoomId });
+      if (other._id !== member.player._id && other.currentPlaceId === place._id && other.currentRoomId) {
+        partners.push({ name: other.nickname, roomId: other.currentRoomId });
+        visited.add(other.currentRoomId);
+      }
     }
     const knownItems = [];
     for await (const known of ctx.db.query("sessionItems").withIndex("by_sessionId", (q) => q.eq("sessionId", member.session._id))) {
@@ -109,7 +114,7 @@ export const getPlace = query({
       placeName: place.name,
       placeDescription: place.description,
       currentRoomId,
-      rooms: rooms.map((room, index) => ({ id: room._id, name: room.name, floor: floors[index]?.floorNumber ?? 0, searchable: room.searchable, searched: searched.has(room._id), walkMinutes: walk.get(room._id), hasCamera: room.hasCamera, isEntrance: room.isEntrance,
+      rooms: rooms.map((room, index) => ({ id: room._id, name: room.name, floor: floors[index]?.floorNumber ?? 0, searchable: room.searchable, searched: searched.has(room._id), visited: visited.has(room._id) || searched.has(room._id), walkMinutes: walk.get(room._id), hasCamera: room.hasCamera, isEntrance: room.isEntrance,
         spots: room.searchable ? roomSpots(room, roomItems.get(room._id) ?? []).map((spot) => ({ ...spot, searched: searchedSpotKeys.has(`${room._id}:${spot.key}`) })) : [] })),
       connections: connections.map((edge) => ({ a: edge.fromRoomId, b: edge.toRoomId })),
       partners,

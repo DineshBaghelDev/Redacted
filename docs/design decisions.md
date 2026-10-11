@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-11 — Buildings are explored, not picked from a list
+
+- Moving is through doors to neighbouring rooms, so the layout is discovered by walking it. The fogged map is shared, matching the rule that both players share all case state.
+- Room names behind unentered doors stay hidden; this is presentation only (no locked rooms), and explored rooms on the map stay one tap away so backtracking isn't tedious.
+
 ## 2026-10-11 — One control per job
 
 - Where dragging or pressing already does the job, extra buttons are hidden or shrunk (spot cards, notebook entries, item cards). Touch screens still see every button because they cannot hover.

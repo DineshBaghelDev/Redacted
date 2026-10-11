@@ -8,8 +8,8 @@ const place = {
   placeDescription: "A tired apartment block.",
   currentRoomId: "lobby",
   rooms: [
-    { id: "lobby", name: "Lobby", floor: 0, walkMinutes: 0, searched: false, searchable: true, hasCamera: true, isEntrance: true, spots: [{ key: "desk", name: "Front desk", searched: false }] },
-    { id: "office", name: "Office", floor: 0, walkMinutes: 1, searched: false, searchable: true, hasCamera: false, isEntrance: false, spots: [] },
+    { id: "lobby", name: "Lobby", floor: 0, walkMinutes: 0, searched: false, visited: true, searchable: true, hasCamera: true, isEntrance: true, spots: [{ key: "desk", name: "Front desk", searched: false }] },
+    { id: "office", name: "Office", floor: 0, walkMinutes: 1, searched: false, visited: false, searchable: true, hasCamera: false, isEntrance: false, spots: [] },
   ],
   connections: [{ a: "lobby", b: "office" }],
   partners: [{ name: "Sam", roomId: "office" }],
@@ -25,16 +25,17 @@ vi.mock("convex/react", () => ({
 }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/lobby/ABC123/place", useSearchParams: () => new URLSearchParams() }));
 
-test("arrives with the place description, then shows spots to search and a strip of rooms to walk to", () => {
+test("arrives with the place description, then shows the room to search, its doors, and the building map", () => {
   query.calls = 0;
   const html = renderToStaticMarkup(<PlaceScreen roomCode="ABC123" onBack={() => {}} />);
   expect(html).toContain("A tired apartment block.");
   expect(html).toContain("Step inside");
-  expect(html).toContain("Where to look");
   expect(html).toContain("Front desk");
-  expect(html).toContain("Press and hold to search");
+  expect(html).toContain("Hold to search · 4 min");
   expect(html).toContain("Check this room&#x27;s camera");
-  expect(html).toContain('aria-label="Rooms"');
-  expect(html).toContain("◆ Sam");
-  expect(html).toContain("1 min");
+  expect(html).toContain('aria-label="Building map"');
+  // The office has not been entered yet, so its door doesn't say what's behind it.
+  expect(html).toContain("Unexplored");
+  expect(html).not.toContain(">Office<");
+  expect(html).toContain("1 min · ◆ partner");
 });

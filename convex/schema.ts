@@ -446,6 +446,12 @@ export default defineSchema({
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_sessionId_and_statementId", ["sessionId", "statementId"]),
+  /** Rooms either detective has stood in; the building map stays fogged until a room is entered. */
+  visitedRooms: defineTable({
+    sessionId: v.id("sessions"),
+    roomId: v.id("rooms"),
+  })
+    .index("by_sessionId_and_roomId", ["sessionId", "roomId"]),
   searchedRooms: defineTable({
     sessionId: v.id("sessions"),
     roomId: v.id("rooms"),

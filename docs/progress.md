@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-10-11 — Exploring buildings
+
+- Inside a building you stand in one room seen from above: furniture you press and hold to search, and doors cut into the walls to the rooms next door (stairs lead to other floors). Doors to rooms nobody has entered say "Unexplored".
+- A small paper map beside the room fills in as either detective walks the building ("Explored 4/9"); unentered rooms next to explored ones show as "?". Tap an explored room on the map to walk back.
+- Entering a room fades it in with a door sound; walking shows "Walking to …" over the room.
+- New shared `visitedRooms` record (arrival, cold open, finished moves). What was found in the room is listed under it.
+
 ## 2026-10-11 — Clutter pass
 
 - Places: the floor plan is now a thin strip of rooms across the top (ordered by doors from the entrance), so the search area gets the full width. Each spot card is itself the press-and-hold target; no separate buttons.

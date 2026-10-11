@@ -5,7 +5,7 @@ import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { ensureCaseOpening, PUBLICATION_VERSION } from "./cases";
 import { cancelRoomAction } from "./lib/cancelRoomAction";
-import { entranceRoomId, settleActions } from "./world";
+import { entranceRoomId, markVisited, settleActions } from "./world";
 
 const MAX_PLAYERS = 2;
 const ROOM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -194,6 +194,7 @@ export const start = mutation({
     const startPlaceId = sceneBuilding?.placeId ?? bureau?._id;
     const startRoomId = scene && sceneBuilding ? scene._id : bureau ? await entranceRoomId(ctx, bureau._id) : undefined;
     await Promise.all(players.map(async (player) => await ctx.db.patch(player._id, { currentPlaceId: startPlaceId, currentRoomId: startRoomId })));
+    if (startRoomId) await markVisited(ctx, session._id, startRoomId);
     const startMinute = playableCase?.discoveryMinute ?? 0;
     await ctx.db.patch(session._id, { status: "playing", gameTime: startMinute, clockStartedAt: undefined, deadline: session.deadline !== undefined
       // Rooms created before story-time clocks counted from minute zero; keep their allowance.

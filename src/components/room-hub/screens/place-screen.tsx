@@ -13,13 +13,12 @@ import { formatGameMinute, partOfDay } from "../../../lib/game-time";
 import { play } from "../../../lib/sound";
 import { CctvScreen } from "./cctv-screen";
 import { GameIcon } from "../game-icon";
-import { HoldButton } from "../gestures";
+import { BuildingMap, RoomView } from "../building-view";
 import { InvestigationIcon } from "../investigation-icon";
 import { startCardDrag } from "../../../lib/evidence-drag";
 import { DeviceViewer } from "./device-viewer";
 
 type Place = NonNullable<FunctionReturnType<typeof api.investigation.getPlace>>;
-type Room = Place["rooms"][number];
 type Item = Place["items"][number];
 
 const atmosphere = {
@@ -28,23 +27,6 @@ const atmosphere = {
   Evening: "The lights are coming on. Rain ticks against the glass.",
   Night: "It is dark and still. Your torch picks out the doorway.",
 } as const;
-
-/** Orders one floor's rooms by how many doors they are from its first room, so the strip reads like walking in. */
-function walkOrder(rooms: Room[], connections: Place["connections"]) {
-  const ids = new Set(rooms.map((room) => room.id));
-  const edges = connections.filter((edge) => ids.has(edge.a) && ids.has(edge.b));
-  const start = rooms.find((room) => room.isEntrance) ?? rooms[0];
-  const depth = new Map<string, number>(start ? [[start.id, 0]] : []);
-  const queue = start ? [start.id] : [];
-  while (queue.length) {
-    const current = queue.shift()!;
-    for (const edge of edges) {
-      const next = edge.a === current ? edge.b : edge.b === current ? edge.a : null;
-      if (next && !depth.has(next)) { depth.set(next, depth.get(current)! + 1); queue.push(next); }
-    }
-  }
-  return [...rooms].sort((a, b) => (depth.get(a.id) ?? 99) - (depth.get(b.id) ?? 99));
-}
 
 export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
@@ -135,12 +117,8 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
     ? 0 : Math.max(0, Math.floor((now - place.clock.clockStartedAt) / place.clock.minuteMs)));
   const floors = [...new Set(place.rooms.map((room) => room.floor))].sort((a, b) => a - b);
   const shownFloor = floor ?? currentRoom?.floor ?? floors[0] ?? 0;
-  const floorRooms = walkOrder(place.rooms.filter((room) => room.floor === shownFloor), place.connections);
-  const stairs = new Set(place.connections.flatMap((edge) => {
-    const a = place.rooms.find((room) => room.id === edge.a);
-    const b = place.rooms.find((room) => room.id === edge.b);
-    return a && b && a.floor !== b.floor ? [a.id, b.id] : [];
-  }));
+  const searchedSpots = currentRoom?.spots.filter((spot) => spot.searched) ?? [];
+  const foundBySpot = new Map(searchedSpots.map((spot) => [spot.key, here.filter((item) => item.spot === spot.key).length]));
   const actionRoom = place.rooms.find((room) => room.id === place.action?.roomId);
   const actionLabel = place.action?.kind === "move" ? `Walking to ${actionRoom?.name ?? "the room"}`
     : place.action?.kind === "search" ? `Searching ${currentRoom?.spots.find((spot) => spot.key === place.action?.slot)?.name ?? "the room"}`
@@ -179,71 +157,56 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
         </div>
       ) : null}
 
-      <nav aria-label="Rooms" className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-[#6f9f98]/25 bg-[#071619]/85 px-4 py-2 sm:px-6">
-        {floors.length > 1 ? floors.map((number) => <button aria-pressed={number === shownFloor} className="min-h-9 shrink-0 border border-[#6f9f98]/50 px-2 text-xs uppercase aria-pressed:border-[#e8ac51] aria-pressed:text-[#f1c987]" key={number} onClick={() => setFloor(number)} type="button">{number === 0 ? "Ground" : `Floor ${number}`}</button>) : null}
-        {floorRooms.map((room) => {
-          const current = room.id === place.currentRoomId;
-          const done = room.spots.length > 0 && room.spots.every((spot) => spot.searched);
-          const partner = place.partners.find((item) => item.roomId === room.id);
-          return (
-            <button
-              className="plan-room relative shrink-0"
-              data-current={current}
-              data-done={done}
-              disabled={busy || current || room.walkMinutes === undefined}
-              key={room.id}
-              onClick={() => run(moveToRoom({ roomCode, roomId: room.id }))}
-              title={current ? "You are here" : room.walkMinutes !== undefined ? `Walk here · ${room.walkMinutes} min` : "No way through"}
-              type="button"
-            >
-              <span className="whitespace-nowrap">{room.name}</span>
-              <span className="flex items-center gap-1 text-[0.65rem] normal-case text-[#c8d8d2]/70">
-                {current ? <span className="text-[#f1c987]">● You</span> : room.walkMinutes !== undefined ? `${room.walkMinutes} min` : null}
-                {partner ? <span className="text-[#9fd1c4]">◆ {partner.name}</span> : null}
-                {stairs.has(room.id) ? <span>↕</span> : null}
-                {room.hasCamera ? <span title="Camera">◉</span> : null}
-                {done ? <span>✓</span> : null}
-              </span>
-            </button>
-          );
-        })}
-      </nav>
-
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="game-station-main mx-auto min-h-0 max-w-5xl p-4 sm:p-6">
-          <h3 className="flex items-center gap-3 text-2xl uppercase"><InvestigationIcon className="size-11" name="room" /><span className="min-w-0 break-words">{currentRoom?.name ?? "Entrance"}</span></h3>
-          <FirstTimeTip id="place" title="Searching a place">Press and hold a spot to search it (4 min). Anything there flips up as a card: bag it for the lab, or pin it. Tap a room in the strip at the top to walk there. Press N any time for the notebook.</FirstTimeTip>
-          {place.action && place.action.kind !== "search" ? (
-            <div className="mt-4 border border-[#e8ac51]/45 bg-[#211d15] p-3" role="status">
-              <p className="text-sm uppercase text-[#f1c987]">{actionLabel}</p>
-              <progress aria-label={actionLabel} className="mt-2 h-2 w-full accent-[#e8ac51]" max={place.action.completeGameTime - place.action.startGameTime} value={Math.max(0, gameTime - place.action.startGameTime)} />
+        <div className="game-station-main mx-auto min-h-0 max-w-6xl p-4 sm:p-6">
+          <FirstTimeTip id="place" title="Exploring a building">Press and hold a piece of furniture to search it (4 min). Walk through the doors to explore; unexplored doors don&apos;t say what&apos;s behind them. The map fills in as you go, and you can tap an explored room on it to walk back.</FirstTimeTip>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_19rem]">
+            <div>
+              <h3 className="mb-2 flex items-center gap-3 text-xl uppercase"><InvestigationIcon className="size-9" name="room" /><span className="min-w-0 break-words">{currentRoom?.name ?? "Entrance"}</span></h3>
+              {currentRoom ? (
+                <RoomView
+                  busy={busy}
+                  foundBySpot={foundBySpot}
+                  onCamera={() => setCameraOpen(true)}
+                  onSearch={(spot) => run(searchSpot({ roomCode, spot }))}
+                  onWalk={(roomId) => run(moveToRoom({ roomCode, roomId: roomId as Id<"rooms"> }))}
+                  place={place}
+                  room={currentRoom}
+                  searchingKey={place.action?.kind === "search" ? place.action.slot ?? null : null}
+                  walkingTo={place.action?.kind === "move" ? actionRoom ?? null : null}
+                />
+              ) : null}
+              {place.action && place.action.kind !== "search" && place.action.kind !== "move" ? (
+                <div className="mt-3 border border-[#e8ac51]/45 bg-[#211d15] p-3" role="status">
+                  <p className="text-sm uppercase text-[#f1c987]">{actionLabel}</p>
+                  <progress aria-label={actionLabel} className="mt-2 h-2 w-full accent-[#e8ac51]" max={place.action.completeGameTime - place.action.startGameTime} value={Math.max(0, gameTime - place.action.startGameTime)} />
+                </div>
+              ) : null}
+              {error ? <p className="mt-3 border border-red-300/60 bg-red-950/70 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
             </div>
-          ) : null}
-          {currentRoom?.hasCamera ? <button className="mt-4 flex min-h-11 items-center gap-3 text-left text-sm uppercase text-[#f1c987] hover:text-white" onClick={() => setCameraOpen(true)} type="button"><GameIcon name="cctv" className="size-9" /><span>Check this room&apos;s camera</span></button> : null}
-          {error ? <p className="mt-4 border border-red-300/60 bg-red-950/70 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
+            <aside aria-label="Building map" className="lg:pt-11">
+              <BuildingMap busy={busy} floor={shownFloor} floors={floors} onFloor={setFloor} onWalk={(roomId) => run(moveToRoom({ roomCode, roomId: roomId as Id<"rooms"> }))} place={place} />
+            </aside>
+          </div>
 
-          {currentRoom?.spots.length ? (
-            <>
-              <p className="mt-6 text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Where to look · 4 min each</p>
+          {searchedSpots.length ? (
+            <section className="mt-6">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Found in this room</p>
               <ul className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {currentRoom.spots.map((spot) => {
-                  const searching = place.action?.kind === "search" && place.action.slot === spot.key;
+                {searchedSpots.map((spot) => {
                   const found = here.filter((item) => item.spot === spot.key);
                   return (
-                    <li key={spot.key}>
-                      {!spot.searched ? (
-                        <HoldButton className="min-h-20 border-[#e8ac51]/40 bg-[#14140e]/70 p-3 text-left normal-case" disabled={busy} label={searching ? "Searching..." : "Press and hold to search"} onDone={() => run(searchSpot({ roomCode, spot: spot.key }))}>
-                          <span className="flex items-center gap-2 text-sm uppercase text-[#e4e6d8]"><InvestigationIcon className="size-7" name="search" />{spot.name}</span>
-                        </HoldButton>
-                      ) : <div className="border border-[#6f9f98]/30 bg-[#071619]/70 p-3"><p className="flex items-center gap-2 text-sm uppercase"><InvestigationIcon className="size-7" name="search" />{spot.name}</p>{found.length ? (
+                    <li className="border border-[#6f9f98]/30 bg-[#071619]/80 p-3" id={`spot-${spot.key}`} key={spot.key}>
+                      <p className="flex items-center gap-2 text-sm uppercase"><InvestigationIcon className="size-7" name="search" />{spot.name}</p>
+                      {found.length ? (
                         <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />)}</div>
-                      ) : <p className="mt-2 text-sm text-[#c8d8d2]/55">Nothing here.</p>}</div>}
+                      ) : <p className="mt-2 text-sm text-[#c8d8d2]/55">Nothing here.</p>}
                     </li>
                   );
                 })}
               </ul>
-            </>
-          ) : <p className="mt-6 text-sm text-[#c8d8d2]/60">Nothing to search here. Pick another room at the top.</p>}
+            </section>
+          ) : null}
 
         </div>
       </div>

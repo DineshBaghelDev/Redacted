@@ -54,6 +54,13 @@ export async function bureauRoomId(ctx: MutationCtx, caseId: Id<"cases">, player
   return undefined;
 }
 
+/** Remember that the team has stood in a room, so the building map reveals it. */
+export async function markVisited(ctx: MutationCtx, sessionId: Id<"sessions">, roomId: Id<"rooms">) {
+  if (!(await ctx.db.query("visitedRooms").withIndex("by_sessionId_and_roomId", (q) => q.eq("sessionId", sessionId).eq("roomId", roomId)).unique())) {
+    await ctx.db.insert("visitedRooms", { sessionId, roomId });
+  }
+}
+
 export async function settleActions(ctx: MutationCtx, session: Doc<"sessions">, now: number) {
   const travel = await ctx.db.query("travelActions").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).collect();
   const room = await ctx.db.query("roomActions").withIndex("by_sessionId", (q) => q.eq("sessionId", session._id)).collect();
@@ -64,11 +71,16 @@ export async function settleActions(ctx: MutationCtx, session: Doc<"sessions">, 
   const pendingRequests = requests.filter((request) => request.readyAtGameTime > (session.gameTime ?? 0));
   const dueRequests = pendingRequests.filter((request) => request.readyAtGameTime <= gameTime);
   for (const action of dueTravel) {
-    await ctx.db.patch(action.playerId, { currentPlaceId: action.destinationPlaceId, currentRoomId: await entranceRoomId(ctx, action.destinationPlaceId) });
+    const arrivalRoomId = await entranceRoomId(ctx, action.destinationPlaceId);
+    await ctx.db.patch(action.playerId, { currentPlaceId: action.destinationPlaceId, currentRoomId: arrivalRoomId });
+    if (arrivalRoomId) await markVisited(ctx, session._id, arrivalRoomId);
     await ctx.db.delete(action._id);
   }
   for (const action of dueRoom) {
-    if (action.kind === "move") await ctx.db.patch(action.playerId, { currentRoomId: action.roomId });
+    if (action.kind === "move") {
+      await ctx.db.patch(action.playerId, { currentRoomId: action.roomId });
+      await markVisited(ctx, session._id, action.roomId);
+    }
     else if (action.kind === "npc" && action.npcTurnId) {
       const turn = await ctx.db.get(action.npcTurnId);
       if (turn?.status === "waiting") {
