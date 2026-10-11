@@ -142,7 +142,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
   return (
     <div className="relative grid h-full min-h-0 grid-rows-[max-content_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:grid-rows-1 lg:gap-5">
       {/* The one way to catch a lie: Show evidence → pick it in the notebook → Confront. */}
-      {trayOpen ? <NotebookOverlay onClose={() => setTrayOpen(false)} onPick={(entry) => { setTrayOpen(false); setShown(entry); }} pickFor={person.name.split(" ")[0]} roomCode={roomCode} /> : null}
+      {trayOpen ? <NotebookOverlay onClose={() => setTrayOpen(false)} onPick={(entry) => { setTrayOpen(false); setShown(entry); }} pickTitle={`Show ${person.name.split(" ")[0]}…`} roomCode={roomCode} /> : null}
       {stamp ? <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"><p className={`contradiction-stamp px-6 py-3 text-3xl sm:text-5xl ${stamp === "missed" ? "contradiction-stamp--missed" : ""}`}>{stamp === "caught" ? "Contradiction" : "They don't budge"}</p></div> : null}
       <aside className="game-dossier min-h-0 overflow-y-auto p-3 text-[#211d17] lg:p-5">
         <div className="flex items-center gap-3 lg:flex-col lg:items-start">

@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-11 — The report is written, not chosen
+
+- The case-close form no longer lays out every known person, bagged object and pinned card. The killer and the weapon are typed. A name suggestion appears only after part of an already-known name is typed, and an unknown name says "No one by that name in your files". The typed name is matched to the person for exact scoring; a weapon matching a bagged object is scored exactly, otherwise it is judged on meaning. Proof is cited through the notebook picker ("Cite evidence from the notebook") and pinned automatically. Opening the form no longer requires a pin first.
+- Type-ahead hides once a whole known name is in the text.
+- Checked in Chrome on ZYZTSR (filled in, not submitted). 174 tests and lint pass.
+
 ## 2026-10-11 — One way to confront
 
 - Fixed: confronting with evidence picked from the notebook failed with a server validation error (an extra `label` field was sent).

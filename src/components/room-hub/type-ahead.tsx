@@ -12,7 +12,8 @@ function fragment(value: string) {
  */
 export function TypeAhead({ value, names, onPick }: { value: string; names: string[]; onPick: (next: string) => void }) {
   const typed = fragment(value);
-  if (!typed) return null;
+  // Nothing to finish when the text already ends with a whole known name.
+  if (!typed || names.some((name) => value.trimEnd().toLowerCase().endsWith(name.toLowerCase()))) return null;
   const lower = typed.toLowerCase();
   const matches = [...new Set(names)]
     .filter((name) => name.toLowerCase() !== lower && name.toLowerCase().split(/\s+/).some((word) => word.startsWith(lower)))

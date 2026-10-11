@@ -31,7 +31,7 @@ export type NotebookPick = { type: (typeof groups)[number][0]; referenceId: stri
  * The shared notebook: everything found so far, in one place. Pin what matters; the board is for your theory.
  * With `onPick` it opens to choose evidence to show someone: evidence only, one "Show this" per entry.
  */
-export function NotebookOverlay({ roomCode, onClose, onPick, pickFor }: { roomCode: string; onClose: () => void; onPick?: (entry: NotebookPick) => void; pickFor?: string }) {
+export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle }: { roomCode: string; onClose: () => void; onPick?: (entry: NotebookPick) => void; pickTitle?: string }) {
   const entries = useQuery(api.notebook.get, { roomCode });
   const people = useQuery(api.npcs.list, { roomCode });
   const nodes = useQuery(api.clueBoard.getNodes, { roomCode });
@@ -59,7 +59,7 @@ export function NotebookOverlay({ roomCode, onClose, onPick, pickFor }: { roomCo
         <header className="flex items-center justify-between gap-3 border-b border-[#8b7355] pb-3">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-red-800">Shared notebook</p>
-            <h2 className="mt-1 text-2xl uppercase">{picking ? `Show ${pickFor ?? "them"}…` : "What we know"}</h2>
+            <h2 className="mt-1 text-2xl uppercase">{picking ? pickTitle ?? "Pick evidence" : "What we know"}</h2>
           </div>
           <button aria-label="Close notebook" className="game-icon-button" onClick={onClose} title="Close notebook · N" type="button"><ControlIcon name="close" /></button>
         </header>

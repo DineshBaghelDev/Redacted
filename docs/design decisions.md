@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-11 — The report is written, not chosen
+
+- The final report has no option tray: the detective writes who, with what, why and how, and cites proof from the notebook. A list of every person and object turned the ending into multiple choice. Scoring is unchanged: a typed name must match someone the team has uncovered, and a weapon matching a bagged object is matched exactly. This replaces "the final report reads as one sentence with blanks" (drop or tap cards).
+
 ## 2026-10-11 — One way to confront
 
 - Interviews keep free typing and exactly one way to present proof: Show evidence → pick → Confront. Line-by-line pressing and portrait drops were removed (player feedback: too many overlapping ways, confusing). This replaces the Ace Attorney-style "press a line" layer from the 2026-10-11 "Do it, don't click it" entry.

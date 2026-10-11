@@ -7,7 +7,9 @@ import { useQuery } from "convex-helpers/react/cache";
 import { useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { formatDuration, formatGameMinute } from "../../../lib/game-time";
-import { cardDropTarget, startCardDrag, type DragCard, type DragKind } from "../../../lib/evidence-drag";
+import { cardDropTarget, type DragCard } from "../../../lib/evidence-drag";
+import { TypeAhead } from "../type-ahead";
+import { NotebookOverlay } from "../notebook-overlay";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { ControlIcon } from "../control-icon";
 import { go } from "../../../lib/game-nav";
@@ -41,10 +43,10 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
   const [reviewing, setReviewing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [culpritNpcId, setCulpritNpcId] = useState("");
+  const [culpritName, setCulpritName] = useState("");
+  const [citing, setCiting] = useState(false);
   const [motiveExplanation, setMotiveExplanation] = useState("");
   const [weaponDescription, setWeaponDescription] = useState("");
-  const [weaponItemId, setWeaponItemId] = useState("");
   const [evidenceIds, setEvidenceIds] = useState<string[]>([]);
   const [evidenceExplanation, setEvidenceExplanation] = useState("");
   const [methodExplanation, setMethodExplanation] = useState("");
@@ -54,6 +56,11 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
       (node.type === "cctv" || node.type === "public_record" || node.type === "item" || node.type === "forensic" || node.type === "device_file" || node.type === "call" || node.type === "message" || node.type === "statement") && !!node.referenceId,
   );
   const victimName = people?.find((person) => person.isVictim)?.name ?? "the victim";
+  // The report is written, not chosen: the typed name is matched to someone the team has uncovered.
+  const same = (a: string, b: string) => a.trim().toLowerCase().replace(/\s+/g, " ") === b.trim().toLowerCase().replace(/\s+/g, " ");
+  const accused = people?.find((person) => !person.isVictim && same(person.name, culpritName));
+  const culpritNpcId = accused?.id ?? "";
+  const weaponItemId = inventory?.find((item) => same(item.name, weaponDescription))?.id ?? "";
   const canReview = !!culpritNpcId
     && motiveExplanation.trim().length >= 10
     && weaponDescription.trim().length > 0
@@ -221,11 +228,10 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   <ul className="mt-5 list-disc space-y-2 border-t border-[#6d5138]/40 pt-4 pl-5 text-sm leading-relaxed">
                     {brief.initialFacts.map((fact) => <li key={fact}>{fact}</li>)}
                   </ul>
-                  <button className="game-control-button mt-7 min-h-12 w-full px-5 uppercase text-[#f1c987] disabled:opacity-50 sm:w-auto" disabled={!people?.length || evidence.length === 0} onClick={() => setClosing(true)} type="button">
+                  <button className="game-control-button mt-7 min-h-12 w-full px-5 uppercase text-[#f1c987] disabled:opacity-50 sm:w-auto" disabled={!people?.length} onClick={() => setClosing(true)} type="button">
                     <ControlIcon name="play" />
                     Close this case
                   </button>
-                  {!evidence.length ? <p className="mt-3 text-sm text-red-900">Pin at least one piece of evidence to the clueboard before closing the case.</p> : null}
                   <div className="mt-8 border-t border-[#6d5138]/40 pt-4">
                     {confirmGiveUp ? (
                       <div>
@@ -258,15 +264,20 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
             </section>
           ) : (
             <form className="game-dossier space-y-5 px-5 pb-20 pt-20 sm:px-8 sm:pb-16" onSubmit={review}>
-              <div className="border-b-2 border-[#6d5138] pb-4"><p className="text-xs uppercase tracking-[0.2em] text-red-800">Five findings · five stars</p><h3 className="mt-2 text-3xl uppercase">Tell it like it happened</h3><p className="mt-2 text-sm text-[#5b4635]">Drag cards from below (or from the notebook) into the blanks, or tap a card to place it.</p></div>
+              {citing ? <NotebookOverlay onClose={() => setCiting(false)} onPick={(entry) => { setCiting(false); addProof({ kind: entry.type, referenceId: entry.referenceId, label: entry.label }); }} pickTitle="Cite evidence" roomCode={roomCode} /> : null}
+              <div className="border-b-2 border-[#6d5138] pb-4"><p className="text-xs uppercase tracking-[0.2em] text-red-800">Five findings · five stars</p><h3 className="mt-2 text-3xl uppercase">Tell it like it happened</h3><p className="mt-2 text-sm text-[#5b4635]">Write it in your own words. Name the killer and the weapon, say why and how, and cite the evidence that proves it.</p></div>
               <div className="space-y-4 text-lg leading-[2.6rem]">
-                <p>
-                  <Slot accepts={(kind) => kind === "person"} label="who" onCard={(card) => setCulpritNpcId(card.referenceId)} onClear={() => setCulpritNpcId("")} value={people?.find((person) => person.id === culpritNpcId)?.name} />
-                  {" "}killed {victimName} with{" "}
-                  <Slot accepts={(kind) => kind === "item"} label="the weapon" onCard={(card) => { setWeaponItemId(inventory?.some((item) => item.id === card.referenceId) ? card.referenceId : ""); setWeaponDescription(card.label); }} onClear={() => { setWeaponItemId(""); setWeaponDescription(""); }} value={weaponItemId ? weaponDescription : undefined}>
-                    <input aria-label="Describe the weapon" className="case-close-blank w-44" maxLength={200} onChange={(event) => { setWeaponDescription(event.target.value); setWeaponItemId(""); }} placeholder="or describe it" value={weaponDescription} />
-                  </Slot>.
-                </p>
+                <div>
+                  <p>The killer is</p>
+                  <input aria-label="Who did it?" className="case-close-blank block w-full" maxLength={120} onChange={(event) => setCulpritName(event.target.value)} placeholder="their full name" value={culpritName} />
+                  <TypeAhead names={(people ?? []).filter((person) => !person.isVictim).map((person) => person.name)} onPick={setCulpritName} value={culpritName} />
+                  {culpritName.trim() && !accused ? <p className="text-sm leading-normal text-red-900">No one by that name in your files.</p> : null}
+                </div>
+                <div>
+                  <p>who killed {victimName} with</p>
+                  <input aria-label="What was the weapon?" className="case-close-blank block w-full" maxLength={200} onChange={(event) => setWeaponDescription(event.target.value)} placeholder="the weapon, in your words" value={weaponDescription} />
+                  <TypeAhead names={(inventory ?? []).map((item) => item.name)} onPick={setWeaponDescription} value={weaponDescription} />
+                </div>
                 <p>They did it because <textarea aria-label="Why did they do it?" className="case-close-blank block min-h-16 w-full" maxLength={2000} onChange={(event) => setMotiveExplanation(event.target.value)} placeholder="the reason, in your words" value={motiveExplanation} /></p>
                 <p>This is how it was done: <textarea aria-label="How was it done?" className="case-close-blank block min-h-16 w-full" maxLength={2000} onChange={(event) => setMethodExplanation(event.target.value)} placeholder="step by step, in your words" value={methodExplanation} /></p>
                 <div>
@@ -276,19 +287,12 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                       <ul className="flex flex-wrap gap-2">
                         {evidenceIds.map((id) => <li className="flex items-center gap-2 border border-red-900/60 bg-[#efe3c4] px-2 py-1 text-sm" key={id}>{evidence.find((item) => item.referenceId === id)?.text.split("\n")[0] ?? "Evidence"}<button aria-label="Remove" className="text-red-900" onClick={() => toggleEvidence(id)} type="button">✕</button></li>)}
                       </ul>
-                    ) : <p className="text-sm text-[#6d5138]">Drop up to {MAX_EVIDENCE} pieces of evidence here.</p>}
+                    ) : <p className="text-sm text-[#6d5138]">Nothing cited yet.</p>}
                   </div>
+                  <button className="mt-2 min-h-10 border-2 border-[#573821] px-4 text-sm uppercase disabled:opacity-50" disabled={evidenceIds.length >= MAX_EVIDENCE} onClick={() => setCiting(true)} type="button">Cite evidence from the notebook</button>
                   <textarea aria-label="Explain how the evidence proves it" className="case-close-blank mt-2 block min-h-16 w-full" maxLength={2000} onChange={(event) => setEvidenceExplanation(event.target.value)} placeholder="because this evidence shows..." value={evidenceExplanation} />
                 </div>
               </div>
-              <section className="border-t border-[#6d5138]/40 pt-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-red-800">Your cards</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {people?.filter((person) => !person.isVictim).map((person) => <Card card={{ kind: "person", referenceId: person.id, label: person.name }} key={person.id} onTap={() => setCulpritNpcId(person.id)} tone="person" />)}
-                  {inventory?.map((item) => <Card card={{ kind: "item", referenceId: item.id, label: item.name }} key={item.id} onTap={() => { setWeaponItemId(item.id); setWeaponDescription(item.name); }} tone="object" />)}
-                  {evidence.map((item) => <Card card={{ kind: item.type as DragKind, referenceId: item.referenceId, label: item.text.split("\n")[0] }} key={`${item.type}:${item.referenceId}`} onTap={() => toggleEvidence(item.referenceId)} tone="evidence" />)}
-                </div>
-              </section>
               <div className="flex flex-col-reverse gap-3 border-t border-[#6d5138]/40 pt-5 sm:flex-row sm:justify-end"><button className="min-h-11 border-2 border-[#573821] px-5 uppercase" onClick={() => setClosing(false)} type="button">Cancel</button><button className="game-control-button min-h-11 px-5 uppercase text-[#f1c987] disabled:opacity-50" disabled={!canReview} type="submit"><ControlIcon name="play" />Review final theory</button></div>
             </form>
           )}
@@ -337,33 +341,5 @@ function Epilogue({ epilogue, answer }: { epilogue: EpilogueData; answer?: Answe
         ))}
       </ol>
     </div>
-  );
-}
-
-/** A blank in the report sentence that takes a dropped card. */
-function Slot({ label, value, accepts, onCard, onClear, children }: { label: string; value?: string; accepts: (kind: DragKind) => boolean; onCard: (card: DragCard) => void; onClear: () => void; children?: React.ReactNode }) {
-  return (
-    <span className="inline-flex flex-wrap items-center gap-2 align-middle" {...cardDropTarget(onCard, accepts)}>
-      {value ? (
-        <span className="inline-flex items-center gap-2 border-b-2 border-red-900 bg-[#efe3c4] px-2 leading-8">{value}<button aria-label={`Clear ${label}`} className="text-sm text-red-900" onClick={onClear} type="button">✕</button></span>
-      ) : <span className="inline-block min-w-32 border-b-2 border-dashed border-[#6d5138] px-2 text-center text-sm leading-8 text-[#8b7355]">{label}</span>}
-      {!value ? children : null}
-    </span>
-  );
-}
-
-/** A draggable, tappable card in the report's card tray. */
-function Card({ card, tone, onTap }: { card: DragCard; tone: "person" | "object" | "evidence"; onTap: () => void }) {
-  return (
-    <button
-      className={`max-w-56 cursor-grab truncate border px-2 py-1 text-left text-xs ${tone === "person" ? "border-red-900/60 bg-[#e9d9c0]" : tone === "object" ? "border-[#573821] bg-[#e6dcc2]" : "border-[#6d5138]/60 bg-[#efe6cf]"}`}
-      draggable
-      onClick={onTap}
-      onDragStart={(event) => startCardDrag(event, card)}
-      title={card.label}
-      type="button"
-    >
-      {card.label}
-    </button>
   );
 }
