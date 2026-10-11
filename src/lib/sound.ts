@@ -1,11 +1,19 @@
-// Small synthesized sound kit: no audio files, nothing plays until the player has interacted.
-type Cue = "click" | "reveal" | "stamp" | "door" | "ping" | "sting" | "type";
+// Small synthesized sound kit: playback starts after the player's first gesture.
+type Cue = "click" | "reveal" | "stamp" | "door" | "ping" | "sting" | "type" | "search" | "open" | "close";
 
 const MUTE_KEY = "redacted.muted";
 const VOLUME_KEY = "redacted.volume";
 let context: AudioContext | null = null;
 let master: GainNode | null = null;
 let rain: { source: AudioBufferSourceNode; gain: GainNode } | null = null;
+let musicTimer: ReturnType<typeof setInterval> | null = null;
+let nextBeatTime = 0;
+let beat = 0;
+
+const BEAT_SECONDS = 0.72;
+const ROOTS = [110, 87.31, 73.42, 82.41];
+const MINOR_THIRD = 2 ** (3 / 12);
+const FIFTH = 2 ** (7 / 12);
 
 export function isMuted() {
   try {
@@ -21,8 +29,9 @@ export function setMuted(muted: boolean) {
   } catch {
     // Sound preference is a convenience; ignore storage failures.
   }
-  if (muted) stopRain();
-  else startRain();
+  if (master) master.gain.value = muted ? 0 : getVolume();
+  if (muted) stopAmbience();
+  else startAmbience();
 }
 
 export function getVolume() {
@@ -35,12 +44,13 @@ export function getVolume() {
 }
 
 export function setVolume(volume: number) {
+  const level = Math.min(1, Math.max(0, volume));
   try {
-    window.localStorage.setItem(VOLUME_KEY, String(volume));
+    window.localStorage.setItem(VOLUME_KEY, String(level));
   } catch {
     // Volume is a convenience; keep the current level if storage is blocked.
   }
-  if (master) master.gain.value = volume;
+  if (master) master.gain.value = level;
 }
 
 function audio() {
@@ -102,6 +112,9 @@ export function play(cue: Cue) {
   if (cue === "door") { burst(ctx, 0.35, 600, 0.12); tone(ctx, 140, 0.05, 0.3, "sawtooth", 0.02, 90); }
   if (cue === "ping") { tone(ctx, 1046, 0, 0.12, "sine", 0.07); tone(ctx, 1318, 0.1, 0.2, "sine", 0.07); }
   if (cue === "sting") { tone(ctx, 110, 0, 0.9, "sawtooth", 0.06, 104); tone(ctx, 155, 0, 0.9, "sawtooth", 0.05, 147); burst(ctx, 0.2, 200, 0.4); }
+  if (cue === "search") { burst(ctx, 0.11, 1400, 0.11); tone(ctx, 330, 0, 0.09, "triangle", 0.035, 280); }
+  if (cue === "open") { tone(ctx, 440, 0, 0.09, "triangle", 0.05); tone(ctx, 660, 0.08, 0.13, "triangle", 0.04); }
+  if (cue === "close") tone(ctx, 440, 0, 0.12, "triangle", 0.045, 260);
 }
 
 /** A low rain loop under the whole investigation. */
@@ -124,4 +137,43 @@ export function startRain() {
 export function stopRain() {
   rain?.source.stop();
   rain = null;
+}
+
+/** Quiet four-chord pulse beneath the rain; all notes are scheduled on the audio clock. */
+export function startMusic() {
+  const ctx = audio();
+  if (!ctx || musicTimer) return;
+  nextBeatTime = ctx.currentTime + 0.08;
+  beat = 0;
+  const schedule = () => {
+    while (nextBeatTime < ctx.currentTime + 0.8) {
+      const root = ROOTS[Math.floor(beat / 4) % ROOTS.length];
+      const start = Math.max(0, nextBeatTime - ctx.currentTime);
+      const notes = [root * 2, root * 2 * MINOR_THIRD, root * 2 * FIFTH];
+      if (beat % 4 === 0) {
+        notes.forEach((frequency) => tone(ctx, frequency, start, BEAT_SECONDS * 3.7, "sine", 0.018));
+        tone(ctx, root, start, BEAT_SECONDS * 1.5, "triangle", 0.05);
+      }
+      tone(ctx, notes[[0, 2, 1, 2][beat % 4]], start, 0.18, "triangle", 0.018);
+      nextBeatTime += BEAT_SECONDS;
+      beat++;
+    }
+  };
+  schedule();
+  musicTimer = setInterval(schedule, 200);
+}
+
+export function stopMusic() {
+  if (musicTimer) clearInterval(musicTimer);
+  musicTimer = null;
+}
+
+export function startAmbience() {
+  startRain();
+  startMusic();
+}
+
+export function stopAmbience() {
+  stopRain();
+  stopMusic();
 }

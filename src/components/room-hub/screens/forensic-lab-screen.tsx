@@ -10,6 +10,7 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 import { cardDropTarget, startCardDrag } from "../../../lib/evidence-drag";
 import { formatDuration, formatGameMinute } from "../../../lib/game-time";
 import { play } from "../../../lib/sound";
+import { ControlIcon } from "../control-icon";
 import { FirstTimeTip } from "../first-time-tip";
 import { LabTask, type LabTest } from "../lab-tasks";
 import { InvestigationIcon } from "../investigation-icon";
@@ -102,9 +103,9 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
           <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">{lab.placeName} · {formatGameMinute(gameTime)}</p>
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">Forensic lab</h2>
         </div>
-        <button className="min-h-11 shrink-0 border border-[#6f9f98]/70 px-4 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">Leave the lab</button>
+        <button aria-label="Leave the lab" className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase" onClick={onBack} title="Leave the lab" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Leave the lab</span></button>
       </header>
-      <FirstTimeTip id="lab" title="Forensic lab">Drag evidence onto the bench (or tap it), pick a tool, then do the job it asks for: dust, sweep a lamp, swab, pipette, peel tape, stir a cast, line up a scope. The result shows as soon as you finish, and not every test finds something.</FirstTimeTip>
+      <FirstTimeTip id="lab" title="Forensic lab">Put evidence on the bench, pick a tool, and follow its action. Results appear when you finish.</FirstTimeTip>
       <main className="game-station-main min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
           <aside>

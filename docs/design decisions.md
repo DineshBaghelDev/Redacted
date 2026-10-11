@@ -1,5 +1,13 @@
 # Design Decisions
 
+## 2026-10-11 — Logo, audio, and lighter controls
+
+- The brand mark is one simple pixel dossier with a redaction bar; the REDACTED wordmark stays live text so it remains sharp and cannot contain generated lettering artifacts. Generated art is reserved for prominent controls and symbols, while long case text remains selectable DOM text.
+- A quiet synthesized minor progression and rain form the investigation bed. Browsers may block audio until interaction, so pointer and keyboard input both unlock it. Music, ambience, and effects share one mute and volume setting.
+- Use illustrated plates and clear icon silhouettes for primary actions and exits. Keep accessible names and visible labels where space permits; mobile icon-only returns have titles and accessible names. Do not add an illustrated box around every evidence row or object.
+- Full case summaries remain available within each archive card, but start collapsed so case choice and replay actions stay scannable. First-time tips describe gestures in short lines, with deeper case information opened intentionally.
+- On narrow interviews, keep the portrait identity visible, fold appearance text, and anchor the evidence tray above the question composer. Evidence already on the clueboard appears first and is labeled; other discovered proof remains usable under the existing game rule.
+
 ## 2026-10-11 — Navigation is about the case, not the maze
 
 - Players are solving a case, not a maze: room names are always shown, the map is fully labelled, and any room is one tap away. Walking still costs the shortest-path minutes.

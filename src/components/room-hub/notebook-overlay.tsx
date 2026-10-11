@@ -70,7 +70,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
           ))}
         </div>
         {message ? <p className="mt-2 text-sm text-red-900" role="status">{message}</p> : null}
-        <FirstTimeTip id="notebook" title="Shared notebook">Everything either of you uncovers lands here on its own. Drag an entry onto the clueboard, a suspect&apos;s portrait, the lab bench, or your report. Show partner points your partner at it.</FirstTimeTip>
+        <FirstTimeTip id="notebook" title="Shared notebook">Discoveries appear here. Drag one to the clueboard, a person, the lab bench, or your report.</FirstTimeTip>
         <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
           {tab === "people" ? (
             people === undefined ? <p className="uppercase">Opening files...</p> : (

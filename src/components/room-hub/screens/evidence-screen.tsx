@@ -6,6 +6,7 @@ import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
 import { useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
+import { ControlIcon } from "../control-icon";
 import { InvestigationIcon } from "../investigation-icon";
 import { TypeAhead } from "../type-ahead";
 
@@ -70,11 +71,11 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
         </div>
         <button
           aria-label="Leave the records room"
-          className="min-h-11 shrink-0 border border-[#6f9f98] px-4 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] focus-visible:outline-2 focus-visible:outline-[#e8ac51]"
+          className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase focus-visible:outline-2 focus-visible:outline-[#e8ac51]"
           onClick={onBack}
           type="button"
         >
-          Leave the room
+          <ControlIcon name="back" /><span className="hidden sm:inline">Leave the room</span>
         </button>
       </header>
 
@@ -87,16 +88,16 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
             id="record-search"
             maxLength={80}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Try a name, address, employment, or card payment"
+            placeholder="Name or address"
             type="search"
             value={search}
           />
           <button
-            className="min-h-12 border border-[#e8ac51] px-5 text-sm uppercase text-[#e8ac51] hover:bg-[#e8ac51] hover:text-[#071014] focus-visible:outline-2 focus-visible:outline-[#e8ac51] disabled:cursor-wait disabled:opacity-50"
+            className="game-control-button flex min-h-12 items-center justify-center gap-2 px-5 text-sm uppercase text-[#e8ac51] focus-visible:outline-2 focus-visible:outline-[#e8ac51] disabled:cursor-wait disabled:opacity-50"
             disabled={startingSearch || (result?.status === "pending" && normalizedTerm(submittedSearch) === currentTerm)}
             type="submit"
           >
-            {startingSearch ? "Starting search..." : !search.trim() ? "Browse files" : result?.savedTerms.includes(currentTerm) ? "Open saved search" : "Search records"}
+            <ControlIcon name="search" />{startingSearch ? "Starting search..." : !search.trim() ? "Browse files" : result?.savedTerms.includes(currentTerm) ? "Open saved search" : "Search records"}
           </button>
         </div>
         <TypeAhead names={(people ?? []).map((person) => person.name)} onPick={setSearch} value={search} />

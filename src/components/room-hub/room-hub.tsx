@@ -12,6 +12,7 @@ import { RoomLobbyModal } from "./screens/room-lobby-modal";
 import { SettingsPanel } from "./screens/settings-panel";
 import { CaseBriefScreen } from "./screens/status-screens";
 import { BureauScreen, preloadStations } from "./screens/bureau-screen";
+import { GameLogo } from "./game-logo";
 
 const DETECTIVE_NAME_KEY = "redacted.detectiveName";
 const subscribeToNothing = () => () => {};
@@ -69,7 +70,7 @@ export function RoomHub() {
   if (!isMounted) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-[#071014]">
-        <p className="game-title animate-pulse text-4xl">REDACTED</p>
+        <GameLogo className="animate-pulse" />
         <p className="text-xs uppercase tracking-[0.3em] text-[#c8d8d2]/60">Opening the case files...</p>
       </div>
     );

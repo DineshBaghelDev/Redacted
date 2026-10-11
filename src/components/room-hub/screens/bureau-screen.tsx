@@ -9,8 +9,9 @@ import { go, replaceTo } from "../../../lib/game-nav";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { currentGameMinute, formatGameMinute, formatDuration, partOfDay } from "../../../lib/game-time";
-import { getVolume, isMuted, play, setMuted, setVolume, startRain } from "../../../lib/sound";
+import { getVolume, isMuted, play, setMuted, setVolume, startAmbience, stopAmbience } from "../../../lib/sound";
 import { GameIcon } from "../game-icon";
+import { ControlIcon } from "../control-icon";
 import { NotebookOverlay } from "../notebook-overlay";
 
 const ClueBoardScreen = dynamic(() =>
@@ -201,9 +202,11 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   }, []);
 
   useEffect(() => {
-    const begin = () => startRain();
-    window.addEventListener("pointerdown", begin, { once: true });
-    return () => window.removeEventListener("pointerdown", begin);
+    const begin = () => startAmbience();
+    begin();
+    window.addEventListener("pointerdown", begin);
+    window.addEventListener("keydown", begin);
+    return () => { window.removeEventListener("pointerdown", begin); window.removeEventListener("keydown", begin); stopAmbience(); };
   }, []);
 
   useEffect(() => {
@@ -249,8 +252,8 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         </span>
         {left !== null ? <span className={`whitespace-nowrap ${left <= 0 ? "text-[#e5a18e]" : left < 120 ? "text-[#f1c987]" : "text-[#b8ccc1]"}`}>{left <= 0 ? "Overdue" : <>{formatDuration(left)}<span className="hidden sm:inline"> left</span></>}</span> : null}
         {partner ? <span className="ml-auto hidden min-w-0 truncate normal-case tracking-normal text-[#c8d8d2] sm:inline" title="Your partner">{partner.name} · {partner.place} · {partner.activity}</span> : <span className="ml-auto" />}
-        <button className="min-h-8 shrink-0 border border-[#e8ac51]/60 px-2 hover:bg-[#e8ac51]/15" onClick={() => setNotebookOpen(true)} type="button">Notebook<span className="hidden text-[#b8ccc1] lg:inline"> · N</span></button>
-        <button aria-label="Pause menu" className="min-h-8 shrink-0 border border-[#6f9f98]/60 px-2 text-[#c8d8d2] hover:border-[#e8ac51]" onClick={() => setMenuOpen(true)} type="button">Menu<span className="hidden lg:inline"> · Esc</span></button>
+        <button aria-label="Notebook" className="game-control-button flex min-h-9 shrink-0 items-center gap-2 px-3" onClick={() => { play("open"); setNotebookOpen(true); }} title="Notebook · N" type="button"><ControlIcon name="notebook" /><span className="hidden sm:inline">Notebook</span></button>
+        <button aria-label="Pause menu" className="game-control-button flex min-h-9 shrink-0 items-center gap-2 px-3" onClick={() => { play("open"); setMenuOpen(true); }} title="Pause · Esc" type="button"><ControlIcon name="pause" /><span className="hidden sm:inline">Menu</span></button>
       </header>
       {clockError ? <p className="absolute inset-x-3 top-11 z-50 mx-auto w-fit border border-red-300/60 bg-red-950/95 px-3 py-2 text-sm text-red-100" role="status">Clock sync delayed. Retrying...</p> : null}
 
@@ -261,7 +264,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
           {showBureauHub ? hotspots.map((spot) => <Hotspot key={spot.station} {...spot} onClick={() => openStation(spot.station)} />) : null}
         </div>
       </div>
-      {showBureauHub ? <FirstTimeTip id="bureau" title="The bureau">Click around the room: interview room, security desk, clueboard, records, city map, and the case file. Esc pauses; N opens the notebook.</FirstTimeTip> : null}
+      {showBureauHub && !menuOpen ? <FirstTimeTip id="bureau" title="The bureau">Tap a station to open it. N opens the notebook; Esc pauses.</FirstTimeTip> : null}
       {showBureauHub ? <p className="pointer-events-none absolute inset-x-0 bottom-3 z-20 text-center text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/70 lg:hidden">Swipe to look around the bureau</p> : null}
 
       {activeStation || showAwayNotice ? (
@@ -313,20 +316,20 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
             </div>
           ) : (
             <div className="mt-4 grid gap-2">
-              <button autoFocus className="min-h-11 border border-[#e8ac51] text-sm uppercase text-[#f1c987] hover:bg-[#e8ac51]/15" onClick={() => setMenuOpen(false)} type="button">Resume</button>
-              <button className="min-h-11 border border-[#6f9f98]/60 text-sm uppercase" onClick={() => { const next = !muted; setMuted(next); setMutedState(next); }} type="button">Sound · {muted ? "Off" : "On"}</button>
-              {!muted ? <label className="flex items-center gap-3 text-xs uppercase text-[#c8d8d2]">Volume<input aria-label="Volume" className="flex-1 accent-[#e8ac51]" defaultValue={Math.round(getVolume() * 100)} max={100} min={0} onChange={(event) => setVolume(Number(event.target.value) / 100)} type="range" /></label> : null}
+              <button autoFocus className="game-control-button flex min-h-11 items-center justify-center gap-2 text-sm uppercase text-[#f1c987]" onClick={() => { play("close"); setMenuOpen(false); }} type="button"><ControlIcon name="play" />Resume</button>
+              <button className="game-control-button flex min-h-11 items-center justify-center gap-2 text-sm uppercase" onClick={() => { const next = !muted; setMuted(next); setMutedState(next); if (!next) play("ping"); }} type="button"><ControlIcon name="speaker" />Music &amp; effects · {muted ? "Off" : "On"}</button>
+              {!muted ? <label className="flex items-center gap-3 text-xs uppercase text-[#c8d8d2]">Volume<input aria-label="Volume" className="flex-1 accent-[#e8ac51]" defaultValue={Math.round(getVolume() * 100)} max={100} min={0} onChange={(event) => setVolume(Number(event.target.value) / 100)} onPointerUp={() => play("ping")} type="range" /></label> : null}
               <button className="min-h-11 border border-[#6f9f98]/60 text-sm uppercase" onClick={() => { resetTips(); setMenuOpen(false); }} type="button">Show tips again</button>
               <button className="min-h-11 border border-red-400/70 text-sm uppercase text-red-100" onClick={() => setConfirmLeave(true)} type="button">Leave case</button>
             </div>
           )}
-          <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-[#c8d8d2]/75">
+          <details className="mt-4 text-xs text-[#c8d8d2]/75"><summary className="cursor-pointer uppercase text-[#e8ac51]">Controls</summary><dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
             <dt className="font-mono text-[#e8ac51]">N</dt><dd>Notebook</dd>
             <dt className="font-mono text-[#e8ac51]">M</dt><dd>City map</dd>
             <dt className="font-mono text-[#e8ac51]">B</dt><dd>Clueboard</dd>
             <dt className="font-mono text-[#e8ac51]">C</dt><dd>Case file</dd>
             <dt className="font-mono text-[#e8ac51]">Esc</dt><dd>Pause / close</dd>
-          </dl>
+          </dl></details>
         </div>
       </dialog>
     </section>

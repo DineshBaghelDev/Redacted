@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-10-11 — Logo, controls, and audio pass
+
+- Added an inspected transparent case-file emblem, a restrained metal button plate, and an eight-symbol control atlas. The live REDACTED title stays as readable text beside the emblem. Main menu, archive replay, opening brief, pause, station returns, device return, and interview evidence controls now use the shared asset language.
+- Added a quiet four-chord synthesized score beneath the rain, plus search, open, and close cues. Music starts on bureau mount when allowed and resumes on pointer or keyboard input when browser audio is suspended. Mute stops both loops immediately; unmuting restarts them and plays a confirmation ping. The volume slider controls the shared output.
+- The archive now keeps full public summaries under “Read case brief” on each card, putting replay actions in view sooner. First-time tips across investigation stations have been shortened to one or two control hints.
+- At 320px, the interview header uses an icon return, the portrait is smaller, appearance is disclosed on demand, and the evidence tray opens above the composer. Pinned clueboard evidence is listed first and marked in the tray. Menu, archive, and interview had no document-wide horizontal overflow in a signed-in Playwright pass.
+- Browser audio instrumentation saw score oscillators and rain sources start; muting stopped new score notes and unmuting restarted them. All 171 tests across 35 files, TypeScript, focused lint, and the production build pass. Signed-in 320px captures of archive, interview, map, CCTV, and records show no document-wide horizontal overflow.
+
 ## 2026-10-11 — Smoother building navigation
 
 - Doors always name the room behind them; no more "Unexplored" doors or "?" rooms. The map shows every room on a floor by name (explored ones inked solid) and any room can be tapped to walk there.

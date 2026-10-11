@@ -13,6 +13,7 @@ import { api } from "../../../../convex/_generated/api";
 import { play } from "../../../lib/sound";
 import { CharacterPortrait } from "../character-portrait";
 import { GameIcon } from "../game-icon";
+import { ControlIcon } from "../control-icon";
 import { cardDropTarget, startCardDrag } from "../../../lib/evidence-drag";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
@@ -56,8 +57,8 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Step away from the t
           <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Security terminal</p>
           <h2 className="mt-1 text-lg uppercase tracking-wide sm:text-2xl">Camera tapes</h2>
         </div>
-        <button className="shrink-0 border border-[#6f9f98]/70 px-3 py-2 text-xs uppercase text-[#c8d8d2] hover:border-[#e8ac51] hover:text-[#e8ac51] sm:text-sm" onClick={() => setCompareOpen(!compareOpen)} type="button">{compareOpen ? "Hide people" : <>Compare<span className="hidden sm:inline"> with people</span></>}</button>
-        <button className="shrink-0 border border-[#6f9f98]/70 px-3 py-2 text-xs uppercase text-[#c8d8d2] hover:border-[#e8ac51] hover:text-[#e8ac51] sm:text-sm" onClick={onBack} type="button">{backLabel}</button>
+        <button className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-xs uppercase sm:text-sm" onClick={() => setCompareOpen(!compareOpen)} type="button"><GameIcon className="size-6" name="interview" />{compareOpen ? "Hide people" : <>Compare<span className="hidden sm:inline"> with people</span></>}</button>
+        <button aria-label={backLabel} className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-xs uppercase sm:text-sm" onClick={onBack} title={backLabel} type="button"><ControlIcon name="back" /><span className="hidden sm:inline">{backLabel}</span></button>
       </header>
       <div className="game-station-main relative flex min-h-0 flex-1">
         <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
@@ -233,7 +234,7 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
 
   return (
     <div>
-      <FirstTimeTip id="cctv" title="Camera tapes">Drag the tape left and right. Orange marks are people passing. Logs never name anyone: drag a face from the notebook or &quot;Compare with people&quot; onto a sighting if you think it&apos;s them.</FirstTimeTip>
+      <FirstTimeTip id="cctv" title="Camera tapes">Drag the tape to scan. Drop a face on a sighting to mark your guess.</FirstTimeTip>
       <div className="cctv-monitor relative overflow-hidden border-2 border-[#2f4a47] bg-[#020807] p-4 font-mono sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs uppercase tracking-[0.18em] text-[#7fd1ae]">
           <span>{camera.name}</span>

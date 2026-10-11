@@ -3,6 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "convex-helpers/react/cache";
 import { api } from "../../../../convex/_generated/api";
+import { ControlIcon } from "../control-icon";
 
 export function CaseBriefScreen({
   roomCode,
@@ -45,12 +46,12 @@ export function CaseBriefScreen({
 
         <div className="grid gap-3 border-t-2 border-[#211d17] pt-5 sm:grid-cols-[1fr_auto]">
           <button
-            className="min-h-12 border-2 border-[#211d17] bg-[#243335] px-5 text-lg uppercase text-[#f1c987] disabled:cursor-not-allowed disabled:opacity-45"
+            className="game-control-button flex min-h-12 items-center justify-center gap-2 px-5 text-lg uppercase text-[#f1c987] disabled:cursor-not-allowed disabled:opacity-45"
             disabled={!brief}
             onClick={onBegin}
             type="button"
           >
-            Begin investigation
+            <ControlIcon name="play" />Begin investigation
           </button>
           <button className="min-h-12 border-2 border-red-800 px-5 text-lg uppercase text-red-900 hover:bg-red-900 hover:text-red-50" onClick={onLeave} type="button">
             Leave room

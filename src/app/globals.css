@@ -74,6 +74,30 @@
   .device-app-icon--calls { background-position: 50% 0; }
   .device-app-icon--files { background-position: 100% 0; }
 
+  .control-icon {
+    display: inline-block;
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: url('/assets/control-icons.png') no-repeat 0 0 / 400% 200%;
+    image-rendering: pixelated;
+  }
+  .control-icon--notebook { background-position: 33.333% 0; }
+  .control-icon--pause { background-position: 66.667% 0; }
+  .control-icon--speaker { background-position: 100% 0; }
+  .control-icon--play { background-position: 0 100%; }
+  .control-icon--search { background-position: 33.333% 100%; }
+  .control-icon--pin { background-position: 66.667% 100%; }
+  .control-icon--close { background-position: 100% 100%; }
+
+  .game-control-button {
+    background: url('/assets/control-plate.png') center 24% / 100% 250% no-repeat;
+    color: #e4e6d8;
+    transition: filter 120ms, transform 120ms;
+  }
+  .game-control-button:hover, .game-control-button:focus-visible { filter: brightness(1.2); transform: translateY(-1px); }
+  .game-control-button:active { transform: translateY(1px); }
+
   .character-portrait {
     display: block;
     flex: none;
@@ -140,10 +164,9 @@
     min-height: 3.5rem;
     align-items: center;
     gap: 0.85rem;
-    border: 12px solid transparent;
-    border-image: url('/assets/terminal-frame.png') 120 fill / 12px / 0 stretch;
-    background: rgb(8 21 24 / 88%);
-    padding: 0.35rem 0.65rem;
+    border: 0;
+    background: url('/assets/control-plate.png') center 24% / 100% 250% no-repeat;
+    padding: 0.75rem 1.35rem;
     text-align: left;
     color: #e4e6d8;
     transition: background-color 120ms, border-color 120ms, color 120ms;
@@ -151,7 +174,6 @@
 
   .game-menu-button:hover,
   .game-menu-button:focus-visible {
-    background: #312819;
     color: #f5c87f;
     filter: brightness(1.2);
   }
@@ -181,6 +203,17 @@
   .game-menu-button:disabled {
     cursor: not-allowed;
     opacity: 0.5;
+  }
+
+  .game-menu-scene nav[aria-label="Main menu"] > button {
+    animation: menu-enter 280ms steps(5) both;
+  }
+  .game-menu-scene nav[aria-label="Main menu"] > button:nth-child(2) { animation-delay: 60ms; }
+  .game-menu-scene nav[aria-label="Main menu"] > button:nth-child(3) { animation-delay: 120ms; }
+  .game-menu-scene nav[aria-label="Main menu"] > button:nth-child(4) { animation-delay: 180ms; }
+  @keyframes menu-enter {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 
   .game-ui {
@@ -554,7 +587,8 @@
 
 /* Respect the system "reduce motion" setting for the game's own animations. */
 @media (prefers-reduced-motion: reduce) {
-  .reveal-card, .terminal-line, .contradiction-stamp, .cctv-static, .game-toast, .game-tip { animation: none !important; }
+  .reveal-card, .terminal-line, .contradiction-stamp, .cctv-static, .game-toast, .game-tip,
+  .game-menu-scene nav[aria-label="Main menu"] > button { animation: none !important; }
   .game-panorama, .cctv-tape { scroll-behavior: auto; }
 }
 

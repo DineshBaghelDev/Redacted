@@ -1,6 +1,8 @@
 import { ArrowRight } from "lucide-react";
 import { menuOptionButton } from "../constants";
 import { GameIcon } from "../game-icon";
+import { GameLogo } from "../game-logo";
+import { play } from "../../../lib/sound";
 
 type MainMenuScreenProps = {
   activeRooms?: Array<{
@@ -31,15 +33,13 @@ export function MainMenuScreen({
 }: MainMenuScreenProps) {
   return (
     <div className="flex max-h-full w-full max-w-md flex-col gap-7 overflow-y-auto py-1">
-      <h1 className="game-title text-5xl leading-none sm:text-7xl">
-        REDACTED
-      </h1>
+      <GameLogo />
       <nav aria-label="Main menu" className="flex w-full flex-col gap-2">
         {activeRooms?.map((room) => (
           <button
             className="game-menu-button mb-2 min-h-20 border-[#e8ac51] bg-[#2b2419]"
             key={room.roomCode}
-            onClick={() => onContinue(room.roomCode, room.status, room.reportSubmitted)}
+            onClick={() => { play("open"); onContinue(room.roomCode, room.status, room.reportSubmitted); }}
             type="button"
           >
             <GameIcon name="case" className="size-10" />
@@ -51,15 +51,15 @@ export function MainMenuScreen({
             <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
           </button>
         ))}
-        <button className={menuOptionButton} onClick={onPrevious} type="button">
+        <button className={menuOptionButton} onClick={() => { play("open"); onPrevious(); }} type="button">
           <GameIcon name="case" />
           Play a previous case
         </button>
-        <button className={menuOptionButton} onClick={onJoin} type="button">
+        <button className={menuOptionButton} onClick={() => { play("open"); onJoin(); }} type="button">
           <GameIcon name="badge" />
           Join room
         </button>
-        <button className={menuOptionButton} onClick={onSettings} type="button">
+        <button className={menuOptionButton} onClick={() => { play("open"); onSettings(); }} type="button">
           <GameIcon name="records" />
           Settings
         </button>

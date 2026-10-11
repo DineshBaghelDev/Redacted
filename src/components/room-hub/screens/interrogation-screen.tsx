@@ -13,6 +13,7 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 import { play } from "../../../lib/sound";
 import { CharacterPortrait } from "../character-portrait";
 import { GameIcon } from "../game-icon";
+import { ControlIcon } from "../control-icon";
 import { DeviceViewer } from "./device-viewer";
 import { TypeAhead } from "../type-ahead";
 import { cardDropTarget, startCardDrag } from "../../../lib/evidence-drag";
@@ -49,8 +50,8 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
           <p className="text-xs uppercase tracking-[0.25em] text-[#e8ac51]">Interview room</p>
           <h2 className="mt-1 break-words text-xl uppercase tracking-wide sm:text-2xl">{selected ? selected.name : "People we know of"}</h2>
         </div>
-        <button className="min-h-11 shrink-0 border border-[#6f9f98] px-3 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={selected ? () => setSelectedId(null) : onBack} type="button">
-          {selected ? "End interview" : "Leave the room"}
+        <button aria-label={selected ? "End interview" : "Leave the room"} className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase" onClick={selected ? () => setSelectedId(null) : onBack} title={selected ? "End interview" : "Leave the room"} type="button">
+          <ControlIcon name="back" /><span className="hidden sm:inline">{selected ? "End interview" : "Leave the room"}</span>
         </button>
       </header>
       <main className={`game-station-main min-h-0 flex-1 p-3 sm:p-6 lg:p-8 ${selected ? "overflow-hidden" : "overflow-y-auto"}`}>
@@ -144,6 +145,8 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
     ...people.filter((other) => other.id !== person.id).map((other) => other.name),
     ...(proof ?? []).filter((entry) => entry.type === "item").map((entry) => entry.label),
   ];
+  const onBoard = (entry: Proof) => boardNodes?.some((node) => node.type === entry.type && node.referenceId === entry.referenceId) ?? false;
+  const orderedProof = [...(proof ?? [])].sort((a, b) => Number(onBoard(b)) - Number(onBoard(a)));
 
   /** Put evidence on the table and demand an explanation, optionally about one line they said. */
   function confront(entry: { type: Proof["type"]; referenceId: string }, line?: string) {
@@ -162,7 +165,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
           title="Drop evidence here to confront them"
           {...cardDropTarget((card) => confront({ type: card.kind as Proof["type"], referenceId: card.referenceId }), (kind) => kind !== "person" && kind !== "place")}
         >
-          <CharacterPortrait age={person.age} className={`w-20 transition lg:w-full lg:max-w-[14rem] ${interview && interview.exposedLies > 0 ? "saturate-150 sepia-[.2]" : ""}`} description={person.publicDescription} gender={person.gender} id={person.id} />
+          <CharacterPortrait age={person.age} className={`w-16 transition sm:w-20 lg:w-full lg:max-w-[14rem] ${interview && interview.exposedLies > 0 ? "saturate-150 sepia-[.2]" : ""}`} description={person.publicDescription} gender={person.gender} id={person.id} />
           <div className="min-w-0">
             <h3 className="break-words text-lg uppercase leading-tight">{person.name}</h3>
             <p className="mt-1 text-xs italic text-[#5d4d3d]">
@@ -170,7 +173,8 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
             </p>
           </div>
         </div>
-        <p className="mt-3 border-t border-[#8b7355] pt-3 text-sm leading-relaxed text-[#4b3b2d]">{person.publicDescription}</p>
+        <details className="mt-3 border-t border-[#8b7355] pt-2 text-sm leading-relaxed text-[#4b3b2d] sm:hidden"><summary className="cursor-pointer text-xs uppercase text-red-800">Appearance</summary><p className="mt-2">{person.publicDescription}</p></details>
+        <p className="mt-3 hidden border-t border-[#8b7355] pt-3 text-sm leading-relaxed text-[#4b3b2d] sm:block">{person.publicDescription}</p>
         {!present ? (
           <div className="mt-4">
             <button className="min-h-11 w-full border-2 border-red-900 bg-red-950 px-3 text-xs uppercase text-red-50 disabled:opacity-50" disabled={working || !interview?.canTalkHere} onClick={() => run(callToBureau({ roomCode, npcId: person.id }), () => play("door"))} type="button">Have them brought in</button>
@@ -192,12 +196,12 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
       </aside>
 
       <section aria-label={`Interview with ${person.name}`} className="flex min-h-0 flex-col border border-[#6f9f98]/30 bg-[#09191c]/95 text-[#e4e6d8]">
-        <FirstTimeTip id="interview" title="Questioning">Ask anything in your own words; each question takes 3 minutes. Click a line they said to press it or prove it wrong, or drag evidence onto their portrait. Only real proof breaks a lie. Asking what they saw takes their statement; asking for their phone may get it handed over.</FirstTimeTip>
+        <FirstTimeTip id="interview" title="Questioning">Type a question. Tap a reply line to press it, or drop proof on the portrait. Each question takes 3 minutes.</FirstTimeTip>
         {interview?.threadId ? <ConversationMessages canAsk={canAsk} name={person.name} onPress={(line) => run(sendQuestion({ roomCode, npcId: person.id, question: `You said: "${line}" Tell me more about that.` }))} onPresent={(line) => { setQuote(line); setTrayOpen(true); }} roomCode={roomCode} threadId={interview.threadId} /> : <div className="flex min-h-0 flex-1 items-center justify-center p-4 text-center text-sm text-[#c8d8d2]/60">{present ? `${person.name} is shown in and sits down.` : "The chair across the table is empty."}</div>}
         {waiting ? <p className="px-4 py-2 text-sm italic text-[#e8ac51]" role="status">{person.name} is thinking<span className="animate-pulse">...</span></p> : null}
         {interview?.turns.at(-1)?.status === "failed" ? <div className="px-4 py-2 text-sm text-red-200" role="alert"><p>That answer was lost. Asking again costs no time.</p><button className="mt-2 min-h-10 border border-red-400 px-3 text-xs uppercase disabled:opacity-50" disabled={working} onClick={() => run(retryFailed({ roomCode, npcId: person.id }))} type="button">Ask again</button></div> : null}
         {present && interview ? (
-          <form className="border-t border-[#6f9f98]/45 p-3 sm:p-4" onSubmit={(event) => {
+          <form className="relative border-t border-[#6f9f98]/45 p-3 sm:p-4" onSubmit={(event) => {
             event.preventDefault();
             const body = question.trim() || (shown ? "How do you explain this?" : "");
             if (!body) return;
@@ -213,13 +217,13 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
             <textarea className="min-h-16 w-full resize-y border border-[#45635d] bg-[#102326] p-3 text-base text-[#e4e6d8] outline-none focus:border-[#e8ac51]" id="interview-question" maxLength={500} onChange={(event) => setQuestion(event.target.value)} placeholder={`Ask ${person.name.split(" ")[0]} anything...`} value={question} />
             <TypeAhead names={knownNames} onPick={setQuestion} value={question} />
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <button aria-expanded={trayOpen} className="min-h-11 border border-[#e8ac51]/70 px-3 text-xs uppercase text-[#f1c987]" onClick={() => setTrayOpen(!trayOpen)} type="button">Show evidence</button>
-              <button className="min-h-11 bg-[#e8ac51] px-4 text-xs uppercase text-[#071014] hover:bg-[#f1c987] disabled:opacity-50" disabled={!canAsk || (!question.trim() && !shown)} type="submit">{shown ? "Confront · 3 min" : "Ask · 3 min"}</button>
+              <button aria-expanded={trayOpen} className="game-control-button flex min-h-11 items-center gap-2 px-4 text-xs uppercase text-[#f1c987]" onClick={() => { play("open"); setTrayOpen(!trayOpen); }} title="Choose discovered evidence" type="button"><ControlIcon name="pin" />Tag clue</button>
+              <button className="flex min-h-11 items-center gap-2 bg-[#e8ac51] px-4 text-xs uppercase text-[#071014] hover:bg-[#f1c987] disabled:opacity-50" disabled={!canAsk || (!question.trim() && !shown)} type="submit"><ControlIcon name="play" />{shown ? "Confront · 3 min" : "Ask · 3 min"}</button>
               {!interview.canTalkHere ? <p className="text-xs text-red-200">Return to the bureau to continue.</p> : null}
             </div>
             {trayOpen ? (
-              <div aria-label="Your evidence" className="mt-2 max-h-48 overflow-y-auto border-t border-[#6f9f98]/45 pt-2">
-                {proof?.length ? <div className="grid gap-1 sm:grid-cols-2">{proof.map((entry) => <button aria-pressed={shown?.referenceId === entry.referenceId} className="min-h-10 cursor-grab border border-[#45635d] px-2 py-1 text-left text-xs aria-pressed:border-[#e8ac51] aria-pressed:text-[#f1c987]" draggable key={`${entry.type}:${entry.referenceId}`} onClick={() => { if (quote) confront(entry, quote); else { setShown(entry); setTrayOpen(false); } }} onDragStart={(event) => startCardDrag(event, { kind: entry.type, referenceId: entry.referenceId, label: entry.label })} type="button">{entry.label}</button>)}</div> : <p className="text-sm text-[#c8d8d2]/70">You have nothing to show yet.</p>}
+              <div aria-label="Your evidence" className="absolute inset-x-2 bottom-full z-20 mb-1 max-h-[min(12rem,40vh)] overflow-y-auto border border-[#6f9f98]/60 bg-[#09191c] p-2 shadow-[0_-8px_24px_#0009]">
+                {orderedProof.length ? <div className="grid gap-1 sm:grid-cols-2">{orderedProof.map((entry) => <button aria-pressed={shown?.referenceId === entry.referenceId} className="min-h-10 cursor-grab border border-[#45635d] px-2 py-1 text-left text-sm leading-snug aria-pressed:border-[#e8ac51] aria-pressed:text-[#f1c987]" draggable key={`${entry.type}:${entry.referenceId}`} onClick={() => { play("click"); if (quote) confront(entry, quote); else { setShown(entry); setTrayOpen(false); } }} onDragStart={(event) => startCardDrag(event, { kind: entry.type, referenceId: entry.referenceId, label: entry.label })} type="button">{onBoard(entry) ? <span className="mb-1 block text-xs uppercase text-[#e8ac51]">On clueboard</span> : null}<span className="line-clamp-2 break-words">{entry.label}</span></button>)}</div> : <p className="text-sm text-[#c8d8d2]/70">You have nothing to show yet.</p>}
               </div>
             ) : null}
           </form>

@@ -1,5 +1,6 @@
 import { input, menuButton, panel } from "../constants";
 import { CharacterPortrait } from "../character-portrait";
+import { GameLogo } from "../game-logo";
 
 type NameEntryScreenProps = {
   detectiveName: string;
@@ -18,9 +19,7 @@ export function NameEntryScreen({
 }: NameEntryScreenProps) {
   return (
     <div className="relative z-10 flex w-full max-w-sm flex-col gap-8 px-5 sm:px-0">
-      <h1 className="game-title text-5xl leading-none sm:text-7xl">
-        REDACTED
-      </h1>
+      <GameLogo />
       <form
         className={panel}
         onSubmit={(event) => {

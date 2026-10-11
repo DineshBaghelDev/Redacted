@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { InvestigationIcon } from "../investigation-icon";
+import { ControlIcon } from "../control-icon";
+import { play } from "../../../lib/sound";
 
 export type DeviceData = {
   type: "phone" | "laptop";
@@ -36,6 +38,7 @@ export function DeviceViewer({ title, data, onBack, onPin, isPinned, busy, error
   const message = messages.find((row) => row.id === openId);
 
   function openApp(next: App) {
+    play("open");
     setApp(next);
     setOpenId(null);
   }
@@ -44,7 +47,7 @@ export function DeviceViewer({ title, data, onBack, onPin, isPinned, busy, error
     <header className="game-station-header flex shrink-0 items-center gap-3 px-4 py-3 sm:px-6">
       <InvestigationIcon className="size-10" name={data.type === "laptop" ? "file" : "device"} />
       <div className="min-w-0 flex-1"><p className="text-xs uppercase tracking-widest text-[#a5c6bb]">Recovered {data.type}</p><h2 className="break-words text-lg uppercase sm:text-2xl">{title}</h2></div>
-      <button className="min-h-11 shrink-0 border border-[#6f9f98] px-3 text-xs uppercase" onClick={onBack} type="button">Put it down</button>
+      <button aria-label="Put it down" className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-xs uppercase" onClick={() => { play("close"); onBack(); }} title="Put it down" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Put it down</span></button>
     </header>
     {error ? <p className="mx-3 mt-3 border border-red-400 bg-red-950 p-3 text-sm text-red-50" role="alert">{error}</p> : null}
     {data.type === "laptop" ? <Laptop busy={busy} files={data.files} isPinned={(id) => isPinned("device_file", id)} onPin={(id) => onPin("device_file", id)} title={title} /> : (

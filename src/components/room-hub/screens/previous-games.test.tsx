@@ -24,7 +24,7 @@ test("shows replay creation errors beside the case choices", () => {
 test.each(["0", "0.99", "-1", "NaN", "Infinity", "1e308"])("disables replay for invalid deadline %s", (deadline) => {
   state.deadline = deadline;
   const html = renderToStaticMarkup(<PreviousGamesScreen error="" isWorking={false} onBack={() => {}} onPlay={() => {}} />);
-  expect(html).toMatch(/disabled=""[^>]*>Play case/);
+  expect(html).toMatch(/disabled=""[^>]*>.*Play case<\/button>/);
 });
 
 test.each([["", undefined], ["1", 60], ["1.234", 74]])("passes whole minutes for deadline %s", (deadline, minutes) => {

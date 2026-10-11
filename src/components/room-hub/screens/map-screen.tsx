@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { go } from "../../../lib/game-nav";
 import { play } from "../../../lib/sound";
+import { ControlIcon } from "../control-icon";
 import { GameIcon } from "../game-icon";
 
 const kindLabels = {
@@ -160,13 +161,13 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
           <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">Investigation routes</p>
           <h2 className="mt-1 text-xl uppercase tracking-wide sm:text-2xl">City map</h2>
         </div>
-        <button className="border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">
-          Put the map away
+        <button aria-label="Put the map away" className="game-control-button flex min-h-11 items-center gap-2 px-3 text-sm uppercase" onClick={onBack} title="Put the map away" type="button">
+          <ControlIcon name="back" /><span className="hidden sm:inline">Put the map away</span>
         </button>
       </header>
 
       <div className="relative min-h-0 flex-1 overflow-auto p-3 sm:p-5" ref={mapViewport}>
-        <FirstTimeTip id="map" title="City map">Tap a place to travel there or go inside. Your partner shows as ◆. Dashed red streets have cameras; their tapes are at the bureau security desk.</FirstTimeTip>
+        <FirstTimeTip id="map" title="City map">Tap a place to travel. Red routes have cameras; review street logs at the bureau.</FirstTimeTip>
         <div className="city-map relative mx-auto aspect-[16/10] min-w-[44rem] max-w-6xl md:min-w-[50rem]" onClick={(event) => { if (event.target === event.currentTarget) setSelectedId(""); }}>
             <span className="pointer-events-none absolute left-3 top-2 text-xs uppercase tracking-[0.25em] text-[#92c1c7]/70">Northside</span>
             <span className="pointer-events-none absolute left-3 top-[36%] text-xs uppercase tracking-[0.25em] text-[#e4bc75]/70">Midtown</span>

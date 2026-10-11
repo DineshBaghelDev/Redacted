@@ -11,6 +11,7 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { partOfDay } from "../../../lib/game-time";
 import { play } from "../../../lib/sound";
+import { ControlIcon } from "../control-icon";
 import { CctvScreen } from "./cctv-screen";
 import { GameIcon } from "../game-icon";
 import { BuildingMap, RoomView } from "../building-view";
@@ -74,7 +75,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
     const ids = new Set(place.items.map((item) => item.id as string));
     if (seenItems.current) {
       const fresh = [...ids].filter((id) => !seenItems.current!.has(id));
-      if (fresh.length) setFreshItems(new Set(fresh));
+      if (fresh.length) { setFreshItems(new Set(fresh)); play("reveal"); }
     }
     seenItems.current = ids;
   }, [place]);
@@ -91,10 +92,10 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
     if (currentRoomId) play("door");
   }, [currentRoomId]);
 
-  function run(action: Promise<unknown>) {
+  function run(action: Promise<unknown>, cue: "click" | "search" = "click") {
     setWorking(true);
     setError("");
-    play("click");
+    play(cue);
     void action.catch((caught: unknown) => {
       setError(errorText(caught, "That action could not be completed."));
     }).finally(() => setWorking(false));
@@ -134,14 +135,14 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
           <p className="text-xs uppercase tracking-[0.25em] text-[#a5c6bb]/80">{currentRoom?.name ?? "Inside"}</p>
           <h2 className="mt-1 break-words text-xl uppercase tracking-wide sm:text-2xl">{place.placeName}</h2>
         </div>
-        <button className="min-h-11 shrink-0 border border-[#6f9f98]/70 px-3 py-2 text-sm uppercase hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={onBack} type="button">Leave building</button>
+        <button aria-label="Leave building" className="game-control-button flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm uppercase" onClick={onBack} title="Leave building" type="button"><ControlIcon name="back" /><span className="hidden sm:inline">Leave building</span></button>
       </header>
 
       {toastDoneFor !== place.placeName ? <p className="game-toast pointer-events-none absolute right-4 top-24 z-30 max-w-sm animate-in fade-in slide-in-from-right" role="status">{place.placeName} · {atmosphere[partOfDay(gameTime)]}</p> : null}
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="game-station-main mx-auto min-h-0 max-w-6xl p-4 sm:p-6">
-          <FirstTimeTip id="place" title="Exploring a building">Press and hold a piece of furniture to search it (4 min). Walk through the doors, or use the stairs and lift buttons to change floor. Tap any room on the map to walk straight there.</FirstTimeTip>
+          <FirstTimeTip id="place" title="Exploring a building">Hold furniture to search. Use doors or the room map to move.</FirstTimeTip>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_19rem]">
             <div>
               <h3 className="mb-2 flex items-center gap-3 text-xl uppercase"><InvestigationIcon className="size-9" name="room" /><span className="min-w-0 break-words">{currentRoom?.name ?? "Entrance"}</span></h3>
@@ -150,7 +151,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
                   busy={busy}
                   foundBySpot={foundBySpot}
                   onCamera={() => setCameraOpen(true)}
-                  onSearch={(spot) => run(searchSpot({ roomCode, spot }))}
+                  onSearch={(spot) => run(searchSpot({ roomCode, spot }), "search")}
                   onWalk={(roomId) => run(moveToRoom({ roomCode, roomId: roomId as Id<"rooms"> }))}
                   place={place}
                   room={currentRoom}
@@ -180,7 +181,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
                   return (
                     <li className="border border-[#6f9f98]/30 bg-[#071619]/80 p-3" id={`spot-${spot.key}`} key={spot.key}>
                       <p className="flex items-center gap-2 text-sm uppercase"><InvestigationIcon className="size-7" name="search" />{spot.name}</p>
-                      <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => setActiveDeviceId(item.id)} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />)}</div>
+                      <div className="mt-2 grid gap-2">{found.map((item) => <ItemCard busy={busy} fresh={freshItems.has(item.id)} item={item} key={item.id} onCollect={() => run(collectItem({ roomCode, itemId: item.id }))} onOpenDevice={() => { play("open"); setActiveDeviceId(item.id); }} onPin={() => pin("item", item.id)} onRead={(code, crack) => run(readDevice({ roomCode, itemId: item.id, code, crack }))} pinned={boardNodes?.some((node) => node.type === "item" && node.referenceId === item.id) ?? false} />)}</div>
                     </li>
                   );
                 })}

@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { api } from "../../../../convex/_generated/api";
 import { menuButton } from "../constants";
+import { ControlIcon } from "../control-icon";
 
 type PreviousGamesScreenProps = {
   error: string;
@@ -24,7 +25,7 @@ export function PreviousGamesScreen({ error, isWorking, onBack, onPlay }: Previo
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <button className={`${menuButton} w-fit`} onClick={onBack} type="button">Back to menu</button>
+      <button className={`${menuButton} w-fit`} onClick={onBack} type="button"><ControlIcon name="back" />Back to menu</button>
       <h1 className="game-title text-3xl uppercase sm:text-5xl">Case archive</h1>
       {error ? <p className="border border-red-300 bg-red-950/90 p-3 text-sm text-red-100" role="alert">{error}</p> : null}
       <details className="max-w-md border-l-2 border-[#e8ac51]/60 pl-3 text-sm text-[#c8d8d2]">
@@ -55,14 +56,14 @@ export function PreviousGamesScreen({ error, isWorking, onBack, onPlay }: Previo
             <h2 className="min-h-16 break-words border-b border-[#573821] pb-2 text-2xl uppercase leading-tight">
               {game.title}
             </h2>
-            <p className="mt-4 break-words text-base leading-snug">{game.description}</p>
+            <details className="mt-3 border-b border-[#8b7355]/60 text-[#3e342a]"><summary className="min-h-11 cursor-pointer py-3 text-sm uppercase text-red-800">Read case brief</summary><p className="pb-3 break-words text-base leading-snug">{game.description}</p></details>
             <button
-              className="mt-5 h-11 w-full border-2 border-[#6f9f98] bg-[#0b1a1c] text-lg uppercase text-[#e8ac51]"
+              className="game-control-button mt-5 flex h-12 w-full items-center justify-center gap-2 text-lg uppercase text-[#e8ac51]"
               disabled={isWorking || invalidDeadline}
               onClick={() => onPlay(game, deadlineMinutes)}
               type="button"
             >
-              Play case
+              <ControlIcon name="play" />Play case
             </button>
           </article>
         ))}
