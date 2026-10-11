@@ -3,6 +3,7 @@
 ## 2026-10-12 — Case moment art and share packaging
 
 - The brief uses a compact dossier emblem and less vertical space. The close and give-up results use blank ink stamps; five-star results and Case history use filled/empty raster stars, with accessible live labels retained.
+- A live result-screen check found that the first multi-asset result sheet cropped into partial borders. Replaced it with individually generated frame and star files; the given-up stamp now renders as one complete, readable mark.
 - Added inspected two-detective key art for the Open Graph and Twitter share images, plus a high-resolution square app emblem. Next.js static image metadata supplies the share tags. The banner is 1730×909, the same wide ratio as the requested 1200×630 size.
 
 ## 2026-10-12 — Device lock and call details

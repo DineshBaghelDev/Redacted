@@ -120,20 +120,20 @@
     flex: none;
     width: 1.5rem;
     height: 1.5rem;
-    background: url('/assets/case-result-stamps.png') no-repeat 66.667% 50% / 400% auto;
+    background: url('/assets/case-star-filled.png') center / contain no-repeat;
     image-rendering: pixelated;
   }
-  .case-star--empty { background-position: 100% 50%; }
+  .case-star--empty { background-image: url('/assets/case-star-empty.png'); }
   .case-stamp {
     display: inline-flex;
     width: 10rem;
     height: 6rem;
     align-items: center;
     justify-content: center;
-    background: url('/assets/case-result-stamps.png') no-repeat 0 50% / 400% auto;
+    background: url('/assets/case-stamp-frame.png') center / contain no-repeat;
     image-rendering: pixelated;
   }
-  .case-stamp--given-up { background-position: 33.333% 50%; }
+  .case-stamp--given-up { filter: grayscale(1) opacity(.8); }
 
   .case-opened-icon {
     display: inline-block;
