@@ -16,7 +16,7 @@ import {
 } from "@xyflow/react";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { GameIcon } from "../game-icon";
@@ -59,9 +59,6 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
   const [stringColor, setStringColor] = useState<StringColor>("red");
   const [selectedEdge, setSelectedEdge] = useState<Id<"clueBoardEdges"> | null>(null);
   const [inspectingNode, setInspectingNode] = useState<Id<"clueBoardNodes"> | null>(null);
-  const [sourceId, setSourceId] = useState("");
-  const [targetId, setTargetId] = useState("");
-  const [tying, setTying] = useState(false);
   const [error, setError] = useState("");
   const [nodes, setNodes, onNodesChange] = useNodesState<BoardNode>([]);
 
@@ -122,22 +119,6 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
     }).catch(showError);
   }
 
-  function tieSelected(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!sourceId || !targetId || sourceId === targetId) return;
-    setTying(true);
-    setError("");
-    void createEdge({
-      roomCode,
-      sourceNodeId: sourceId as Id<"clueBoardNodes">,
-      targetNodeId: targetId as Id<"clueBoardNodes">,
-      color: stringColor,
-    }).then(() => {
-      setSourceId("");
-      setTargetId("");
-    }).catch(showError).finally(() => setTying(false));
-  }
-
   function chooseColor(color: StringColor) {
     setStringColor(color);
     if (selectedEdge) void updateEdge({ edgeId: selectedEdge, color }).catch(showError);
@@ -195,24 +176,6 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
             </button>
           </div>
         ) : null}
-        {(savedNodes?.length ?? 0) >= 2 ? <details className="order-last w-full border-t border-[#5e3e29] pt-2">
-          <summary className="w-fit cursor-pointer text-xs uppercase tracking-wide text-[#fff1c9]">Tie string without dragging</summary>
-          <form className="mt-2 flex flex-wrap items-end gap-2 text-sm" onSubmit={tieSelected}>
-            <label className="min-w-40 flex-1">From card
-              <select className="mt-1 min-h-11 w-full border border-[#c99b63] bg-[#15100d] px-2 text-[#fff1c9]" onChange={(event) => setSourceId(event.target.value)} required value={sourceId}>
-                <option value="">Choose card</option>
-                {savedNodes?.map((node, index) => <option key={node._id} value={node._id}>#{index + 1} {node.text.split("\n")[0]}</option>)}
-              </select>
-            </label>
-            <label className="min-w-40 flex-1">To card
-              <select className="mt-1 min-h-11 w-full border border-[#c99b63] bg-[#15100d] px-2 text-[#fff1c9]" onChange={(event) => setTargetId(event.target.value)} required value={targetId}>
-                <option value="">Choose card</option>
-                {savedNodes?.map((node, index) => <option key={node._id} value={node._id}>#{index + 1} {node.text.split("\n")[0]}</option>)}
-              </select>
-            </label>
-            <button className="clue-board-button min-h-11" disabled={tying || !sourceId || !targetId || sourceId === targetId} type="submit">{tying ? "Tying..." : "Tie string"}</button>
-          </form>
-        </details> : null}
       </header>
 
       <div

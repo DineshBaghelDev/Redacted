@@ -657,9 +657,9 @@
   }
 
   .clue-pin.react-flow__handle {
-    top: -13px;
-    width: 18px;
-    height: 18px;
+    top: -26px;
+    width: 36px;
+    height: 36px;
     border: 0;
     border-radius: 0;
     background: url('/assets/control-icons.png') no-repeat 66.667% 100% / 400% 200%;

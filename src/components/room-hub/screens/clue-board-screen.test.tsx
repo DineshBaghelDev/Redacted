@@ -22,12 +22,9 @@ vi.mock("@xyflow/react", () => ({
   useNodesState: () => [[], () => {}, () => {}],
 }));
 
-test("offers a non-drag way to tie two board cards", () => {
+test("strings are tied by dragging pins only, with no card dropdown", () => {
   queryCount.value = 0;
   const html = renderToStaticMarkup(<ClueBoardScreen roomCode="ABC123" onBack={() => {}} />);
-  expect(html).toContain("Tie string without dragging");
-  expect(html).toContain("From card");
-  expect(html).toContain("To card");
-  expect(html).toContain("#1 First clue");
-  expect(html).toContain("#2 Second clue");
+  expect(html).not.toContain("Tie string without dragging");
+  expect(html).not.toContain("<select");
 });

@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-12 — Bigger clueboard pins, no tie dropdown
+
+- Card pins doubled to 36px so they are easy to grab when tying strings.
+- Removed the "Tie string without dragging" From/To card dropdowns (added 2026-10-09). Strings are tied only by dragging one pin to another.
+
 ## 2026-10-12 — Phone filler no longer contradicts the story
 
 - Phone filler no longer includes "Mum" or "Sis". On the Ines Castellano case, a separate "Sis" contact appeared next to her real sister Tamsin, and a casual "Mum" text contradicted Tamsin's message about their mother's care-home bills. Filler now only uses neutral contacts (dentist, takeaway, parcel, landlord, unknown number).

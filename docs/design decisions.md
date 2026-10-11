@@ -629,3 +629,4 @@ Generated character IDs are stored as case-scoped `npcs.sourceId` values only to
 - Leaving cancels unfinished interview, CCTV, and record-search actions. Shared record access keeps other searches and any earlier access intact.
 - Publication runs separately after generation passes; publication errors mark the job failed at the publish stage.
 - Replay deadline overrides must be at least one hour and are rounded to whole minutes.
+- Clueboard strings are tied only by dragging pin to pin; the card dropdown alternative was removed by user request. Pins are large enough to grab by touch.
