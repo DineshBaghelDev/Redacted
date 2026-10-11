@@ -2,7 +2,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 
 /** Bump when the filler below changes, so cases opened earlier get the new set on their next replay. */
-const FILLER_VERSION = 2;
+const FILLER_VERSION = 3;
 const PREFIX = "filler/";
 
 /** Small deterministic random generator seeded from text, so a case always gets the same filler. */
@@ -18,22 +18,36 @@ function seeded(text: string) {
 
 const pick = <T,>(random: () => number, list: readonly T[]) => list[Math.floor(random() * list.length)];
 
-// Ordinary phone life. Labels are never case names, so filler never adds anyone to People.
+// Ordinary phone life. Labels are never case names or family, so filler never adds anyone to People
+// and never invents a relative the story did not write.
 const MESSAGES: [string, "incoming" | "outgoing", string][] = [
-  ["Mum", "incoming", "Did you get home ok? Call me this weekend, your dad wants to ask about the car."],
-  ["Mum", "outgoing", "Yes all fine. Busy week, will ring Sunday x"],
   ["Riverside Dental", "incoming", "Reminder: your check-up is booked for next month. Reply C to cancel."],
   ["Pizza Palace", "incoming", "Your order is on its way! Estimated arrival 25 minutes."],
   ["Bank alert", "incoming", "Your statement is ready to view. We will never ask for your PIN by text."],
   ["Gym", "incoming", "We miss you! Come back this month and your next class is free."],
-  ["Sis", "incoming", "Can you send me that photo from the barbecue? The one with the dog."],
-  ["Sis", "outgoing", "Will dig it out tonight"],
   ["Landlord", "incoming", "Plumber is coming Tuesday morning about the boiler. Please leave the key with the neighbour."],
   ["Parcel service", "incoming", "We tried to deliver your parcel today. Rebook your delivery online."],
   ["Unknown number", "incoming", "Hi, is this still the number for the bike you were selling?"],
   ["Work rota", "incoming", "Shift swaps for next week need to be in by Friday please."],
 ];
-const CALLERS: [string, "incoming" | "outgoing"][] = [["Mum", "outgoing"], ["Unknown number", "incoming"], ["Sis", "incoming"], ["Riverside Dental", "outgoing"], ["Taxi", "outgoing"], ["Landlord", "incoming"], ["Pizza Palace", "outgoing"]];
+const CALLERS: [string, "incoming" | "outgoing"][] = [["Unknown number", "incoming"], ["Riverside Dental", "outgoing"], ["Taxi", "outgoing"], ["Landlord", "incoming"], ["Pizza Palace", "outgoing"]];
+// Family filler written before version 3, swapped in place so notes and pins on those entries survive.
+const FAMILY = new Set(["Mum", "Sis"]);
+const isFiller = (row: { evidenceId: string }) => row.evidenceId.startsWith(PREFIX);
+
+/** The victim cannot text or call after dying: filler they send stays at or before their last real send. */
+async function lastRealSend(ctx: MutationCtx, device: Doc<"devices">, start: number) {
+  const owner = device.ownerNpcId ? await ctx.db.get(device.ownerNpcId) : null;
+  if (owner?.role !== "victim") return undefined;
+  let last = start;
+  for (const table of ["messages", "callLogs"] as const) {
+    for (const row of await ctx.db.query(table).withIndex("by_deviceId_and_timestamp", (q) => q.eq("deviceId", device._id)).order("desc").take(200)) {
+      if (row.direction === "outgoing" && !isFiller(row)) { last = Math.max(last, row.timestamp); break; }
+    }
+  }
+  return last;
+}
+
 const FILES: [string, string][] = [
   ["Packing list", "Passport, chargers, sun cream, the good walking shoes, book for the train."],
   ["Lentil soup", "1 onion, 2 carrots, 200g red lentils, stock, cumin. Simmer 25 minutes, blend half."],
@@ -80,22 +94,37 @@ export async function ensureCaseFiller(ctx: MutationCtx, caseId: Id<"cases">) {
   const start = Math.max(0, end - 2 * 1440);
   const between = (random: () => number, from: number, to: number) => from + Math.floor(random() * Math.max(1, to - from));
 
-  // Device filler only changes with version 1; later versions redo the camera crowd alone.
-  if (firstTime) for await (const device of ctx.db.query("devices").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) {
+  // Device filler is written once (version 1); version 3 repairs it in place.
+  for await (const device of ctx.db.query("devices").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) {
     const random = seeded(`${device._id}:filler`);
     if (device.type === "laptop") {
-      for (const [title, body] of [...FILES].sort(() => random() - 0.5).slice(0, 2)) {
+      if (firstTime) for (const [title, body] of [...FILES].sort(() => random() - 0.5).slice(0, 2)) {
         await ctx.db.insert("deviceFiles", { caseId, deviceId: device._id, evidenceId: `${PREFIX}${device.sourceId}/${title.toLowerCase().replace(/\s+/g, "-")}`, title, body });
       }
       continue;
     }
-    const messages = [...MESSAGES].sort(() => random() - 0.5).slice(0, 3 + Math.floor(random() * 3));
-    for (const [index, [label, direction, body]] of messages.entries()) {
-      await ctx.db.insert("messages", { caseId, deviceId: device._id, evidenceId: `${PREFIX}${device.sourceId}/message-${index}`, otherPartyLabel: label, direction, body, timestamp: between(random, start, end) });
+    const lastSend = await lastRealSend(ctx, device, start);
+    const timeFor = (direction: "incoming" | "outgoing") => direction === "outgoing" && lastSend !== undefined ? between(random, start, lastSend) : between(random, start, end);
+    if (firstTime) {
+      const messages = [...MESSAGES].sort(() => random() - 0.5).slice(0, 3 + Math.floor(random() * 3));
+      for (const [index, [label, direction, body]] of messages.entries()) {
+        await ctx.db.insert("messages", { caseId, deviceId: device._id, evidenceId: `${PREFIX}${device.sourceId}/message-${index}`, otherPartyLabel: label, direction, body, timestamp: timeFor(direction) });
+      }
+      const calls = [...CALLERS].sort(() => random() - 0.5).slice(0, 2 + Math.floor(random() * 3));
+      for (const [index, [label, direction]] of calls.entries()) {
+        await ctx.db.insert("callLogs", { caseId, deviceId: device._id, evidenceId: `${PREFIX}${device.sourceId}/call-${index}`, otherPartyLabel: label, direction, durationSeconds: 20 + Math.floor(random() * 600), timestamp: timeFor(direction) });
+      }
+      continue;
     }
-    const calls = [...CALLERS].sort(() => random() - 0.5).slice(0, 2 + Math.floor(random() * 3));
-    for (const [index, [label, direction]] of calls.entries()) {
-      await ctx.db.insert("callLogs", { caseId, deviceId: device._id, evidenceId: `${PREFIX}${device.sourceId}/call-${index}`, otherPartyLabel: label, direction, durationSeconds: 20 + Math.floor(random() * 600), timestamp: between(random, start, end) });
+    for (const message of (await ctx.db.query("messages").withIndex("by_deviceId_and_timestamp", (q) => q.eq("deviceId", device._id)).take(200)).filter(isFiller)) {
+      const [label, direction, body] = FAMILY.has(message.otherPartyLabel ?? "") ? pick(random, MESSAGES) : [message.otherPartyLabel, message.direction, message.body];
+      const timestamp = direction === "outgoing" && lastSend !== undefined && message.timestamp > lastSend ? timeFor(direction) : message.timestamp;
+      await ctx.db.patch(message._id, { otherPartyLabel: label, direction, body, timestamp });
+    }
+    for (const call of (await ctx.db.query("callLogs").withIndex("by_deviceId_and_timestamp", (q) => q.eq("deviceId", device._id)).take(200)).filter(isFiller)) {
+      const [label, direction] = FAMILY.has(call.otherPartyLabel ?? "") ? pick(random, CALLERS) : [call.otherPartyLabel, call.direction];
+      const timestamp = direction === "outgoing" && lastSend !== undefined && call.timestamp > lastSend ? timeFor(direction) : call.timestamp;
+      await ctx.db.patch(call._id, { otherPartyLabel: label, direction, timestamp });
     }
   }
 

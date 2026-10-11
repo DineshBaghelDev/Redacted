@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-10-12 — Phone filler no longer contradicts the story
+
+- Phone filler no longer includes "Mum" or "Sis". On the Ines Castellano case, a separate "Sis" contact appeared next to her real sister Tamsin, and a casual "Mum" text contradicted Tamsin's message about their mother's care-home bills. Filler now only uses neutral contacts (dentist, takeaway, parcel, landlord, unknown number).
+- Filler messages and calls the victim sends are now timed at or before the victim's last real send, so a dead victim never appears to text.
+- Existing cases are fixed in place on their next open (filler version 3). Family entries become neutral ones and late victim sends are moved earlier. Message IDs stay the same, so notes and pins still work.
+- Checked: the reported "too many people" in the notebook was not leftover data. All 7 came from the brief (victim, Aisha Osei) and the victim's phone, which names 5 people, so it is working as intended.
+
 ## 2026-10-12 — Case moment art and share packaging
 
 - The brief uses a compact dossier emblem and less vertical space. The close and give-up results use blank ink stamps; five-star results and Case history use filled/empty raster stars, with accessible live labels retained.
