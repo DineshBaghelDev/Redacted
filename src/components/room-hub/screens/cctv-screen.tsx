@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 import { api } from "../../../../convex/_generated/api";
 import { play } from "../../../lib/sound";
 import { CharacterPortrait } from "../character-portrait";
+import { PinButton } from "../pin-button";
 import { GameIcon } from "../game-icon";
 import { ControlIcon } from "../control-icon";
 import { cardDropTarget, startCardDrag } from "../../../lib/evidence-drag";
@@ -68,7 +69,7 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Step away from the t
             ) : (
               <>
                 {data.cameras.length > 1 ? (
-                  <button className="mb-3 flex min-h-10 items-center gap-2 border border-[#6f9f98]/50 px-3 text-xs uppercase text-[#c8d8d2] hover:border-[#e8ac51] hover:text-[#e8ac51]" onClick={() => setWallOpen(true)} type="button">
+                  <button className="game-control-button mb-3 min-h-11 px-3 text-xs uppercase text-[#c8d8d2]" onClick={() => setWallOpen(true)} type="button">
                     <GameIcon className="size-6" name="cctv" />◀ Change camera
                   </button>
                 ) : null}
@@ -247,7 +248,7 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
                 <div className={`terminal-line flex items-start gap-3 ${record.kind === "offline" ? "text-red-300" : "text-[#f1c987]"}`} key={record.id} {...cardDropTarget((card) => mark(record.id, card.referenceId), (kind) => kind === "person")}>
                   <p className="min-w-0 flex-1"><span className="text-[#7fd1ae]">[{clock(record.start)}–{clock(record.end)}]</span> {record.summary}</p>
                   {record.kind !== "offline" ? <PhotoSlot onMark={(npcId) => mark(record.id, npcId)} people={people ?? []} person={personFor(record.id)} /> : null}
-                  <PinButton onPin={() => pinRecord(record.id)} pinned={Boolean(boardNodes?.some((node) => node.type === "cctv" && node.referenceId === record.id)) || pinning === record.id} />
+                  <PinButton busy={pinning === record.id} onClick={() => pinRecord(record.id)} pinned={Boolean(boardNodes?.some((node) => node.type === "cctv" && node.referenceId === record.id))} />
                 </div>
               )) : <p className="text-[#7fd1ae]/50">Empty frame. Nobody in view.</p>}
         </div>
@@ -309,7 +310,7 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
                       <li className="flex flex-wrap items-center gap-2 py-2" key={record.id} {...cardDropTarget((card) => mark(record.id, card.referenceId), (kind) => kind === "person")}>
                         <button className="min-w-0 flex-1 text-left font-mono normal-case text-[#c9f2dd] hover:text-[#f1c987]" onClick={() => seek(record.start)} type="button"><span className="text-[#e8ac51]">[{clock(record.start)}]</span> {record.summary}</button>
                         {record.kind !== "offline" ? <PhotoSlot onMark={(npcId) => mark(record.id, npcId)} people={people ?? []} person={personFor(record.id)} small /> : null}
-                        <button className="ml-auto border-b border-[#7fd1ae]/50 text-xs uppercase text-[#7fd1ae] hover:text-[#e8ac51] disabled:opacity-50" disabled={pinning === record.id || pinned} onClick={() => pinRecord(record.id)} type="button">{pinned ? "Pinned" : "Pin"}</button>
+                        <PinButton busy={pinning === record.id} className="ml-auto" onClick={() => pinRecord(record.id)} pinned={Boolean(pinned)} />
                       </li>
                     );
                   })}
@@ -320,15 +321,6 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
         </>
       ) : null}
     </div>
-  );
-}
-
-/** A small pin-to-clueboard button that sits beside a sighting on the monitor. */
-function PinButton({ pinned, onPin }: { pinned: boolean; onPin: () => void }) {
-  return (
-    <button aria-label={pinned ? "Pinned to the clueboard" : "Pin to the clueboard"} className="shrink-0 border border-[#2f4a47] p-1 hover:border-[#e8ac51] disabled:opacity-35" disabled={pinned} onClick={onPin} title={pinned ? "Pinned" : "Pin to the clueboard"} type="button">
-      <GameIcon className="size-6" name="clueboard" />
-    </button>
   );
 }
 

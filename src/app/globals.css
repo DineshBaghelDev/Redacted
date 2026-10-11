@@ -91,12 +91,39 @@
   .control-icon--close { background-position: 100% 100%; }
 
   .game-control-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     background: url('/assets/control-plate.png') center 24% / 100% 250% no-repeat;
     color: #e4e6d8;
+    line-height: 1.15;
+    padding-top: 0.3rem;
     transition: filter 120ms, transform 120ms;
   }
   .game-control-button:hover, .game-control-button:focus-visible { filter: brightness(1.2); transform: translateY(-1px); }
   .game-control-button:active { transform: translateY(1px); }
+
+  .game-pin-button {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #54756e;
+    background: #102427;
+    color: #d3e0d7;
+  }
+  .game-pin-button:hover:not(:disabled) { border-color: #e8ac51; background: #1b3536; }
+  .game-pin-button .control-icon { width: 2rem; height: 2rem; filter: grayscale(1) brightness(0.95); }
+  .game-pin-button[aria-pressed="true"] { border-color: #bc8a46; background: #493822; }
+  .game-pin-button[aria-pressed="true"] .control-icon { filter: sepia(1) saturate(1.6) brightness(1.25); }
+  .game-pin-check { position: absolute; right: 2px; bottom: 2px; width: 7px; height: 7px; background: #f5c87f; box-shadow: 0 0 0 1px #102427; }
+  .game-pin-button:disabled:not([aria-pressed="true"]) { opacity: 0.55; }
+  .game-dossier .game-pin-button { border-color: #6d5136; background: #e2d4b2; }
+  .game-dossier .game-pin-button[aria-pressed="true"] { border-color: #7e3f26; background: #b98146; }
 
   .character-portrait {
     display: block;
@@ -166,7 +193,8 @@
     gap: 0.85rem;
     border: 0;
     background: url('/assets/control-plate.png') center 24% / 100% 250% no-repeat;
-    padding: 0.75rem 1.35rem;
+    padding: 1.05rem 1.35rem 0.65rem;
+    line-height: 1.15;
     text-align: left;
     color: #e4e6d8;
     transition: background-color 120ms, border-color 120ms, color 120ms;

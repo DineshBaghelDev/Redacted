@@ -14,6 +14,7 @@ import { play } from "../../../lib/sound";
 import { CharacterPortrait } from "../character-portrait";
 import { GameIcon } from "../game-icon";
 import { ControlIcon } from "../control-icon";
+import { PinButton } from "../pin-button";
 import { DeviceViewer } from "./device-viewer";
 import { TypeAhead } from "../type-ahead";
 import { cardDropTarget, startCardDrag } from "../../../lib/evidence-drag";
@@ -78,8 +79,8 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
                       <p className="mt-3 break-words border-t border-[#8b7355]/50 pt-3 text-sm leading-relaxed text-[#3e342a]">{person.publicDescription}</p>
                       <p className="mt-2 text-xs italic text-[#5d4d3d]">First seen in: {person.firstSeenIn}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <button className="min-h-11 border-2 border-[#573821] px-3 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2] disabled:opacity-55" disabled={pinning === person.id || pinned} onClick={() => pinPerson(person.id)} type="button">{pinned ? "Pinned" : "Pin to clueboard"}</button>
-                        {!person.isVictim ? <button className="min-h-11 border-2 border-red-900 bg-red-950 px-3 text-xs uppercase text-red-50 hover:bg-red-900" onClick={() => { play("door"); setSelectedId(person.id); }} type="button">Interview</button> : null}
+                        <PinButton busy={pinning === person.id} onClick={() => pinPerson(person.id)} pinned={Boolean(pinned)} />
+                        {!person.isVictim ? <button className="game-control-button min-h-11 px-3 text-xs uppercase text-[#f1c987]" onClick={() => { play("door"); setSelectedId(person.id); }} type="button">Interview</button> : null}
                       </div>
                     </li>
                   );
@@ -177,7 +178,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
         <p className="mt-3 hidden border-t border-[#8b7355] pt-3 text-sm leading-relaxed text-[#4b3b2d] sm:block">{person.publicDescription}</p>
         {!present ? (
           <div className="mt-4">
-            <button className="min-h-11 w-full border-2 border-red-900 bg-red-950 px-3 text-xs uppercase text-red-50 disabled:opacity-50" disabled={working || !interview?.canTalkHere} onClick={() => run(callToBureau({ roomCode, npcId: person.id }), () => play("door"))} type="button">Have them brought in</button>
+            <button className="game-control-button min-h-11 w-full px-3 text-xs uppercase text-[#f1c987] disabled:opacity-50" disabled={working || !interview?.canTalkHere} onClick={() => run(callToBureau({ roomCode, npcId: person.id }), () => play("door"))} type="button">Have them brought in</button>
             {interview && !interview.canTalkHere ? <p className="mt-2 text-xs">Interviews happen at the bureau. Travel back first.</p> : null}
           </div>
         ) : null}
@@ -188,7 +189,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
               <div className="mt-3 border-l-2 border-[#8b7355] pl-3" key={statement.id}>
                 <p className="text-sm font-semibold">{statement.title}</p>
                 <p className="mt-1 whitespace-pre-wrap text-sm">{statement.text}</p>
-                <button className="mt-2 min-h-9 border border-[#573821] px-2 text-xs uppercase disabled:opacity-50" disabled={boardNodes?.some((node) => node.type === "statement" && node.referenceId === statement.id)} onClick={() => pinRecord("statement", statement.id)} type="button">Pin</button>
+                <PinButton busy={Boolean(working)} className="mt-2" onClick={() => pinRecord("statement", statement.id)} pinned={Boolean(boardNodes?.some((node) => node.type === "statement" && node.referenceId === statement.id))} />
               </div>
             ))}
           </details>
@@ -218,7 +219,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
             <TypeAhead names={knownNames} onPick={setQuestion} value={question} />
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button aria-expanded={trayOpen} className="game-control-button flex min-h-11 items-center gap-2 px-4 text-xs uppercase text-[#f1c987]" onClick={() => { play("open"); setTrayOpen(!trayOpen); }} title="Choose discovered evidence" type="button"><ControlIcon name="pin" />Tag clue</button>
-              <button className="flex min-h-11 items-center gap-2 bg-[#e8ac51] px-4 text-xs uppercase text-[#071014] hover:bg-[#f1c987] disabled:opacity-50" disabled={!canAsk || (!question.trim() && !shown)} type="submit"><ControlIcon name="play" />{shown ? "Confront · 3 min" : "Ask · 3 min"}</button>
+              <button className="game-control-button min-h-11 px-4 text-xs uppercase text-[#f1c987] disabled:opacity-50" disabled={!canAsk || (!question.trim() && !shown)} type="submit"><ControlIcon name="play" />{shown ? "Confront · 3 min" : "Ask · 3 min"}</button>
               {!interview.canTalkHere ? <p className="text-xs text-red-200">Return to the bureau to continue.</p> : null}
             </div>
             {trayOpen ? (
@@ -280,7 +281,7 @@ function Message({ message, onBack }: { message: string; onBack: () => void }) {
       <div className="game-dossier w-full max-w-lg px-6 pb-20 pt-20 text-center sm:px-10">
         <GameIcon className="mx-auto size-12" name="interview" />
         <p className="mt-4 text-lg uppercase leading-snug">{message}</p>
-        <button className="mt-6 min-h-11 w-full border-2 border-[#573821] px-4 py-2 uppercase hover:bg-[#573821] hover:text-[#f4ead2] sm:w-auto" onClick={onBack} type="button">Leave the room</button>
+        <button className="game-control-button mt-6 min-h-11 w-full px-4 uppercase sm:w-auto" onClick={onBack} type="button"><ControlIcon name="back" />Leave the room</button>
       </div>
     </section>
   );

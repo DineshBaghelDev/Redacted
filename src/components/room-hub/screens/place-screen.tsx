@@ -13,7 +13,7 @@ import { partOfDay } from "../../../lib/game-time";
 import { play } from "../../../lib/sound";
 import { ControlIcon } from "../control-icon";
 import { CctvScreen } from "./cctv-screen";
-import { GameIcon } from "../game-icon";
+import { PinButton } from "../pin-button";
 import { BuildingMap, RoomView } from "../building-view";
 import { InvestigationIcon } from "../investigation-icon";
 import { startCardDrag } from "../../../lib/evidence-drag";
@@ -213,18 +213,18 @@ function ItemCard({ item, busy, pinned, fresh, onRead, onOpenDevice, onCollect, 
         <h5 className="flex min-w-0 flex-1 items-center gap-2 text-sm uppercase text-[#f1c987]"><InvestigationIcon className="size-8" name={item.device ? "device" : "evidence"} /><span className="min-w-0 break-words">{item.name}</span></h5>
         {onCollect && item.collectible && !item.collected ? <button aria-label="Bag it for the lab" className="shrink-0 border border-[#e8ac51]/50 p-1 hover:border-[#e8ac51] disabled:opacity-45" disabled={busy} onClick={onCollect} title="Bag it for the lab" type="button"><InvestigationIcon className="size-6" name="lab" /></button> : null}
         {item.collected ? <span className="shrink-0 text-[0.65rem] uppercase text-[#9fd1c4]" title="In the evidence bag">Bagged</span> : null}
-        <button aria-label={pinned ? "Pinned to the clueboard" : "Pin to the clueboard"} className="shrink-0 border border-[#6f9f98]/50 p-1 hover:border-[#e8ac51] disabled:opacity-35" disabled={busy || pinned} onClick={onPin} title={pinned ? "Pinned" : "Pin to the clueboard"} type="button"><GameIcon className="size-6" name="clueboard" /></button>
+        <PinButton busy={busy} onClick={onPin} pinned={pinned} />
       </div>
       <p className="mt-2 text-sm leading-relaxed text-[#c8d8d2]/75">{item.description}</p>
       {locked ? (
         <form className="mt-3 flex flex-wrap items-center gap-2" onSubmit={(event) => { event.preventDefault(); if (code.length === 4) onRead(code); }}>
           <label className="sr-only" htmlFor={`code-${item.id}`}>Unlock code</label>
           <input autoComplete="off" className="h-9 w-24 border border-[#45635d] bg-[#071014] text-center font-mono text-lg tracking-[0.4em] text-[#f1c987] outline-none focus:border-[#e8ac51]" id={`code-${item.id}`} inputMode="numeric" maxLength={4} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="····" value={code} />
-          <button className="min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={busy || code.length !== 4} type="submit">Unlock · 5 min</button>
+          <button className="game-control-button min-h-11 px-3 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={busy || code.length !== 4} type="submit">Unlock · 5 min</button>
           <button className="basis-full text-left text-[0.7rem] normal-case text-[#c8d8d2]/55 underline-offset-4 hover:text-[#e8ac51] hover:underline disabled:opacity-45" disabled={busy} onClick={() => onRead(undefined, true)} type="button">No code? Have the lab crack it (60 min)</button>
         </form>
       ) : null}
-      {item.device?.read ? <button className="mt-3 min-h-9 border border-[#e8ac51]/70 px-2 text-xs uppercase text-[#f1c987]" onClick={onOpenDevice} type="button">Open {item.device.type}</button> : null}
+      {item.device?.read ? <button className="game-control-button mt-3 min-h-11 px-3 text-xs uppercase text-[#f1c987]" onClick={onOpenDevice} type="button"><ControlIcon name="play" />Open {item.device.type}</button> : null}
     </article>
   );
 }
@@ -235,7 +235,7 @@ function PlaceMessage({ message, onBack }: { message: string; onBack: () => void
       <div className="game-panel w-full max-w-lg px-7 py-9 text-center sm:px-12">
         <InvestigationIcon className="mx-auto size-12" name="room" />
         <p className="mt-4 text-lg uppercase leading-snug">{message}</p>
-        <button className="mt-6 min-h-11 w-full border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] sm:w-auto" onClick={onBack} type="button">Open the city map</button>
+        <button className="game-control-button mt-6 min-h-11 w-full px-4 uppercase sm:w-auto" onClick={onBack} type="button"><ControlIcon name="back" />Open the city map</button>
       </div>
     </section>
   );

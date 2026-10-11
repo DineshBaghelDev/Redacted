@@ -11,6 +11,7 @@ import { cardDropTarget, startCardDrag } from "../../../lib/evidence-drag";
 import { formatDuration, formatGameMinute } from "../../../lib/game-time";
 import { play } from "../../../lib/sound";
 import { ControlIcon } from "../control-icon";
+import { PinButton } from "../pin-button";
 import { FirstTimeTip } from "../first-time-tip";
 import { LabTask, type LabTest } from "../lab-tasks";
 import { InvestigationIcon } from "../investigation-icon";
@@ -180,11 +181,11 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
                       <p className="flex items-center justify-between gap-2 text-sm uppercase"><span>{name}</span>
                         <span className="text-xs">{request.status === "pending" ? `${formatDuration(remaining)} left` : request.status === "ready" ? "Ready" : "Report"}</span></p>
                       {request.status === "pending" ? <progress aria-label={`${name} processing`} className="mt-2 h-2 w-full accent-[#6f9f98]" /> : null}
-                      {request.status === "ready" ? <button className="mt-2 min-h-10 w-full border border-[#e8ac51] bg-[#e8ac51]/15 text-xs uppercase text-[#f1c987]" disabled={Boolean(working)} onClick={() => run(request.id, markViewed({ roomCode, requestId: request.id }), "stamp")} type="button">Tear open the report</button> : null}
+                      {request.status === "ready" ? <button className="game-control-button mt-2 min-h-11 w-full px-3 text-xs uppercase text-[#f1c987]" disabled={Boolean(working)} onClick={() => run(request.id, markViewed({ roomCode, requestId: request.id }), "stamp")} type="button"><ControlIcon name="play" />Tear open the report</button> : null}
                       {request.status === "viewed" ? (
                         <>
                           <p className="mt-2 whitespace-pre-wrap border-t border-[#8b7355] pt-2 text-sm leading-relaxed">{request.result}</p>
-                          {request.outputId ? <button className="mt-2 min-h-9 border border-[#573821] px-3 text-xs uppercase disabled:opacity-50" disabled={pinned || Boolean(working)} onClick={() => pin(request.outputId!)} type="button">{pinned ? "Pinned" : "Pin to clueboard"}</button> : null}
+                          {request.outputId ? <PinButton busy={Boolean(working)} className="mt-2" onClick={() => pin(request.outputId!)} pinned={Boolean(pinned)} /> : null}
                         </>
                       ) : null}
                     </li>
@@ -205,7 +206,7 @@ function LabMessage({ message, onBack }: { message: string; onBack: () => void }
       <div className="game-panel w-full max-w-lg px-7 py-9 text-center sm:px-12">
         <InvestigationIcon className="mx-auto size-12" name="lab" />
         <p className="mt-4 text-lg uppercase leading-snug">{message}</p>
-        <button className="mt-6 min-h-11 w-full border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] sm:w-auto" onClick={onBack} type="button">Open the city map</button>
+        <button className="game-control-button mt-6 min-h-11 w-full px-4 uppercase sm:w-auto" onClick={onBack} type="button"><ControlIcon name="back" />Open the city map</button>
       </div>
     </section>
   );

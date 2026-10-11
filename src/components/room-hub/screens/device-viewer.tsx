@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { InvestigationIcon } from "../investigation-icon";
 import { ControlIcon } from "../control-icon";
+import { PinButton } from "../pin-button";
 import { play } from "../../../lib/sound";
 
 export type DeviceData = {
@@ -69,7 +70,7 @@ export function DeviceViewer({ title, data, onBack, onPin, isPinned, busy, error
               {call ? <p className="mt-3 text-sm">{call.direction === "incoming" ? "Incoming" : "Outgoing"} · {timeLabel(call.time)} · {Math.ceil(call.durationSeconds / 60)} min</p> : null}
               {message ? <><p className="mt-3 text-xs uppercase text-[#a5c6bb]">{message.direction === "incoming" ? "Received" : "Sent"} · {timeLabel(message.time)}</p><p className="mt-5 whitespace-pre-wrap break-words border-l-2 border-[#e8ac51] pl-4 text-base leading-relaxed">{message.body}</p></> : null}
               {file ? <p className="mt-5 whitespace-pre-wrap break-words border-l-2 border-[#e8ac51] pl-4 text-base leading-relaxed">{file.body}</p> : null}
-              <button className="mt-6 min-h-11 border border-[#e8ac51] px-4 text-xs uppercase text-[#e8ac51] disabled:opacity-50" disabled={busy || isPinned(file ? "device_file" : call ? "call" : "message", openId!)} onClick={() => onPin(file ? "device_file" : call ? "call" : "message", openId!)} type="button">{isPinned(file ? "device_file" : call ? "call" : "message", openId!) ? "Pinned to clueboard" : "Pin to clueboard"}</button>
+              <PinButton busy={busy} className="mt-6" onClick={() => onPin(file ? "device_file" : call ? "call" : "message", openId!)} pinned={isPinned(file ? "device_file" : call ? "call" : "message", openId!)} />
             </article> : <div className="mt-3 divide-y divide-[#45635d]/60">
               {files.map((row) => <button className="flex min-h-16 w-full items-center justify-between gap-3 py-3 text-left text-sm" key={row.id} onClick={() => setOpenId(row.id)} type="button"><span className="min-w-0 break-words">{row.title}</span><span className="text-[#e8ac51]">Open →</span></button>)}
               {calls.map((row) => <button className="flex min-h-16 w-full items-center justify-between gap-3 py-3 text-left text-sm" key={row.id} onClick={() => setOpenId(row.id)} type="button"><span className="min-w-0"><span className="block break-words">{row.direction === "incoming" ? "From" : "To"} {row.otherParty}</span><span className="block text-xs text-[#a5c6bb]">{timeLabel(row.time)}</span></span><span className="text-[#e8ac51]">Open →</span></button>)}
@@ -117,7 +118,7 @@ function Laptop({ title, files, busy, isPinned, onPin }: { title: string; files:
                   <>
                     <h3 className="break-words font-mono text-sm uppercase tracking-wide text-[#f1c987]">{file.title}</h3>
                     <p className="mt-4 whitespace-pre-wrap break-words bg-[#e9e2cf] p-4 font-mono text-sm leading-relaxed text-[#211d17] shadow-[3px_3px_0_#0006]">{file.body}</p>
-                    <button className="mt-5 min-h-10 border border-[#e8ac51] px-4 text-xs uppercase text-[#e8ac51] disabled:opacity-50" disabled={busy || isPinned(file.id)} onClick={() => onPin(file.id)} type="button">{isPinned(file.id) ? "Pinned to clueboard" : "Pin to clueboard"}</button>
+                    <PinButton busy={busy} className="mt-5" onClick={() => onPin(file.id)} pinned={isPinned(file.id)} />
                   </>
                 ) : <p className="font-mono text-sm text-[#a5c6bb]/70">Open a file from the list.</p>}
               </article>

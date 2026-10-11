@@ -9,6 +9,7 @@ import { api } from "../../../../convex/_generated/api";
 import { formatDuration, formatGameMinute } from "../../../lib/game-time";
 import { cardDropTarget, startCardDrag, type DragCard, type DragKind } from "../../../lib/evidence-drag";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { ControlIcon } from "../control-icon";
 
 const MAX_EVIDENCE = 12;
 const fields = [
@@ -121,7 +122,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
           <p className="text-xs uppercase tracking-[0.24em] text-red-900/70">Final investigation file</p>
           <h2 className="mt-1 text-xl uppercase sm:text-2xl">Case file</h2>
         </div>
-        <button className="min-h-11 border-2 border-[#573821] px-4 text-sm uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onBack} type="button">Close the file</button>
+        <button className="game-control-button min-h-11 px-4 text-sm uppercase" onClick={onBack} type="button"><ControlIcon name="back" />Close the file</button>
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto bg-[#160f0b]/60 p-4 sm:p-6 lg:p-8">
@@ -186,7 +187,8 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   <ul className="mt-5 list-disc space-y-2 border-t border-[#6d5138]/40 pt-4 pl-5 text-sm leading-relaxed">
                     {brief.initialFacts.map((fact) => <li key={fact}>{fact}</li>)}
                   </ul>
-                  <button className="mt-7 min-h-12 w-full border-2 border-red-900 bg-red-950 px-5 uppercase text-red-50 hover:bg-red-900 disabled:opacity-50 sm:w-auto" disabled={!people?.length || evidence.length === 0} onClick={() => setClosing(true)} type="button">
+                  <button className="game-control-button mt-7 min-h-12 w-full px-5 uppercase text-[#f1c987] disabled:opacity-50 sm:w-auto" disabled={!people?.length || evidence.length === 0} onClick={() => setClosing(true)} type="button">
+                    <ControlIcon name="play" />
                     Close this case
                   </button>
                   {!evidence.length ? <p className="mt-3 text-sm text-red-900">Pin at least one piece of evidence to the clueboard before closing the case.</p> : null}
@@ -217,7 +219,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               </dl>
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <button className="min-h-11 border-2 border-[#573821] px-5 uppercase" disabled={submitting} onClick={() => setReviewing(false)} type="button">Keep editing</button>
-                <button className="min-h-11 border-2 border-red-900 bg-red-950 px-5 uppercase text-red-50 disabled:opacity-50" disabled={submitting} onClick={submit} type="button">{submitting ? "Submitting..." : "Submit final report"}</button>
+                <button className="game-control-button min-h-11 px-5 uppercase text-[#f1c987] disabled:opacity-50" disabled={submitting} onClick={submit} type="button"><ControlIcon name="play" />{submitting ? "Submitting..." : "Submit final report"}</button>
               </div>
             </section>
           ) : (
@@ -253,7 +255,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                   {evidence.map((item) => <Card card={{ kind: item.type as DragKind, referenceId: item.referenceId, label: item.text.split("\n")[0] }} key={`${item.type}:${item.referenceId}`} onTap={() => toggleEvidence(item.referenceId)} tone="evidence" />)}
                 </div>
               </section>
-              <div className="flex flex-col-reverse gap-3 border-t border-[#6d5138]/40 pt-5 sm:flex-row sm:justify-end"><button className="min-h-11 border-2 border-[#573821] px-5 uppercase" onClick={() => setClosing(false)} type="button">Cancel</button><button className="min-h-11 border-2 border-red-900 bg-red-950 px-5 uppercase text-red-50 disabled:opacity-50" disabled={!canReview} type="submit">Review final theory</button></div>
+              <div className="flex flex-col-reverse gap-3 border-t border-[#6d5138]/40 pt-5 sm:flex-row sm:justify-end"><button className="min-h-11 border-2 border-[#573821] px-5 uppercase" onClick={() => setClosing(false)} type="button">Cancel</button><button className="game-control-button min-h-11 px-5 uppercase text-[#f1c987] disabled:opacity-50" disabled={!canReview} type="submit"><ControlIcon name="play" />Review final theory</button></div>
             </form>
           )}
         </div>

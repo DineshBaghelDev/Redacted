@@ -11,6 +11,7 @@ import { go } from "../../../lib/game-nav";
 import { play } from "../../../lib/sound";
 import { ControlIcon } from "../control-icon";
 import { GameIcon } from "../game-icon";
+import { PinButton } from "../pin-button";
 
 const kindLabels = {
   home: "Residence",
@@ -248,7 +249,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
               ? <>On the way to <span className="text-[#f1c987]">{city.activeTravel.destinationName}</span> · {travelRemaining} min</>
               : <>You are at <span className="text-[#f1c987]">{here?.name ?? "the bureau"}</span> · tap a place</>}
           </p>
-          <button className="pointer-events-auto ml-2 border border-[#e8ac51]/70 bg-[#071014]/95 px-3 py-2 text-xs uppercase text-[#f1c987]" onClick={() => setFindOpen(!findOpen)} type="button">Find a place</button>
+          <button className="game-control-button pointer-events-auto ml-2 min-h-11 px-3 text-xs uppercase text-[#f1c987]" onClick={() => setFindOpen(!findOpen)} type="button"><ControlIcon name="search" />Find a place</button>
         </div>
         {findOpen ? (
           <div className="fixed inset-x-3 bottom-16 z-50 max-h-[50vh] overflow-y-auto border-2 border-[#e8ac51]/60 bg-[#071014]/97 p-2 sm:left-auto sm:right-6 sm:w-72" role="dialog" aria-label="Find a place">
@@ -296,18 +297,19 @@ function PlaceCard({ place, here, travelling, busy, pinned, pinning, error, onTr
           <p className="break-words text-sm uppercase leading-tight text-[#f1c987]">{place.name}</p>
           <p className="mt-0.5 text-[0.65rem] uppercase text-[#c8d8d2]/60">{kindLabels[place.kind]} · {place.area}</p>
         </div>
-        <button aria-label="Close" className="-mr-1 -mt-1 size-7 text-[#c8d8d2]/70 hover:text-[#e8ac51]" onClick={onClose} type="button">✕</button>
+        <button aria-label="Close place details" className="game-pin-button -mr-1 -mt-1" onClick={onClose} title="Close" type="button"><ControlIcon name="close" /></button>
       </div>
       <div className="mt-3 grid gap-2">
         {here ? (
-          canEnter ? <button className="min-h-10 border border-[#e8ac51] bg-[#e8ac51]/15 text-xs uppercase text-[#f1c987] hover:bg-[#e8ac51]/25" onClick={onEnter} type="button">{place.kind === "lab" ? "Use the lab" : place.kind === "bureau" ? "Go inside the bureau" : "Go inside"}</button>
+          canEnter ? <button className="game-control-button min-h-11 px-3 text-xs uppercase text-[#f1c987]" onClick={onEnter} type="button"><ControlIcon name="play" />{place.kind === "lab" ? "Use the lab" : place.kind === "bureau" ? "Go inside the bureau" : "Go inside"}</button>
             : <p className="text-xs uppercase text-[#c8d8d2]/60">You are here</p>
         ) : (
-          <button className="min-h-10 border border-[#e8ac51] bg-[#e8ac51]/15 text-xs uppercase text-[#f1c987] hover:bg-[#e8ac51]/25 disabled:opacity-45" disabled={busy || travelling || place.travelMinutes === undefined} onClick={onTravel} type="button">
+          <button className="game-control-button min-h-11 px-3 text-xs uppercase text-[#f1c987] disabled:opacity-45" disabled={busy || travelling || place.travelMinutes === undefined} onClick={onTravel} type="button">
+            <ControlIcon name="play" />
             {travelling ? "Already on the road" : place.travelMinutes === undefined ? "No route" : `Travel · ${place.travelMinutes} min`}
           </button>
         )}
-        <button className="min-h-9 border border-[#6f9f98]/50 text-xs uppercase text-[#c8d8d2] hover:border-[#e8ac51] disabled:opacity-50" disabled={pinned || pinning} onClick={onPin} type="button">{pinned ? "Pinned" : pinning ? "Pinning..." : "Pin to clueboard"}</button>
+        <PinButton busy={pinning} onClick={onPin} pinned={pinned} />
       </div>
       {error ? <p className="mt-2 text-xs text-red-200" role="alert">{error}</p> : null}
     </div>
@@ -320,7 +322,7 @@ function MapMessage({ message, onBack }: { message: string; onBack: () => void }
       <div className="game-panel w-full max-w-lg px-7 py-9 text-center sm:px-12">
         <GameIcon className="mx-auto size-12" name="map" />
         <p className="mt-4 text-lg uppercase leading-snug">{message}</p>
-        <button className="mt-6 min-h-11 w-full border border-[#6f9f98]/70 px-4 py-2 uppercase hover:border-[#e8ac51] hover:text-[#e8ac51] sm:w-auto" onClick={onBack} type="button">Back to bureau</button>
+        <button className="game-control-button mt-6 min-h-11 w-full px-4 uppercase sm:w-auto" onClick={onBack} type="button"><ControlIcon name="back" />Back to bureau</button>
       </div>
     </section>
   );

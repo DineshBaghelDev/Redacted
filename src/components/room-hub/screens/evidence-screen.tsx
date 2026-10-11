@@ -8,6 +8,7 @@ import { useState, type FormEvent } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { ControlIcon } from "../control-icon";
 import { InvestigationIcon } from "../investigation-icon";
+import { PinButton } from "../pin-button";
 import { TypeAhead } from "../type-ahead";
 
 function normalizedTerm(search: string) {
@@ -147,14 +148,7 @@ export function EvidenceScreen({ roomCode, onBack }: { roomCode: string; onBack:
                     </div>
                   </div>
                   <p className="mt-3 text-sm leading-relaxed sm:text-base">{record.content}</p>
-                  <button
-                    className="mt-4 min-h-11 border border-[#211d17]/60 px-3 text-xs uppercase hover:border-red-800 hover:text-red-800 focus-visible:outline-2 focus-visible:outline-red-800 disabled:cursor-default disabled:opacity-55"
-                    disabled={pinning === record.id || isPinned}
-                    onClick={() => pinRecord(record.id)}
-                    type="button"
-                  >
-                    {pinning === record.id ? "Pinning..." : isPinned ? "Pinned to clueboard" : "Pin to clueboard"}
-                  </button>
+                  <PinButton busy={pinning === record.id} className="mt-4" onClick={() => pinRecord(record.id)} pinned={Boolean(isPinned)} />
                 </li>
               );
             })}

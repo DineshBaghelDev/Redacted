@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-11 — Button alignment and clueboard pin states
+
+- Centered labels within the existing illustrated menu and control plates, and applied those plates to map travel/entry, interview, lab report, device opening, and other primary station actions.
+- Replaced repeated clueboard pin text and inconsistent icons in records, CCTV, map, interiors, devices, interviews, lab reports, and the notebook with one accessible icon control. Unpinned, pinning, and pinned states have distinct labels; pinned evidence remains visibly marked.
+- Verified menu plate alignment and zero page overflow at 320px, 390px, and 1440px; the full 172-test suite, TypeScript, lint, and production build pass. Four backend tests timed out during a parallel run and passed when rerun with one test worker.
+
 ## 2026-10-11 — Logo, controls, and audio pass
 
 - Added an inspected transparent case-file emblem, a restrained metal button plate, and an eight-symbol control atlas. The live REDACTED title stays as readable text beside the emblem on signed-out, sign-in, loading, and signed-in screens. Main menu, archive replay, opening brief, pause, station returns, device return, and interview evidence controls now use the shared asset language.

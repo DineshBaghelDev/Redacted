@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-11 — Control alignment and pin language
+
+- Keep primary action labels optically centered on the illustrated metal plate. Use the plate for destination and commitment actions; leave lists, tabs, and evidence text as lighter surfaces so the game stays scannable.
+- Every clueboard pin is an icon action with a title and accessible name. A gold pin and corner mark persist after pinning; the button stays disabled to avoid duplicate nodes. A pending pin has its own label.
+
 ## 2026-10-11 — Logo, audio, and lighter controls
 
 - The brand mark is one simple pixel dossier with a redaction bar; the REDACTED wordmark stays live text so it remains sharp and cannot contain generated lettering artifacts. Generated art is reserved for prominent controls and symbols, while long case text remains selectable DOM text.

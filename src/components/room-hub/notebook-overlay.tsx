@@ -9,7 +9,9 @@ import { api } from "../../../convex/_generated/api";
 import { formatGameMinute } from "../../lib/game-time";
 import { play } from "../../lib/sound";
 import { CharacterPortrait } from "./character-portrait";
+import { ControlIcon } from "./control-icon";
 import { startCardDrag } from "../../lib/evidence-drag";
+import { PinButton } from "./pin-button";
 
 const groups = [
   ["item", "Objects"],
@@ -31,6 +33,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
   const ping = useMutation(api.coop.ping);
   const [tab, setTab] = useState<"people" | "evidence">("evidence");
   const [message, setMessage] = useState("");
+  const [pinning, setPinning] = useState("");
   // While dragging an entry out, fade the notebook so the screen behind can take the drop.
   const [dragging, setDragging] = useState(false);
 
@@ -39,12 +42,15 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
   }
 
   function pinEntry(type: Parameters<typeof pin>[0]["type"], referenceId: string) {
+    const key = `${type}:${referenceId}`;
     const count = nodes?.length ?? 0;
     setMessage("");
+    setPinning(key);
     play("click");
     void pin({ roomCode, type, referenceId, x: 80 + (count % 4) * 220, y: 90 + Math.floor(count / 4) * 180 })
       .then(() => setMessage("Pinned to the clueboard."))
-      .catch((caught: unknown) => setMessage(errorText(caught, "Could not pin that.")));
+      .catch((caught: unknown) => setMessage(errorText(caught, "Could not pin that.")))
+      .finally(() => setPinning(""));
   }
 
   function share(text: string) {
@@ -60,7 +66,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
             <p className="text-xs uppercase tracking-[0.2em] text-red-800">Shared notebook</p>
             <h2 className="mt-1 text-2xl uppercase">What we know</h2>
           </div>
-          <button className="min-h-10 border-2 border-[#573821] px-3 text-xs uppercase hover:bg-[#573821] hover:text-[#f4ead2]" onClick={onClose} type="button">Close · N</button>
+          <button aria-label="Close notebook" className="game-pin-button" onClick={onClose} title="Close notebook · N" type="button"><ControlIcon name="close" /></button>
         </header>
         <div className="mt-3 grid grid-cols-2 gap-2" role="tablist">
           {(["evidence", "people"] as const).map((item) => (
@@ -83,7 +89,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
                       <p className="text-xs text-[#5d4d3d]">{[person.age ? `Age ${person.age}` : null, person.occupation].filter(Boolean).join(" · ")}</p>
                       <p className="mt-1 text-xs italic text-[#5d4d3d]">First seen in: {person.firstSeenIn}</p>
                       {person.spotted.length ? <p className="mt-1 text-xs text-[#5d4d3d]">You placed them on camera: {person.spotted.join("; ")}</p> : null}
-                      <EntryActions onPin={() => pinEntry("npc", person.id)} onShare={() => share(`Look at ${person.name}`)} pinned={pinned("npc", person.id)} />
+                      <EntryActions busy={pinning === `npc:${person.id}`} onPin={() => pinEntry("npc", person.id)} onShare={() => share(`Look at ${person.name}`)} pinned={pinned("npc", person.id)} />
                     </div>
                   </li>
                 ))}
@@ -104,7 +110,7 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
                         <p className="text-sm font-semibold">{entry.title}</p>
                         {entry.time !== undefined ? <p className="font-mono text-xs text-[#5d4d3d]">{formatGameMinute(entry.time)}</p> : null}
                         <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{entry.body}</p>
-                        <EntryActions onPin={() => pinEntry(entry.type, entry.referenceId)} onShare={() => share(`Look at: ${entry.title}`)} pinned={pinned(entry.type, entry.referenceId)} />
+                        <EntryActions busy={pinning === `${entry.type}:${entry.referenceId}`} onPin={() => pinEntry(entry.type, entry.referenceId)} onShare={() => share(`Look at: ${entry.title}`)} pinned={pinned(entry.type, entry.referenceId)} />
                       </li>
                     ))}
                   </ul>
@@ -122,12 +128,11 @@ export function NotebookOverlay({ roomCode, onClose }: { roomCode: string; onClo
  * Pin and Show partner for one entry. Hidden until you point at or focus the entry (dragging covers most uses);
  * always shown on touch screens, which cannot hover. A pinned entry keeps a small "Pinned" mark either way.
  */
-function EntryActions({ pinned, onPin, onShare }: { pinned: boolean; onPin: () => void; onShare: () => void }) {
+function EntryActions({ pinned, busy, onPin, onShare }: { pinned: boolean; busy: boolean; onPin: () => void; onShare: () => void }) {
   return (
     <div className="mt-2 flex flex-wrap items-center gap-2">
-      {pinned ? <span className="text-xs uppercase text-red-800">Pinned</span> : null}
-      <span className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100">
-        {pinned ? null : <button className="min-h-8 border border-[#573821] px-2 text-xs uppercase" onClick={onPin} type="button">Pin</button>}
+      <span className={`flex gap-2 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 ${pinned || busy ? "opacity-100" : "opacity-0"}`}>
+        <PinButton busy={busy} onClick={onPin} pinned={pinned} />
         <button className="min-h-8 border border-[#573821] px-2 text-xs uppercase" onClick={onShare} type="button">Show partner</button>
       </span>
     </div>
