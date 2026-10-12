@@ -331,10 +331,10 @@ function Epilogue({ epilogue, answer }: { epilogue: EpilogueData; answer?: Answe
         </>
       )}
       <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed">{epilogue.explanation}</p>
-      <ol className="mt-6 border-l-2 border-red-900/60 pl-4">
+      <ol className="mt-6 border-l-2 border-[#8b7355] pl-4">
         {epilogue.events.map((event, index) => (
           <li className="reveal-card relative mb-4" key={`${event.time}-${index}`} style={{ animationDelay: `${Math.min(index, 20) * 120}ms` }}>
-            <span aria-hidden="true" className="absolute -left-[1.4rem] top-1 size-2 bg-red-900" />
+            <span aria-hidden="true" className="epilogue-rivet absolute -left-[1.6rem] top-0 size-4" />
             <p className="font-mono text-xs text-[#5b4635]">{formatGameMinute(event.time)} · {event.place}</p>
             <p className="text-sm leading-relaxed">{event.text}</p>
           </li>

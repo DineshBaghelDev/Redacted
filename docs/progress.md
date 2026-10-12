@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-12 — Result timeline and return-to-game clock check
+
+- Replaced the result timeline's plain square bullets with one inspected brass rivet sprite. Times, places and explanations remain live text, and no event type is inferred from the story.
+- Extended the shared-clock test: after one detective's journey completes with no client settlement call, the other detective's return settles it and pauses the clock. This covers the server half of reopening after both tabs were closed; the browser mount path still needs a live check.
+- Focused Convex test, TypeScript and lint passed.
+
 ## 2026-10-12 — Floor-plan markers and production build
 
 - The building map and door labels now reuse the detective sprites already shown on the city map. Both detectives can be marked in the same room without obscuring its name.

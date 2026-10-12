@@ -981,6 +981,7 @@
 .map-room:hover:not(:disabled) { border-color: #8b1d1d; }
 .map-room-token { position: absolute; top: -7px; right: -5px; width: 17px; height: 17px; }
 .map-room-token[data-with-player="true"] { right: 11px; }
+.epilogue-rivet { background: url('/assets/timeline-rivet.png') center / contain no-repeat; image-rendering: pixelated; }
 
 @media (max-width: 639px) {
   .game-icon-mobile.game-control-button, .game-icon-mobile.clue-board-button {

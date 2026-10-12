@@ -22,7 +22,7 @@ Still open after the 2026-10-12 art pass:
 
 - **Art pass:** room sprites, object icons, portrait expressions, interview room foreground, clueboard surface, missing map icons, and four clock-driven light variants have shipped. The last optional treatments and rejected forensic image attempts are resolved in `ARTWORK_NEEDED.md`; the live lab tasks retain their clearer interactive graphics.
 - **Design calls left as they are:** the lab still offers every tool on every bag (the autopsy task was reworked into a dictation); the report keeps three written answers because motive and method are separate stars.
-- **Phone layout:** checked at 390×844 and fixed (see progress). **Not measured:** render churn on a mid-range phone; client-settled clock with both tabs closed.
+- **Phone layout:** checked at 390×844 and fixed (see progress). **Not measured:** render churn on a mid-range phone. A server test now verifies that a returning teammate can settle an overdue journey; the browser return path after both tabs close still needs a live check.
 - **Not reproduced:** the main-menu "never finishes loading" seen twice in the first run. The menu loaded normally in the second run.
 - **Build:** an isolated `next build --webpack` passed on 2026-10-12. The default Turbopack build could not compile from that isolated checkout because its linked `node_modules` target sat outside the checkout root.
 

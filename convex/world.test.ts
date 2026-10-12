@@ -66,7 +66,9 @@ test("partners travel in parallel and the shared clock pauses after the last jou
   expect((await one.query(api.world.getMap, { roomCode: "ABC123" }))?.clock.gameTime).toBe(8);
   expect(await two.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "hospital" })).toEqual({ completeGameTime: 11 });
   vi.advanceTimersByTime(3 * GAME_MINUTE_MS);
-  expect(await two.mutation(api.world.finishTravel, { roomCode: "ABC123" })).toEqual({ gameTime: 11, traveling: false });
+  expect((await one.query(api.world.getMap, { roomCode: "ABC123" }))?.nextCompletionGameTime).toBe(11);
+  // A returning teammate can settle the finished journey even if its traveler never reopened the tab.
+  expect(await one.mutation(api.world.finishTravel, { roomCode: "ABC123" })).toEqual({ gameTime: 11, traveling: false });
   expect((await two.query(api.world.getMap, { roomCode: "ABC123" }))?.currentPlaceId).toBe("hospital");
   expect(await one.mutation(api.world.startTravel, { roomCode: "ABC123", destinationId: "bureau" })).toEqual({ completeGameTime: 19 });
   vi.advanceTimersByTime(30 * GAME_MINUTE_MS);
