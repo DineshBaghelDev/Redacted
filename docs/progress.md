@@ -5,6 +5,7 @@
 - Replaced the result timeline's plain square bullets with one inspected brass rivet sprite. Times, places and explanations remain live text, and no event type is inferred from the story.
 - Extended the shared-clock test: after one detective's journey completes with no client settlement call, the other detective's return settles it and pauses the clock. This covers the server half of reopening after both tabs were closed; the browser mount path still needs a live check.
 - Focused Convex test, TypeScript and lint passed.
+- Checked the signed-in desktop result screen in Chrome: all 16 timeline markers align with the rail and remain legible beside the event text. A fresh main-menu tab also reached actionable buttons after authentication; the earlier indefinite loading symptom did not recur.
 
 ## 2026-10-12 — Floor-plan markers and production build
 
