@@ -1,5 +1,14 @@
 # Design Decisions
 
+## 2026-10-12 — Playtest audit fixes
+
+- The weapon is written in the player's words, so it is judged on meaning like motive and method; the exact item name or bagged weapon still always counts.
+- Citing evidence keeps pinning it to the clueboard (the report cites the board), but the screen now says so.
+- Bagging stays a choice: a labelled "Bag for lab" button and a one-time tip, not automatic bagging.
+- The autopsy is one hold: examining the body is the pathologist's job, not a puzzle.
+- Building cameras name the doors people use: a corridor camera sees which room someone goes into. Still text only.
+- Older cases are only repaired where nothing a player has already found could move: wording and timestamps yes, object spots no.
+
 ## 2026-10-12 — Unknown people are the player's own placeholder
 
 - Players asked for a "dummy character" that fills itself in. The game must not deduce for them (rule 5), so the placeholder holds only what the team writes and tags, and the team decides who it was. Nothing is ever revealed or checked automatically.

@@ -1,5 +1,18 @@
 # Progress
 
+## 2026-10-12 — Playtest audit fixes
+
+From a full easy playthrough (Regent Hotel Death). LLM prompts and checks were left alone on purpose.
+- Scoring: a correct weapon in the player's own words now earns the weapon star (the grader's verdict counts, not only the exact item name).
+- Case report: the notebook picker stays open to cite several pieces, shows "✓ Cited", and says citing pins to the clueboard; Review lists what is still missing instead of doing nothing.
+- Interviews: choosing Interview brings the person in straight away; Enter sends (Shift+Enter for a new line).
+- Rooms: doors no longer sit on the stairs and lift buttons; other spots say "Wait, you're busy" during a search; clicking a searched spot scrolls smoothly to its finds without changing the address.
+- Found objects have a plain "Bag for lab" button and a one-time tip about bagging.
+- Notebook reopens on the last tab; "Show partner" only shows with a partner. Phones found on site open over that place.
+- Autopsy is one short hold.
+- Case building (new cases; marked repairs also apply to older cases when a room opens): toxicology names the poison only (repaired); phone filler is never dated after the body is found (repaired); passers-by keep one look across cameras (repaired); building cameras take a minute per room and name the doors used; everyday objects sit in sensible spots, repeat less and appear less often; story objects without their spot go to a sensible one; the hotel has a reception desk and kitchen, the café and diner have kitchens, and the garage, bar and warehouse have their own room names (city version 2, room ids unchanged).
+- Not changed: interview reply speed (model), the brief contradicting the story, purchases not on camera, and how findable the killer is (all LLM pipeline).
+
 ## 2026-10-12 — Unknown people in the notebook
 
 - People tab: **+ Someone you can't name yet** adds a placeholder ("Man in red jacket") with a note. Drag its ? onto camera sightings, or pick it from "Who is it?". Its card lists every sighting tagged with it.
