@@ -26,6 +26,9 @@ const groups = [
   ["public_record", "Public records"],
 ] as const;
 
+// The tab you last read stays open next time the notebook opens (for this visit to the page).
+let lastTab: "people" | "evidence" = "evidence";
+
 export type NotebookPick = { type: (typeof groups)[number][0]; referenceId: string; label: string };
 
 /**
@@ -41,7 +44,9 @@ export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle, pickLabe
   const coop = useQuery(api.coop.get, { roomCode });
   const [filter, setFilter] = useState("");
   const [partnerText, setPartnerText] = useState("");
-  const [tab, setTab] = useState<"people" | "evidence">("evidence");
+  const [tab, setTabState] = useState<"people" | "evidence">(lastTab);
+  const setTab = (next: "people" | "evidence") => { lastTab = next; setTabState(next); };
+  const solo = !coop?.partners.length;
   const picking = Boolean(onPick);
   const onBoard = (referenceId: string) => nodes?.some((node) => node.referenceId === referenceId) ?? false;
   const [message, setMessage] = useState("");
@@ -100,7 +105,7 @@ export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle, pickLabe
                       <p className="mt-1 text-xs italic text-[#5d4d3d]">First seen in: {person.firstSeenIn}</p>
                       {person.spotted.length ? <p className="mt-1 text-xs text-[#5d4d3d]">You placed them on camera: {person.spotted.join("; ")}</p> : null}
                       <EntryNote note={person.note} onSave={(text) => { void setNote({ roomCode, referenceId: person.id, text }).catch((caught: unknown) => setMessage(errorText(caught, "Could not save that note."))); }} />
-                      <EntryActions onShare={() => share(`Look at ${person.name}`)} pinControl={<PinButton nodes={nodes} onChange={(next) => setMessage(next ? "Pinned to the clueboard." : "Removed from the clueboard.")} onError={(caught) => setMessage(errorText(caught, "Could not update this pin."))} referenceId={person.id} roomCode={roomCode} type="npc" />} />
+                      <EntryActions onShare={solo ? undefined : () => share(`Look at ${person.name}`)} pinControl={<PinButton nodes={nodes} onChange={(next) => setMessage(next ? "Pinned to the clueboard." : "Removed from the clueboard.")} onError={(caught) => setMessage(errorText(caught, "Could not update this pin."))} referenceId={person.id} roomCode={roomCode} type="npc" />} />
                     </div>
                   </li>
                 ))}
@@ -125,7 +130,7 @@ export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle, pickLabe
                         {entry.time !== undefined ? <p className="font-mono text-xs text-[#5d4d3d]">{formatGameMinute(entry.time)}</p> : null}
                         <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{entry.body}</p>
                         {picking ? (entry.note ? <p className="mt-1 text-sm italic text-red-900">✎ {entry.note}</p> : null) : <EntryNote note={entry.note} onSave={(text) => { void setNote({ roomCode, referenceId: entry.referenceId, text }).catch((caught: unknown) => setMessage(errorText(caught, "Could not save that note."))); }} />}
-                        {onPick ? (picked?.includes(entry.referenceId) ? <p className="mt-2 text-xs uppercase text-red-900">✓ Cited</p> : <button className="game-control-button mt-2 min-h-10 px-4 text-xs uppercase text-[#f1c987]" onClick={() => { play("click"); onPick({ type: entry.type, referenceId: entry.referenceId, label: entry.title }); }} type="button">{pickLabel}</button>) : <EntryActions onShare={() => share(`Look at: ${entry.title}`)} pinControl={<PinButton nodes={nodes} onChange={(next) => setMessage(next ? "Pinned to the clueboard." : "Removed from the clueboard.")} onError={(caught) => setMessage(errorText(caught, "Could not update this pin."))} referenceId={entry.referenceId} roomCode={roomCode} type={entry.type} />} />}
+                        {onPick ? (picked?.includes(entry.referenceId) ? <p className="mt-2 text-xs uppercase text-red-900">✓ Cited</p> : <button className="game-control-button mt-2 min-h-10 px-4 text-xs uppercase text-[#f1c987]" onClick={() => { play("click"); onPick({ type: entry.type, referenceId: entry.referenceId, label: entry.title }); }} type="button">{pickLabel}</button>) : <EntryActions onShare={solo ? undefined : () => share(`Look at: ${entry.title}`)} pinControl={<PinButton nodes={nodes} onChange={(next) => setMessage(next ? "Pinned to the clueboard." : "Removed from the clueboard.")} onError={(caught) => setMessage(errorText(caught, "Could not update this pin."))} referenceId={entry.referenceId} roomCode={roomCode} type={entry.type} />} />}
                       </li>
                     ))}
                   </ul>
@@ -147,12 +152,12 @@ export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle, pickLabe
   );
 }
 
-function EntryActions({ pinControl, onShare }: { pinControl: ReactNode; onShare: () => void }) {
+function EntryActions({ pinControl, onShare }: { pinControl: ReactNode; onShare?: () => void }) {
   return (
     <div className="mt-2 flex flex-wrap items-center gap-2">
       <span className="flex items-center gap-2">
         {pinControl}
-        <button className="min-h-8 border border-[#573821] px-2 text-xs uppercase" onClick={onShare} type="button">Show partner</button>
+        {onShare ? <button className="min-h-8 border border-[#573821] px-2 text-xs uppercase" onClick={onShare} type="button">Show partner</button> : null}
       </span>
     </div>
   );
