@@ -2,9 +2,10 @@
 
 ## 2026-10-12 — Narrow-screen game check
 
+- Reopened the signed-in solo room after restarting the local dev server and applied a true 390×844 browser viewport. Pier 9's entrance, door controls, and floor plan fit with `scrollWidth === innerWidth === 390`. Travelled back to the lab and checked a selected evidence bag and active powder task at the same viewport; the title wraps, but the instructions, tray, and tool choices remain visible and usable with no horizontal overflow. Reset the browser viewport afterward.
 - Inspected the signed-in forensic lab at a measured 500×698 Chrome viewport: the empty bench, selected evidence bag, tool picker, and active powder task fit the mobile layout without document-wide horizontal overflow. The illustrated tray leaves the task graphic and instructions clear.
 - Travelled from the lab to Pier 9 Warehouse in the same solo room. At 500px wide, the entrance's door actions and ten-room floor plan remained readable and scrollable; `document.documentElement.scrollWidth` matched the 500px viewport. The desktop browser was restored after capture.
-- A separate local Playwright capture at 390×844 showed the signed-out menu plates and actions without clipping. Signed-in play at 390px and render performance on a mid-range phone remain unmeasured; the blind first-time-player playtest remains the human ship check.
+- A separate local Playwright capture at 390×844 showed the signed-out menu plates and actions without clipping. Render performance on a mid-range phone remains unmeasured; the blind first-time-player playtest remains the human ship check.
 
 ## 2026-10-12 — Illustrated hands-on lab surface
 
