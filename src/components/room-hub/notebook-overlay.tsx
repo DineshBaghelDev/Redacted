@@ -32,7 +32,7 @@ export type NotebookPick = { type: (typeof groups)[number][0]; referenceId: stri
  * The shared notebook: everything found so far, in one place. Pin what matters; the board is for your theory.
  * With `onPick` it opens to choose evidence to show someone: evidence only, one "Show this" per entry.
  */
-export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle }: { roomCode: string; onClose: () => void; onPick?: (entry: NotebookPick) => void; pickTitle?: string }) {
+export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle, pickLabel = "Show this", picked }: { roomCode: string; onClose: () => void; onPick?: (entry: NotebookPick) => void; pickTitle?: string; pickLabel?: string; picked?: string[] }) {
   const entries = useQuery(api.notebook.get, { roomCode });
   const people = useQuery(api.npcs.list, { roomCode });
   const nodes = useQuery(api.clueBoard.getNodes, { roomCode });
@@ -125,7 +125,7 @@ export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle }: { room
                         {entry.time !== undefined ? <p className="font-mono text-xs text-[#5d4d3d]">{formatGameMinute(entry.time)}</p> : null}
                         <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{entry.body}</p>
                         {picking ? (entry.note ? <p className="mt-1 text-sm italic text-red-900">✎ {entry.note}</p> : null) : <EntryNote note={entry.note} onSave={(text) => { void setNote({ roomCode, referenceId: entry.referenceId, text }).catch((caught: unknown) => setMessage(errorText(caught, "Could not save that note."))); }} />}
-                        {onPick ? <button className="game-control-button mt-2 min-h-10 px-4 text-xs uppercase text-[#f1c987]" onClick={() => { play("click"); onPick({ type: entry.type, referenceId: entry.referenceId, label: entry.title }); }} type="button">Show this</button> : <EntryActions onShare={() => share(`Look at: ${entry.title}`)} pinControl={<PinButton nodes={nodes} onChange={(next) => setMessage(next ? "Pinned to the clueboard." : "Removed from the clueboard.")} onError={(caught) => setMessage(errorText(caught, "Could not update this pin."))} referenceId={entry.referenceId} roomCode={roomCode} type={entry.type} />} />}
+                        {onPick ? (picked?.includes(entry.referenceId) ? <p className="mt-2 text-xs uppercase text-red-900">✓ Cited</p> : <button className="game-control-button mt-2 min-h-10 px-4 text-xs uppercase text-[#f1c987]" onClick={() => { play("click"); onPick({ type: entry.type, referenceId: entry.referenceId, label: entry.title }); }} type="button">{pickLabel}</button>) : <EntryActions onShare={() => share(`Look at: ${entry.title}`)} pinControl={<PinButton nodes={nodes} onChange={(next) => setMessage(next ? "Pinned to the clueboard." : "Removed from the clueboard.")} onError={(caught) => setMessage(errorText(caught, "Could not update this pin."))} referenceId={entry.referenceId} roomCode={roomCode} type={entry.type} />} />}
                       </li>
                     ))}
                   </ul>

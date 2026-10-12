@@ -45,6 +45,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
   const [reviewing, setReviewing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [showMissing, setShowMissing] = useState(false);
   const [culpritName, setCulpritName] = useState("");
   const [citing, setCiting] = useState(false);
   const [motiveExplanation, setMotiveExplanation] = useState("");
@@ -63,12 +64,16 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
   const accused = people?.find((person) => !person.isVictim && same(person.name, culpritName));
   const culpritNpcId = accused?.id ?? "";
   const weaponItemId = inventory?.find((item) => same(item.name, weaponDescription))?.id ?? "";
-  const canReview = !!culpritNpcId
-    && motiveExplanation.trim().length >= 10
-    && weaponDescription.trim().length > 0
-    && evidenceIds.length > 0
-    && evidenceExplanation.trim().length >= 10
-    && methodExplanation.trim().length >= 10;
+  // What the report still needs, in the order it is written. Review lists these instead of doing nothing.
+  const missing = [
+    !culpritNpcId && "who did it",
+    !weaponDescription.trim() && "the weapon",
+    motiveExplanation.trim().length < 10 && "why they did it",
+    methodExplanation.trim().length < 10 && "how it was done",
+    !evidenceIds.length && "at least one piece of evidence",
+    evidenceExplanation.trim().length < 10 && "how the evidence proves it",
+  ].filter((item): item is string => Boolean(item));
+  const canReview = missing.length === 0;
 
   function toggleEvidence(id: string) {
     if (evidenceIds.includes(id)) {
@@ -98,7 +103,9 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
 
   function review(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (canReview) { play("page"); setReviewing(true); }
+    if (!canReview) { setShowMissing(true); return; }
+    play("page");
+    setReviewing(true);
   }
 
   function submit() {
@@ -253,7 +260,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
               <p className="mt-4 text-sm leading-relaxed text-[#5b4635]">This closes the case for both detectives. Your report cannot be replaced after submission.</p>
               <dl className="mt-5 grid gap-3 border-y border-[#6d5138]/40 py-5 text-sm sm:grid-cols-2">
                 <div><dt className="uppercase text-red-800">Accused</dt><dd className="mt-1">{people?.find((person) => person.id === culpritNpcId)?.name}</dd></div>
-                <div><dt className="uppercase text-red-800">Evidence</dt><dd className="mt-1">{evidenceIds.length} pinned {evidenceIds.length === 1 ? "piece" : "pieces"}</dd></div>
+                <div><dt className="uppercase text-red-800">Evidence</dt><dd className="mt-1">{evidenceIds.length} cited {evidenceIds.length === 1 ? "piece" : "pieces"}</dd></div>
                 <div><dt className="uppercase text-red-800">Weapon</dt><dd className="mt-1">{weaponDescription}</dd></div>
                 <div><dt className="uppercase text-red-800">Report</dt><dd className="mt-1">Motive, evidence, and method included</dd></div>
               </dl>
@@ -264,7 +271,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
             </section>
           ) : (
             <form className="game-dossier space-y-5 px-5 pb-20 pt-20 sm:px-8 sm:pb-16" onSubmit={review}>
-              {citing ? <NotebookOverlay onClose={() => setCiting(false)} onPick={(entry) => { setCiting(false); addProof({ kind: entry.type, referenceId: entry.referenceId, label: entry.label }); }} pickTitle="Cite evidence" roomCode={roomCode} /> : null}
+              {citing ? <NotebookOverlay onClose={() => setCiting(false)} onPick={(entry) => addProof({ kind: entry.type, referenceId: entry.referenceId, label: entry.label })} pickLabel="Cite this" picked={evidenceIds} pickTitle="Cite evidence" roomCode={roomCode} /> : null}
               <div className="border-b-2 border-[#6d5138] pb-4"><p className="text-xs uppercase tracking-[0.2em] text-red-800">Five findings · five stars</p><h3 className="mt-2 text-3xl uppercase">Tell it like it happened</h3><p className="mt-2 text-sm text-[#5b4635]">Write it in your own words. Name the killer and the weapon, say why and how, and cite the evidence that proves it.</p></div>
               <div className="space-y-4 text-lg leading-[2.6rem]">
                 <div>
@@ -290,10 +297,12 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                     ) : <p className="text-sm text-[#6d5138]">Nothing cited yet.</p>}
                   </div>
                   <button className="mt-2 min-h-10 border-2 border-[#573821] px-4 text-sm uppercase disabled:opacity-50" disabled={evidenceIds.length >= MAX_EVIDENCE} onClick={() => setCiting(true)} type="button">Cite evidence from the notebook</button>
+                  <p className="mt-1 text-xs leading-normal text-[#6d5138]">Cited evidence is pinned to your clueboard too.</p>
                   <textarea aria-label="Explain how the evidence proves it" className="case-close-blank mt-2 block min-h-16 w-full" maxLength={2000} onChange={(event) => setEvidenceExplanation(event.target.value)} placeholder="because this evidence shows..." value={evidenceExplanation} />
                 </div>
               </div>
-              <div className="flex flex-col-reverse gap-3 border-t border-[#6d5138]/40 pt-5 sm:flex-row sm:justify-end"><button className="min-h-11 border-2 border-[#573821] px-5 uppercase" onClick={() => setClosing(false)} type="button">Cancel</button><button className="game-control-button min-h-11 px-5 uppercase text-[#f1c987] disabled:opacity-50" disabled={!canReview} type="submit"><ControlIcon name="play" />Review final theory</button></div>
+              {showMissing && missing.length ? <p className="text-sm text-red-900" role="alert">Still missing: {missing.join(", ")}.</p> : null}
+              <div className="flex flex-col-reverse gap-3 border-t border-[#6d5138]/40 pt-5 sm:flex-row sm:justify-end"><button className="min-h-11 border-2 border-[#573821] px-5 uppercase" onClick={() => setClosing(false)} type="button">Cancel</button><button className="game-control-button min-h-11 px-5 uppercase text-[#f1c987] disabled:opacity-50" type="submit"><ControlIcon name="play" />Review final theory</button></div>
             </form>
           )}
         </div>
