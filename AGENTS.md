@@ -28,6 +28,7 @@ This repository's technical decisions are split across the files below. Agents s
 | [DECISIONS.md](./docs/DECISIONS.md) | Locked decisions, rejected alternatives, unresolved items |
 | [progress.md](./docs/progress.md) | Current implementation progress and latest shipped UI/backend changes |
 | [design decisions.md](./docs/design decisions.md) | Product and UI decisions made during implementation |
+| [ROADMAP.md](./docs/ROADMAP.md) | To-do list for v1.1 and later (security, AI rate limits, case tools, artwork) |
 
 ## Non-negotiable product rules
 

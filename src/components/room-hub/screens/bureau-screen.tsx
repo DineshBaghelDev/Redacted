@@ -84,6 +84,7 @@ const hotspots: { station: Station; label: string; icon: Parameters<typeof GameI
   { station: "case", label: "Case file", icon: "case", className: "left-[39%] top-[76%] h-[22%] w-[23%]" },
 ];
 
+/** Render the bureau and active investigation station, keeping the shared clock and notebook in sync. */
 export function BureauScreen({ error, onLeave }: { error: string; onLeave: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const pathname = usePathname();
@@ -267,7 +268,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
       </header>
       {clockError ? <p className="absolute inset-x-3 top-11 z-50 mx-auto w-fit border border-red-300/60 bg-red-950/95 px-3 py-2 text-sm text-red-100" role="status">Clock sync delayed. Retrying...</p> : null}
 
-      <div className={`game-panorama relative h-full w-full overflow-x-auto overflow-y-hidden bg-black transition-[filter] duration-1000 lg:overflow-hidden ${gameTime !== null && partOfDay(gameTime) === "Night" ? "brightness-[.7] saturate-[.8]" : ""}`} ref={panoramaRef}>
+      <div className="game-panorama relative h-full w-full overflow-x-auto overflow-y-hidden bg-black transition-[filter] duration-1000 lg:overflow-hidden" data-time-of-day={gameTime !== null ? partOfDay(gameTime).toLowerCase() : undefined} ref={panoramaRef}>
         <div className="relative h-full w-[260vh] min-w-full lg:w-full">
           <Image alt="The investigation bureau" className="object-cover" fill priority sizes="260vh" src="/assets/bureau-noir.png" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#071014]/15 via-transparent to-[#071014]/20" />

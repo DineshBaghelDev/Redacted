@@ -30,6 +30,7 @@ const atmosphere = {
   Night: "It is dark and still. Your torch picks out the doorway.",
 } as const;
 
+/** Manage room navigation, timed searches, evidence collection, and device or camera inspection at a place. */
 export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const place = useQuery(api.investigation.getPlace, isLoaded && isSignedIn ? { roomCode } : "skip");
@@ -138,7 +139,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="game-station-main mx-auto min-h-0 max-w-6xl p-4 sm:p-6">
           <FirstTimeTip id="place" title="Exploring a building">Hold furniture to search. Use doors or the room map to move.</FirstTimeTip>
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_19rem]">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_23rem]">
             <div>
               <h3 className="mb-2 flex items-center gap-3 text-xl uppercase"><InvestigationIcon className="size-9" name="room" /><span className="min-w-0 break-words">{currentRoom?.name ?? "Entrance"}</span></h3>
               {currentRoom ? (

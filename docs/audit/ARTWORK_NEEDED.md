@@ -5,15 +5,17 @@ Style: the existing pixel-noir set (charcoal, petrol teal, aged amber; transpare
 ## Already in `public/assets/`
 bureau-noir, menu-noir, archive-room, interview-room, lab-room, records-room, report-desk, exploration-wall, city-grid, clueboard-cork (reverted), dossier-frame, terminal-frame, control-plate(+trim), control-icons, station-icons, investigation-icons, device-app-icons, map-places, map-places-extra, redacted-emblem.
 
-**Update:** room-furniture and room-furniture-searched atlases cover the common search spots; evidence-objects-primary and evidence-objects-secondary cover 25 found-object categories. Twelve floor materials, named-place silhouettes, car/detective map tokens, door/stair/lift/camera markers, and covered-body/shed spots are now in use. The remaining work is listed by station below.
+**Update:** room-furniture and room-furniture-searched atlases cover the common search spots; evidence-objects-primary and evidence-objects-secondary cover 25 found-object categories. Twelve floor materials, named-place silhouettes, car/detective map tokens in both the city and building maps, door/stair/lift/camera/window pieces, and covered-body/shed spots are now in use. The station lists below are the original artwork request; the updates above record what shipped and the final choices below explain what was deliberately left out. All 64 literal asset references in the current `src` TSX/CSS files resolve to files in `public/assets/` (checked 2026-10-12).
 
 **Interview update:** transcript paper, table/chair foreground, three blank stamp frames, and deterministic portrait expressions are now in use.
 
-**Lab update:** all eight tool sprites, the bench, sealed/open evidence bags, and a blank report sheet are now in use. Per-task visuals remain open.
+**Lab update:** all eight tool sprites, the bench, sealed/open evidence bags, a blank report sheet, and a quiet illustrated work tray behind the hands-on tasks are now in use. Specific fingerprint/UV/bullet/footprint imagery remains procedural so it matches the seeded interactions.
 
-**Board/device update:** dark felt, four blank card variants, raster board controls, image pin, phone/laptop shells, illustrated keypad, and incoming/outgoing call icons are in use. No missed-call type exists in stored phone data.
+**Board/device update:** dark felt, four blank card variants, raster board controls, image pin, phone/laptop shells, illustrated keypad, message bubble tails, and incoming/outgoing call icons are in use. No missed-call type exists in stored phone data.
 
-**Moment/packaging update:** compact case-opened dossier, blank result stamps, star art, two-detective key art, social share images, and square app emblem are in use. Arrival notices remain text in the shared notification stack. The current result timeline has only free-text events, so specific event-type icons would guess at case facts; it retains a neutral marker.
+**Moment/packaging update:** compact case-opened dossier, blank result stamps, star art, a brass-rivet result timeline, four subtle clock-driven scene light variants, two-detective key art, social share images, and square app emblem are in use. Arrival notices remain text in the shared notification stack. The current result timeline has only free-text events, so specific event-type icons would guess at case facts; it retains a neutral marker.
+
+**Final art choices:** search targets already get a focus/hover outline, so a second illustrated hover frame would add clutter. The illustrated board pins are the string endpoints; separate knot sprites would make them harder to grab. The lab tasks keep their interactive, seeded graphics: generated fingerprint and task sheets showed stray pixels and were rejected. Arrival notices and the loading emblem stay compact so they do not cover investigation controls. The share banner is 1730×909 and the app emblem is 1254×1254, both supplied at the intended aspect ratios rather than exact suggested export dimensions.
 
 ## Priority 1 — the screens players spend most time on
 

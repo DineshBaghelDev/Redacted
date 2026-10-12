@@ -30,6 +30,7 @@ const tools: { test: TestType; name: string; colour: string }[] = [
   { test: "autopsy", name: "Autopsy", colour: "#e5a18e" },
 ];
 
+/** Manage evidence and tool selection, timed lab work, and viewing or pinning stored forensic results. */
 export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const lab = useQuery(api.forensics.getLab, isLoaded && isSignedIn ? { roomCode } : "skip");
@@ -122,7 +123,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
 
           <div>
             <div
-              className="lab-bench relative flex min-h-56 flex-col items-center justify-center p-4 text-center"
+              className={`lab-bench ${chosen && !alreadyDone ? "lab-bench--working" : ""} relative flex min-h-56 flex-col items-center justify-center p-4 text-center`}
               {...cardDropTarget((card) => {
                 const key = card.kind === "item" && !card.referenceId.includes(":") ? `item:${card.referenceId}` : card.referenceId;
                 if (lab.sources.some((item) => item.key === key)) placeOnBench(key);

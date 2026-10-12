@@ -16,14 +16,16 @@ Fixed and checked (tests and a signed-in Chrome run; details in `docs/progress.m
 - **P0-6 Fair scoring:** "You said / The truth" beside What really happened.
 - **Live playtest 2–18:** duplicate clutter, clutter tell, near-empty phones and cameras (seeded filler), improvised NPC lies, NPC time sense, statement titles, "Name asks:" prefix, bureau cameras, fake Play label, payment times, lab leftovers, "Other" record labels, Main menu exit, solo lobby. The victim's bag now uses the evidence icon (a new icon would need art).
 - **P1:** one name per station and action, one notification stack, archive deadline text, interviews-at-bureau hint, solo "1–2 detectives" wording, team notes on notebook entries, interview transcript restyled without new art.
+- **Docs drift:** current lab workflow now agrees in `GAME_SYSTEMS.md` and `DECISIONS.md`; historical decisions remain dated in `design decisions.md`.
 
-Still open:
+Still open after the 2026-10-12 art pass:
 
-- **Needs art** (see `ARTWORK_NEEDED.md`): room sprites, object icons, portrait expressions, interview room foreground, clueboard surface, missing map icons.
+- **Art pass:** room sprites, object icons, portrait expressions, interview room foreground, clueboard surface, missing map icons, and four clock-driven light variants have shipped. The last optional treatments and rejected forensic image attempts are resolved in `ARTWORK_NEEDED.md`; the live lab tasks retain their clearer interactive graphics.
+- **Clueboard controls:** the remaining graph toolbar and attribution were removed from the board scene. A pixel-art view control opens keyboard-accessible zoom and fit actions; scroll and pinch still work. Checked at 390px and desktop width, including a live zoom action.
 - **Design calls left as they are:** the lab still offers every tool on every bag (the autopsy task was reworked into a dictation); the report keeps three written answers because motive and method are separate stars.
-- **Phone layout:** checked at 390×844 and fixed (see progress). **Not measured:** render churn on a mid-range phone; client-settled clock with both tabs closed.
-- **Not reproduced:** the main-menu "never finishes loading" seen twice in the first run. The menu loaded normally in the second run.
-- **Not run:** `next build`, because the dev server was using `.next`.
+- **Phone layout:** checked at 390×844 and fixed (see progress). Signed-in Chrome checks at 390×844 covered Pier 9's interior and the active lab task, with no document-wide horizontal overflow; a 500×698 pass covered both screens, and a separate 390×844 Playwright capture covered the signed-out menu. **Not measured:** render churn on a mid-range phone. A server test verifies that a returning teammate can settle an overdue journey; a solo Chrome return from a closed tab confirmed arrival and a paused clock after a 22-minute journey.
+- **Not reproduced:** the main-menu "never finishes loading" seen twice in the first run. The menu loaded normally in the second run and in a fresh signed-in tab on 2026-10-12.
+- **Build:** an isolated `next build --webpack` passed on 2026-10-12. The default Turbopack build could not compile from that isolated checkout because its linked `node_modules` target sat outside the checkout root.
 
 ## Live playtest — Whitlock Office Murder (solo, easy)
 

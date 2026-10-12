@@ -133,6 +133,7 @@ function MonitorWall({ cameras, selectedId, onPick }: { cameras: Camera[]; selec
   );
 }
 
+/** Navigate a camera timeline, request reviews of selected hours, and label or pin recorded sightings. */
 function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; camera: Camera; presetTime: number | null }) {
   const tape = useQuery(api.cases.getCctvTape, { roomCode, cameraId: camera.id });
   const boardNodes = useQuery(api.clueBoard.getNodes, { roomCode });
@@ -282,10 +283,10 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
             </div>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs uppercase">
-            <button className="min-h-10 border border-[#2f4a47] px-3 text-[#9fe0c2] hover:border-[#7fd1ae] disabled:opacity-40" disabled={!previous} onClick={() => previous && seek(previous.start)} type="button">◀◀ Last sighting</button>
-            <button className="min-h-10 border border-[#2f4a47] px-3 text-[#9fe0c2] hover:border-[#7fd1ae]" onClick={() => seek(minute - 10)} type="button">−10 min</button>
-            <button className="min-h-10 border border-[#2f4a47] px-3 text-[#9fe0c2] hover:border-[#7fd1ae]" onClick={() => seek(minute + 10)} type="button">+10 min</button>
-            <button className="min-h-10 border border-[#2f4a47] px-3 text-[#9fe0c2] hover:border-[#7fd1ae] disabled:opacity-40" disabled={!next} onClick={() => next && seek(next.start)} type="button">Next sighting ▶▶</button>
+            <button className="game-control-button min-h-10 px-1 text-[#9fe0c2] disabled:opacity-40" disabled={!previous} onClick={() => previous && seek(previous.start)} type="button">◀◀ Last sighting</button>
+            <button className="game-control-button min-h-10 px-1 text-[#9fe0c2]" onClick={() => seek(minute - 10)} type="button">−10 min</button>
+            <button className="game-control-button min-h-10 px-1 text-[#9fe0c2]" onClick={() => seek(minute + 10)} type="button">+10 min</button>
+            <button className="game-control-button min-h-10 px-1 text-[#9fe0c2] disabled:opacity-40" disabled={!next} onClick={() => next && seek(next.start)} type="button">Next sighting ▶▶</button>
             <span className="ml-auto normal-case tracking-normal text-[#c8d8d2]/60">Drag or scroll the tape. Orange marks are people passing.</span>
           </div>
 

@@ -22,6 +22,7 @@ import { NotebookOverlay } from "../notebook-overlay";
 type Person = NonNullable<FunctionReturnType<typeof api.npcs.list>>[number];
 type Proof = FunctionReturnType<typeof api.npcConversations.listAvailableProof>[number];
 
+/** List discovered people and open the selected person's interview panel. */
 export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const people = useQuery(api.npcs.list, isLoaded && isSignedIn ? { roomCode } : "skip");
@@ -50,7 +51,7 @@ export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; on
           {selected ? <InterviewPanel key={selected.id} people={people} person={selected} roomCode={roomCode} /> : (
             <>
               <p className="max-w-2xl text-sm leading-relaxed text-[#c8d8d2]">
-                Only people your investigation has come across are on file. Find names in messages, records, and statements to add more. Interviews happen here at the bureau.
+                People found in messages, records, and statements appear here. Interviews happen at the bureau.
               </p>
               <ul className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {people.map((person) => {

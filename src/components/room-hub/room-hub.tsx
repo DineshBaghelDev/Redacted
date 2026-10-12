@@ -19,9 +19,20 @@ import { CaseHistoryScreen } from "./screens/case-history";
 import { HowToPlay } from "./how-to-play";
 import { menuButton } from "./constants";
 import { ControlIcon } from "./control-icon";
+import { AuthScreen } from "./auth-screen";
+import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 
 const DETECTIVE_NAME_KEY = "redacted.detectiveName";
 const subscribeToNothing = () => () => {};
+
+/** Render the room hub once Convex authenticates, with loading and sign-in fallbacks. */
+export function ReadyRoomHub() {
+  return <>
+    <Authenticated><RoomHub /></Authenticated>
+    <AuthLoading><div className="flex h-full w-full items-center justify-center"><GameLogo className="animate-pulse" /></div></AuthLoading>
+    <Unauthenticated><AuthScreen><p className="text-sm text-[#e4e6d8]">Sign in again from the menu to open this case.</p></AuthScreen></Unauthenticated>
+  </>;
+}
 
 export function RoomHub() {
   const { user } = useUser();

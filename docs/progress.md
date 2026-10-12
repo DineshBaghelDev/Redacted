@@ -1,5 +1,67 @@
 # Progress
 
+## 2026-10-12 — Asset-only handoff
+
+- Wrote `docs/audit/ASSET_HANDOFF.md` with a checked inventory of all 65 public PNGs and three metadata exports, their use/status, the remaining optional asset work, and the non-art checks for the next implementer. The artwork assignment is stopping here at the user's request.
+
+## 2026-10-12 — Populated clueboard check
+
+- Pinned two read records in a signed-in test room and inspected the board at 390px. The cards and their full-detail view are reachable. The full-detail view and empty-board note now reuse the matching illustrated board paper instead of plain CSS sheets, and each card's inspect/remove tap area is larger while its icon stays unboxed.
+
+## 2026-10-12 — Camera transport controls
+
+- A signed-in 390px pass of the case file, records search/results, and security desk found readable scrolling and no document-wide overflow. The camera tape's four plain outlined transport buttons now use the existing illustrated control plate; camera records remain text only.
+
+## 2026-10-12 — Clueboard view control
+
+- Replaced the default graph zoom toolbar with a small pixel-art view control that reveals Zoom in, Zoom out, and Fit board actions. The graph's attribution is hidden, while pinch, scroll, and the existing board interactions stay available.
+- A signed-in 390px pass through the city map, bureau, notebook, clueboard, and interview found no page-wide horizontal overflow. The interview roster's long instruction was shortened so the first person card appears sooner on a phone.
+- Hid the native horizontal scrollbar on the phone city map; its touch panning and Find a place control remain available.
+
+## 2026-10-12 — Narrow-screen game check
+
+- Reopened the signed-in solo room after restarting the local dev server and applied a true 390×844 browser viewport. Pier 9's entrance, door controls, and floor plan fit with `scrollWidth === innerWidth === 390`. Travelled back to the lab and checked a selected evidence bag and active powder task at the same viewport; the title wraps, but the instructions, tray, and tool choices remain visible and usable with no horizontal overflow. Reset the browser viewport afterward.
+- Inspected the signed-in forensic lab at a measured 500×698 Chrome viewport: the empty bench, selected evidence bag, tool picker, and active powder task fit the mobile layout without document-wide horizontal overflow. The illustrated tray leaves the task graphic and instructions clear.
+- Travelled from the lab to Pier 9 Warehouse in the same solo room. At 500px wide, the entrance's door actions and ten-room floor plan remained readable and scrollable; `document.documentElement.scrollWidth` matched the 500px viewport. The desktop browser was restored after capture.
+- A separate local Playwright capture at 390×844 showed the signed-out menu plates and actions without clipping. Render performance on a mid-range phone remains unmeasured; the blind first-time-player playtest remains the human ship check.
+
+## 2026-10-12 — Illustrated hands-on lab surface
+
+- Added an inspected, low-detail forensic tray behind the existing seeded lab tasks. The tray uses a decorative image layer, so pointer coordinates and the 224px work area do not change. The outer bench frame steps aside only while a task is open to avoid nested frames.
+- Checked the powder and UV tasks in a signed-in Chrome room. The UV task still accepts Enter, spent the same 5 game minutes, and revealed its stored report.
+- All 176 tests across 39 files, TypeScript, and focused lint passed after this change.
+
+## 2026-10-12 — Reopen during travel and interior readability
+
+- In a fresh solo Chrome room (`OIHZYA`), closed the only tab during a 22-minute trip from St. Clare Clinic to Pier 9 Warehouse. On reopening after the due time, the player arrived at Pier 9 at Day 2 · 10:52 and the shared clock stayed paused. This verifies the browser return path in addition to the server test.
+- A desktop interior check exposed cramped 9.6px floor-plan labels and small search sprites. Widened the paper plan, raised its labels to 11.5px, masked route lines behind opaque room labels, softened line contrast, and enlarged search sprites. The direct room-walk plan and travel costs are unchanged. Checked the Pier 9 office at 1536px: selected room and labels are visible, with no page-wide horizontal overflow.
+
+## 2026-10-12 — Result timeline and return-to-game clock check
+
+- Replaced the result timeline's plain square bullets with one inspected brass rivet sprite. Times, places and explanations remain live text, and no event type is inferred from the story.
+- Extended the shared-clock test: after one detective's journey completes with no client settlement call, the other detective's return settles it and pauses the clock. This covers the server half of reopening after both tabs were closed; the browser mount path still needs a live check.
+- Focused Convex test, TypeScript and lint passed.
+- Checked the signed-in desktop result screen in Chrome: all 16 timeline markers align with the rail and remain legible beside the event text. A fresh main-menu tab also reached actionable buttons after authentication; the earlier indefinite loading symptom did not recur.
+
+## 2026-10-12 — Floor-plan markers and production build
+
+- The building map and door labels now reuse the detective sprites already shown on the city map. Both detectives can be marked in the same room without obscuring its name.
+- Added one inspected, transparent window sprite to indoor room walls where the top wall has no door. It is decorative and does not reveal or imply case evidence. Rejected another fingerprint generation because it still contained stray pixels.
+- Updated the current lab rules in `DECISIONS.md`; its older turnaround wording disagreed with the hands-on bench flow documented in `GAME_SYSTEMS.md`.
+- Closed the remaining artwork checklist as design choices: retained clear procedural lab tasks after generated attempts showed artifacts, reused the board pins as string endpoints, and kept arrival/loading treatments compact to avoid covering play controls. A blind first-time-player test remains a human acceptance step.
+- Set the share-image URL base from the deployment host, with localhost for local development. The isolated Webpack production build passed; the default Turbopack build could not run in the isolated checkout because its linked dependencies pointed outside that checkout.
+- The focused room test passed; TypeScript and focused lint checks passed.
+
+## 2026-10-12 — Daylight and phone message details
+
+- Bureau and room scenes now shift subtly through morning, afternoon, evening and night using the shared case clock. Room floor art remains visible and search targets stay clear.
+- Open phone messages have directional bubble tails and restrained incoming/outgoing colors. The stored messages and device rules are unchanged.
+
+## 2026-10-12 — Direct-route auth and mobile board
+
+- A fresh browser visit to a room route surfaced a Convex "Sign in first" error before the case UI finished authenticating. The room hub now mounts only after Convex confirms the session; loading and signed-out states show safe UI. The direct route no longer throws.
+- Raised clueboard fit zoom so paper cards stay legible on a 390×844 viewport. Checked the live board at desktop and phone sizes; its felt texture, cards and controls render without page-wide horizontal overflow.
+
 ## 2026-10-12 — Grabbable clueboard string pins, no tie dropdown
 
 - The string handle on each card was rendering as React Flow's default 6px dot: the pushpin style sat in a Tailwind layer, which loses to React Flow's unlayered stylesheet. Moved it out of the layer; it now shows as the 28px pushpin and is easy to grab.

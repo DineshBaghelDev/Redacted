@@ -1,6 +1,42 @@
 # Redacted
 
-Browser-based detective simulation where players investigate procedurally generated cases across a simulated city using interrogation, CCTV, forensics, records, and evidence.
+![Redacted key art](./public/assets/key-art.png)
+
+**A pixel-noir detective game for one or two players, in the browser.** Every case is a murder in a generated city. You travel the streets, search rooms, review camera logs, run lab tests, read phones and records, and question suspects who lie to protect themselves. When you're sure, you write up your report and the case is scored out of five stars.
+
+The game never solves anything for you: there are no hints, suspicion meters or auto-filled clues. Everything you find is real stored evidence. Working out what it means is your job.
+
+## How a case plays
+
+1. **Read the brief.** You get the victim, where and when they were found, who reported it, and the victim's home and workplace.
+2. **Investigate the city.** Drive between at least 10 places and walk through buildings room by room. Hold to search furniture and pick up what you find.
+3. **Use the bureau and the lab.** Search public records, review CCTV logs (text only, no footage), examine phones and laptops, and run forensic tests on bagged evidence.
+4. **Interview people.** Call anyone you've come across into the bureau and question them freely. Each person plays their own part live. They don't know the solution, and they lie until you show them proof that catches them out.
+5. **Build your theory.** Everything you uncover lands in a shared notebook. Pin people and evidence to the clueboard and tie strings between them.
+6. **File the report.** Name the killer and explain the motive, weapon, method and evidence. You get one star for each one you get right, then see what really happened.
+
+Every action takes game minutes on a shared clock, and each case has a deadline. Two detectives can split up and work at the same time.
+
+## Playing together
+
+- **1–2 players per case.** Share an invite link or the 6-letter room code, or play alone.
+- **Partners share everything:** the clock, inventory, notebook, clueboard, notes and every interview.
+- **Replay any finished case** in a fresh room, or pick from the archive and the case of the day.
+- **Case history** keeps your results, stars, rank and badges.
+
+## How cases are made
+
+Cases are **generated once, checked, then frozen.** An AI pipeline writes the crime, cast, story and lies. Code builds the city, timeline and evidence, and checks the case can be solved before it's published. Building interiors come from templates and a seed, not AI.
+
+During play, AI is only used for the people you interview and for grading your final report. It never creates new evidence.
+
+## Built with
+
+Next.js on Vercel, Convex (database, backend functions and realtime), Clerk (sign-in), React Flow (clueboard), the Vercel AI SDK with the Convex Agent component (interviews), and Sentry (errors and player reports).
+
+## Docs
+
+Start with [AGENTS.md](./AGENTS.md), which links every design doc: architecture, database, game systems, generation, security and decisions. Shipped work is logged in [docs/progress.md](./docs/progress.md), and the to-do list is [docs/ROADMAP.md](./docs/ROADMAP.md).
 
 ## Development
 

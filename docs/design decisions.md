@@ -1,5 +1,24 @@
 # Design Decisions
 
+## 2026-10-12 — Camera tape controls
+
+- The security desk's tape actions use the shared illustrated control plate. Camera sightings stay text and data only; the monitor wall does not depict footage.
+
+## 2026-10-12 — Clueboard view controls
+
+- Keep zoom and fit actions available to keyboard and touch users behind one pixel-art view control. Scroll and pinch still zoom the board directly; the default graph toolbar and attribution do not belong in the game scene.
+- The board's empty note and full-detail view use its existing paper card art. Card action icons stay unboxed, with larger invisible tap areas on phones.
+- Keep the interview roster's guidance short enough for the first character card to appear quickly on a phone; name discovery and bureau-only interviews remain explained.
+- On phones, the city map keeps touch panning and Find a place while its browser scrollbar is hidden so the scene reaches the edge cleanly.
+
+## 2026-10-12 — Scene light and device messages
+
+- Use subtle lighting over the existing room and bureau art for the four parts of the day; separate generated overlays would add load without changing the scene. Phone message direction changes only the bubble presentation.
+
+## 2026-10-12 — Room auth readiness
+
+- Render the entire room hub only after Convex confirms authentication. Clerk may know a signed-in user before the Convex token is ready; station queries must not open during that interval.
+
 ## 2026-10-12 — Result and share art
 
 - Keep the words and score live over blank stamp and star artwork so dynamic results stay correct and accessible. The share banner shows no case-specific evidence or characters; the square app emblem matches the existing favicon.

@@ -5,6 +5,7 @@ import type { FunctionReturnType } from "convex/server";
 import type { api } from "../../../convex/_generated/api";
 import { HoldButton } from "./gestures";
 import { FurnitureSprite } from "./furniture-sprite";
+import { partOfDay } from "../../lib/game-time";
 
 type Place = NonNullable<FunctionReturnType<typeof api.investigation.getPlace>>;
 type Room = Place["rooms"][number];
@@ -62,8 +63,10 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
   const around = neighbours(place, room.id);
   const hubs = isHub(room) ? [room] : around.filter(isHub);
   const doors = around.filter((next) => !isHub(next) && !(isHub(room) && next.floor !== room.floor));
+  const hasWindow = ["living", "kitchen", "bedroom", "office", "unit"].includes(room.type) && doors.length < 3;
   return (
-    <div className="room-floor relative flex flex-wrap content-start gap-2 p-4 animate-in fade-in zoom-in-95 duration-300 sm:block sm:aspect-[16/9] sm:p-0" data-room-type={room.type} key={room.id}>
+    <div className="room-floor relative flex flex-wrap content-start gap-2 p-4 animate-in fade-in zoom-in-95 duration-300 sm:block sm:aspect-[16/9] sm:p-0" data-room-type={room.type} data-time-of-day={partOfDay(place.clock.gameTime).toLowerCase()} key={room.id}>
+      {hasWindow ? <span aria-hidden="true" className="room-window hidden sm:block" /> : null}
       {room.spots.map((spot, index) => {
         const [x, y] = SPOT_ANCHORS[index % SPOT_ANCHORS.length];
         const found = foundBySpot.get(spot.key) ?? 0;
@@ -101,7 +104,7 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
           >
             <span aria-hidden="true" className="room-control-sprite room-control-sprite--door" />
             <span>{next.name}{level}</span>
-            <span className="text-[0.6rem] normal-case text-[#c8d8d2]/60">{next.walkMinutes ?? 1} min{place.partners.some((partner) => partner.roomId === next.id) ? " · ◆ partner" : ""}</span>
+            <span className="flex items-center gap-1 text-[0.6rem] normal-case text-[#c8d8d2]/60">{next.walkMinutes ?? 1} min{place.partners.some((partner) => partner.roomId === next.id) ? <><span aria-hidden="true" className="map-token map-token--partner size-4" /> partner</> : null}</span>
           </button>
         );
       })}
@@ -155,9 +158,9 @@ function mapLayout(rooms: Room[], connections: Place["connections"]) {
   return { positions, edges, columns: Math.max(1, ...[...positions.values()].map((point) => point.column + 1)), rows: Math.max(1, ...rows.values()) };
 }
 
-const CELL_W = 68;
-const CELL_H = 30;
-const GAP = 10;
+const CELL_W = 76;
+const CELL_H = 42;
+const GAP = 12;
 
 /**
  * A small paper map of one floor. Every room is named; rooms either detective has been in are inked in solid.
@@ -186,7 +189,7 @@ export function BuildingMap({ place, floor, floors, busy, onFloor, onWalk }: { p
             {layout.edges.map((edge) => {
               const a = at(edge.a);
               const b = at(edge.b);
-              return <line key={`${edge.a}-${edge.b}`} stroke="#6d5138" strokeDasharray="3 3" strokeWidth="1.5" x1={a.x + CELL_W / 2} x2={b.x + CELL_W / 2} y1={a.y + CELL_H / 2} y2={b.y + CELL_H / 2} />;
+              return <line key={`${edge.a}-${edge.b}`} opacity="0.35" stroke="#6d5138" strokeWidth="1" x1={a.x + CELL_W / 2} x2={b.x + CELL_W / 2} y1={a.y + CELL_H / 2} y2={b.y + CELL_H / 2} />;
             })}
           </svg>
           {rooms.map((room) => {
@@ -208,7 +211,9 @@ export function BuildingMap({ place, floor, floors, busy, onFloor, onWalk }: { p
                 title={current ? "You are here" : `Walk here · ${room.walkMinutes ?? "?"} min`}
                 type="button"
               >
-                <span className="line-clamp-2">{current ? "● " : partner ? "◆ " : ""}{room.name}{done ? " ✓" : ""}</span>
+                <span className="line-clamp-2">{room.name}{done ? " ✓" : ""}</span>
+                {current ? <span aria-hidden="true" className="map-token map-token--player map-room-token" /> : null}
+                {partner ? <span aria-hidden="true" className="map-token map-token--partner map-room-token" data-with-player={current} /> : null}
               </button>
             );
           })}

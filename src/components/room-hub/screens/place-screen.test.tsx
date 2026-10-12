@@ -34,5 +34,5 @@ test("shows the room to search, its doors, and the building map", () => {
   expect(html).toContain('aria-label="Building map"');
   // Doors always say which room is behind them.
   expect(html).toContain("<span>Office</span>");
-  expect(html).toContain("1 min · ◆ partner");
+  expect(html).toContain("map-token--partner");
 });
