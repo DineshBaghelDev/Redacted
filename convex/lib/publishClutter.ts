@@ -1,7 +1,7 @@
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import type { RoomKind } from "../generation/core/buildings";
-import { POOL } from "../generation/core/evidence/clutter";
+import { fitSlot, POOL } from "../generation/core/evidence/clutter";
 
 const PREFIX = "scatter/";
 
@@ -33,15 +33,18 @@ export async function ensureCaseClutter(ctx: MutationCtx, caseId: Id<"cases">) {
   const random = seeded(caseId);
   for await (const place of ctx.db.query("places").withIndex("by_cityId_and_order", (q) => q.eq("cityId", playableCase.cityId!))) {
     if (!place.buildingId) continue;
+    // Each everyday object appears at most once per building, so searching feels like new rooms, not copies.
+    const usedHere = new Set<string>();
     for await (const room of ctx.db.query("rooms").withIndex("by_buildingId_and_order", (q) => q.eq("buildingId", place.buildingId!))) {
       const pool = POOL[room.type as RoomKind];
       if (!room.searchable || !room.itemSlots.length || !pool?.length) continue;
-      // Most rooms get one object, some two, some none.
-      const count = random() < 0.25 ? 0 : random() < 0.7 ? 1 : 2;
+      // Many rooms hold nothing worth noting; most of the rest one object.
+      const count = random() < 0.4 ? 0 : random() < 0.85 ? 1 : 2;
       // Never the same everyday object twice in one room (the case's own clutter may already be there).
       const present = new Set((await ctx.db.query("caseItems").withIndex("by_roomId", (q) => q.eq("roomId", room._id)).take(50)).map((item) => item.name));
-      const picks = [...pool].filter(([name]) => !present.has(name)).sort(() => random() - 0.5).slice(0, count);
+      const picks = [...pool].filter(([name]) => !present.has(name) && !usedHere.has(name)).sort(() => random() - 0.5).slice(0, count);
       for (const [name, description] of picks) {
+        usedHere.add(name);
         await ctx.db.insert("caseItems", {
           caseId,
           evidenceId: `${PREFIX}${room.sourceId}/${name.toLowerCase().replace(/\s+/g, "-")}`,
@@ -49,7 +52,7 @@ export async function ensureCaseClutter(ctx: MutationCtx, caseId: Id<"cases">) {
           description,
           placeId: place._id,
           roomId: room._id,
-          slot: room.itemSlots[Math.floor(random() * room.itemSlots.length)],
+          slot: fitSlot(name, room.itemSlots, (from) => from[Math.floor(random() * from.length)]),
           discoverableBySearch: true,
           collectible: true,
           hidden: true,

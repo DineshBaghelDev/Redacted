@@ -44,6 +44,10 @@ export const POOL: Partial<Record<RoomKind, [string, string][]>> = {
     ["Rent reminder", "A polite letter from the landlord about late rent, opened and refolded along its creases."],
     ["Houseplant", "A wilting houseplant on the windowsill, its saucer dry and its lower leaves gone yellow."],
     ["Takeaway cups", "Two takeaway coffee cups from the station kiosk, both drained, lids pushed back on."],
+    ["Spare keys", "A ring of spare keys with a faded tag that just says \"back\", none of them obviously for this door."],
+    ["Laundry bag", "A drawstring laundry bag, half full, smelling faintly of fabric softener."],
+    ["Travel adaptor", "A chunky travel plug adaptor with one pin slightly bent, still in its blister pack."],
+    ["Crossword book", "A pocket crossword book, most puzzles finished in biro, a few answers scribbled over."],
   ],
   office: [
     ["Memo", "A coffee-stained memo about the new printer rules, signed by facilities and pinned up twice."],
@@ -77,6 +81,44 @@ export const POOL: Partial<Record<RoomKind, [string, string][]>> = {
 
 const PER_PLACE = { easy: 2, normal: 3, hard: 5 } as const;
 
+// Where each everyday object would really be: a slot name from the room, never a pizza box in a wardrobe.
+const FITS: Record<string, string[]> = {
+  "TV remote": ["sofa cushions", "side table drawer"], "Stack of magazines": ["bookshelf", "side table drawer"],
+  "Board game": ["bookshelf"], "Knitted blanket": ["sofa cushions"],
+  "Electricity bill": ["kitchen drawer", "fridge"], "Takeaway menu": ["kitchen drawer", "fridge"], "Coffee jar": ["kitchen drawer"], "Shopping list": ["fridge", "kitchen drawer"],
+  "Paperback novel": ["bedside drawer"], "Photo album": ["wardrobe", "under the bed"], "Phone charger": ["bedside drawer"], "Odd socks": ["under the bed", "wardrobe"],
+  "Allergy tablets": ["cabinet"], "Razor": ["cabinet"], "Hand towel": ["cabinet"],
+  "Toolbox": ["workbench", "tool shelf"], "Car wax": ["tool shelf"], "Bike pump": ["tool shelf"],
+  "Garden gloves": ["shed"], "Plant pots": ["shed", "flower bed"], "Watering can": ["shed", "flower bed"],
+  "Pizza box": ["bin"], "Gym bag": ["wardrobe"], "Rent reminder": ["desk"], "Houseplant": ["desk"], "Takeaway cups": ["bin"],
+  "Spare keys": ["desk", "kitchen drawer"], "Laundry bag": ["wardrobe"], "Travel adaptor": ["desk", "kitchen drawer"], "Crossword book": ["desk"],
+  "Memo": ["desk drawer", "bin"], "Desk calendar": ["desk drawer"], "Sticky notes": ["desk drawer"], "Lanyard": ["desk drawer"],
+  "Box of receipts": ["boxes", "shelves"], "Cleaning supplies": ["shelves"], "Spare bulbs": ["shelves", "boxes"], "Archive boxes": ["shelves"],
+  "Umbrella": ["under the counter"], "Crumpled receipt": ["bin"], "Price gun": ["under the counter"],
+  "Soda can": ["bin", "bushes"], "Torn flyer": ["bin", "bushes"], "Cigarette butts": ["bushes"], "Lost glove": ["bushes"],
+  "Clipboard": ["cabinet"], "Box of gloves": ["cabinet"], "Visitor log": ["cabinet"],
+};
+
+/** A spot this everyday object could really be in; any spot when the room has none of them. */
+export function fitSlot(name: string, slots: string[], pick: (from: string[]) => string) {
+  const fitting = slots.filter((slot) => FITS[name]?.includes(slot));
+  return pick(fitting.length ? fitting : slots);
+}
+
+// Surfaces first: an object the story leaves "on the table" belongs on a desk, not in a wardrobe or bin.
+const SURFACES = ["desk", "side table drawer", "kitchen drawer", "desk drawer", "under the counter", "workbench", "shelves", "cabinet", "bedside drawer"];
+
+/**
+ * The room's spot for a story object whose own spot the room lacks: one named in the wanted spot or the
+ * object's description ("still on her desk"), else the most ordinary surface, else the room's first spot.
+ */
+export function bestSlot(wanted: string, description: string, slots: string[]) {
+  if (slots.includes(wanted)) return wanted;
+  const text = `${wanted} ${description}`.toLowerCase();
+  const named = (slot: string) => text.split(/[^a-z]+/).includes(slot.split(" ").at(-1)!);
+  return slots.find(named) ?? SURFACES.find((slot) => slots.includes(slot)) ?? slots[0] ?? wanted;
+}
+
 /**
  * Scatters everyday objects in rooms of the places that matter to the case, so searches don't only
  * turn up clues. More clutter at higher difficulty.
@@ -96,13 +138,15 @@ export function buildClutter(
     const options = place.building.rooms
       .filter((r) => roomIds.includes(r.id) && r.itemSlots.length && POOL[r.kind])
       .flatMap((r) => POOL[r.kind]!.map(([name, description]) => ({ room: r, name, description })));
-    for (const pick of rng.shuffle(options).slice(0, PER_PLACE[difficulty])) {
+    // Never the same everyday object twice in one place.
+    const unique = rng.shuffle(options).filter((option, index, all) => all.findIndex((other) => other.name === option.name) === index);
+    for (const pick of unique.slice(0, PER_PLACE[difficulty])) {
       out.push({
         id: `clutter/${pick.room.id}/${pick.name.toLowerCase().replace(/\s+/g, "-")}`,
         type: "item",
         title: pick.name,
         summary: pick.description,
-        access: { tool: "search", roomId: pick.room.id, slot: rng.pick(pick.room.itemSlots) },
+        access: { tool: "search", roomId: pick.room.id, slot: fitSlot(pick.name, pick.room.itemSlots, (from) => rng.pick(from)) },
         aboutIds: [],
         sourceIds: [],
         data: { itemId: "", proves: [], clutter: true },

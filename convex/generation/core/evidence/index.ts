@@ -4,7 +4,7 @@ import { createRng } from "../rng";
 import { formatTime, type Cast, type CrimeBase, type Story } from "../schemas";
 import type { Timeline } from "../timeline";
 import { buildCctv } from "./cctv";
-import { buildClutter } from "./clutter";
+import { bestSlot, buildClutter } from "./clutter";
 import type { Evidence, EvidenceSet } from "./types";
 
 type Difficulty = "easy" | "normal" | "hard";
@@ -116,8 +116,8 @@ export function buildEvidence(
     );
   }
 
-  // Story items where they end up. A spot the room doesn't have becomes the room's first spot: which
-  // drawer doesn't change the case, so it isn't worth a repair.
+  // Story items where they end up. A spot the room doesn't have becomes the closest one it does have:
+  // which drawer doesn't change the case, so it isn't worth a repair.
   for (const item of story.items) {
     const slots = findRoom(city, item.finalRoomId)?.room.itemSlots ?? [];
     evidence.push({
@@ -125,7 +125,7 @@ export function buildEvidence(
       type: "item",
       title: item.name,
       summary: item.description,
-      access: { tool: "search", roomId: item.finalRoomId, slot: slots.includes(item.finalSlot) ? item.finalSlot : (slots[0] ?? item.finalSlot) },
+      access: { tool: "search", roomId: item.finalRoomId, slot: bestSlot(item.finalSlot, item.description, slots) },
       aboutIds: item.ownerId ? [item.ownerId] : [],
       sourceIds: [item.id],
       data: { itemId: item.id, ownerId: item.ownerId, proves: item.proves },
