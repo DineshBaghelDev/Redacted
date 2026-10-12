@@ -202,7 +202,7 @@ export const murder: CrimeKind<MurderCore> = {
     // Weapon-type specific tests.
     const weaponName = (weapon?.name ?? crime.weapon.name).toLowerCase();
     const special = {
-      poison: { test: "toxicology" as const, subjectId: bodyId, title: "Toxicology report", text: `Traces of ${weaponName} found in the blood.` },
+      poison: { test: "toxicology" as const, subjectId: bodyId, title: "Toxicology report", text: `Traces of ${poisonName(weaponName)} found in the blood.` },
       firearm: { test: "ballistics" as const, subjectId: "item:weapon", title: `Ballistics · ${weapon?.name ?? "weapon"}`, text: `The bullet from the body was fired by the ${weaponName}.` },
       strangulation: { test: "ligature" as const, subjectId: bodyId, title: "Ligature marks", text: `Marks on the neck match the ${weaponName}.` },
     } as const;
@@ -345,4 +345,15 @@ export const murder: CrimeKind<MurderCore> = {
 function weaponInPlainSight(crime: MurderCore, story: CaseParts["story"]) {
   const weapon = story.items.find((i) => i.id === "weapon");
   return weapon && weapon.finalRoomId === crime.sceneRoomId && !crime.coverUp.includes("hide-weapon") ? weapon.name : null;
+}
+
+/**
+ * The substance in a poison weapon's name, for the toxicology report: the blood holds the poison, not its
+ * packet or drink. "small paper packet of potassium cyanide powder" → "potassium cyanide".
+ */
+export function poisonName(weaponName: string) {
+  const name = weaponName.toLowerCase().trim();
+  const afterContainer = name.includes(" of ") ? name.slice(name.lastIndexOf(" of ") + 4) : name;
+  const substance = afterContainer.split(/ (?:in|mixed|dissolved|stirred|hidden|from) /)[0];
+  return substance.replace(/ (?:powder|pills?|tablets?|capsules?|liquid|solution|drops|crystals)$/, "").trim() || name;
 }

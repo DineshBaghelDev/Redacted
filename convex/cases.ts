@@ -11,7 +11,7 @@ import { ensureCaseFiller, ensureVictimLeads } from "./lib/publishFiller";
 import { ensureCaseClutter } from "./lib/publishClutter";
 import { ensureDeviceNotes } from "./lib/deviceCodes";
 import { ensureCaseDevices } from "./lib/publishDevices";
-import { ensureCaseForensics, restoreBodyForensicSources } from "./lib/publishForensics";
+import { ensureCaseForensics, repairToxicologyText, restoreBodyForensicSources } from "./lib/publishForensics";
 import { ensureCaseNarrative } from "./lib/publishNarrative";
 import { ensureCaseItems } from "./lib/publishItems";
 import { ensureCaseRecords, ensurePaymentTimes } from "./lib/publishRecords";
@@ -93,6 +93,7 @@ export async function ensureCaseOpening(ctx: MutationCtx, caseId: Id<"cases">) {
   await ensureCaseClutter(ctx, caseId);
   await ensureDeviceNotes(ctx, caseId);
   await ensureCaseFiller(ctx, caseId);
+  await repairToxicologyText(ctx, caseId);
   const opening = await ctx.db.get(caseId);
   if (opening) await ensurePaymentTimes(ctx, caseId, opening.generationJobId);
   if (opening) await ensureVictimLeads(ctx, caseId, (await getDraft(ctx, opening.generationJobId, "cast"))?.output);
