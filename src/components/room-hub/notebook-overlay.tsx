@@ -26,9 +26,6 @@ const groups = [
   ["public_record", "Public records"],
 ] as const;
 
-// The tab you last read stays open next time the notebook opens (for this visit to the page).
-let lastTab: "people" | "evidence" = "evidence";
-
 export type NotebookPick = { type: (typeof groups)[number][0]; referenceId: string; label: string };
 
 /**
@@ -44,8 +41,9 @@ export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle, pickLabe
   const coop = useQuery(api.coop.get, { roomCode });
   const [filter, setFilter] = useState("");
   const [partnerText, setPartnerText] = useState("");
-  const [tab, setTabState] = useState<"people" | "evidence">(lastTab);
-  const setTab = (next: "people" | "evidence") => { lastTab = next; setTabState(next); };
+  // The tab you last read stays open next time the notebook opens.
+  const [tab, setTabState] = useState<"people" | "evidence">(() => window.sessionStorage.getItem("notebook-tab") === "people" ? "people" : "evidence");
+  const setTab = (next: "people" | "evidence") => { window.sessionStorage.setItem("notebook-tab", next); setTabState(next); };
   const solo = !coop?.partners.length;
   const picking = Boolean(onPick);
   const onBoard = (referenceId: string) => nodes?.some((node) => node.referenceId === referenceId) ?? false;
