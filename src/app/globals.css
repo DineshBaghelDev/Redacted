@@ -89,8 +89,8 @@
 
   .furniture-sprite {
     display: block;
-    width: 4rem;
-    height: 4rem;
+    width: 5rem;
+    height: 5rem;
     margin-inline: auto;
     background-size: 400% 400%;
     background-repeat: no-repeat;
@@ -914,7 +914,7 @@
   background: rgb(7 20 22 / 82%);
   padding: 0.1rem 0.3rem;
   color: #e4e6d8;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1.15;
   text-transform: uppercase;
 }
@@ -948,8 +948,8 @@
 .room-control-sprite--camera { background-position: 100% 50%; }
 .room-special-spot {
   display: block;
-  width: 4rem;
-  height: 4rem;
+  width: 5rem;
+  height: 5rem;
   margin-inline: auto;
   background: url('/assets/room-special-spots.png') no-repeat 0 0 / 200% 100%;
   image-rendering: pixelated;
@@ -967,18 +967,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px dashed #8b7355;
-  background: rgb(233 220 192 / 70%);
-  padding: 2px 4px;
-  font-size: 0.6rem;
+  border: 0;
+  border-bottom: 1px dashed #8b7355;
+  background: #e9dcc0;
+  padding: 3px 5px;
+  font-size: 0.72rem;
   line-height: 1.1;
   text-transform: uppercase;
   text-align: center;
-  color: #8b7355;
+  color: #5d4d3d;
 }
-.map-room[data-known="true"] { border-style: solid; border-color: #573821; background: #f4ead2; color: #3a2a1b; }
-.map-room[data-current="true"] { border-color: #8b1d1d; background: #f1d9a8; color: #8b1d1d; font-weight: 700; }
-.map-room:hover:not(:disabled) { border-color: #8b1d1d; }
+.map-room[data-known="true"] { border-bottom-style: solid; border-bottom-color: #573821; background: #f4ead2; color: #3a2a1b; }
+.map-room[data-current="true"] { border-bottom: 3px solid #8b1d1d; background: #f1d9a8; color: #8b1d1d; font-weight: 700; }
+.map-room:hover:not(:disabled), .map-room:focus-visible { outline: 2px solid #8b1d1d; outline-offset: 1px; }
 .map-room-token { position: absolute; top: -7px; right: -5px; width: 17px; height: 17px; }
 .map-room-token[data-with-player="true"] { right: 11px; }
 .epilogue-rivet { background: url('/assets/timeline-rivet.png') center / contain no-repeat; image-rendering: pixelated; }

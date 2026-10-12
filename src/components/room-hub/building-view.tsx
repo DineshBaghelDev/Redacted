@@ -158,9 +158,9 @@ function mapLayout(rooms: Room[], connections: Place["connections"]) {
   return { positions, edges, columns: Math.max(1, ...[...positions.values()].map((point) => point.column + 1)), rows: Math.max(1, ...rows.values()) };
 }
 
-const CELL_W = 68;
-const CELL_H = 30;
-const GAP = 10;
+const CELL_W = 76;
+const CELL_H = 42;
+const GAP = 12;
 
 /**
  * A small paper map of one floor. Every room is named; rooms either detective has been in are inked in solid.
@@ -189,7 +189,7 @@ export function BuildingMap({ place, floor, floors, busy, onFloor, onWalk }: { p
             {layout.edges.map((edge) => {
               const a = at(edge.a);
               const b = at(edge.b);
-              return <line key={`${edge.a}-${edge.b}`} stroke="#6d5138" strokeDasharray="3 3" strokeWidth="1.5" x1={a.x + CELL_W / 2} x2={b.x + CELL_W / 2} y1={a.y + CELL_H / 2} y2={b.y + CELL_H / 2} />;
+              return <line key={`${edge.a}-${edge.b}`} opacity="0.35" stroke="#6d5138" strokeWidth="1" x1={a.x + CELL_W / 2} x2={b.x + CELL_W / 2} y1={a.y + CELL_H / 2} y2={b.y + CELL_H / 2} />;
             })}
           </svg>
           {rooms.map((room) => {

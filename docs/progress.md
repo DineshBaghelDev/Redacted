@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-12 — Reopen during travel and interior readability
+
+- In a fresh solo Chrome room (`OIHZYA`), closed the only tab during a 22-minute trip from St. Clare Clinic to Pier 9 Warehouse. On reopening after the due time, the player arrived at Pier 9 at Day 2 · 10:52 and the shared clock stayed paused. This verifies the browser return path in addition to the server test.
+- A desktop interior check exposed cramped 9.6px floor-plan labels and small search sprites. Widened the paper plan, raised its labels to 11.5px, masked route lines behind opaque room labels, softened line contrast, and enlarged search sprites. The direct room-walk plan and travel costs are unchanged. Checked the Pier 9 office at 1536px: selected room and labels are visible, with no page-wide horizontal overflow.
+
 ## 2026-10-12 — Result timeline and return-to-game clock check
 
 - Replaced the result timeline's plain square bullets with one inspected brass rivet sprite. Times, places and explanations remain live text, and no event type is inferred from the story.
