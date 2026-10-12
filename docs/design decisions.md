@@ -1,5 +1,17 @@
 # Design Decisions
 
+## 2026-10-12 — Unknown people are the player's own placeholder
+
+- Players asked for a "dummy character" that fills itself in. The game must not deduce for them (rule 5), so the placeholder holds only what the team writes and tags, and the team decides who it was. Nothing is ever revealed or checked automatically.
+- Kept off the clueboard and report so they never stand in for real evidence or a named suspect.
+
+## 2026-10-12 — Playtest fixes
+
+- Shortcut keys toggle their screen. The case file is a quick reference, so closing it returns you to where you were rather than the bureau.
+- Notebook text must be selectable; dragging starts from a small handle or a person's photo.
+- The camera screen keeps only the tape and its sightings; the per-hour list was redundant.
+- Starred words in interview replies read as italic actions or emphasis.
+
 ## 2026-10-12 — AI limits players can understand
 
 - Limits are generous enough that normal play never meets them (an interview reply takes seconds). When hit, the player gets a plain sentence with how long to wait; the daily game-wide cap says interviews and grading are resting until tomorrow. Test data in production is left as is.

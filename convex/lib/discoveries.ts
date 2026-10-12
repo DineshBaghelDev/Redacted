@@ -1,5 +1,6 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { markedName } from "./sightingLabels";
 
 /** A camera review covers half an hour either side of its chosen minute (one hour block). */
 export const CCTV_HALF_WINDOW = 30;
@@ -48,8 +49,8 @@ export async function collectDiscoveries(ctx: QueryCtx, session: Doc<"sessions">
       if (record.endTime < review.minute - CCTV_HALF_WINDOW || reviewed.has(record.evidenceId)) continue;
       reviewed.add(record.evidenceId);
       const label = await ctx.db.query("cctvLabels").withIndex("by_sessionId_and_recordEvidenceId", q => q.eq("sessionId", session._id).eq("recordEvidenceId", record.evidenceId)).unique();
-      const marked = label ? await ctx.db.get(label.npcId) : null;
-      entries.push({ type: "cctv", referenceId: record.evidenceId, title: camera.name, body: marked ? `${record.description}\nYou marked: looks like ${marked.name}` : record.description, time: record.startTime });
+      const marked = label ? await markedName(ctx, label) : null;
+      entries.push({ type: "cctv", referenceId: record.evidenceId, title: camera.name, body: marked ? `${record.description}\nYou marked: looks like ${marked}` : record.description, time: record.startTime });
     }
   }
   const readDevices = new Set<Id<"devices">>();

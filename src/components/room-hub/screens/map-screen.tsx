@@ -200,7 +200,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
             })() : null}
             {coop?.partners.map((partner) => {
               const at = city.places.find((place) => place.id === partner.placeId);
-              return at ? <span className="pointer-events-none absolute z-40 flex -translate-x-1/2 translate-y-3 items-center gap-1 whitespace-nowrap text-[0.65rem] uppercase text-[#9fd1c4]" key={partner.name} style={{ left: `${at.x}%`, top: `${at.y}%` }}><span aria-hidden="true" className="map-token map-token--partner size-5" />{partner.name}</span> : null;
+              return at ? <span className="pointer-events-none absolute z-40 flex -translate-x-1/2 translate-y-3 items-center gap-1 whitespace-nowrap text-[0.65rem] uppercase text-[#9fd1c4]" key={partner.name} style={{ left: `${at.x}%`, top: `${at.y}%` }}><span aria-hidden="true" className="map-token map-token--partner size-7" />{partner.name}</span> : null;
             })}
             {city.places.map((place) => {
               const active = place.id === selected.id;
@@ -217,7 +217,7 @@ export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () =
                   type="button"
                 >
                   <span aria-hidden="true" className={`map-place-icon map-place-icon--${artworkForPlace(place)}`} />
-                  {current ? <span aria-hidden="true" className="map-token map-token--player absolute -right-1 -top-1 size-5" /> : null}
+                  {current ? <span aria-hidden="true" className="map-token map-token--player absolute -right-3 -top-4 size-8 sm:size-9" /> : null}
                   <span className={`map-marker-label ${crowded ? "map-marker-label--crowded" : ""} ${place.y > 77 ? "map-marker-label--above" : ""} ${place.x > 82 ? "map-marker-label--right" : ""}`}>{place.name}</span>
                 </button>
               );

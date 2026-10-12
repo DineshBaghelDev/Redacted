@@ -4,7 +4,7 @@ import { errorText } from "../../lib/error-text";
 import { FirstTimeTip } from "./first-time-tip";
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
-import { useState, type ReactNode } from "react";
+import { useState, type DragEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { api } from "../../../convex/_generated/api";
 import { formatGameMinute } from "../../lib/game-time";
@@ -13,6 +13,7 @@ import { CharacterPortrait } from "./character-portrait";
 import { ControlIcon } from "./control-icon";
 import { startCardDrag } from "../../lib/evidence-drag";
 import { PinButton } from "./pin-button";
+import { UnknownPeople } from "./unknown-people";
 
 const groups = [
   ["item", "Objects"],
@@ -47,6 +48,14 @@ export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle }: { room
   // While dragging an entry out, fade the notebook so the screen behind can take the drop.
   const [dragging, setDragging] = useState(false);
 
+  /** Only the handle starts a drag (so text stays selectable), but the whole entry is what you see moving. */
+  function dragOut(event: DragEvent<HTMLElement>, card: Parameters<typeof startCardDrag>[1]) {
+    startCardDrag(event, card);
+    const entry = event.currentTarget.closest("li");
+    if (entry) event.dataTransfer.setDragImage(entry, 16, 16);
+    setDragging(true);
+  }
+
   function share(text: string) {
     play("ping");
     void ping({ roomCode, text }).then(() => setMessage("Sent to your partner."));
@@ -73,24 +82,30 @@ export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle }: { room
         <label className="sr-only" htmlFor="notebook-filter">Find in notebook</label>
         <input autoFocus={picking} className="mt-3 h-10 w-full border border-[#8b7355] bg-[#efe3c4] px-3 text-sm text-[#211d17] outline-none placeholder:text-[#8b7355] focus:border-red-900" id="notebook-filter" onChange={(event) => setFilter(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); onClose(); } }} placeholder="Find a name, place, or word..." type="search" value={filter} />
         {message ? <p className="mt-2 text-sm text-red-900" role="status">{message}</p> : null}
-        {picking ? null : <FirstTimeTip id="notebook" title="Shared notebook">Discoveries appear here. Drag one to the clueboard, a person, the lab bench, or your report.</FirstTimeTip>}
+        {picking ? null : <FirstTimeTip id="notebook" title="Shared notebook">Discoveries appear here. Grab one by its ⠿ handle or photo and drag it to the clueboard, a person, the lab bench, or your report.</FirstTimeTip>}
         <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
           {tab === "people" && !picking ? (
             people === undefined ? <p className="uppercase">Opening files...</p> : (
+              <>
+              <UnknownPeople filter={(...texts) => matches(filter, ...texts)} onDrag={dragOut} onDragEnd={() => setDragging(false)} onMessage={setMessage} people={people ?? []} roomCode={roomCode} />
               <ul className="space-y-3">
                 {(people ?? []).filter((person) => matches(filter, person.name, person.occupation ?? "", person.publicDescription)).map((person) => (
-                  <li className="group flex cursor-grab gap-3 border-b border-[#8b7355]/60 pb-3" draggable key={person.id} onDragEnd={() => setDragging(false)} onDragStart={(event) => { startCardDrag(event, { kind: "person", referenceId: person.id, label: person.name }); setDragging(true); }}>
-                    <CharacterPortrait age={person.age} className="w-14" description={person.publicDescription} gender={person.gender} id={person.id} />
+                  <li className="group flex gap-3 border-b border-[#8b7355]/60 pb-3" key={person.id}>
+                    <div className="cursor-grab" draggable onDragEnd={() => setDragging(false)} onDragStart={(event) => dragOut(event, { kind: "person", referenceId: person.id, label: person.name })} title="Drag to the clueboard, a sighting, or your report">
+                      <CharacterPortrait age={person.age} className="w-14" description={person.publicDescription} gender={person.gender} id={person.id} />
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-base uppercase">{person.name}{person.isVictim ? <span className="ml-2 text-xs text-red-800">Victim</span> : null}</p>
                       <p className="text-xs text-[#5d4d3d]">{[person.age ? `Age ${person.age}` : null, person.occupation].filter(Boolean).join(" · ")}</p>
                       <p className="mt-1 text-xs italic text-[#5d4d3d]">First seen in: {person.firstSeenIn}</p>
                       {person.spotted.length ? <p className="mt-1 text-xs text-[#5d4d3d]">You placed them on camera: {person.spotted.join("; ")}</p> : null}
+                      <EntryNote note={person.note} onSave={(text) => { void setNote({ roomCode, referenceId: person.id, text }).catch((caught: unknown) => setMessage(errorText(caught, "Could not save that note."))); }} />
                       <EntryActions onShare={() => share(`Look at ${person.name}`)} pinControl={<PinButton nodes={nodes} onChange={(next) => setMessage(next ? "Pinned to the clueboard." : "Removed from the clueboard.")} onError={(caught) => setMessage(errorText(caught, "Could not update this pin."))} referenceId={person.id} roomCode={roomCode} type="npc" />} />
                     </div>
                   </li>
                 ))}
               </ul>
+              </>
             )
           ) : entries === undefined ? <p className="uppercase">Opening notebook...</p> : !entries?.length ? (
             <p className="text-sm leading-relaxed">Nothing written down yet. Search places, read devices, question people, and review records. Everything you uncover lands here for both of you.</p>
@@ -105,8 +120,8 @@ export function NotebookOverlay({ roomCode, onClose, onPick, pickTitle }: { room
                   <h3 className="border-b border-red-900/50 pb-1 text-xs uppercase tracking-[0.18em] text-red-800">{label} · {rows.length}</h3>
                   <ul>
                     {rows.map((entry) => (
-                      <li className="group cursor-grab border-b border-[#8b7355]/40 py-3" draggable key={`${entry.type}:${entry.referenceId}`} onDragEnd={() => setDragging(false)} onDragStart={(event) => { startCardDrag(event, { kind: entry.type, referenceId: entry.referenceId, label: entry.title }); setDragging(true); }}>
-                        <p className="text-sm font-semibold">{entry.title}{picking && onBoard(entry.referenceId) ? <span className="ml-2 text-xs font-normal uppercase text-red-800">On clueboard</span> : null}</p>
+                      <li className="group border-b border-[#8b7355]/40 py-3" key={`${entry.type}:${entry.referenceId}`}>
+                        <p className="flex items-start gap-2 text-sm font-semibold"><span aria-hidden="true" className="cursor-grab select-none px-1 text-[#8b7355] hover:text-red-900" draggable onDragEnd={() => setDragging(false)} onDragStart={(event) => dragOut(event, { kind: entry.type, referenceId: entry.referenceId, label: entry.title })} title="Drag to the clueboard, a person, the lab bench, or your report">⠿</span><span className="min-w-0 flex-1">{entry.title}{picking && onBoard(entry.referenceId) ? <span className="ml-2 text-xs font-normal uppercase text-red-800">On clueboard</span> : null}</span></p>
                         {entry.time !== undefined ? <p className="font-mono text-xs text-[#5d4d3d]">{formatGameMinute(entry.time)}</p> : null}
                         <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{entry.body}</p>
                         {picking ? (entry.note ? <p className="mt-1 text-sm italic text-red-900">✎ {entry.note}</p> : null) : <EntryNote note={entry.note} onSave={(text) => { void setNote({ roomCode, referenceId: entry.referenceId, text }).catch((caught: unknown) => setMessage(errorText(caught, "Could not save that note."))); }} />}

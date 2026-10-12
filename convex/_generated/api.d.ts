@@ -73,12 +73,14 @@ import type * as lib_publishStatements from "../lib/publishStatements.js";
 import type * as lib_publishWorld from "../lib/publishWorld.js";
 import type * as lib_rank from "../lib/rank.js";
 import type * as lib_rateLimits from "../lib/rateLimits.js";
+import type * as lib_sightingLabels from "../lib/sightingLabels.js";
 import type * as lib_spots from "../lib/spots.js";
 import type * as notebook from "../notebook.js";
 import type * as npcConversations from "../npcConversations.js";
 import type * as npcs from "../npcs.js";
 import type * as publicRecords from "../publicRecords.js";
 import type * as sessions from "../sessions.js";
+import type * as unknownPeople from "../unknownPeople.js";
 import type * as world from "../world.js";
 
 import type {
@@ -153,12 +155,14 @@ declare const fullApi: ApiFromModules<{
   "lib/publishWorld": typeof lib_publishWorld;
   "lib/rank": typeof lib_rank;
   "lib/rateLimits": typeof lib_rateLimits;
+  "lib/sightingLabels": typeof lib_sightingLabels;
   "lib/spots": typeof lib_spots;
   notebook: typeof notebook;
   npcConversations: typeof npcConversations;
   npcs: typeof npcs;
   publicRecords: typeof publicRecords;
   sessions: typeof sessions;
+  unknownPeople: typeof unknownPeople;
   world: typeof world;
 }>;
 

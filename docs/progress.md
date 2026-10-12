@@ -1,5 +1,20 @@
 # Progress
 
+## 2026-10-12 — Unknown people in the notebook
+
+- People tab: **+ Someone you can't name yet** adds a placeholder ("Man in red jacket") with a note. Drag its ? onto camera sightings, or pick it from "Who is it?". Its card lists every sighting tagged with it.
+- **This is…** picks a known person: the tagged sightings move to them and the note is added to that person's note. Edit and Remove (which clears its tags) are on the card.
+- Known people can now carry a note too. Unknown people can't be pinned to the clueboard or used as proof in the report.
+- New `unknownPeople` table and functions, `cctvLabels` can point at either kind, shared helpers in `convex/lib/sightingLabels.ts`; test in `convex/unknownPeople.test.ts`.
+
+## 2026-10-12 — Playtest fixes
+
+- Your marker on the city map and in building rooms is about twice as big; the partner marker is bigger too.
+- Pressing M, B or C again closes the map, clueboard or case file. Closing the case file goes back to the screen it was opened from.
+- Notebook entries are dragged by their ⠿ handle (people by their photo), so text can be selected. The whole entry still shows while dragging.
+- Removed the "This hour" list under the camera tape.
+- Interview replies show `*text*` and `**text**` in italics instead of raw stars.
+
 ## 2026-10-12 — v1.1.0: AI rate limits
 
 - Added `@convex-dev/rate-limiter` and `convex/lib/rateLimits.ts`. Per player: interview questions/retries 8 a minute and 400 a day; report grading 3 at once, refilling 6 an hour; new rooms 30 a day. Whole game: 5,000 AI calls a day. Limits roll back with the mutation, so a rejected question costs nothing.

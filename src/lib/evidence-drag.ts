@@ -1,6 +1,6 @@
 // Notebook entries, people, and evidence cards can be dragged onto other screens (board, portrait, bench, report).
 
-export type DragKind = "person" | "item" | "forensic" | "cctv" | "public_record" | "device_file" | "call" | "message" | "statement" | "place";
+export type DragKind = "person" | "unknown" | "item" | "forensic" | "cctv" | "public_record" | "device_file" | "call" | "message" | "statement" | "place";
 export type DragCard = { kind: DragKind; referenceId: string; label: string };
 
 const MIME = "application/x-redacted-card";

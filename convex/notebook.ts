@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getPlayingRoomMember } from "./lib/auth";
-import { collectDiscoveries, type Discovery } from "./lib/discoveries";
+import { collectDiscoveries, knownPeople, type Discovery } from "./lib/discoveries";
 
 const MAX_NOTE = 200;
 
@@ -27,7 +27,7 @@ export const get = query({
   },
 });
 
-/** Write, change, or clear (empty text) the team's note on one notebook entry. The note is reasoning only. */
+/** Write, change, or clear (empty text) the team's note on one notebook entry or known person. The note is reasoning only. */
 export const setNote = mutation({
   args: { roomCode: v.string(), referenceId: v.string(), text: v.string() },
   returns: v.null(),
@@ -36,7 +36,9 @@ export const setNote = mutation({
     if (!member?.session.caseId) throw new Error("Start the investigation first.");
     const note = text.trim();
     if (note.length > MAX_NOTE) throw new Error(`Keep notes under ${MAX_NOTE} characters.`);
-    if (!(await collectDiscoveries(ctx, member.session)).some((entry) => entry.referenceId === referenceId)) throw new Error("Find this first.");
+    const discoveries = await collectDiscoveries(ctx, member.session);
+    const known = discoveries.some((entry) => entry.referenceId === referenceId) || [...(await knownPeople(ctx, member.session, discoveries)).keys()].some((id) => id === referenceId);
+    if (!known) throw new Error("Find this first.");
     const existing = await ctx.db.query("notebookNotes").withIndex("by_sessionId_and_referenceId", (q) => q.eq("sessionId", member.session._id).eq("referenceId", referenceId)).unique();
     if (!note) {
       if (existing) await ctx.db.delete(existing._id);

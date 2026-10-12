@@ -182,7 +182,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
         className="clue-board relative min-h-0 flex-1"
         {...cardDropTarget((card) => {
           // A notebook entry dropped on the board becomes a pinned card where it lands.
-          if (card.referenceId.includes(":") || card.referenceId === "victim") return;
+          if (card.kind === "unknown" || card.referenceId.includes(":") || card.referenceId === "victim") return;
           const position = flow?.screenToFlowPosition({ x: dropPoint.x, y: dropPoint.y }) ?? { x: 80, y: 90 };
           void createReference({ roomCode, type: card.kind === "person" ? "npc" : card.kind, referenceId: card.referenceId, x: position.x, y: position.y }).catch(showError);
         })}

@@ -282,7 +282,7 @@ export function CaseFileScreen({ roomCode, onBack }: { roomCode: string; onBack:
                 <p>This is how it was done: <textarea aria-label="How was it done?" className="case-close-blank block min-h-16 w-full" maxLength={2000} onChange={(event) => setMethodExplanation(event.target.value)} placeholder="step by step, in your words" value={methodExplanation} /></p>
                 <div>
                   <p>And here is the proof:</p>
-                  <div className="min-h-16 border-2 border-dashed border-[#6d5138]/60 p-2 leading-normal" {...cardDropTarget(addProof, (kind) => kind !== "person" && kind !== "place")}>
+                  <div className="min-h-16 border-2 border-dashed border-[#6d5138]/60 p-2 leading-normal" {...cardDropTarget(addProof, (kind) => kind !== "person" && kind !== "unknown" && kind !== "place")}>
                     {evidenceIds.length ? (
                       <ul className="flex flex-wrap gap-2">
                         {evidenceIds.map((id) => <li className="flex items-center gap-2 border border-red-900/60 bg-[#efe3c4] px-2 py-1 text-sm" key={id}>{evidence.find((item) => item.referenceId === id)?.text.split("\n")[0] ?? "Evidence"}<button aria-label="Remove" className="text-red-900" onClick={() => toggleEvidence(id)} type="button">✕</button></li>)}
