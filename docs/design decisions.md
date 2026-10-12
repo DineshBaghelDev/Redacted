@@ -1,5 +1,11 @@
 # Design Decisions
 
+## 2026-10-12 — Fairer generated cases
+
+- The killer has to be findable by more than one route: a player who skips the one witness who knows the name must still come across it. Decided after a playtest where the killer only ever appeared in one interview.
+- On easy, the strongest red herring must be clearable with proof; harder cases may leave an innocent without an alibi.
+- A card payment is evidence of where someone was, so it has to agree with the timeline and cameras.
+
 ## 2026-10-12 — Playtest audit fixes
 
 - The weapon is written in the player's words, so it is judged on meaning like motive and method; the exact item name or bagged weapon still always counts.

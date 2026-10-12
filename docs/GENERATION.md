@@ -125,7 +125,7 @@ Implemented (`core/story.ts`, prompt `prompts/story.ts`): the AI gets the crime 
 
 - **CCTV:** code routes each movement — shortest street path between places, and entrance → stairs/lift → corridor → room inside buildings. Every active camera on the route emits a row with time, direction and an **appearance description, not a name**. Inside a building each room on the route takes a minute (arrivals are timed back from reaching the room, departures forward from leaving), and a sighting names the doors used ("comes from the stairs, goes into Room 3B"); "comes in" and "goes out" are only for entering or leaving the building. Players match appearance to people. A `disable-camera` cover-up produces a gap plus an outage/maintenance record.
 - **Phone:** call logs (timestamp, incoming/outgoing, duration) and messages from comm events.
-- **Card records:** from card purchases. Cash leaves no record.
+- **Card records:** from card purchases. Cash leaves no record. The buyer must be at that place then (a timeline check), so payments agree with cameras and alibis.
 - **Forensics:** a rule table maps weapon category + method + cover-up to cause of death, widened time-of-death range, wounds, prints/DNA/fibers present or wiped.
 - **Physical items:** weapon, receipts, notes placed in interior template slots by seed.
 - **Public records:** from cast backstory (debts, insurance, property, criminal record).
@@ -222,6 +222,8 @@ No LLM judge in V1. Implemented in `core/validate.ts`; returns a pass/fail list 
 - **red herrings:** every lie and fake motive is refutable,
 - **reachable:** every required item is obtainable at a city place/tool,
 - **no shortcut:** no single item names the killer outright ("<killer> … killed/shot/poisoned … <victim>" in a few words; the killer's name next to other deaths is fine).
+- **culprit named:** the killer's first name appears in ≥ 2 pieces of evidence (≥ 1 on hard) players can find without questioning the right witness: not interviews or statements, not cameras, not the killer's own phone or own records,
+- **clearable red herrings (easy only):** an innocent seen near the scene (camera, card payment or witness at the scene's place) in the hour before the crime has a provable alibi at the crime time.
 
 "Killer" counts evidence kinds across: at the scene, near the scene, and proof that breaks the killer's whereabouts lie. "Reachable" means: search spots exist in the room ("on the body" only at the scene), cameras exist, lab subjects and devices are themselves found, phones exist, and the person to question is alive and not lying about that event.
 
@@ -300,7 +302,7 @@ Testing:
 ## Model strategy
 
 - Generation models are set per AI stage in `convex/generation/llm.ts` (`STAGE_MODELS`) as a fixed, ordered list written `provider:model` (providers: Moonshot (Kimi), NIM, Gemini, Groq, OpenRouter, all through their OpenAI-compatible APIs via the Vercel AI SDK). When a call fails (rate limit, daily quota, overload, timeout) the next model in the list takes over. Current lists (runs 8–12, 2026-09-25):
-  - GPT-6 Sol (`codex:gpt-6-sol`) leads every AI stage where it is reachable: the owner's ChatGPT subscription through a local OpenAI-compatible server over Codex (`CODEX_API_KEY`, optional `CODEX_BASE_URL`). Low thinking, except medium for the story (fuller writing, usually right first try). OpenAI's strict schema mode needs every field required, so its schema is sent non-strict and code checks the reply. Local full cases after the richer prompts: easy 3.7 min, normal ~5 min, hard 3.1 min, as rich as Kimi (20–28 events at 20–25 words, 6–8 messages, 2–3 purchases, 2–3 lies). Providers with no key in an environment are skipped, so Convex (which can't reach the owner's PC) goes straight to Kimi.
+  - GPT-6 Sol (`codex:gpt-6-sol`) leads every AI stage where it is reachable: the owner's ChatGPT subscription through a local OpenAI-compatible server over Codex (`CODEX_API_KEY`, optional `CODEX_BASE_URL`). Low thinking, except medium for the story (fuller writing, usually right first try). OpenAI's strict schema mode needs every field required, so its schema is sent non-strict and code checks the reply. `GENERATION_ONLY_MODEL` (Convex env) forces every generation and grading call onto one model with no fallback, for test runs. Local full cases after the richer prompts: easy 3.7 min, normal ~5 min, hard 3.1 min, as rich as Kimi (20–28 events at 20–25 words, 6–8 messages, 2–3 purchases, 2–3 lies). Providers with no key in an environment are skipped, so Convex (which can't reach the owner's PC) goes straight to Kimi.
   - Then crime, cast, story, lies: Kimi `kimi-k3` on the owner's paid Moonshot key, low thinking; then free Gemini `gemini-3.5-flash` (20 calls a day), OpenRouter Nemotron (cast, story; 50 a day) and NIM. Kimi K2.6 without thinking missed the crime's time band three tries in a row, so it isn't used for these.
   - text, brief: free Groq `openai/gpt-oss-120b` (1–5 s), then Kimi `kimi-k2.6` without thinking, then NIM.
   - Thinking is low on every provider (`reasoningEffort: "low"`; Kimi K2.6 `thinking: disabled`). It must go through the SDK's own `reasoningEffort` option: a raw `reasoning_effort` field is overwritten, which left every call thinking at full length (slow, costly, timing out).

@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-10-12 — Playtest audit: generation fixes (not yet tested with a live model)
+
+- Card purchases: a card payment must happen where the buyer is (an event at that place covering the time), so cameras and alibis agree with it. Hard timeline check, plus the story rule.
+- The victim's phone needs at least 2 real calls or messages from the story (early story check).
+- New solvability check "culprit-named": the killer's first name must appear in at least 2 pieces of evidence (1 on hard) players can find without questioning the right witness (not interviews, cameras, the killer's own phone or own records). The story plan lists ways to meet it.
+- New easy-only check "herring": an innocent seen near the scene in the hour before the crime must have a provable alibi at the crime time.
+- The brief gets "how it was found" (the finder's discovery event from the story) and is told not to add early or late to times.
+- `GENERATION_ONLY_MODEL` (Convex env) runs every generation and grading call on one model with no fallback, e.g. `codex:gpt-6-sol` for a test run that never reaches Kimi. Interviews still use their own model.
+
 ## 2026-10-12 — Playtest audit fixes
 
 From a full easy playthrough (Regent Hotel Death). LLM prompts and checks were left alone on purpose.
