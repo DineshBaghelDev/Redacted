@@ -27,6 +27,21 @@ describe("evidence for the easy case", () => {
     expect(rows[0].summary).not.toContain("Victor");
   });
 
+  it("nobody shows up on two cameras in one building in the same minute", () => {
+    const seen = new Map<string, Set<string>>();
+    for (const row of set.evidence) {
+      if (row.type !== "cctv" || row.access.tool !== "cctv" || !row.aboutIds.length || row.access.cameraId.includes("~")) continue;
+      const key = `${row.aboutIds[0]}@${(row.data as { placeId: string }).placeId}@${row.time}`;
+      seen.set(key, new Set([...(seen.get(key) ?? []), row.access.cameraId]));
+    }
+    expect([...seen.values()].every((cameras) => cameras.size === 1)).toBe(true);
+  });
+
+  it("camera sightings inside a building name the doors people use", () => {
+    const passes = set.evidence.filter((e) => e.type === "cctv" && (e.data as { kind?: string }).kind === "pass" && !e.summary.includes("walking from"));
+    expect(passes.some((e) => /(comes from|goes into) /.test(e.summary))).toBe(true);
+  });
+
   it("the doorbell camera never sees Victor (he used the back door)", () => {
     const doorbell = set.evidence.filter((e) => e.access.tool === "cctv" && e.access.cameraId === "cam:keel-14:front-door");
     expect(doorbell.some((e) => e.aboutIds.includes("tom"))).toBe(true);
