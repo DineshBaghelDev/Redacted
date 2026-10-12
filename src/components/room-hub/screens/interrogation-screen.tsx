@@ -22,6 +22,7 @@ import { NotebookOverlay } from "../notebook-overlay";
 type Person = NonNullable<FunctionReturnType<typeof api.npcs.list>>[number];
 type Proof = FunctionReturnType<typeof api.npcConversations.listAvailableProof>[number];
 
+/** List discovered people and open the selected person's interview panel. */
 export function InterrogationScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const people = useQuery(api.npcs.list, isLoaded && isSignedIn ? { roomCode } : "skip");

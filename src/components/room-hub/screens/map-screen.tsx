@@ -48,6 +48,7 @@ function artworkForPlace(place: { id: string; kind: keyof typeof kindLabels }) {
   return placeArtwork[place.id] ?? place.kind;
 }
 
+/** Display city locations and detective positions, with travel controls and shared-clock progress. */
 export function MapScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const city = useQuery(api.world.getMap, isLoaded && isSignedIn ? { roomCode } : "skip");

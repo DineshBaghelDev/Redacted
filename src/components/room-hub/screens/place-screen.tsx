@@ -30,6 +30,7 @@ const atmosphere = {
   Night: "It is dark and still. Your torch picks out the doorway.",
 } as const;
 
+/** Manage room navigation, timed searches, evidence collection, and device or camera inspection at a place. */
 export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const place = useQuery(api.investigation.getPlace, isLoaded && isSignedIn ? { roomCode } : "skip");

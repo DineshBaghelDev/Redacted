@@ -84,6 +84,7 @@ const hotspots: { station: Station; label: string; icon: Parameters<typeof GameI
   { station: "case", label: "Case file", icon: "case", className: "left-[39%] top-[76%] h-[22%] w-[23%]" },
 ];
 
+/** Render the bureau and active investigation station, keeping the shared clock and notebook in sync. */
 export function BureauScreen({ error, onLeave }: { error: string; onLeave: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const pathname = usePathname();

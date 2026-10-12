@@ -30,6 +30,7 @@ const tools: { test: TestType; name: string; colour: string }[] = [
   { test: "autopsy", name: "Autopsy", colour: "#e5a18e" },
 ];
 
+/** Manage evidence and tool selection, timed lab work, and viewing or pinning stored forensic results. */
 export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const { isLoaded, isSignedIn } = useAuth();
   const lab = useQuery(api.forensics.getLab, isLoaded && isSignedIn ? { roomCode } : "skip");

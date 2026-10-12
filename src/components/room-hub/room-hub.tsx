@@ -25,6 +25,7 @@ import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 const DETECTIVE_NAME_KEY = "redacted.detectiveName";
 const subscribeToNothing = () => () => {};
 
+/** Render the room hub once Convex authenticates, with loading and sign-in fallbacks. */
 export function ReadyRoomHub() {
   return <>
     <Authenticated><RoomHub /></Authenticated>

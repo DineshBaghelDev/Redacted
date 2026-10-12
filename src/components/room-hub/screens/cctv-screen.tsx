@@ -133,6 +133,7 @@ function MonitorWall({ cameras, selectedId, onPick }: { cameras: Camera[]; selec
   );
 }
 
+/** Navigate a camera timeline, request reviews of selected hours, and label or pin recorded sightings. */
 function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; camera: Camera; presetTime: number | null }) {
   const tape = useQuery(api.cases.getCctvTape, { roomCode, cameraId: camera.id });
   const boardNodes = useQuery(api.clueBoard.getNodes, { roomCode });

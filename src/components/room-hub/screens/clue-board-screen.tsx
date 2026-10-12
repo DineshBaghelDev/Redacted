@@ -44,6 +44,7 @@ const colors: Record<StringColor, { label: string; value: string }> = {
 
 const nodeTypes = { board: BoardCard };
 
+/** Manage the shared clue board, persisting card positions, notes, and player-created connections. */
 export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack: () => void }) {
   const savedNodes = useQuery(api.clueBoard.getNodes, { roomCode });
   const savedEdges = useQuery(api.clueBoard.getEdges, { roomCode });
@@ -269,6 +270,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
   );
 }
 
+/** Render a clue-board card with editable note text, connection handles, and inspect and remove actions. */
 function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
   const label = boardLabel(data.kind);
   const paper = boardPaper(data.kind);
@@ -321,6 +323,7 @@ function boardLabel(kind: BoardData["kind"]) {
   return kind === "npc" ? "Person" : kind === "cctv" ? "Camera record" : kind === "place" ? "Place" : kind === "public_record" ? "Public record" : kind === "item" ? "Found object" : kind === "forensic" ? "Lab report" : kind === "device_file" ? "Device file" : kind === "call" ? "Call" : kind === "message" ? "Message" : kind === "statement" ? "Statement" : "Note";
 }
 
+/** Return the paper style for a clue kind, using record paper for kinds without a dedicated style. */
 function boardPaper(kind: BoardData["kind"]) {
   return kind === "npc" ? "person" : kind === "forensic" ? "lab" : kind === "note" ? "note" : "record";
 }

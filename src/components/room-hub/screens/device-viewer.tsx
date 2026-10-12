@@ -20,6 +20,7 @@ function timeLabel(minutes: number) {
   return `Day ${Math.floor(minutes / 1440) + 1} · ${String(Math.floor(withinDay / 60)).padStart(2, "0")}:${String(withinDay % 60).padStart(2, "0")}`;
 }
 
+/** Display recovered phone or laptop records and let players inspect and pin their contents. */
 export function DeviceViewer({ roomCode, title, data, nodes, onBack, onPinError, busy, error }: {
   roomCode: string;
   title: string;

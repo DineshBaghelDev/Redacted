@@ -306,6 +306,7 @@ type EpilogueData = { culprit: string; motive: string; method: string; explanati
 
 type Answer = { culprit: string; weapon: string; motive: string; method: string; evidence: string };
 
+/** Show the revealed case solution and event timeline, optionally comparing the submitted theory. */
 function Epilogue({ epilogue, answer }: { epilogue: EpilogueData; answer?: Answer }) {
   return (
     <div className="mt-10 border-t-2 border-[#6d5138] pt-6">
