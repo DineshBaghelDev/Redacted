@@ -5,6 +5,7 @@ import type { FunctionReturnType } from "convex/server";
 import type { api } from "../../../convex/_generated/api";
 import { HoldButton } from "./gestures";
 import { FurnitureSprite } from "./furniture-sprite";
+import { partOfDay } from "../../lib/game-time";
 
 type Place = NonNullable<FunctionReturnType<typeof api.investigation.getPlace>>;
 type Room = Place["rooms"][number];
@@ -63,7 +64,7 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
   const hubs = isHub(room) ? [room] : around.filter(isHub);
   const doors = around.filter((next) => !isHub(next) && !(isHub(room) && next.floor !== room.floor));
   return (
-    <div className="room-floor relative flex flex-wrap content-start gap-2 p-4 animate-in fade-in zoom-in-95 duration-300 sm:block sm:aspect-[16/9] sm:p-0" data-room-type={room.type} key={room.id}>
+    <div className="room-floor relative flex flex-wrap content-start gap-2 p-4 animate-in fade-in zoom-in-95 duration-300 sm:block sm:aspect-[16/9] sm:p-0" data-room-type={room.type} data-time-of-day={partOfDay(place.clock.gameTime).toLowerCase()} key={room.id}>
       {room.spots.map((spot, index) => {
         const [x, y] = SPOT_ANCHORS[index % SPOT_ANCHORS.length];
         const found = foundBySpot.get(spot.key) ?? 0;

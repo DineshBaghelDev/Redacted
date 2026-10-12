@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-12 — Scene light and device messages
+
+- Use subtle lighting over the existing room and bureau art for the four parts of the day; separate generated overlays would add load without changing the scene. Phone message direction changes only the bubble presentation.
+
 ## 2026-10-12 — Room auth readiness
 
 - Render the entire room hub only after Convex confirms authentication. Clerk may know a signed-in user before the Convex token is ready; station queries must not open during that interval.

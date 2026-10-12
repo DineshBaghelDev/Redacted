@@ -68,7 +68,7 @@ export function DeviceViewer({ roomCode, title, data, nodes, onBack, onPinError,
               <p className="text-xs uppercase tracking-widest text-[#a5c6bb]">{file ? "File" : call ? "Call log" : "Message"}</p>
               <h4 className="mt-2 break-words text-lg uppercase text-[#e8ac51]">{file?.title ?? call?.otherParty ?? message?.otherParty}</h4>
               {call ? <p className="mt-3 flex items-center gap-2 text-sm"><span aria-hidden="true" className={`call-direction call-direction--${call.direction}`} />{call.direction === "incoming" ? "Incoming" : "Outgoing"} · {timeLabel(call.time)} · {Math.ceil(call.durationSeconds / 60)} min</p> : null}
-              {message ? <><p className="mt-3 text-xs uppercase text-[#a5c6bb]">{message.direction === "incoming" ? "Received" : "Sent"} · {timeLabel(message.time)}</p><p className="mt-5 whitespace-pre-wrap break-words border-l-2 border-[#e8ac51] pl-4 text-base leading-relaxed">{message.body}</p></> : null}
+              {message ? <><p className="mt-3 text-xs uppercase text-[#a5c6bb]">{message.direction === "incoming" ? "Received" : "Sent"} · {timeLabel(message.time)}</p><p className={`phone-message phone-message--${message.direction} mt-5 whitespace-pre-wrap break-words p-3 text-base leading-relaxed`}>{message.body}</p></> : null}
               {file ? <p className="mt-5 whitespace-pre-wrap break-words border-l-2 border-[#e8ac51] pl-4 text-base leading-relaxed">{file.body}</p> : null}
               <PinButton className="mt-6" disabled={busy} key={openId} nodes={nodes} onError={onPinError} referenceId={openId!} roomCode={roomCode} type={file ? "device_file" : call ? "call" : "message"} />
             </article> : <div className="mt-3 divide-y divide-[#45635d]/60">

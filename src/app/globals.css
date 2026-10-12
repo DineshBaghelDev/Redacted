@@ -30,6 +30,22 @@
     overflow-wrap: anywhere;
   }
 
+  .game-panorama[data-time-of-day="morning"] { filter: brightness(1.05) saturate(.9); }
+  .game-panorama[data-time-of-day="afternoon"] { filter: brightness(1.02); }
+  .game-panorama[data-time-of-day="evening"] { filter: sepia(.1) brightness(.88); }
+  .game-panorama[data-time-of-day="night"] { filter: brightness(.7) saturate(.8); }
+
+  .room-floor::before {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    content: '';
+  }
+  .room-floor[data-time-of-day="morning"]::before { background: linear-gradient(120deg, rgb(233 207 158 / 15%), transparent 55%); }
+  .room-floor[data-time-of-day="afternoon"]::before { background: linear-gradient(120deg, rgb(231 217 173 / 9%), transparent 65%); }
+  .room-floor[data-time-of-day="evening"]::before { background: linear-gradient(120deg, rgb(214 140 81 / 16%), rgb(8 24 30 / 12%)); }
+  .room-floor[data-time-of-day="night"]::before { background: rgb(7 20 31 / 32%); }
+
   .game-icon {
     display: inline-block;
     flex: none;
@@ -114,6 +130,25 @@
     image-rendering: pixelated;
   }
   .call-direction--outgoing { background-position: 50% 50%; }
+
+  .phone-message {
+    position: relative;
+    width: fit-content;
+    max-width: 100%;
+    background: #264244;
+  }
+  .phone-message::before {
+    position: absolute;
+    bottom: -0.6rem;
+    left: 0;
+    width: 0.65rem;
+    height: 0.65rem;
+    background: inherit;
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+    content: '';
+  }
+  .phone-message--outgoing { margin-left: auto; background: #614b2e; }
+  .phone-message--outgoing::before { right: 0; left: auto; transform: scaleX(-1); }
 
   .case-star {
     display: inline-block;

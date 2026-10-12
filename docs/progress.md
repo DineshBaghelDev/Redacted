@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-12 — Daylight and phone message details
+
+- Bureau and room scenes now shift subtly through morning, afternoon, evening and night using the shared case clock. Room floor art remains visible and search targets stay clear.
+- Open phone messages have directional bubble tails and restrained incoming/outgoing colors. The stored messages and device rules are unchanged.
+
 ## 2026-10-12 — Direct-route auth and mobile board
 
 - A fresh browser visit to a room route surfaced a Convex "Sign in first" error before the case UI finished authenticating. The room hub now mounts only after Convex confirms the session; loading and signed-out states show safe UI. The direct route no longer throws.
