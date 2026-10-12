@@ -15,6 +15,8 @@ bureau-noir, menu-noir, archive-room, interview-room, lab-room, records-room, re
 
 **Moment/packaging update:** compact case-opened dossier, blank result stamps, star art, four subtle clock-driven scene light variants, two-detective key art, social share images, and square app emblem are in use. Arrival notices remain text in the shared notification stack. The current result timeline has only free-text events, so specific event-type icons would guess at case facts; it retains a neutral marker.
 
+**Final art choices:** search targets already get a focus/hover outline, so a second illustrated hover frame would add clutter. The illustrated board pins are the string endpoints; separate knot sprites would make them harder to grab. The lab tasks keep their interactive, seeded graphics: generated fingerprint and task sheets showed stray pixels and were rejected. Arrival notices and the loading emblem stay compact so they do not cover investigation controls. The share banner is 1730×909 and the app emblem is 1254×1254, both supplied at the intended aspect ratios rather than exact suggested export dimensions.
+
 ## Priority 1 — the screens players spend most time on
 
 ### A. Room interiors (biggest "app vs game" gap)

@@ -5,6 +5,7 @@
 - The building map and door labels now reuse the detective sprites already shown on the city map. Both detectives can be marked in the same room without obscuring its name.
 - Added one inspected, transparent window sprite to indoor room walls where the top wall has no door. It is decorative and does not reveal or imply case evidence. Rejected another fingerprint generation because it still contained stray pixels.
 - Updated the current lab rules in `DECISIONS.md`; its older turnaround wording disagreed with the hands-on bench flow documented in `GAME_SYSTEMS.md`.
+- Closed the remaining artwork checklist as design choices: retained clear procedural lab tasks after generated attempts showed artifacts, reused the board pins as string endpoints, and kept arrival/loading treatments compact to avoid covering play controls. A blind first-time-player test remains a human acceptance step.
 - Set the share-image URL base from the deployment host, with localhost for local development. The isolated Webpack production build passed; the default Turbopack build could not run in the isolated checkout because its linked dependencies pointed outside that checkout.
 - The focused room test passed; TypeScript and focused lint checks passed.
 
