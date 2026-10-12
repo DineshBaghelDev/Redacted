@@ -20,6 +20,9 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 
 type Camera = NonNullable<FunctionReturnType<typeof api.cases.getCctv>>["cameras"][number];
 type Person = NonNullable<FunctionReturnType<typeof api.npcs.list>>[number];
+type Unknown = NonNullable<FunctionReturnType<typeof api.unknownPeople.list>>[number];
+/** Who a sighting is marked as: a known person or one of the team's unknown people. */
+type Mark = { npcId: string } | { unknownPersonId: string };
 
 /** Pixels of tape per game minute: an hour is a comfortable swipe. */
 const PX_PER_MINUTE = 4;
@@ -43,6 +46,7 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Step away from the t
   const presetTime = Number(useSearchParams().get("t"));
   const data = useQuery(api.cases.getCctv, isLoaded && isSignedIn ? { roomCode } : "skip");
   const people = useQuery(api.npcs.list, isLoaded && isSignedIn ? { roomCode } : "skip");
+  const unknown = useQuery(api.unknownPeople.list, isLoaded && isSignedIn ? { roomCode } : "skip");
   const [chosenCameraId, setCameraId] = useState("");
   const [compareOpen, setCompareOpen] = useState(false);
 
@@ -87,6 +91,12 @@ export function CctvScreen({ roomCode, onBack, backLabel = "Step away from the t
                 <li className="flex cursor-grab gap-2 border-b border-[#8b7355]/50 pb-3" draggable key={person.id} onDragStart={(event) => startCardDrag(event, { kind: "person", referenceId: person.id, label: person.name })}>
                   <CharacterPortrait age={person.age} className="w-12" description={person.publicDescription} gender={person.gender} id={person.id} />
                   <div className="min-w-0"><p className="text-sm uppercase">{person.name}</p><p className="text-xs leading-relaxed">{person.publicDescription}</p></div>
+                </li>
+              ))}
+              {(unknown ?? []).map((person) => (
+                <li className="flex cursor-grab gap-2 border-b border-[#8b7355]/50 pb-3" draggable key={person.id} onDragStart={(event) => startCardDrag(event, { kind: "unknown", referenceId: person.id, label: person.name })}>
+                  <UnknownFace className="h-14 w-12" />
+                  <div className="min-w-0"><p className="text-sm uppercase">{person.name}</p><p className="text-xs leading-relaxed">{person.note || "Not named yet"}</p></div>
                 </li>
               ))}
             </ul>
@@ -140,6 +150,7 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
   const startReview = useMutation(api.cases.startCctvReview);
   const labelSighting = useMutation(api.cases.labelSighting);
   const people = useQuery(api.npcs.list, { roomCode });
+  const unknown = useQuery(api.unknownPeople.list, { roomCode });
   const scroller = useRef<HTMLDivElement>(null);
   const requested = useRef(new Set<number>());
   const startMinute = presetTime !== null && presetTime >= camera.start && presetTime <= camera.end ? presetTime : camera.start;
@@ -207,15 +218,24 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
     scroller.current?.scrollTo({ left: (clamped - camera.start) * PX_PER_MINUTE, behavior: "smooth" });
   }
 
-  function personFor(recordId: string) {
-    const npcId = tape?.labels.find((label) => label.recordId === recordId)?.npcId;
-    return npcId ? people?.find((person) => person.id === npcId) : undefined;
+  function markedAs(recordId: string) {
+    const label = tape?.labels.find((item) => item.recordId === recordId);
+    if (label?.npcId) return { person: people?.find((person) => person.id === label.npcId) };
+    if (label?.unknownPersonId) return { unknown: unknown?.find((person) => person.id === label.unknownPersonId) };
+    return {};
   }
 
-  function mark(recordId: string, npcId: string | null) {
+  function mark(recordId: string, who: Mark | null) {
     setError("");
-    void labelSighting({ roomCode, recordId, npcId: npcId as Id<"npcs"> | null }).catch((caught: unknown) => setError(errorText(caught, "Could not mark that sighting.")));
+    const npcId = who && "npcId" in who ? who.npcId as Id<"npcs"> : null;
+    const unknownPersonId = who && "unknownPersonId" in who ? who.unknownPersonId as Id<"unknownPeople"> : undefined;
+    void labelSighting({ roomCode, recordId, npcId, unknownPersonId }).catch((caught: unknown) => setError(errorText(caught, "Could not mark that sighting.")));
   }
+
+  const dropMark = (recordId: string) => cardDropTarget(
+    (card) => mark(recordId, card.kind === "unknown" ? { unknownPersonId: card.referenceId } : { npcId: card.referenceId }),
+    (kind) => kind === "person" || kind === "unknown",
+  );
 
   const hours = [];
   for (let hour = Math.ceil(camera.start / 60) * 60; hour <= camera.end; hour += 60) hours.push(hour);
@@ -235,9 +255,9 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
         <div className="mt-4 min-h-24 border-t border-[#2f4a47] pt-3 text-sm leading-relaxed sm:text-base">
           {camera.faulty ? <p className="text-red-300">This camera recorded nothing during the case.</p>
             : onScreen.length ? onScreen.map((record) => (
-                <div className={`terminal-line flex items-start gap-3 ${record.kind === "offline" ? "text-red-300" : "text-[#f1c987]"}`} key={record.id} {...cardDropTarget((card) => mark(record.id, card.referenceId), (kind) => kind === "person")}>
+                <div className={`terminal-line flex items-start gap-3 ${record.kind === "offline" ? "text-red-300" : "text-[#f1c987]"}`} key={record.id} {...dropMark(record.id)}>
                   <p className="min-w-0 flex-1"><span className="text-[#7fd1ae]">[{clock(record.start)}–{clock(record.end)}]</span> {record.summary}</p>
-                  {record.kind !== "offline" ? <PhotoSlot onMark={(npcId) => mark(record.id, npcId)} people={people ?? []} person={personFor(record.id)} /> : null}
+                  {record.kind !== "offline" ? <PhotoSlot {...markedAs(record.id)} onMark={(who) => mark(record.id, who)} people={people ?? []} unknownPeople={unknown ?? []} /> : null}
                   <PinButton nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={record.id} roomCode={roomCode} type="cctv" />
                 </div>
               )) : <p className="text-[#7fd1ae]/50">Empty frame. Nobody in view.</p>}
@@ -299,7 +319,7 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
  * A photo clipped next to a sighting: who the team thinks it shows. Empty, it takes a dropped face or a tap to pick one.
  * The mark is shared with the partner, shows in the notebook and on the clueboard, and is never checked.
  */
-function PhotoSlot({ person, people, onMark, small = false }: { person?: Person; people: Person[]; onMark: (npcId: string | null) => void; small?: boolean }) {
+function PhotoSlot({ person, unknown, people, unknownPeople, onMark, small = false }: { person?: Person; unknown?: Unknown; people: Person[]; unknownPeople: Unknown[]; onMark: (who: Mark | null) => void; small?: boolean }) {
   // Where the picker opens, in screen coordinates. It renders on the page body so the monitor frame never clips it.
   const [picking, setPicking] = useState<{ top: number; left: number } | null>(null);
   const toggle = (event: React.MouseEvent) => {
@@ -307,12 +327,13 @@ function PhotoSlot({ person, people, onMark, small = false }: { person?: Person;
     setPicking(picking ? null : { top: rect.bottom + 4, left: Math.max(8, Math.min(rect.right - 256, window.innerWidth - 264)) });
   };
   const suspects = people.filter((item) => !item.isVictim);
+  const marked = person ?? unknown;
   return (
     <div className="relative shrink-0 font-mono">
-      {person ? (
+      {marked ? (
         <div className="flex items-center gap-2 border border-[#9fd1c4]/50 bg-[#0c1f1d] p-1 pr-2">
-          <button aria-label={`Change who this is (now ${person.name})`} onClick={toggle} type="button"><CharacterPortrait age={person.age} className={small ? "w-10" : "w-14"} description={person.publicDescription} gender={person.gender} id={person.id} /></button>
-          <span className="max-w-28 text-xs uppercase leading-tight text-[#9fd1c4]">{small ? null : <span className="block text-[0.6rem] text-[#7fd1ae]/70">You think</span>}{person.name}</span>
+          <button aria-label={`Change who this is (now ${marked.name})`} onClick={toggle} type="button">{person ? <CharacterPortrait age={person.age} className={small ? "w-10" : "w-14"} description={person.publicDescription} gender={person.gender} id={person.id} /> : <UnknownFace className={small ? "h-12 w-10" : "h-16 w-14"} />}</button>
+          <span className="max-w-28 text-xs uppercase leading-tight text-[#9fd1c4]">{small ? null : <span className="block text-[0.6rem] text-[#7fd1ae]/70">You think</span>}{marked.name}</span>
           <button aria-label="Clear" className="text-xs text-[#7fd1ae] hover:text-[#e8ac51]" onClick={() => onMark(null)} type="button">✕</button>
         </div>
       ) : (
@@ -321,17 +342,28 @@ function PhotoSlot({ person, people, onMark, small = false }: { person?: Person;
       {picking ? createPortal(
         <div className="fixed z-50 grid w-64 grid-cols-4 gap-2 border border-[#2f4a47] bg-[#020807] p-2 shadow-xl" style={picking}>
           {suspects.map((item) => (
-            <button className="text-center text-[0.6rem] uppercase leading-tight text-[#c9f2dd] hover:text-[#f1c987]" key={item.id} onClick={() => { onMark(item.id); setPicking(null); }} type="button">
+            <button className="text-center text-[0.6rem] uppercase leading-tight text-[#c9f2dd] hover:text-[#f1c987]" key={item.id} onClick={() => { onMark({ npcId: item.id }); setPicking(null); }} type="button">
               <CharacterPortrait age={item.age} className="mx-auto w-11" description={item.publicDescription} gender={item.gender} id={item.id} />
               <span className="mt-1 block truncate">{item.name.split(" ")[0]}</span>
             </button>
           ))}
-          {suspects.length ? null : <p className="col-span-4 text-xs text-[#7fd1ae]/60">You haven&apos;t come across anyone yet.</p>}
+          {unknownPeople.map((item) => (
+            <button className="text-center text-[0.6rem] uppercase leading-tight text-[#c9f2dd] hover:text-[#f1c987]" key={item.id} onClick={() => { onMark({ unknownPersonId: item.id }); setPicking(null); }} type="button">
+              <UnknownFace className="mx-auto h-14 w-11" />
+              <span className="mt-1 block truncate">{item.name}</span>
+            </button>
+          ))}
+          {suspects.length || unknownPeople.length ? null : <p className="col-span-4 text-xs text-[#7fd1ae]/60">You haven&apos;t come across anyone yet.</p>}
         </div>,
         document.body,
       ) : null}
     </div>
   );
+}
+
+/** Stand-in photo for someone the team has not named yet. */
+function UnknownFace({ className }: { className: string }) {
+  return <span aria-hidden="true" className={`flex items-center justify-center border border-dashed border-[#7fd1ae]/60 bg-[#0c1f1d] text-xl text-[#7fd1ae] ${className}`}>?</span>;
 }
 
 function CctvMessage({ message, onBack, backLabel }: { message: string; onBack: () => void; backLabel: string }) {
