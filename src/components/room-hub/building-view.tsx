@@ -11,9 +11,11 @@ type Place = NonNullable<FunctionReturnType<typeof api.investigation.getPlace>>;
 type Room = Place["rooms"][number];
 
 /** Where furniture sits in a room, as % of its width/height. Kept off the walls so doors stay clear. */
-const SPOT_ANCHORS = [[24, 30], [52, 26], [78, 32], [30, 70], [58, 72], [80, 66], [44, 48], [16, 52]];
+const SPOT_ANCHORS = [[24, 36], [52, 35], [78, 38], [30, 66], [58, 67], [80, 63], [44, 51], [16, 52]];
 // Bottom wall last: the stairs and lift buttons sit in the bottom-left corner.
 const WALLS = ["right", "left", "top", "bottom"] as const;
+// With stairs or a lift in the room their buttons fill the lower left, so doors keep off that wall.
+const WALLS_BESIDE_HUB = ["right", "top", "bottom"] as const;
 
 function neighbours(place: Place, roomId: string) {
   return place.connections.flatMap((edge) => edge.a === roomId ? [edge.b] : edge.b === roomId ? [edge.a] : [])
@@ -34,10 +36,10 @@ function floorStops(place: Place, hub: Room) {
 const floorName = (floor: number) => (floor === 0 ? "G" : String(floor));
 
 /** Where a door sits on a wall: walls are filled in turn, doors spread evenly along each wall. */
-function doorStyle(index: number, total: number): CSSProperties {
-  const wall = WALLS[index % WALLS.length];
-  const onWall = Math.ceil((total - (index % WALLS.length)) / WALLS.length);
-  const slot = Math.floor(index / WALLS.length);
+function doorStyle(index: number, total: number, walls: readonly (typeof WALLS)[number][]): CSSProperties {
+  const wall = walls[index % walls.length];
+  const onWall = Math.ceil((total - (index % walls.length)) / walls.length);
+  const slot = Math.floor(index / walls.length);
   const along = `${((slot + 1) / (onWall + 1)) * 100}%`;
   if (wall === "right") return { "--dx": "100%", "--dy": along, "--tx": "-100%", "--ty": "-50%" } as CSSProperties;
   if (wall === "left") return { "--dx": "0%", "--dy": along, "--tx": "0%", "--ty": "-50%" } as CSSProperties;
@@ -74,13 +76,13 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
         return (
           <div className="w-[calc(50%-0.25rem)] sm:absolute sm:left-[var(--x)] sm:top-[var(--y)] sm:w-36 sm:-translate-x-1/2 sm:-translate-y-1/2" key={spot.key} style={style}>
             {spot.searched ? (
-              <a className="room-spot block text-[#c8d8d2]/80" href={`#spot-${spot.key}`}>
+              <a className="room-spot block text-[#c8d8d2]/80" href={`#spot-${spot.key}`} onClick={(event) => { event.preventDefault(); document.getElementById(`spot-${spot.key}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }}>
                 {spot.name === "on the body" || spot.name === "shed" ? <span aria-hidden="true" className={`room-special-spot room-special-spot--${spot.name === "shed" ? "shed" : "body"}`} /> : <FurnitureSprite searched spot={spot.name} />}
                 <span className="room-spot-label">{spot.name}</span>
                 <span className="block text-[0.65rem] normal-case">{found ? `✓ ${found} found` : "✓ Nothing here"}</span>
               </a>
             ) : (
-              <HoldButton className="room-spot text-center normal-case" disabled={busy} label={searchingKey === spot.key ? "Searching..." : "Hold to search · 4 min"} onDone={() => onSearch(spot.key)}>
+              <HoldButton className="room-spot text-center normal-case" disabled={busy} label={searchingKey === spot.key ? "Searching..." : searchingKey || walkingTo ? "Wait, you're busy" : "Hold to search · 4 min"} onDone={() => onSearch(spot.key)}>
                 {spot.name === "on the body" || spot.name === "shed" ? <span aria-hidden="true" className={`room-special-spot room-special-spot--${spot.name === "shed" ? "shed" : "body"}`} /> : <FurnitureSprite searched={false} spot={spot.name} />}
                 <span className="room-spot-label">{spot.name}</span>
               </HoldButton>
@@ -98,12 +100,12 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
             disabled={busy}
             key={next.id}
             onClick={() => onWalk(next.id)}
-            style={doorStyle(index, doors.length)}
+            style={doorStyle(index, doors.length, hubs.length ? WALLS_BESIDE_HUB : WALLS)}
             title={`Walk through · ${next.walkMinutes ?? 1} min`}
             type="button"
           >
             <span aria-hidden="true" className="room-control-sprite room-control-sprite--door" />
-            <span>{next.name}{level}</span>
+            <span className="whitespace-nowrap">{next.name}{level}</span>
             <span className="flex items-center gap-1 text-[0.6rem] normal-case text-[#c8d8d2]/60">{next.walkMinutes ?? 1} min{place.partners.some((partner) => partner.roomId === next.id) ? <><span aria-hidden="true" className="map-token map-token--partner size-4" /> partner</> : null}</span>
           </button>
         );
@@ -112,9 +114,9 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
       {hubs.length ? (
         <div className="flex w-full flex-col gap-1 sm:absolute sm:bottom-3 sm:left-3 sm:w-auto">
           {hubs.map((hub) => (
-            <div className="room-door" key={hub.id} style={{ flexDirection: "row", gap: "0.4rem" }}>
+            <div className="room-door" key={hub.id} style={{ flexDirection: "row", gap: "0.4rem", maxWidth: "none" }}>
               <span aria-hidden="true" className={`room-control-sprite room-control-sprite--${hub.type}`} />
-              <span>{hub.type === "lift" ? "Lift" : "Stairs"}</span>
+              <span className="whitespace-nowrap">{hub.type === "lift" ? "Lift" : "Stairs"}</span>
               {floorStops(place, hub).map((stop) => (
                 <button aria-label={`${hub.type === "lift" ? "Lift" : "Stairs"} to floor ${floorName(stop.floor)}`} className="min-w-7 border border-current px-1.5 py-0.5 disabled:border-[#e8ac51] disabled:bg-[#e8ac51] disabled:text-[#14120c]" disabled={busy || stop.floor === room.floor} key={stop.floor} onClick={() => onWalk(stop.roomId)} title={place.rooms.find((item) => item.id === stop.roomId)?.name} type="button">{floorName(stop.floor)}</button>
               ))}

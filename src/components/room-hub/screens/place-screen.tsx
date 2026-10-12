@@ -107,7 +107,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   if (!place) return <PlaceMessage message="There are no rooms to explore here right now." onBack={onBack} />;
   if (cameraOpen) return <CctvScreen roomCode={roomCode} onBack={() => setCameraOpen(false)} backLabel="Back to room" />;
   const activeDevice = place.items.find((item) => item.id === activeDeviceId && item.device?.read);
-  if (activeDevice?.device) return <DeviceViewer roomCode={roomCode} title={activeDevice.name} data={activeDevice.device} nodes={boardNodes} onBack={() => setActiveDeviceId(null)} onPinError={(caught) => setError(errorText(caught, "Could not update this pin."))} busy={working || Boolean(place.action)} error={error} />;
+  if (activeDevice?.device) return <DeviceViewer roomCode={roomCode} title={activeDevice.name} data={activeDevice.device} nodes={boardNodes} onBack={() => setActiveDeviceId(null)} onPinError={(caught) => setError(errorText(caught, "Could not update this pin."))} busy={working || Boolean(place.action)} error={error} scene="place" />;
 
   const currentRoom = place.rooms.find((room) => room.id === place.currentRoomId);
   // Bagged objects stay on their spot's card (marked "Bagged"); the lab and notebook are where carried evidence is used.
@@ -171,6 +171,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
           {searchedSpots.length ? (
             <section className="mt-6">
               <p className="text-xs uppercase tracking-[0.2em] text-[#c8d8d2]/55">Found in this room</p>
+              <FirstTimeTip id="bagging" title="Evidence bags">The lab can only test what you bag. Press Bag for lab on anything worth testing.</FirstTimeTip>
               <ul className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {searchedSpots.map((spot) => {
                   const found = here.filter((item) => item.spot === spot.key);
@@ -206,7 +207,7 @@ function ItemCard({ item, busy, pinControl, fresh, onRead, onOpenDevice, onColle
     <article className={`border-l-2 border-[#e8ac51] bg-[#0b1a1c]/90 p-3 ${fresh ? "reveal-card" : ""}`} draggable onDragStart={(event) => startCardDrag(event, { kind: "item", referenceId: item.id, label: item.name })}>
       <div className="flex items-start gap-2">
         <h5 className="flex min-w-0 flex-1 items-center gap-2 text-sm uppercase text-[#f1c987]"><ObjectIcon className="size-9" name={item.name} /><span className="min-w-0 break-words">{item.name}</span></h5>
-        {onCollect && item.collectible && !item.collected ? <button aria-label="Bag it for the lab" className="game-icon-button disabled:opacity-45" disabled={busy} onClick={onCollect} title="Bag it for the lab" type="button"><InvestigationIcon className="size-8" name="lab" /></button> : null}
+        {onCollect && item.collectible && !item.collected ? <button className="flex shrink-0 items-center gap-1 border border-[#e8ac51]/60 px-1.5 text-[0.65rem] uppercase text-[#f1c987] hover:border-[#f1c987] disabled:opacity-45" disabled={busy} onClick={onCollect} title="Bag it so the lab can test it" type="button"><InvestigationIcon className="size-6" name="lab" />Bag for lab</button> : null}
         {item.collected ? <span className="shrink-0 text-[0.65rem] uppercase text-[#9fd1c4]" title="In the evidence bag">Bagged</span> : null}
         {pinControl}
       </div>

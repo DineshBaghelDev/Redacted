@@ -20,6 +20,8 @@ export function storyRules(crime: CrimeBase) {
     `Times are whole minutes from Day 1 00:00. Everything happens between 0 and the time ${w.discovery}. Every event lasts at least 1 minute (end is after start); a quick action takes 2–5 minutes.`,
     "Every roomId is copied from the room list. enteredVia/leftVia, when given, is an [entrance] room of the same building.",
     "Nobody is in two events at once, and there is enough travel time between events at different places (see travel minutes). Everyday routines are added by code around your events; you only write what matters.",
+    "A card purchase happens where the buyer is: give the buyer an event at that place covering the purchase time.",
+    "The victim's phone holds at least 2 real calls or messages with people in the cast (plans, arguments, ordinary life), so it isn't only junk.",
     ...kind.storyRules(crime),
     "An item that ends in a different room from where it starts needs an event in its final room that uses it. finalSlot is where in the room it ends up (e.g. a drawer, the bin); rooms marked [no items] can't hold one.",
     `${capitalize(w.finder)} has an event in the crime scene room starting at the discovery time.`,
@@ -83,6 +85,18 @@ export function evidencePlan(city: City, crime: CrimeBase, difficulty: Difficult
   ];
   const routes = [
     { checkId: "culprit", label: `Place the ${w.culprit} at the scene with 2 different kinds of evidence`, ways: atScene },
+    {
+      checkId: "culprit-named",
+      label: `Let players come across the ${w.culprit}'s name in at least ${difficulty === "hard" ? 1 : 2} thing(s) they can find without questioning the right witness`,
+      ways: [`a call or message between the ${w.culprit} and the victim (it is on the victim's phone)`, `a document, item or device file that names the ${w.culprit}`, `another person's record or card payment that mentions the ${w.culprit}`],
+    },
+    ...(difficulty === "easy"
+      ? [{
+          checkId: "herring",
+          label: `On easy, a red herring must be clearable: an innocent seen near the scene in the hour before the ${w.crimeTime} has a provable alibi at the ${w.crimeTime}`,
+          ways: ["a camera sighting at another place at that time", "a card purchase at another place at that time", "a public event at another place that others see", "moving their visit to the scene more than an hour earlier"],
+        }]
+      : []),
     ...own.routes,
     ...(crime.accomplice
       ? [{ checkId: "accomplice", label: `Link the accomplice to the ${w.culprit} (at least 1)`, ways: [`a call or message between the ${w.culprit} and the accomplice`, 'a message, item or device file tagged proves ["accomplice"]'] }]
@@ -152,6 +166,8 @@ export function storyProblems(city: City, crime: CrimeBase, cast: Cast, story: S
   const inStory = new Set([...story.events.flatMap((e) => e.actors), ...story.comms.flatMap((m) => [m.from, m.to]), ...story.purchases.map((p) => p.who)]);
   const missing = cast.characters.filter((c) => c.role === "suspect" && !inStory.has(c.id)).map((c) => `${c.name} (${c.id})`);
   if (missing.length) early.push(`These suspects don't appear in the story, so nothing backs up why police would suspect them: ${missing.join(", ")}. Give each one an event, call, message or purchase that does.`);
+  const victimComms = story.comms.filter((c) => c.from === crime.victimId || c.to === crime.victimId).length;
+  if (victimComms < 2) early.push(`The victim's phone has only ${victimComms} real call(s) or message(s) from the story; give the victim at least 2 calls or messages with people in the cast, so their phone isn't only junk.`);
   early.push(...clockProblems(story));
   const timeline = buildTimeline(city, crime, cast, story, seed);
   early.push(...checkTimeline(city, crime, cast, story, timeline));

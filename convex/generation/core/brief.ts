@@ -9,7 +9,7 @@ const SHAPE_RULE = "title: 2–5 words, like a case file name. summary: 2–4 pl
 /** Case days have no weekday, so any weekday in the brief is invented. */
 const WEEKDAYS = /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i;
 const ONLY_FACTS_RULE =
-  "Use only the known facts below, worded plainly: no weekdays (cases use Day 1, Day 2...), no part of day that disagrees with the times given, and no actions or details that aren't listed (e.g. why someone came to the room).";
+  "Use only the known facts below, worded plainly: no weekdays (cases use Day 1, Day 2...), no part of day that disagrees with the times given, no early or late added to a time, and no actions or details that aren't listed (e.g. why someone came to the room: use how it was found when it is given).";
 
 /** The brief's rules: the kind's, plus the shape every brief has. */
 export function briefRules(crime: CrimeBase) {

@@ -407,9 +407,10 @@ export const judge = internalAction({
         (group: { requiredEvidenceIds: string[] }) => group.requiredEvidenceIds.every((id) => selected.has(evidenceKey(id))),
       );
       const killer = input.accusation.culpritNpcId === input.solution.culpritNpcId;
-      const weapon = input.canonicalWeapon
+      // The bagged weapon or its exact name always counts; a correct description in the player's own words counts too.
+      const weapon = (input.canonicalWeapon
         ? input.accusation.weaponItemId === input.canonicalWeapon._id || sameText(input.accusation.weaponDescription, input.canonicalWeapon.name)
-        : semantic.weaponStar;
+        : false) || semantic.weaponStar;
       const motive = semantic.motiveStar;
       const evidence = evidenceGroupMatched && semantic.evidenceStar;
       const method = semantic.methodStar;

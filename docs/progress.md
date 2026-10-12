@@ -1,5 +1,27 @@
 # Progress
 
+## 2026-10-12 — Playtest audit: generation fixes (not yet tested with a live model)
+
+- Card purchases: a card payment must happen where the buyer is (an event at that place covering the time), so cameras and alibis agree with it. Hard timeline check, plus the story rule.
+- The victim's phone needs at least 2 real calls or messages from the story (early story check).
+- New solvability check "culprit-named": the killer's first name must appear in at least 2 pieces of evidence (1 on hard) players can find without questioning the right witness (not interviews, cameras, the killer's own phone or own records). The story plan lists ways to meet it.
+- New easy-only check "herring": an innocent seen near the scene in the hour before the crime must have a provable alibi at the crime time.
+- The brief gets "how it was found" (the finder's discovery event from the story) and is told not to add early or late to times.
+- `GENERATION_ONLY_MODEL` (Convex env) runs every generation and grading call on one model with no fallback, e.g. `codex:gpt-6-sol` for a test run that never reaches Kimi. Interviews still use their own model.
+
+## 2026-10-12 — Playtest audit fixes
+
+From a full easy playthrough (Regent Hotel Death). LLM prompts and checks were left alone on purpose.
+- Scoring: a correct weapon in the player's own words now earns the weapon star (the grader's verdict counts, not only the exact item name).
+- Case report: the notebook picker stays open to cite several pieces, shows "✓ Cited", and says citing pins to the clueboard; Review lists what is still missing instead of doing nothing.
+- Interviews: choosing Interview brings the person in straight away; Enter sends (Shift+Enter for a new line).
+- Rooms: doors no longer sit on the stairs and lift buttons; other spots say "Wait, you're busy" during a search; clicking a searched spot scrolls smoothly to its finds without changing the address.
+- Found objects have a plain "Bag for lab" button and a one-time tip about bagging.
+- Notebook reopens on the last tab; "Show partner" only shows with a partner. Phones found on site open over that place.
+- Autopsy is one short hold.
+- Case building (new cases; marked repairs also apply to older cases when a room opens): toxicology names the poison only (repaired); phone filler is never dated after the body is found (repaired); passers-by keep one look across cameras (repaired); building cameras take a minute per room and name the doors used; everyday objects sit in sensible spots, repeat less and appear less often; story objects without their spot go to a sensible one; the hotel has a reception desk and kitchen, the café and diner have kitchens, and the garage, bar and warehouse have their own room names (city version 2, room ids unchanged).
+- Not changed: interview reply speed (model), the brief contradicting the story, purchases not on camera, and how findable the killer is (all LLM pipeline).
+
 ## 2026-10-12 — Unknown people in the notebook
 
 - People tab: **+ Someone you can't name yet** adds a placeholder ("Man in red jacket") with a note. Drag its ? onto camera sightings, or pick it from "Who is it?". Its card lists every sighting tagged with it.

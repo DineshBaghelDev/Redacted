@@ -174,6 +174,13 @@ export function checkTimeline(city: City, crime: CrimeBase, cast: Cast, story: S
   for (const p of story.purchases) {
     if (!people.has(p.who)) problems.push(`Purchase "${p.id}" has "${p.who}", who isn't a cast id. Use one of: ${[...people.keys()].join(", ")}.`);
     if (!city.places.some((pl) => pl.id === p.placeId)) problems.push(`Purchase "${p.id}" is at an unknown place.`);
+    // A card payment is a record of where someone was: the buyer must be there then, so cameras and alibis agree with it.
+    else if (people.has(p.who) && p.payment === "card" && !covering(p.who, p.time).some((e) => e.placeId === p.placeId)) {
+      const there = covering(p.who, p.time)[0];
+      problems.push(
+        `${nameOf(p.who)} pays by card at ${p.placeId} at ${formatTime(p.time)} (purchase "${p.id}"), but the story has them ${there ? `at ${there.placeId}` : "nowhere"} then. Give them an event at ${p.placeId} that covers ${formatTime(p.time)}, or move the purchase to a time they are there.`,
+      );
+    }
   }
   for (const item of story.items) {
     for (const r of [item.startRoomId, item.finalRoomId]) if (!roomOk(r)) problems.push(`Item "${item.id}" is in unknown room ${r}.${roomsOf(r)}`);

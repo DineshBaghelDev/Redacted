@@ -84,14 +84,31 @@ export function buildCctv(
     });
   }
 
-  function passRooms(entry: TimelineEntry, building: Building, from: string, to: string, time: number, skip: string) {
-    const route = roomRoute(building, from, to);
-    for (const roomId of route?.cameraRooms ?? []) {
-      if (roomId === skip) continue;
+  /**
+   * Camera rooms on a walk through a building, a minute per room so nobody is on two floors at once.
+   * Each sighting names the doors used, which is what a corridor camera actually shows.
+   */
+  function passRooms(entry: TimelineEntry, building: Building, from: string, to: string, time: number, skip: string, way: "arrive" | "leave" | "move") {
+    const path = roomRoute(building, from, to)?.path ?? [];
+    // Leaving counts forward from the minute they set off; arriving and moving count back from the minute they
+    // get there, so a walk never overlaps the stay it ends in.
+    const minute = (step: number) => way === "leave" ? time + step : Math.max(way === "move" ? time + step : -Infinity, entry.start - (path.length - 1 - step));
+    path.forEach((roomId, step) => {
+      if (roomId === skip || !building.cameraRoomIds.includes(roomId)) return;
       const room = findRoom(city, roomId)!.room;
-      const text = room.isEntrance ? (roomId === from ? "comes in" : "goes out") : "passes through";
-      row(cameraByRoom.get(roomId)!, entry, entry.placeId, "pass", text, time);
-    }
+      const text = room.isEntrance && way === "arrive" && step === 0 ? "comes in"
+        : room.isEntrance && way === "leave" && step === path.length - 1 ? "goes out"
+          : doorsUsed(path[step - 1], path[step + 1]);
+      row(cameraByRoom.get(roomId)!, entry, entry.placeId, "pass", text, minute(step));
+    });
+  }
+
+  function doorsUsed(previous?: string, next?: string) {
+    const label = (id: string) => {
+      const name = findRoom(city, id)!.room.name;
+      return /^(room|flat|unit|suite|apartment) /i.test(name) ? name : `the ${name.toLowerCase()}`;
+    };
+    return [previous && `comes from ${label(previous)}`, next && `goes into ${label(next)}`].filter(Boolean).join(", ") || "passes through";
   }
 
   for (const person of people) {
@@ -102,10 +119,10 @@ export function buildCctv(
         const buildingA = findRoom(city, a.roomId)!.place.building;
         const buildingB = findRoom(city, b.roomId)!.place.building;
         if (a.placeId === b.placeId) {
-          passRooms(b, buildingB, a.roomId, b.roomId, a.end, b.roomId);
+          passRooms(b, buildingB, a.roomId, b.roomId, a.end, b.roomId, "move");
         } else {
           const exit = a.leftVia ?? nearestEntrance(buildingA, a.roomId);
-          passRooms(a, buildingA, a.roomId, exit, a.end, a.roomId);
+          passRooms(a, buildingA, a.roomId, exit, a.end, a.roomId, "leave");
           const trip = streetRoute(city, a.placeId, b.placeId)!;
           let minute = a.end;
           trip.path.slice(1).forEach((placeId, s) => {
@@ -118,7 +135,7 @@ export function buildCctv(
             minute += street.minutes;
           });
           const entrance = b.enteredVia ?? nearestEntrance(buildingB, b.roomId);
-          passRooms(b, buildingB, entrance, b.roomId, a.end + trip.minutes, b.roomId);
+          passRooms(b, buildingB, entrance, b.roomId, a.end + trip.minutes, b.roomId, "arrive");
         }
       }
       const stayCamera = cameraByRoom.get(b.roomId);

@@ -1803,6 +1803,10 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
             "ember-cafe:back-room",
             "ember-cafe:back-door",
           ],
+          [
+            "ember-cafe:back-room",
+            "ember-cafe:kitchen",
+          ],
         ],
         "homeUnits": [],
         "rooms": [
@@ -1824,7 +1828,7 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
               "bin",
             ],
             "kind": "shopfloor",
-            "name": "Counter",
+            "name": "Café counter",
             "placeId": "ember-cafe",
           },
           {
@@ -1872,6 +1876,19 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
             "itemSlots": [],
             "kind": "entrance",
             "name": "Back door",
+            "placeId": "ember-cafe",
+          },
+          {
+            "floor": 0,
+            "id": "ember-cafe:kitchen",
+            "isEntrance": false,
+            "itemSlots": [
+              "kitchen drawer",
+              "bin",
+              "fridge",
+            ],
+            "kind": "kitchen",
+            "name": "Kitchen",
             "placeId": "ember-cafe",
           },
         ],
@@ -2627,6 +2644,14 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
             "regent-hotel:stairs",
           ],
           [
+            "regent-hotel:lobby",
+            "regent-hotel:reception",
+          ],
+          [
+            "regent-hotel:lobby",
+            "regent-hotel:kitchen",
+          ],
+          [
             "regent-hotel:stairs",
             "regent-hotel:corridor-1",
           ],
@@ -2816,6 +2841,31 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
             "itemSlots": [],
             "kind": "lift",
             "name": "Lift",
+            "placeId": "regent-hotel",
+          },
+          {
+            "floor": 0,
+            "id": "regent-hotel:reception",
+            "isEntrance": false,
+            "itemSlots": [
+              "under the counter",
+              "bin",
+            ],
+            "kind": "shopfloor",
+            "name": "Reception desk",
+            "placeId": "regent-hotel",
+          },
+          {
+            "floor": 0,
+            "id": "regent-hotel:kitchen",
+            "isEntrance": false,
+            "itemSlots": [
+              "kitchen drawer",
+              "bin",
+              "fridge",
+            ],
+            "kind": "kitchen",
+            "name": "Hotel kitchen",
             "placeId": "regent-hotel",
           },
           {
@@ -3335,7 +3385,7 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
               "bin",
             ],
             "kind": "shopfloor",
-            "name": "Counter",
+            "name": "Bar",
             "placeId": "blue-lantern",
           },
           {
@@ -3360,7 +3410,7 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
               "bin",
             ],
             "kind": "storage",
-            "name": "Back room",
+            "name": "Cellar",
             "placeId": "blue-lantern",
           },
           {
@@ -3429,6 +3479,10 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
             "route-9-diner:back-room",
             "route-9-diner:back-door",
           ],
+          [
+            "route-9-diner:back-room",
+            "route-9-diner:kitchen",
+          ],
         ],
         "homeUnits": [],
         "rooms": [
@@ -3450,7 +3504,7 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
               "bin",
             ],
             "kind": "shopfloor",
-            "name": "Counter",
+            "name": "Diner counter",
             "placeId": "route-9-diner",
           },
           {
@@ -3498,6 +3552,19 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
             "itemSlots": [],
             "kind": "entrance",
             "name": "Back door",
+            "placeId": "route-9-diner",
+          },
+          {
+            "floor": 0,
+            "id": "route-9-diner:kitchen",
+            "isEntrance": false,
+            "itemSlots": [
+              "kitchen drawer",
+              "bin",
+              "fridge",
+            ],
+            "kind": "kitchen",
+            "name": "Kitchen",
             "placeId": "route-9-diner",
           },
         ],
@@ -3556,7 +3623,7 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
             "isEntrance": true,
             "itemSlots": [],
             "kind": "entrance",
-            "name": "Front",
+            "name": "Forecourt",
             "placeId": "rusk-garage",
           },
           {
@@ -3568,7 +3635,7 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
               "bin",
             ],
             "kind": "shopfloor",
-            "name": "Counter",
+            "name": "Service desk",
             "placeId": "rusk-garage",
           },
           {
@@ -3593,7 +3660,7 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
               "bin",
             ],
             "kind": "storage",
-            "name": "Back room",
+            "name": "Parts store",
             "placeId": "rusk-garage",
           },
           {
@@ -3698,7 +3765,7 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
             "isEntrance": true,
             "itemSlots": [],
             "kind": "entrance",
-            "name": "Front",
+            "name": "Gatehouse",
             "placeId": "pier-9",
           },
           {
@@ -3710,7 +3777,7 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
               "bin",
             ],
             "kind": "shopfloor",
-            "name": "Counter",
+            "name": "Dispatch desk",
             "placeId": "pier-9",
           },
           {
@@ -3735,7 +3802,7 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
               "bin",
             ],
             "kind": "storage",
-            "name": "Back room",
+            "name": "Warehouse floor",
             "placeId": "pier-9",
           },
           {
@@ -4003,6 +4070,6 @@ exports[`V1 city > never changes by accident (cases store these ids) 1`] = `
       "minutes": 6,
     },
   ],
-  "version": 1,
+  "version": 2,
 }
 `;

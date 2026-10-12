@@ -87,7 +87,7 @@ export const places: Place[] = [
   ]),
 
   // Midtown
-  place("ember-cafe", "Ember Café", "midtown", "public", (id) => shop(id, { cameras: ["counter"] }), [
+  place("ember-cafe", "Ember Café", "midtown", "public", (id) => shop(id, { names: { counter: "Café counter" }, extras: [["kitchen", "Kitchen", "kitchen"]], cameras: ["counter"] }), [
     "owner",
     "barista",
     "waiter",
@@ -170,7 +170,13 @@ export const places: Place[] = [
     ["doctor", "nurse", "pharmacist", "receptionist"],
   ),
   place("regent-hotel", "Regent Hotel", "midtown", "public", (id) =>
-    apartment(id, { floors: 4, unitsPerFloor: 3, unitLabel: "Room", cameras: ["lobby", "lift", "corridors"] }),
+    apartment(id, {
+      floors: 4,
+      unitsPerFloor: 3,
+      unitLabel: "Room",
+      ground: [["reception", "Reception desk", "shopfloor"], ["kitchen", "Hotel kitchen", "kitchen"]],
+      cameras: ["lobby", "lift", "corridors"],
+    }),
     ["manager", "receptionist", "housekeeper"],
   ),
   place("police-bureau", "Police Bureau", "midtown", "bureau", (id) =>
@@ -195,23 +201,24 @@ export const places: Place[] = [
   ),
 
   // Eastside
-  place("blue-lantern", "Blue Lantern Bar", "eastside", "public", (id) => shop(id, { cameras: ["front", "counter"] }), [
+  place("blue-lantern", "Blue Lantern Bar", "eastside", "public", (id) => shop(id, { names: { counter: "Bar", "back-room": "Cellar" }, cameras: ["front", "counter"] }), [
     "owner",
     "bartender",
     "waiter",
     "bouncer",
   ]),
-  place("route-9-diner", "Route 9 Diner", "eastside", "public", (id) => shop(id, { cameras: ["front"] }), [
+  place("route-9-diner", "Route 9 Diner", "eastside", "public", (id) => shop(id, { names: { counter: "Diner counter" }, extras: [["kitchen", "Kitchen", "kitchen"]], cameras: ["front"] }), [
     "owner",
     "cook",
     "waiter",
   ]),
   place("rusk-garage", "Rusk Auto Garage", "eastside", "work", (id) =>
-    shop(id, { extras: [["workshop", "Workshop", "garage", true]], cameras: ["workshop"] }),
+    shop(id, { names: { front: "Forecourt", counter: "Service desk", "back-room": "Parts store" }, extras: [["workshop", "Workshop", "garage", true]], cameras: ["workshop"] }),
     ["owner", "mechanic", "mechanic"],
   ),
   place("pier-9", "Pier 9 Warehouse", "eastside", "work", (id) =>
     shop(id, {
+      names: { front: "Gatehouse", counter: "Dispatch desk", "back-room": "Warehouse floor" },
       extras: [
         ["bay-1", "Storage bay 1", "storage"],
         ["bay-2", "Storage bay 2", "storage"],
@@ -261,4 +268,4 @@ export const streets: Street[] = [
   street("rusk-garage", "pier-9", 6),
 ];
 
-export const city: City = { version: 1, places, streets };
+export const city: City = { version: 2, places, streets };

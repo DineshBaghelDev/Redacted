@@ -100,3 +100,15 @@ describe("item spots", () => {
     expect(problems.join(" | ")).toMatch(/has nowhere to leave an item/);
   });
 });
+
+describe("card purchases", () => {
+  it("must happen where the buyer is", async () => {
+    const { cast, crimeCore, story } = await import("../../fixtures/caseEasy");
+    const { city } = await import("../../fixtures/city");
+    const card = story.purchases.find((p) => p.payment === "card")!;
+    const elsewhere = city.places.find((pl) => pl.id !== card.placeId && pl.kind !== "bureau")!.id;
+    const moved = { ...story, purchases: story.purchases.map((p) => (p.id === card.id ? { ...p, placeId: elsewhere } : p)) };
+    const problems = checkTimeline(city, crimeCore, cast, moved, buildTimeline(city, crimeCore, cast, moved, 1234));
+    expect(problems.join(" | ")).toMatch(new RegExp(`pays by card at ${elsewhere}`));
+  });
+});

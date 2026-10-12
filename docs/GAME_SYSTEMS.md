@@ -207,7 +207,7 @@ discover source/item
   -> read the stored result on the report
 ```
 
-The victim's body is a known lab source for autopsy and body-based tests; it does not require inventing a collectible item. Other tests still require their stored item or room source to be discovered.
+The autopsy is one short hold. The victim's body is a known lab source for autopsy and body-based tests; it does not require inventing a collectible item. Other tests still require their stored item or room source to be discovered.
 
 Supported base test types:
 

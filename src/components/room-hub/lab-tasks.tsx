@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
-import { ScrubPad } from "./gestures";
+import { HoldButton, ScrubPad } from "./gestures";
 import { play } from "../../lib/sound";
 
 export type LabTest = "fingerprint" | "footprint" | "dna" | "blood" | "toxicology" | "fiber" | "ballistics" | "autopsy";
@@ -15,7 +15,7 @@ const HINTS: Record<LabTest, string> = {
   fiber: "Grab the tape at the left and pull it all the way across in one go",
   footprint: "Stir the plaster: drag round and round the bowl",
   ballistics: "Drag the lower bullet until its grooves match the top one",
-  autopsy: "Examine each part the pathologist names, in order",
+  autopsy: "Hold to examine the body",
 };
 
 /** A stable 0–1 value per evidence and step, so each piece of evidence gets its own layout. */
@@ -288,47 +288,16 @@ function Scope({ seed, onDone, say }: Game) {
 }
 
 /** Regions of the body on the table, seen from above: the body's left is on the viewer's right. */
-const REGIONS = [
-  { name: "the head", x: 50, y: 12, w: 14, h: 14 },
-  { name: "the neck", x: 50, y: 22, w: 10, h: 5 },
-  { name: "the chest", x: 50, y: 34, w: 26, h: 14 },
-  { name: "the abdomen", x: 50, y: 52, w: 24, h: 14 },
-  { name: "the body's right arm", x: 24, y: 42, w: 10, h: 30 },
-  { name: "the body's left arm", x: 76, y: 42, w: 10, h: 30 },
-  { name: "the body's right leg", x: 41, y: 79, w: 12, h: 22 },
-  { name: "the body's left leg", x: 59, y: 79, w: 12, h: 22 },
-];
-
-/**
- * Autopsy: the pathologist dictates four regions in a seeded order and you examine each on an unlabelled body.
- * Left and right are the body's own, as a pathologist says them. A wrong region is corrected, never reset.
- * It shows no findings; the stored report is the only result.
- */
-function Autopsy({ seed, onDone, say }: Game) {
-  const order = [...REGIONS.keys()].sort((a, b) => seeded(seed, a) - seeded(seed, b)).slice(0, 4);
-  const [next, setNext] = useState(0);
-  const dictation = order.map((index, step) => <span className={step < next ? "text-[#e5a18e]/45 line-through" : step === next ? "text-[#f1c987]" : ""} key={index}>{step ? ", then " : ""}{REGIONS[index].name}</span>);
-  function examine(index: number) {
-    if (index !== order[next]) { play("wrong"); say(`Not there. The pathologist asked for ${REGIONS[order[next]].name}.`); return; }
-    play("tap");
-    say("");
-    if (next === order.length - 1) { onDone(); return; }
-    setNext(next + 1);
-  }
+/** Autopsy: one steady hold over the body. The examination itself is the pathologist's job, not a puzzle. */
+function Autopsy({ onDone }: Game) {
   return (
-    <div className={`${AREA} flex flex-col bg-[#1a1412]`}>
-      <p className="px-3 pt-2 text-left text-xs normal-case leading-snug text-[#e4e6d8]">&ldquo;Examine {dictation}.&rdquo;</p>
-      <div className="relative mx-auto aspect-square min-h-0 flex-1">
-        <svg aria-hidden="true" className="absolute inset-0 h-full w-full" viewBox="0 0 100 100">
-          <ellipse cx="50" cy="12" fill="none" rx="7" ry="8" stroke="#e5a18e" strokeOpacity=".45" />
-          <path d="M36 22 Q50 19 64 22 L64 62 L62 92 L52 92 L50 66 L48 92 L38 92 L36 62 Z" fill="none" stroke="#e5a18e" strokeOpacity=".45" />
-          <path d="M36 26 L20 58 M64 26 L80 58" stroke="#e5a18e" strokeOpacity=".45" strokeWidth="3" />
-        </svg>
-        {REGIONS.map((region, index) => {
-          const done = order.slice(0, next).includes(index);
-          return <button aria-label={`Examine ${region.name}`} className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-sm transition hover:bg-[#e5a18e]/15 ${done ? "bg-[#e5a18e]/25" : ""}`} key={region.name} onClick={() => examine(index)} style={{ left: `${region.x}%`, top: `${region.y}%`, width: `${region.w}%`, height: `${region.h}%` }} type="button" />;
-        })}
-      </div>
+    <div className={`${AREA} flex flex-col items-center justify-center gap-3 bg-[#1a1412] p-4`}>
+      <svg aria-hidden="true" className="h-28 w-28" viewBox="0 0 100 100">
+        <ellipse cx="50" cy="12" fill="none" rx="7" ry="8" stroke="#e5a18e" strokeOpacity=".45" />
+        <path d="M36 22 Q50 19 64 22 L64 62 L62 92 L52 92 L50 66 L48 92 L38 92 L36 62 Z" fill="none" stroke="#e5a18e" strokeOpacity=".45" />
+        <path d="M36 26 L20 58 M64 26 L80 58" stroke="#e5a18e" strokeOpacity=".45" strokeWidth="3" />
+      </svg>
+      <HoldButton className="max-w-56" label="Hold to examine" ms={1200} onDone={onDone} />
     </div>
   );
 }

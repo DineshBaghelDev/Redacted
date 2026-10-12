@@ -1,5 +1,6 @@
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import { poisonName } from "../generation/core/crimes/murder";
 
 const turnaround = {
   fingerprint: 60,
@@ -90,4 +91,13 @@ export async function restoreBodyForensicSources(ctx: MutationCtx, caseId: Id<"c
     repaired++;
   }
   return repaired;
+}
+
+/** Older cases named the poison's packet or drink in the toxicology report; name only the substance. */
+export async function repairToxicologyText(ctx: MutationCtx, caseId: Id<"cases">) {
+  for await (const output of ctx.db.query("forensicOutputs").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) {
+    const old = output.testType === "toxicology" ? /^Traces of (.+) found in the blood\.$/.exec(output.result) : null;
+    const result = old ? `Traces of ${poisonName(old[1])} found in the blood.` : output.result;
+    if (result !== output.result) await ctx.db.patch(output._id, { result });
+  }
 }

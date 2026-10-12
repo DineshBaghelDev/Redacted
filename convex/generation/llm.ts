@@ -71,6 +71,9 @@ const STAGE_MODELS: Record<string, string[]> = {
 
 /** The models to try for a stage, in order; providers without a key in this environment are skipped. */
 export function modelsFor(stage: string) {
+  // A test run on one model with no fallback (e.g. GENERATION_ONLY_MODEL=codex:gpt-6-sol, so nothing reaches Kimi).
+  const only = process.env.GENERATION_ONLY_MODEL;
+  if (only) return [only];
   const list = (STAGE_MODELS[stage] ?? [MODELS.main]).filter((m) => {
     const [prefix] = m.split(":");
     return !(prefix in PROVIDERS) || !!process.env[PROVIDERS[prefix as keyof typeof PROVIDERS].key];
