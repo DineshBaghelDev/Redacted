@@ -1,5 +1,12 @@
 # Design Decisions
 
+## 2026-10-12 — Playtest fixes
+
+- Shortcut keys toggle their screen. The case file is a quick reference, so closing it returns you to where you were rather than the bureau.
+- Notebook text must be selectable; dragging starts from a small handle or a person's photo.
+- The camera screen keeps only the tape and its sightings; the per-hour list was redundant.
+- Starred words in interview replies read as italic actions or emphasis.
+
 ## 2026-10-12 — AI limits players can understand
 
 - Limits are generous enough that normal play never meets them (an interview reply takes seconds). When hit, the player gets a plain sentence with how long to wait; the daily game-wide cap says interviews and grading are resting until tomorrow. Test data in production is left as is.

@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-10-12 — Playtest fixes
+
+- Your marker on the city map and in building rooms is about twice as big; the partner marker is bigger too.
+- Pressing M, B or C again closes the map, clueboard or case file. Closing the case file goes back to the screen it was opened from.
+- Notebook entries are dragged by their ⠿ handle (people by their photo), so text can be selected. The whole entry still shows while dragging.
+- Removed the "This hour" list under the camera tape.
+- Interview replies show `*text*` and `**text**` in italics instead of raw stars.
+
 ## 2026-10-12 — v1.1.0: AI rate limits
 
 - Added `@convex-dev/rate-limiter` and `convex/lib/rateLimits.ts`. Per player: interview questions/retries 8 a minute and 400 a day; report grading 3 at once, refilling 6 an hour; new rooms 30 a day. Whole game: 5,000 AI calls a day. Limits roll back with the mutation, so a rejected question costs nothing.
