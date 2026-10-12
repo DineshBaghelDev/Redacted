@@ -2,7 +2,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 
 /** Bump when the filler below changes, so cases opened earlier get the new set on their next replay. */
-const FILLER_VERSION = 3;
+const FILLER_VERSION = 4;
 const PREFIX = "filler/";
 
 /** Small deterministic random generator seeded from text, so a case always gets the same filler. */
@@ -78,8 +78,13 @@ export function crowdFor(descriptions: string[]) {
   };
 }
 
-function sighting(random: () => number, crowd: ReturnType<typeof crowdFor>) {
-  return `${pick(random, crowd.heights)} ${pick(random, PEOPLE)}, ${pick(random, BUILDS)}, ${pick(random, crowd.clothes)}`;
+/**
+ * The case's regulars: a handful of passers-by, each with one fixed look, so the same outfit on two
+ * tapes is always the same stranger and never changes height or gender between cameras.
+ */
+export function crowdRoster(random: () => number, crowd: ReturnType<typeof crowdFor>) {
+  return [...crowd.clothes].sort(() => random() - 0.5).slice(0, 8)
+    .map((outfit) => `${pick(random, crowd.heights)} ${pick(random, PEOPLE)}, ${pick(random, BUILDS)}, ${outfit}`);
 }
 
 /**
@@ -90,7 +95,8 @@ export async function ensureCaseFiller(ctx: MutationCtx, caseId: Id<"cases">) {
   const playableCase = await ctx.db.get(caseId);
   if (!playableCase || (playableCase.fillerVersion ?? 0) >= FILLER_VERSION) return;
   const firstTime = (playableCase.fillerVersion ?? 0) < 1;
-  const end = playableCase.discoveryMinute ?? 2 * 1440;
+  // Nothing ordinary arrives after the body is found: the case opens then.
+  const end = playableCase.discoveryMinute || 2 * 1440;
   const start = Math.max(0, end - 2 * 1440);
   const between = (random: () => number, from: number, to: number) => from + Math.floor(random() * Math.max(1, to - from));
 
@@ -118,13 +124,13 @@ export async function ensureCaseFiller(ctx: MutationCtx, caseId: Id<"cases">) {
     }
     for (const message of (await ctx.db.query("messages").withIndex("by_deviceId_and_timestamp", (q) => q.eq("deviceId", device._id)).take(200)).filter(isFiller)) {
       const [label, direction, body] = FAMILY.has(message.otherPartyLabel ?? "") ? pick(random, MESSAGES) : [message.otherPartyLabel, message.direction, message.body];
-      const timestamp = direction === "outgoing" && lastSend !== undefined && message.timestamp > lastSend ? timeFor(direction) : message.timestamp;
-      await ctx.db.patch(message._id, { otherPartyLabel: label, direction, body, timestamp });
+      const late = message.timestamp > end || (direction === "outgoing" && lastSend !== undefined && message.timestamp > lastSend);
+      await ctx.db.patch(message._id, { otherPartyLabel: label, direction, body, timestamp: late ? timeFor(direction) : message.timestamp });
     }
     for (const call of (await ctx.db.query("callLogs").withIndex("by_deviceId_and_timestamp", (q) => q.eq("deviceId", device._id)).take(200)).filter(isFiller)) {
       const [label, direction] = FAMILY.has(call.otherPartyLabel ?? "") ? pick(random, CALLERS) : [call.otherPartyLabel, call.direction];
-      const timestamp = direction === "outgoing" && lastSend !== undefined && call.timestamp > lastSend ? timeFor(direction) : call.timestamp;
-      await ctx.db.patch(call._id, { otherPartyLabel: label, direction, timestamp });
+      const late = call.timestamp > end || (direction === "outgoing" && lastSend !== undefined && call.timestamp > lastSend);
+      await ctx.db.patch(call._id, { otherPartyLabel: label, direction, timestamp: late ? timeFor(direction) : call.timestamp });
     }
   }
 
@@ -140,10 +146,11 @@ export async function ensureCaseFiller(ctx: MutationCtx, caseId: Id<"cases">) {
   const descriptions: string[] = [];
   for await (const person of ctx.db.query("npcs").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) descriptions.push(person.publicDescription);
   const crowd = crowdFor(descriptions);
+  const roster = crowd.heights.length ? crowdRoster(seeded(`${caseId}:crowd`), crowd) : [];
   const cameras: Doc<"cctvCameras">[] = [];
   for await (const camera of ctx.db.query("cctvCameras").withIndex("by_caseId", (q) => q.eq("caseId", caseId))) cameras.push(camera);
   for (const camera of cameras) {
-    if (camera.faulty || !crowd.heights.length || !crowd.clothes.length) continue;
+    if (camera.faulty || !roster.length) continue;
     const random = seeded(`${camera._id}:filler`);
     const from = await placeName(camera.streetFromPlaceId);
     const to = await placeName(camera.streetToPlaceId);
@@ -152,7 +159,7 @@ export async function ensureCaseFiller(ctx: MutationCtx, caseId: Id<"cases">) {
     for (let index = 0; index < count; index++) {
       const time = between(random, Math.max(camera.startTime, start), Math.min(camera.endTime, end));
       const movement = street ? (random() < 0.5 ? `walking from ${from} towards ${to}` : `walking from ${to} towards ${from}`) : pick(random, ["passing through", "walking past", "waiting briefly, then leaving"]);
-      await ctx.db.insert("cctvRecords", { caseId, cameraId: camera._id, evidenceId: `${PREFIX}${camera.sourceId}/${index}`, startTime: time, endTime: time + 1, npcIds: [], vehicleIds: [], description: `${sighting(random, crowd)}: ${movement}`, kind: "pass" });
+      await ctx.db.insert("cctvRecords", { caseId, cameraId: camera._id, evidenceId: `${PREFIX}${camera.sourceId}/${index}`, startTime: time, endTime: time + 1, npcIds: [], vehicleIds: [], description: `${pick(random, roster)}: ${movement}`, kind: "pass" });
     }
   }
   await ctx.db.patch(caseId, { fillerVersion: FILLER_VERSION });
