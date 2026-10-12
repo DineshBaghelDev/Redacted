@@ -21,7 +21,7 @@ function timeLabel(minutes: number) {
 }
 
 /** Display recovered phone or laptop records and let players inspect and pin their contents. */
-export function DeviceViewer({ roomCode, title, data, nodes, onBack, onPinError, busy, error }: {
+export function DeviceViewer({ roomCode, title, data, nodes, onBack, onPinError, busy, error, scene = "records" }: {
   roomCode: string;
   title: string;
   data: DeviceData;
@@ -30,6 +30,8 @@ export function DeviceViewer({ roomCode, title, data, nodes, onBack, onPinError,
   onPinError: (error: unknown) => void;
   busy: boolean;
   error?: string;
+  /** Read where it was found: inside a building, or at the bureau. */
+  scene?: "records" | "place";
 }) {
   const [app, setApp] = useState<App>("home");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export function DeviceViewer({ roomCode, title, data, nodes, onBack, onPinError,
     setOpenId(null);
   }
 
-  return <section aria-label={`${title} records`} className="game-records-scene absolute inset-0 z-40 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]">
+  return <section aria-label={`${title} records`} className={`game-${scene}-scene absolute inset-0 z-40 flex flex-col overflow-hidden bg-[#071014] text-[#e4e6d8]`}>
     <header className="game-station-header flex shrink-0 items-center gap-3 px-4 py-3 sm:px-6">
       <InvestigationIcon className="size-10" name={data.type === "laptop" ? "file" : "device"} />
       <div className="min-w-0 flex-1"><p className="text-xs uppercase tracking-widest text-[#a5c6bb]">Recovered {data.type}</p><h2 className="break-words text-lg uppercase sm:text-2xl">{title}</h2></div>

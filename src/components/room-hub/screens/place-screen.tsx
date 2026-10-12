@@ -107,7 +107,7 @@ export function PlaceScreen({ roomCode, onBack }: { roomCode: string; onBack: ()
   if (!place) return <PlaceMessage message="There are no rooms to explore here right now." onBack={onBack} />;
   if (cameraOpen) return <CctvScreen roomCode={roomCode} onBack={() => setCameraOpen(false)} backLabel="Back to room" />;
   const activeDevice = place.items.find((item) => item.id === activeDeviceId && item.device?.read);
-  if (activeDevice?.device) return <DeviceViewer roomCode={roomCode} title={activeDevice.name} data={activeDevice.device} nodes={boardNodes} onBack={() => setActiveDeviceId(null)} onPinError={(caught) => setError(errorText(caught, "Could not update this pin."))} busy={working || Boolean(place.action)} error={error} />;
+  if (activeDevice?.device) return <DeviceViewer roomCode={roomCode} title={activeDevice.name} data={activeDevice.device} nodes={boardNodes} onBack={() => setActiveDeviceId(null)} onPinError={(caught) => setError(errorText(caught, "Could not update this pin."))} busy={working || Boolean(place.action)} error={error} scene="place" />;
 
   const currentRoom = place.rooms.find((room) => room.id === place.currentRoomId);
   // Bagged objects stay on their spot's card (marked "Bagged"); the lab and notebook are where carried evidence is used.
