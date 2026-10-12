@@ -75,7 +75,7 @@ This file records decisions from the technical design discussion so agents do no
 - Call logs must include timestamp, incoming/outgoing, duration.
 - No social posts in V1.
 - Public records included.
-- Forensic outputs generated upfront; requests have in-game turnaround.
+- Forensic outputs are generated upfront; the bench task costs 5 in-game minutes and immediately reveals the stored result.
 - Fingerprints and footprints explicitly supported.
 
 ## Player deduction
@@ -121,7 +121,7 @@ This file records decisions from the technical design discussion so agents do no
 - Deterministic action costs.
 - Timed actions use one continuous shared clock: concurrent actions overlap, and the clock pauses when none remain active.
 - Travel uses city-edge travel cost.
-- Reports/forensics may become available after elapsed game time.
+- Completed forensic bench work reveals its stored report immediately after the 5-minute action.
 - Default deadline = code-estimated optimal investigation time + one in-game day (1440 minutes).
 - Users may override the default case deadline.
 - Difficulty changes case complexity, not arbitrary action-time multipliers.

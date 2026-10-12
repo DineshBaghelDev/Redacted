@@ -16,6 +16,7 @@ Fixed and checked (tests and a signed-in Chrome run; details in `docs/progress.m
 - **P0-6 Fair scoring:** "You said / The truth" beside What really happened.
 - **Live playtest 2–18:** duplicate clutter, clutter tell, near-empty phones and cameras (seeded filler), improvised NPC lies, NPC time sense, statement titles, "Name asks:" prefix, bureau cameras, fake Play label, payment times, lab leftovers, "Other" record labels, Main menu exit, solo lobby. The victim's bag now uses the evidence icon (a new icon would need art).
 - **P1:** one name per station and action, one notification stack, archive deadline text, interviews-at-bureau hint, solo "1–2 detectives" wording, team notes on notebook entries, interview transcript restyled without new art.
+- **Docs drift:** current lab workflow now agrees in `GAME_SYSTEMS.md` and `DECISIONS.md`; historical decisions remain dated in `design decisions.md`.
 
 Still open after the 2026-10-12 art pass:
 
