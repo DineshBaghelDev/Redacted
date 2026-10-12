@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-12 — Narrow-screen game check
+
+- Inspected the signed-in forensic lab at a measured 500×698 Chrome viewport: the empty bench, selected evidence bag, tool picker, and active powder task fit the mobile layout without document-wide horizontal overflow. The illustrated tray leaves the task graphic and instructions clear.
+- Travelled from the lab to Pier 9 Warehouse in the same solo room. At 500px wide, the entrance's door actions and ten-room floor plan remained readable and scrollable; `document.documentElement.scrollWidth` matched the 500px viewport. The desktop browser was restored after capture.
+- A separate local Playwright capture at 390×844 showed the signed-out menu plates and actions without clipping. Signed-in play at 390px and render performance on a mid-range phone remain unmeasured; the blind first-time-player playtest remains the human ship check.
+
 ## 2026-10-12 — Illustrated hands-on lab surface
 
 - Added an inspected, low-detail forensic tray behind the existing seeded lab tasks. The tray uses a decorative image layer, so pointer coordinates and the 224px work area do not change. The outer bench frame steps aside only while a task is open to avoid nested frames.
