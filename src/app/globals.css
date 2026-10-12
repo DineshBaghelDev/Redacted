@@ -968,6 +968,8 @@
 .map-room[data-known="true"] { border-style: solid; border-color: #573821; background: #f4ead2; color: #3a2a1b; }
 .map-room[data-current="true"] { border-color: #8b1d1d; background: #f1d9a8; color: #8b1d1d; font-weight: 700; }
 .map-room:hover:not(:disabled) { border-color: #8b1d1d; }
+.map-room-token { position: absolute; top: -7px; right: -5px; width: 17px; height: 17px; }
+.map-room-token[data-with-player="true"] { right: 11px; }
 
 @media (max-width: 639px) {
   .game-icon-mobile.game-control-button, .game-icon-mobile.clue-board-button {

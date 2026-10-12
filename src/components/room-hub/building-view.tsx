@@ -102,7 +102,7 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
           >
             <span aria-hidden="true" className="room-control-sprite room-control-sprite--door" />
             <span>{next.name}{level}</span>
-            <span className="text-[0.6rem] normal-case text-[#c8d8d2]/60">{next.walkMinutes ?? 1} min{place.partners.some((partner) => partner.roomId === next.id) ? " · ◆ partner" : ""}</span>
+            <span className="flex items-center gap-1 text-[0.6rem] normal-case text-[#c8d8d2]/60">{next.walkMinutes ?? 1} min{place.partners.some((partner) => partner.roomId === next.id) ? <><span aria-hidden="true" className="map-token map-token--partner size-4" /> partner</> : null}</span>
           </button>
         );
       })}
@@ -209,7 +209,9 @@ export function BuildingMap({ place, floor, floors, busy, onFloor, onWalk }: { p
                 title={current ? "You are here" : `Walk here · ${room.walkMinutes ?? "?"} min`}
                 type="button"
               >
-                <span className="line-clamp-2">{current ? "● " : partner ? "◆ " : ""}{room.name}{done ? " ✓" : ""}</span>
+                <span className="line-clamp-2">{room.name}{done ? " ✓" : ""}</span>
+                {current ? <span aria-hidden="true" className="map-token map-token--player map-room-token" /> : null}
+                {partner ? <span aria-hidden="true" className="map-token map-token--partner map-room-token" data-with-player={current} /> : null}
               </button>
             );
           })}

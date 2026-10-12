@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-12 — Floor-plan markers and production build
+
+- The building map and door labels now reuse the detective sprites already shown on the city map. Both detectives can be marked in the same room without obscuring its name.
+- Set the share-image URL base from the deployment host, with localhost for local development. The isolated Webpack production build passed; the default Turbopack build could not run in the isolated checkout because its linked dependencies pointed outside that checkout.
+- The focused room test passed; TypeScript and focused lint checks passed.
+
 ## 2026-10-12 — Daylight and phone message details
 
 - Bureau and room scenes now shift subtly through morning, afternoon, evening and night using the shared case clock. Room floor art remains visible and search targets stay clear.
