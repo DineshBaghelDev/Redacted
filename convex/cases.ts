@@ -18,6 +18,7 @@ import { ensureCaseRecords, ensurePaymentTimes } from "./lib/publishRecords";
 import { ensureCaseStatements } from "./lib/publishStatements";
 import { ensureCaseWorld } from "./lib/publishWorld";
 import { settleActions } from "./world";
+import { markedName } from "./lib/sightingLabels";
 
 type Brief = {
   title?: unknown;
@@ -378,7 +379,7 @@ export const getCctvTape = query({
   returns: v.union(v.null(), v.object({
     reviews: v.array(v.object({ minute: v.number(), ready: v.boolean() })),
     records: v.array(cctvRecord),
-    labels: v.array(v.object({ recordId: v.string(), npcId: v.id("npcs"), name: v.string() })),
+    labels: v.array(v.object({ recordId: v.string(), npcId: v.optional(v.id("npcs")), unknownPersonId: v.optional(v.id("unknownPeople")), name: v.string() })),
   })),
   handler: async (ctx, { roomCode, cameraId }) => {
     const cctv = await loadCctv(ctx, roomCode);
@@ -393,8 +394,8 @@ export const getCctvTape = query({
     const labels = [];
     for await (const label of ctx.db.query("cctvLabels").withIndex("by_sessionId_and_recordEvidenceId", (q) => q.eq("sessionId", cctv.member.session._id))) {
       if (!records.some((record) => record.evidenceId === label.recordEvidenceId)) continue;
-      const person = await ctx.db.get(label.npcId);
-      if (person) labels.push({ recordId: label.recordEvidenceId, npcId: label.npcId, name: person.name });
+      const name = await markedName(ctx, label);
+      if (name) labels.push({ recordId: label.recordEvidenceId, npcId: label.npcId, unknownPersonId: label.unknownPersonId, name });
     }
     return {
       labels,
@@ -404,20 +405,22 @@ export const getCctvTape = query({
   },
 });
 
-/** Mark who the detectives think a sighting shows, or clear it. Shared with the partner; never graded. */
+/** Mark who the detectives think a sighting shows (a known person or one of their unknown people), or clear it. Shared with the partner; never graded. */
 export const labelSighting = mutation({
-  args: { roomCode: v.string(), recordId: v.string(), npcId: v.union(v.id("npcs"), v.null()) },
+  args: { roomCode: v.string(), recordId: v.string(), npcId: v.union(v.id("npcs"), v.null()), unknownPersonId: v.optional(v.id("unknownPeople")) },
   returns: v.null(),
-  handler: async (ctx, { roomCode, recordId, npcId }) => {
+  handler: async (ctx, { roomCode, recordId, npcId, unknownPersonId }) => {
     const member = await getPlayingRoomMember(ctx, roomCode);
     if (!member?.session.caseId) throw new Error("Start the investigation first.");
     const record = await ctx.db.query("cctvRecords").withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", member.session.caseId!).eq("evidenceId", recordId)).unique();
     if (!record) throw new Error("That sighting is not part of this case.");
     if (npcId && !(await knownPeople(ctx, member.session)).has(npcId)) throw new Error("You have not come across this person yet.");
+    if (unknownPersonId && (await ctx.db.get(unknownPersonId))?.sessionId !== member.session._id) throw new Error("That unknown person is not in this case.");
     const existing = await ctx.db.query("cctvLabels").withIndex("by_sessionId_and_recordEvidenceId", (q) => q.eq("sessionId", member.session._id).eq("recordEvidenceId", recordId)).unique();
-    if (!npcId) { if (existing) await ctx.db.delete(existing._id); return null; }
-    if (existing) await ctx.db.patch(existing._id, { npcId });
-    else await ctx.db.insert("cctvLabels", { sessionId: member.session._id, recordEvidenceId: recordId, npcId });
+    const mark = { sessionId: member.session._id, recordEvidenceId: recordId, npcId: npcId ?? undefined, unknownPersonId: npcId ? undefined : unknownPersonId };
+    if (!mark.npcId && !mark.unknownPersonId) { if (existing) await ctx.db.delete(existing._id); return null; }
+    if (existing) await ctx.db.replace(existing._id, mark);
+    else await ctx.db.insert("cctvLabels", mark);
     return null;
   },
 });

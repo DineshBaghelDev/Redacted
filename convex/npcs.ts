@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { getPlayingRoomMember } from "./lib/auth";
 import { knownPeople } from "./lib/discoveries";
+import { spottedBy } from "./lib/sightingLabels";
 
 const publicNpc = v.object({
   id: v.id("npcs"),
@@ -15,12 +16,9 @@ const publicNpc = v.object({
   gender: v.optional(v.union(v.literal("male"), v.literal("female"), v.literal("nonbinary"))),
   /** Camera sightings the detectives themselves marked as this person ("Camera name · Day 2 21:40"). Never checked. */
   spotted: v.array(v.string()),
+  /** The team's own note on this person. */
+  note: v.optional(v.string()),
 });
-
-function clock(minute: number) {
-  const within = ((minute % 1440) + 1440) % 1440;
-  return `Day ${Math.floor(minute / 1440) + 1} ${String(Math.floor(within / 60)).padStart(2, "0")}:${String(within % 60).padStart(2, "0")}`;
-}
 
 const genders = new Set(["male", "female", "nonbinary"]);
 
@@ -51,12 +49,8 @@ export const list = query({
       .unique() : null;
     const gender = castGenders(castDraft?.output);
     const known = await knownPeople(ctx, member.session);
-    const spotted = new Map<string, string[]>();
-    for await (const label of ctx.db.query("cctvLabels").withIndex("by_sessionId_and_recordEvidenceId", (q) => q.eq("sessionId", member.session._id))) {
-      const record = await ctx.db.query("cctvRecords").withIndex("by_caseId_and_evidenceId", (q) => q.eq("caseId", member.session.caseId!).eq("evidenceId", label.recordEvidenceId)).unique();
-      const camera = record ? await ctx.db.get(record.cameraId) : null;
-      if (record && camera) spotted.set(label.npcId, [...(spotted.get(label.npcId) ?? []), `${camera.name} · ${clock(record.startTime)}`]);
-    }
+    const spotted = await spottedBy(ctx, member.session);
+    const notes = new Map((await ctx.db.query("notebookNotes").withIndex("by_sessionId_and_referenceId", (q) => q.eq("sessionId", member.session._id)).take(500)).map((row) => [row.referenceId, row.text]));
 
     const people = [];
     for await (const person of ctx.db
@@ -73,6 +67,7 @@ export const list = query({
         publicDescription: person.publicDescription,
         gender: gender.get(person.sourceId),
         spotted: spotted.get(person._id) ?? [],
+        note: notes.get(person._id),
       });
     }
     return people;

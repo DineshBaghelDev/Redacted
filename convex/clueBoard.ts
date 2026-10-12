@@ -4,6 +4,7 @@ import { mutation, query } from "./_generated/server";
 import { getPlayingRoomMember, getRoomMember, requireInvestigationOpen } from "./lib/auth";
 import { hasReadDevice } from "./lib/deviceAccess";
 import { CCTV_HALF_WINDOW, knownPeople } from "./lib/discoveries";
+import { markedName } from "./lib/sightingLabels";
 
 const MAX_NODES = 100;
 const MAX_EDGES = 200;
@@ -60,8 +61,8 @@ export const getNodes = query({
     // A pinned sighting shows the team's current "looks like" mark, so marking after pinning stays in sync.
     const marked = new Map<string, string>();
     for await (const label of ctx.db.query("cctvLabels").withIndex("by_sessionId_and_recordEvidenceId", (q) => q.eq("sessionId", session._id))) {
-      const person = await ctx.db.get(label.npcId);
-      if (person) marked.set(label.recordEvidenceId, person.name);
+      const name = await markedName(ctx, label);
+      if (name) marked.set(label.recordEvidenceId, name);
     }
     return nodes.map(({ _id, type, referenceId, text, x, y }) => ({ _id, type, referenceId, x, y,
       text: type === "cctv" && referenceId && marked.has(referenceId) ? `${text}\nYou think: ${marked.get(referenceId)}` : text }));
