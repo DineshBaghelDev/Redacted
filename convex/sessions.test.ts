@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import rateLimiterTest from "@convex-dev/rate-limiter/test";
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
@@ -11,6 +12,7 @@ const modules = import.meta.glob("./**/*.ts");
 
 test("a lobby keeps the selected passed case", async () => {
   const t = convexTest(schema, modules);
+  rateLimiterTest.register(t);
   const generationJobId = await t.run(async (ctx) => {
     const jobId = await ctx.db.insert("generationJobs", {
       seed: 7,

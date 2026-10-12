@@ -11,6 +11,7 @@ import { hasReadDevice } from "./lib/deviceAccess";
 import { CCTV_HALF_WINDOW, collectDiscoveries, knownPeople, namesPerson } from "./lib/discoveries";
 import { bureauRoomId, settleActions } from "./world";
 import { sameEvidence } from "./lib/evidenceIds";
+import { checkLimit } from "./lib/rateLimits";
 
 const MAX_QUESTION = 500;
 const proofTypes = new Set(["item", "forensic", "cctv", "public_record", "device_file", "call", "message", "statement"]);
@@ -232,6 +233,7 @@ export const sendQuestion = mutation({
         else if (exposed && exposed.backupExposedAt === undefined && lie.whenCaught === "backup-lie" && disproves(lie.backupLie?.disprovingEvidenceIds)) await ctx.db.patch(exposed._id, { backupExposedAt: conversation.nextSequence });
       }
     }
+    await checkLimit(ctx, "interviewQuestion", member.player.authUserId);
     const prompt = `${member.player.nickname} asks: ${body}${proof ? `\nShows evidence from the shared case file: ${proof.text}` : ""}`;
     const { messageId } = await saveMessage(ctx, components.agent, { threadId: conversation.threadId, userId: member.player._id, prompt });
     const turnId = await ctx.db.insert("npcPendingMessages", { conversationId: conversation._id, playerId: member.player._id, sequence: conversation.nextSequence, promptMessageId: messageId, proofEvidenceId: proof?.evidenceId, proofMissed: proofMissed || undefined, requestedPhoneId, requestedStatements: requestStatements || undefined, status: "waiting", createdAt: now });
@@ -282,6 +284,7 @@ export const retryFailed = mutation({
     if (!conversation) throw new Error("Open this interview first.");
     const latest = await ctx.db.query("npcPendingMessages").withIndex("by_conversationId_and_sequence", (q) => q.eq("conversationId", conversation._id)).order("desc").first();
     if (latest?.status !== "failed" || latest.canceled) throw new Error("There is no failed answer to retry.");
+    await checkLimit(ctx, "interviewQuestion", member.player.authUserId);
     await ctx.db.insert("npcPendingMessages", { conversationId: conversation._id, playerId: latest.playerId, sequence: conversation.nextSequence, promptMessageId: latest.promptMessageId, status: "queued", createdAt: Date.now() });
     await ctx.db.patch(conversation._id, { nextSequence: conversation.nextSequence + 1 });
     await ctx.scheduler.runAfter(0, internal.npcConversations.processNext, { conversationId: conversation._id });

@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import rateLimiterTest from "@convex-dev/rate-limiter/test";
 import agentTest from "@convex-dev/agent/test";
 import { convexTest } from "convex-test";
 import { afterEach, expect, test, vi } from "vitest";
@@ -14,6 +15,7 @@ async function setup() {
   vi.useFakeTimers();
   vi.setSystemTime(100_000);
   const t = convexTest(schema, modules);
+  rateLimiterTest.register(t);
   agentTest.register(t);
   const ids = await t.run(async (ctx) => {
     const generationJobId = await ctx.db.insert("generationJobs", { seed: 1, difficulty: "easy", createdBy: "tester", createdAt: 1 });

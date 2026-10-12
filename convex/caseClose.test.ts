@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import rateLimiterTest from "@convex-dev/rate-limiter/test";
 import { convexTest } from "convex-test";
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
@@ -22,6 +23,7 @@ test("case close grades privately from session-owned evidence", async () => {
     problems: [], model: "fake", mode: "strict", rawText: "{}", ms: 1,
   });
   const t = convexTest(schema, modules);
+  rateLimiterTest.register(t);
   const setup = await t.run(async (ctx) => {
     const generationJobId = await ctx.db.insert("generationJobs", { seed: 1, difficulty: "easy", createdBy: "player-1", createdAt: 1 });
     const caseId = await ctx.db.insert("cases", {

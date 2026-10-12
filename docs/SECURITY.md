@@ -100,6 +100,15 @@ Sanitize rendering; do not render user HTML.
 
 Public sign-up can burn LLM budget.
 
+Implemented in v1.1.0 (`convex/lib/rateLimits.ts`, `@convex-dev/rate-limiter`), keyed by Clerk user:
+
+- interview questions and retries: 8 per minute, 400 per day;
+- report grading (file and retry): 3 at once, refilling 6 per hour;
+- new rooms (new case or replay): 30 per day;
+- whole game: 5,000 AI calls (interview replies + gradings) per day, then interviews and grading pause until the next day.
+
+Limit messages are `ConvexError`s so players see them in production. Joining a room is not limited yet.
+
 At minimum rate-limit:
 
 - case creation/generation,

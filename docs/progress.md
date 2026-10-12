@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-12 — v1.1.0: AI rate limits
+
+- Added `@convex-dev/rate-limiter` and `convex/lib/rateLimits.ts`. Per player: interview questions/retries 8 a minute and 400 a day; report grading 3 at once, refilling 6 an hour; new rooms 30 a day. Whole game: 5,000 AI calls a day. Limits roll back with the mutation, so a rejected question costs nothing.
+- Limit messages are `ConvexError`s and `errorText` now reads them, so players see "Try again in N minutes" in production instead of a generic fallback. Opening a case room shows the message too.
+- Tests register the rate-limiter component; 176 tests pass.
+
 ## 2026-10-12 — v1.1.0: case tester in production
 
 - The generation tester (`/dev/generation`) now runs in production for allowlisted users only (Convex `DEV_TOOL_USER_IDS`); everyone else sees "Not allowed". The page is excluded from search engines.

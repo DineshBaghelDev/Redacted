@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import rateLimiterTest from "@convex-dev/rate-limiter/test";
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { api, internal } from "../_generated/api";
@@ -9,6 +10,7 @@ const modules = import.meta.glob("../**/*.ts");
 
 test("published witness statements are frozen before replay and can be backfilled once", async () => {
   const t = convexTest(schema, modules);
+  rateLimiterTest.register(t);
   const { caseId, draftId } = await t.run(async ctx => {
     const jobId = await ctx.db.insert("generationJobs", { seed: 1, difficulty: "easy", createdBy: "tester", createdAt: 1, status: "passed" });
     const caseId = await ctx.db.insert("cases", { generationJobId: jobId, difficulty: "easy", title: "Case", summary: "A case", initialFacts: [], estimatedOptimalMinutes: 120, publicationVersion: 1, createdAt: 1 });
