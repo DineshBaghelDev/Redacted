@@ -235,12 +235,17 @@ function ConversationMessages({ roomCode, threadId, name }: { roomCode: string; 
           {asked ? <>
             <p className="whitespace-pre-wrap">{asked.question}</p>
             {asked.shown ? <p className="mt-2 border-l-2 border-[#9a573e] pl-2 text-xs text-[#5d4d3d]"><span className="uppercase text-[#8b1d1d]">Shows · </span>{asked.shown}</p> : null}
-          </> : <p className="whitespace-pre-wrap">{message.text}</p>}
+          </> : <p className="whitespace-pre-wrap">{withItalics(message.text)}</p>}
         </div>
         );
       }) : <p className="text-sm italic text-[#5d4d3d]">{name} is shown in and sits down, waiting.</p>}
     </div>
   );
+}
+
+/** Replies mark actions and emphasis with *stars* or **double stars**; show those parts in italics. */
+function withItalics(text: string) {
+  return text.split(/\*{1,2}([^*]+)\*{1,2}/g).map((part, index) => (index % 2 ? <em key={index}>{part}</em> : part));
 }
 
 function Message({ message, onBack }: { message: string; onBack: () => void }) {
