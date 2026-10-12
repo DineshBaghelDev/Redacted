@@ -5,7 +5,7 @@ Style: the existing pixel-noir set (charcoal, petrol teal, aged amber; transpare
 ## Already in `public/assets/`
 bureau-noir, menu-noir, archive-room, interview-room, lab-room, records-room, report-desk, exploration-wall, city-grid, clueboard-cork (reverted), dossier-frame, terminal-frame, control-plate(+trim), control-icons, station-icons, investigation-icons, device-app-icons, map-places, map-places-extra, redacted-emblem.
 
-**Update:** room-furniture and room-furniture-searched atlases cover the common search spots; evidence-objects-primary and evidence-objects-secondary cover 25 found-object categories. Twelve floor materials, named-place silhouettes, car/detective map tokens in both the city and building maps, door/stair/lift/camera markers, and covered-body/shed spots are now in use. The remaining work is listed by station below.
+**Update:** room-furniture and room-furniture-searched atlases cover the common search spots; evidence-objects-primary and evidence-objects-secondary cover 25 found-object categories. Twelve floor materials, named-place silhouettes, car/detective map tokens in both the city and building maps, door/stair/lift/camera/window pieces, and covered-body/shed spots are now in use. The remaining work is listed by station below.
 
 **Interview update:** transcript paper, table/chair foreground, three blank stamp frames, and deterministic portrait expressions are now in use.
 

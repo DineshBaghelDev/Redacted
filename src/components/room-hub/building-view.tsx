@@ -63,8 +63,10 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
   const around = neighbours(place, room.id);
   const hubs = isHub(room) ? [room] : around.filter(isHub);
   const doors = around.filter((next) => !isHub(next) && !(isHub(room) && next.floor !== room.floor));
+  const hasWindow = ["living", "kitchen", "bedroom", "office", "unit"].includes(room.type) && doors.length < 3;
   return (
     <div className="room-floor relative flex flex-wrap content-start gap-2 p-4 animate-in fade-in zoom-in-95 duration-300 sm:block sm:aspect-[16/9] sm:p-0" data-room-type={room.type} data-time-of-day={partOfDay(place.clock.gameTime).toLowerCase()} key={room.id}>
+      {hasWindow ? <span aria-hidden="true" className="room-window hidden sm:block" /> : null}
       {room.spots.map((spot, index) => {
         const [x, y] = SPOT_ANCHORS[index % SPOT_ANCHORS.length];
         const found = foundBySpot.get(spot.key) ?? 0;

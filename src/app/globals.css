@@ -880,6 +880,17 @@
 .room-floor[data-room-type="shopfloor"] { --floor-art: url('/assets/floors/shopfloor.png'); }
 .room-floor[data-room-type="outdoor"] { --floor-art: url('/assets/floors/outdoor.png'); }
 .room-floor[data-room-type="special"] { --floor-art: url('/assets/floors/office.png'); }
+.room-window {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  width: 104px;
+  height: 28px;
+  transform: translateX(-50%);
+  background: url('/assets/room-window.png') center / contain no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
 .room-furniture {
   border-width: 2px;
   padding: 0.5rem 0.6rem;
