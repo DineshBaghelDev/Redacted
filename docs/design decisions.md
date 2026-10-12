@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-12 — Camera tape controls
+
+- The security desk's tape actions use the shared illustrated control plate. Camera sightings stay text and data only; the monitor wall does not depict footage.
+
 ## 2026-10-12 — Clueboard view controls
 
 - Keep zoom and fit actions available to keyboard and touch users behind one pixel-art view control. Scroll and pinch still zoom the board directly; the default graph toolbar and attribution do not belong in the game scene.

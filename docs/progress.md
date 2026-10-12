@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-12 — Camera transport controls
+
+- A signed-in 390px pass of the case file, records search/results, and security desk found readable scrolling and no document-wide overflow. The camera tape's four plain outlined transport buttons now use the existing illustrated control plate; camera records remain text only.
+
 ## 2026-10-12 — Clueboard view control
 
 - Replaced the default graph zoom toolbar with a small pixel-art view control that reveals Zoom in, Zoom out, and Fit board actions. The graph's attribution is hidden, while pinch, scroll, and the existing board interactions stay available.
