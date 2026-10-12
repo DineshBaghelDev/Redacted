@@ -97,6 +97,8 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
   const [muted, setMutedState] = useState(() => typeof window !== "undefined" && isMuted());
   const [toasts, setToasts] = useState<Toast[]>([]);
   const menuRef = useRef<HTMLDialogElement>(null);
+  // The case file can open from anywhere, so closing it returns to that screen.
+  const caseOpenedFrom = useRef<string | null>(null);
   const panoramaRef = useRef<HTMLDivElement>(null);
   const seenEntries = useRef<Set<string> | null>(null);
   const seenPings = useRef<Set<string> | null>(null);
@@ -126,7 +128,21 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
     const path = nextStation === "map" || nextStation === "place" || nextStation === "lab" || nextStation === "case"
       ? `/lobby/${roomCode}/${nextStation}`
       : `/lobby/${roomCode}/bureau/${nextStation}`;
+    if (nextStation === "case" && station !== "case") caseOpenedFrom.current = pathname;
     go(path);
+  }
+
+  function closeCaseFile() {
+    go(caseOpenedFrom.current ?? `/lobby/${roomCode}/bureau`);
+    caseOpenedFrom.current = null;
+  }
+
+  /** Shortcut keys open their station, and pressing the same key again goes back to the bureau. */
+  function toggleStation(nextStation: Station) {
+    if (station !== nextStation) return openStation(nextStation);
+    play("close");
+    if (nextStation === "case") closeCaseFile();
+    else go(`/lobby/${roomCode}/bureau`);
   }
 
   function toast(text: string) {
@@ -215,9 +231,9 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
         else if (menuOpen) setMenuOpen(false);
         else openMenu();
       } else if (key === "n") { play("page"); setNotebookOpen((open) => !open); }
-      else if (key === "m") openStation("map");
-      else if (key === "b") openStation("clueboard");
-      else if (key === "c") openStation("case");
+      else if (key === "m") toggleStation("map");
+      else if (key === "b") toggleStation("clueboard");
+      else if (key === "c") toggleStation("case");
       else return;
       event.preventDefault();
     }
@@ -287,7 +303,7 @@ export function BureauScreen({ error, onLeave }: { error: string; onLeave: () =>
           {station === "lab" ? <ForensicLabScreen roomCode={roomCode} onBack={() => go(`/lobby/${roomCode}/map`)} /> : null}
           {station === "interrogate" ? <InterrogationScreen roomCode={roomCode} onBack={() => go(`/lobby/${roomCode}/bureau`)} /> : null}
           {station === "evidence" && !showAwayNotice ? <EvidenceScreen roomCode={roomCode} onBack={() => go(`/lobby/${roomCode}/bureau`)} /> : null}
-          {station === "case" ? <CaseFileScreen roomCode={roomCode} onBack={() => go(`/lobby/${roomCode}/bureau`)} /> : null}
+          {station === "case" ? <CaseFileScreen roomCode={roomCode} onBack={closeCaseFile} /> : null}
           {showAwayNotice ? (
             <div className="game-place-scene absolute inset-0 z-20 flex items-center justify-center p-4 text-[#e4e6d8]">
               <div className="game-panel w-full max-w-lg p-6 text-center">
