@@ -11,7 +11,7 @@ type Place = NonNullable<FunctionReturnType<typeof api.investigation.getPlace>>;
 type Room = Place["rooms"][number];
 
 /** Where furniture sits in a room, as % of its width/height. Kept off the walls so doors stay clear. */
-const SPOT_ANCHORS = [[24, 30], [52, 26], [78, 32], [30, 70], [58, 72], [80, 66], [44, 48], [16, 52]];
+const SPOT_ANCHORS = [[24, 36], [52, 35], [78, 38], [30, 66], [58, 67], [80, 63], [44, 51], [16, 52]];
 // Bottom wall last: the stairs and lift buttons sit in the bottom-left corner.
 const WALLS = ["right", "left", "top", "bottom"] as const;
 // With stairs or a lift in the room their buttons fill the lower left, so doors keep off that wall.
@@ -105,7 +105,7 @@ export function RoomView({ place, room, busy, searchingKey, walkingTo, foundBySp
             type="button"
           >
             <span aria-hidden="true" className="room-control-sprite room-control-sprite--door" />
-            <span>{next.name}{level}</span>
+            <span className="whitespace-nowrap">{next.name}{level}</span>
             <span className="flex items-center gap-1 text-[0.6rem] normal-case text-[#c8d8d2]/60">{next.walkMinutes ?? 1} min{place.partners.some((partner) => partner.roomId === next.id) ? <><span aria-hidden="true" className="map-token map-token--partner size-4" /> partner</> : null}</span>
           </button>
         );
