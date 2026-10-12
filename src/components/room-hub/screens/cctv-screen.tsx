@@ -149,7 +149,6 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
   const key = hourKey(minute, camera);
   const review = tape?.reviews.find((row) => row.minute === key);
   const onScreen = (tape?.records ?? []).filter((record) => minute >= record.start - 1 && minute <= record.end + 1);
-  const thisHour = (tape?.records ?? []).filter((record) => record.end >= key - 30 && record.start <= key + 30);
 
   // Start at the preset time (from a call or message) or the beginning of the tape.
   useEffect(() => {
@@ -290,24 +289,6 @@ function TapeScrubber({ roomCode, camera, presetTime }: { roomCode: string; came
             <span className="ml-auto normal-case tracking-normal text-[#c8d8d2]/60">Drag or scroll the tape. Orange marks are people passing.</span>
           </div>
 
-          {tape ? (
-            <details className="mt-5">
-              <summary className="cursor-pointer text-xs uppercase tracking-[0.18em] text-[#e8ac51]">This hour · {clock(key - 30)}–{clock(key + 30)} · {thisHour.length} sighting{thisHour.length === 1 ? "" : "s"}</summary>
-              {thisHour.length ? (
-                <ul className="mt-2 divide-y divide-[#2f4a47] border-y border-[#2f4a47] font-mono text-sm">
-                  {thisHour.map((record) => {
-                    return (
-                      <li className="flex flex-wrap items-center gap-2 py-2" key={record.id} {...cardDropTarget((card) => mark(record.id, card.referenceId), (kind) => kind === "person")}>
-                        <button className="min-w-0 flex-1 text-left font-mono normal-case text-[#c9f2dd] hover:text-[#f1c987]" onClick={() => seek(record.start)} type="button"><span className="text-[#e8ac51]">[{clock(record.start)}]</span> {record.summary}</button>
-                        {record.kind !== "offline" ? <PhotoSlot onMark={(npcId) => mark(record.id, npcId)} people={people ?? []} person={personFor(record.id)} small /> : null}
-                        <PinButton className="ml-auto" nodes={boardNodes} onError={(caught) => setError(errorText(caught, "Could not update this pin."))} referenceId={record.id} roomCode={roomCode} type="cctv" />
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : <p className="mt-2 font-mono text-sm text-[#7fd1ae]/50">Nobody passed this camera in this hour.</p>}
-            </details>
-          ) : null}
         </>
       ) : null}
     </div>
