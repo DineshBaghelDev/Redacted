@@ -3,6 +3,7 @@
 ## 2026-10-12 — Clueboard view control
 
 - Replaced the default graph zoom toolbar with a small pixel-art view control that reveals Zoom in, Zoom out, and Fit board actions. The graph's attribution is hidden, while pinch, scroll, and the existing board interactions stay available.
+- A signed-in 390px pass through the city map, bureau, notebook, clueboard, and interview found no page-wide horizontal overflow. The interview roster's long instruction was shortened so the first person card appears sooner on a phone.
 
 ## 2026-10-12 — Narrow-screen game check
 

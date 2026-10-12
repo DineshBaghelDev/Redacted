@@ -3,6 +3,7 @@
 ## 2026-10-12 — Clueboard view controls
 
 - Keep zoom and fit actions available to keyboard and touch users behind one pixel-art view control. Scroll and pinch still zoom the board directly; the default graph toolbar and attribution do not belong in the game scene.
+- Keep the interview roster's guidance short enough for the first character card to appear quickly on a phone; name discovery and bureau-only interviews remain explained.
 
 ## 2026-10-12 — Scene light and device messages
 
