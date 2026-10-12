@@ -17,14 +17,14 @@ Production calls Kimi K2.6 (Moonshot, `MOONSHOT_API_KEY`) for every interview qu
 - [ ] **Scheduled backups** for the production Convex deployment.
 - [ ] **Remove unused secrets from Vercel production:** OpenRouter, Groq, Gemini and NIM keys are only used by Convex.
 - [ ] **Clean up dev test games** copied into production by the v1.0 snapshot import.
-- [ ] **Remove the Sentry example page and API route** (already hidden in production).
+- [x] **Remove the Sentry example page and API route** (done in v1.1.0).
 
 ## v1.2 — Making new cases
 
 New cases can only be generated locally (`next dev` → `/dev/generation`, `DEV_TOOL_USER_IDS` allowlist) into the dev database.
 
 - [ ] **Safe "copy new cases to production" script.** Copy only a case's tables and append them. Never run a full snapshot import with `--replace` again, because it would wipe players' games.
-- [ ] **Case creation dashboard / dev tester in production.** ⚠ Conflicts with the locked rules in `AGENTS.md` ("no custom admin panel", and the case viewer stays hidden in production). Revise that rule first. It also needs a production allowlist, generation keys in production Convex, and a plan for GPT-6 Sol: it only works while the Codex server and tunnel run on the owner's PC, so production can't depend on it.
+- [x] **Case creation dashboard / dev tester in production.** Done in v1.1.0: `/dev/generation` is live, gated by `DEV_TOOL_USER_IDS` (set it on the production deployment), with a one-click **Generate full case**. Production generation uses Kimi only; GPT-6 Sol stays a local-only speedup.
 - [ ] **Bot-proof and budget the generation entry point** if it ever opens beyond the owner.
 
 ## v1.2 — Artwork

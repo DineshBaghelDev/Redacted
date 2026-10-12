@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-12 — Owner case tester in production
+
+- The owner generates new cases from the live site with one button instead of running stages one by one. The tester stays a plain developer tool, not a player screen, and is reachable only by allowlisted accounts.
+
 ## 2026-10-12 — Camera tape controls
 
 - The security desk's tape actions use the shared illustrated control plate. Camera sightings stay text and data only; the monitor wall does not depict footage.

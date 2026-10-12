@@ -200,6 +200,7 @@ function RunStatus({ job }: { job: Doc<"generationJobs"> }) {
       {job.status === "queued" ? "waiting its turn" : job.status}
       {job.failedStage && ` at ${job.failedStage}`}
       {minutes !== undefined && ` · ${minutes} min`}
+      {job.status === "passed" && " · playable in Previous cases"}
       {job.error && <span className="block text-xs">{job.error}</span>}
     </span>
   );

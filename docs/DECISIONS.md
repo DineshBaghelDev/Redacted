@@ -149,7 +149,7 @@ Five independent stars:
 
 - Sentry for runtime errors/failures.
 - Convex dashboard/logs for developer inspection.
-- No custom admin panel in V1, except one dev-only, read-only case viewer page hidden in production.
+- No custom admin panel in V1, except the owner-only case generation tester (`/dev/generation`). Revised 2026-10-12: it is live in production, gated by the `DEV_TOOL_USER_IDS` allowlist, so the owner can generate cases straight into the live game.
 
 ## Rejected or superseded decisions
 

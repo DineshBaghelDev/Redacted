@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-10-12 — v1.1.0: case tester in production
+
+- The generation tester (`/dev/generation`) now runs in production for allowlisted users only (Convex `DEV_TOOL_USER_IDS`); everyone else sees "Not allowed". The page is excluded from search engines.
+- New **Generate full case** button: creates a job for the chosen difficulty (and optional seed) and runs every stage in one go. A passed case publishes itself and shows "playable in Previous cases". Single-stage runs, Run all and 3-case test runs are unchanged, and old jobs and test runs are kept.
+- In production only Moonshot has a key, so every stage falls back to Kimi (GPT-6 Sol, Groq and Gemini are skipped when their keys are missing).
+- Removed the Sentry example page/API route and the unused Next.js starter SVGs.
+
 ## 2026-10-12 — Asset-only handoff
 
 - Wrote `docs/audit/ASSET_HANDOFF.md` with a checked inventory of all 65 public PNGs and three metadata exports, their use/status, the remaining optional asset work, and the non-art checks for the next implementer. The artwork assignment is stopping here at the user's request.
