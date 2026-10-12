@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-12 — Clueboard view controls
+
+- Keep zoom and fit actions available to keyboard and touch users behind one pixel-art view control. Scroll and pinch still zoom the board directly; the default graph toolbar and attribution do not belong in the game scene.
+
 ## 2026-10-12 — Scene light and device messages
 
 - Use subtle lighting over the existing room and bureau art for the four parts of the day; separate generated overlays would add load without changing the scene. Phone message direction changes only the bubble presentation.

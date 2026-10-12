@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-10-12 — Clueboard view control
+
+- Replaced the default graph zoom toolbar with a small pixel-art view control that reveals Zoom in, Zoom out, and Fit board actions. The graph's attribution is hidden, while pinch, scroll, and the existing board interactions stay available.
+
 ## 2026-10-12 — Narrow-screen game check
 
 - Reopened the signed-in solo room after restarting the local dev server and applied a true 390×844 browser viewport. Pier 9's entrance, door controls, and floor plan fit with `scrollWidth === innerWidth === 390`. Travelled back to the lab and checked a selected evidence bag and active powder task at the same viewport; the title wraps, but the instructions, tray, and tool choices remain visible and usable with no horizontal overflow. Reset the browser viewport afterward.

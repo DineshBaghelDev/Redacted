@@ -3,7 +3,6 @@
 import { errorText } from "../../../lib/error-text";
 import {
   ConnectionMode,
-  Controls,
   Handle,
   Position,
   ReactFlow,
@@ -200,6 +199,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
           minZoom={0.5}
           nodeTypes={nodeTypes}
           nodes={nodes}
+          proOptions={{ hideAttribution: true }}
           onConnect={connect}
           onEdgeClick={(_, edge) => setSelectedEdge(edge.id as Id<"clueBoardEdges">)}
           onNodeDragStop={(_, node) => {
@@ -211,9 +211,17 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
           }}
           onNodesChange={onNodesChange}
           onPaneClick={() => setSelectedEdge(null)}
-        >
-          <Controls position="bottom-right" showInteractive={false} />
-        </ReactFlow>
+        />
+        <details className="absolute bottom-4 right-4 z-10" aria-label="Board view">
+          <summary aria-label="Board view controls" className="flex size-11 cursor-pointer list-none items-center justify-center text-[#f4e8c8] focus-visible:outline-2 focus-visible:outline-[#fff1c9] [&::-webkit-details-marker]:hidden">
+            <BoardIcon name="inspect" />
+          </summary>
+          <div className="absolute bottom-full right-0 mb-2 flex w-36 flex-col gap-1 border border-[#8b6040] bg-[#241812] p-2 shadow-lg">
+            <button className="game-control-button min-h-10 text-xs uppercase" onClick={() => void flow?.zoomIn()} type="button">Zoom in</button>
+            <button className="game-control-button min-h-10 text-xs uppercase" onClick={() => void flow?.zoomOut()} type="button">Zoom out</button>
+            <button className="game-control-button min-h-10 text-xs uppercase" onClick={() => void flow?.fitView()} type="button">Fit board</button>
+          </div>
+        </details>
         {savedNodes?.length === 0 ? (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
             <div className="max-w-sm rotate-[-1.5deg] bg-[#f3e6c4] p-5 text-center text-[#2b1d16] shadow-[4px_6px_0_rgb(0_0_0/45%)]">
