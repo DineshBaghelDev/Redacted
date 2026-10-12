@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-12 — AI limits players can understand
+
+- Limits are generous enough that normal play never meets them (an interview reply takes seconds). When hit, the player gets a plain sentence with how long to wait; the daily game-wide cap says interviews and grading are resting until tomorrow. Test data in production is left as is.
+
 ## 2026-10-12 — Owner case tester in production
 
 - The owner generates new cases from the live site with one button instead of running stages one by one. The tester stays a plain developer tool, not a player screen, and is reachable only by allowlisted accounts.

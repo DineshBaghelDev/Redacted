@@ -6,10 +6,10 @@ v1.0 shipped to a few friends on 2026-10-12. This is the to-do list for the next
 
 Production calls Kimi K2.6 (Moonshot, `MOONSHOT_API_KEY`) for every interview question and once per report grading. Nothing limits how often.
 
-- [ ] **Per-player limit on interview questions.** For example a few per minute and a daily cap per Clerk user. Each question costs 3 game minutes, but a player can start unlimited games. `docs/SECURITY.md` requires this.
-- [ ] **Limit report filing and grading** per player and per room.
-- [ ] **Limit room creation** per player per day.
-- [ ] **Global daily AI budget:** stop interviews with a friendly message when the day's spend cap is hit.
+- [x] **Per-player limit on interview questions.** For example a few per minute and a daily cap per Clerk user. Each question costs 3 game minutes, but a player can start unlimited games. `docs/SECURITY.md` requires this.
+- [x] **Limit report filing and grading** per player and per room.
+- [x] **Limit room creation** per player per day.
+- [x] **Global daily AI budget:** stop interviews with a friendly message when the day's spend cap is hit.
 - [ ] **Bot protection** (for example Cloudflare Turnstile) on sign-up and room creation.
 - [ ] **Clerk production instance and own domain.** Production still uses test keys (`pk_test`): "development mode" badge and user limits.
 - [ ] **A working backup model for grading.** In production only Kimi K2.6 has a key. The last fallback (Kimi K3 through NIM) fails without `NIM_API_KEY`, so if Kimi is down players see "Judging is unavailable right now".

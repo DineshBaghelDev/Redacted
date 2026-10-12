@@ -130,7 +130,7 @@ Role:
 
 ### Rate limiter
 
-Use Convex-compatible rate limiting for expensive authenticated operations.
+Use Convex-compatible rate limiting for expensive authenticated operations. Chosen: `@convex-dev/rate-limiter` (Convex component); limits live in `convex/lib/rateLimits.ts`.
 
 ### Cloudflare Turnstile
 

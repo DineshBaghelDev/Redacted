@@ -116,11 +116,11 @@ export function useRoomSession(nickname: string) {
       }
       setRoomCode(result.roomCode);
       router.push(`/lobby/${result.roomCode}`);
-    } catch {
+    } catch (caught) {
       setError(
         action === "join"
           ? "No room found with that code. Check it and try again."
-          : "Could not open this case. Try again later or choose another case.",
+          : errorText(caught, "Could not open this case. Try again later or choose another case."),
       );
     } finally {
       setWorkingAction(null);

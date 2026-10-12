@@ -10,6 +10,7 @@ import { getPlayingRoomMember } from "./lib/auth";
 import { hasReadDevice } from "./lib/deviceAccess";
 import { currentGameTime } from "./lib/clock";
 import { knownPeople } from "./lib/discoveries";
+import { checkLimit } from "./lib/rateLimits";
 
 const MAX_EXPLANATION = 2_000;
 const MAX_EVIDENCE = 12;
@@ -97,6 +98,7 @@ export const submit = mutation({
       .first();
     if (existing) throw new Error("This case has already been submitted.");
     if (member.session.gaveUpAt !== undefined) throw new Error("This case was given up.");
+    await checkLimit(ctx, "reportGrading", member.player.authUserId);
 
     const culprit = await ctx.db.get(args.culpritNpcId);
     if (!culprit || culprit.caseId !== member.session.caseId) throw new Error("Choose a person from this case.");
@@ -189,6 +191,7 @@ export const retry = mutation({
       .unique();
     if (!accusation?.error || accusation.status !== "pending") throw new Error("There is nothing to retry.");
     if (accusation.attempts >= 3) throw new Error("Judging is unavailable right now. Try again later.");
+    await checkLimit(ctx, "reportGrading", member.player.authUserId);
     await ctx.db.patch(accusation._id, { error: undefined, attempts: accusation.attempts + 1, updatedAt: Date.now() });
     await ctx.scheduler.runAfter(0, internal.caseClose.judge, { accusationId: accusation._id });
     return null;

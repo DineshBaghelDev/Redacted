@@ -72,6 +72,7 @@ import type * as lib_publishRecords from "../lib/publishRecords.js";
 import type * as lib_publishStatements from "../lib/publishStatements.js";
 import type * as lib_publishWorld from "../lib/publishWorld.js";
 import type * as lib_rank from "../lib/rank.js";
+import type * as lib_rateLimits from "../lib/rateLimits.js";
 import type * as lib_spots from "../lib/spots.js";
 import type * as notebook from "../notebook.js";
 import type * as npcConversations from "../npcConversations.js";
@@ -151,6 +152,7 @@ declare const fullApi: ApiFromModules<{
   "lib/publishStatements": typeof lib_publishStatements;
   "lib/publishWorld": typeof lib_publishWorld;
   "lib/rank": typeof lib_rank;
+  "lib/rateLimits": typeof lib_rateLimits;
   "lib/spots": typeof lib_spots;
   notebook: typeof notebook;
   npcConversations: typeof npcConversations;
@@ -189,4 +191,5 @@ export declare const internal: FilterApi<
 export declare const components: {
   workflow: import("@convex-dev/workflow/_generated/component.js").ComponentApi<"workflow">;
   agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
+  rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
 };

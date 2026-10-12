@@ -1,6 +1,7 @@
 import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { isClosed, requireUserId } from "./lib/auth";
+import { checkLimit } from "./lib/rateLimits";
 import { detectiveRank } from "./lib/rank";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
@@ -67,6 +68,7 @@ export const createReplay = mutation({
   returns: v.object({ sessionId: v.id("sessions"), playerId: v.id("sessionPlayers"), roomCode: v.string() }),
   handler: async (ctx, { nickname, caseId, deadlineMinutes }) => {
     const authUserId = await requireUserId(ctx);
+    await checkLimit(ctx, "roomCreation", authUserId);
     await ensureCaseOpening(ctx, caseId);
     const playableCase = await ctx.db.get(caseId);
     if (!playableCase || playableCase.publicationVersion !== PUBLICATION_VERSION) throw new Error("This case is not ready to replay.");
@@ -347,6 +349,7 @@ export const replay = mutation({
   returns: v.object({ roomCode: v.string() }),
   handler: async (ctx, { roomCode, nickname }) => {
     const authUserId = await requireUserId(ctx);
+    await checkLimit(ctx, "roomCreation", authUserId);
     const session = await ctx.db.query("sessions").withIndex("by_roomCode", (q) => q.eq("roomCode", roomCode.trim().toUpperCase())).unique();
     if (!session?.caseId || !(await ctx.db.query("sessionPlayers").withIndex("by_sessionId_authUserId", (q) => q.eq("sessionId", session._id).eq("authUserId", authUserId)).unique())) throw new Error("Room not found.");
     await ensureCaseOpening(ctx, session.caseId);
