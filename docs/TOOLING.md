@@ -178,7 +178,7 @@ NPC/case context is bounded structured case data. Do not add embeddings/vector s
 
 Not needed for developer-only debugging. Use Sentry + Convex dashboard.
 
-Exception: one **dev-only, read-only case viewer** page (timeline, evidence, lies, validator results), hidden in production by an env flag. It never creates or edits data.
+Exception: the **owner-only case generation tester** (`/dev/generation`): runs generation, shows timeline, evidence, lies and validator results, and publishes passed cases. Revised 2026-10-12: live in production, gated by the Convex `DEV_TOOL_USER_IDS` allowlist (not an env flag).
 
 ## Operational note
 

@@ -19,7 +19,8 @@ export function Tester() {
   if (!access.allowed) {
     return (
       <p>
-        Not allowed. Run <code>npx convex env set DEV_TOOL_USER_IDS {access.userId}</code>
+        Not allowed. Run <code>npx convex env set DEV_TOOL_USER_IDS {access.userId}</code> (add <code>--prod</code> for the live
+        game).
       </p>
     );
   }
@@ -29,6 +30,7 @@ export function Tester() {
 function Jobs() {
   const jobs = useQuery(api.dev.tester.listJobs);
   const createJob = useMutation(api.dev.tester.createJob);
+  const runAll = useMutation(api.dev.tester.runAll);
   const runTestBatch = useMutation(api.dev.tester.runTestBatch);
   const batches = useQuery(api.dev.tester.listBatches);
   const [batch, setBatch] = useState<string | null>(null);
@@ -38,6 +40,14 @@ function Jobs() {
 
   async function create() {
     const id = await createJob({ difficulty, seed: seed ? Number(seed) : undefined });
+    setSelected(id);
+    setBatch(null);
+  }
+
+  /** One click: a new job that runs every stage; a passed case shows up in Previous cases by itself. */
+  async function generateCase() {
+    const id = await createJob({ difficulty, seed: seed ? Number(seed) : undefined });
+    await runAll({ jobId: id });
     setSelected(id);
     setBatch(null);
   }
@@ -70,6 +80,9 @@ function Jobs() {
             New job
           </button>
         </div>
+        <button className={`${button} text-yellow-200`} onClick={generateCase}>
+          Generate full {difficulty} case
+        </button>
         <button className={button} onClick={startTestRun}>
           Run 3 test cases (easy, normal, hard)
         </button>
