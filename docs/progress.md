@@ -1,5 +1,10 @@
 # Progress
 
+## 2026-10-12 — Direct-route auth and mobile board
+
+- A fresh browser visit to a room route surfaced a Convex "Sign in first" error before the case UI finished authenticating. The room hub now mounts only after Convex confirms the session; loading and signed-out states show safe UI. The direct route no longer throws.
+- Raised clueboard fit zoom so paper cards stay legible on a 390×844 viewport. Checked the live board at desktop and phone sizes; its felt texture, cards and controls render without page-wide horizontal overflow.
+
 ## 2026-10-12 — Grabbable clueboard string pins, no tie dropdown
 
 - The string handle on each card was rendering as React Flow's default 6px dot: the pushpin style sat in a Tailwind layer, which loses to React Flow's unlayered stylesheet. Moved it out of the layer; it now shows as the 28px pushpin and is easy to grab.

@@ -196,7 +196,8 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
           connectionMode={ConnectionMode.Loose}
           edges={edges}
           fitView
-          minZoom={0.35}
+          fitViewOptions={{ minZoom: 0.8, maxZoom: 1 }}
+          minZoom={0.5}
           nodeTypes={nodeTypes}
           nodes={nodes}
           onConnect={connect}

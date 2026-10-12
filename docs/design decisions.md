@@ -1,5 +1,9 @@
 # Design Decisions
 
+## 2026-10-12 — Room auth readiness
+
+- Render the entire room hub only after Convex confirms authentication. Clerk may know a signed-in user before the Convex token is ready; station queries must not open during that interval.
+
 ## 2026-10-12 — Result and share art
 
 - Keep the words and score live over blank stamp and star artwork so dynamic results stay correct and accessible. The share banner shows no case-specific evidence or characters; the square app emblem matches the existing favicon.

@@ -3,7 +3,7 @@ import {
   SignInButton,
   SignUpButton,
 } from "@clerk/nextjs";
-import { RoomHub } from "@/components/room-hub/room-hub";
+import { ReadyRoomHub } from "@/components/room-hub/room-hub";
 import { GameIcon } from "@/components/room-hub/game-icon";
 import { GameLogo } from "@/components/room-hub/game-logo";
 
@@ -49,7 +49,7 @@ export default function Home() {
               "url('/assets/menu-noir.png')",
           }}
         >
-          <RoomHub />
+          <ReadyRoomHub />
         </section>
       </Show>
     </main>

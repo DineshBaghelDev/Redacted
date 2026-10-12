@@ -17,9 +17,9 @@ Fixed and checked (tests and a signed-in Chrome run; details in `docs/progress.m
 - **Live playtest 2–18:** duplicate clutter, clutter tell, near-empty phones and cameras (seeded filler), improvised NPC lies, NPC time sense, statement titles, "Name asks:" prefix, bureau cameras, fake Play label, payment times, lab leftovers, "Other" record labels, Main menu exit, solo lobby. The victim's bag now uses the evidence icon (a new icon would need art).
 - **P1:** one name per station and action, one notification stack, archive deadline text, interviews-at-bureau hint, solo "1–2 detectives" wording, team notes on notebook entries, interview transcript restyled without new art.
 
-Still open:
+Still open after the 2026-10-12 art pass:
 
-- **Needs art** (see `ARTWORK_NEEDED.md`): room sprites, object icons, portrait expressions, interview room foreground, clueboard surface, missing map icons.
+- **Needs selective art polish** (see `ARTWORK_NEEDED.md`): clean per-task forensic visuals, time-of-day light variants, and optional loading/arrival treatments. Room sprites, object icons, portrait expressions, interview room foreground, clueboard surface, and missing map icons have shipped.
 - **Design calls left as they are:** the lab still offers every tool on every bag (the autopsy task was reworked into a dictation); the report keeps three written answers because motive and method are separate stars.
 - **Phone layout:** checked at 390×844 and fixed (see progress). **Not measured:** render churn on a mid-range phone; client-settled clock with both tabs closed.
 - **Not reproduced:** the main-menu "never finishes loading" seen twice in the first run. The menu loaded normally in the second run.
