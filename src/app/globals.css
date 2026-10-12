@@ -97,6 +97,22 @@
     image-rendering: pixelated;
   }
 
+  .lab-task-tray {
+    isolation: isolate;
+    image-rendering: pixelated;
+  }
+  .lab-task-tray::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border: 14px solid transparent;
+    border-image-source: url('/assets/lab-task-tray.png');
+    border-image-slice: 70 fill;
+    border-image-width: 14px;
+    border-image-repeat: stretch;
+  }
+
   .device-app-icon {
     display: inline-block;
     width: 3.5rem;
@@ -281,6 +297,7 @@
     box-shadow: 0 8px 18px rgb(0 0 0 / 45%);
     text-shadow: 1px 2px #061013;
   }
+  .lab-bench--working { background: transparent; box-shadow: none; }
   .lab-tool-icon {
     display: inline-block;
     flex: none;

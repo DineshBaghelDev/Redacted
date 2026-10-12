@@ -122,7 +122,7 @@ export function ForensicLabScreen({ roomCode, onBack }: { roomCode: string; onBa
 
           <div>
             <div
-              className="lab-bench relative flex min-h-56 flex-col items-center justify-center p-4 text-center"
+              className={`lab-bench ${chosen && !alreadyDone ? "lab-bench--working" : ""} relative flex min-h-56 flex-col items-center justify-center p-4 text-center`}
               {...cardDropTarget((card) => {
                 const key = card.kind === "item" && !card.referenceId.includes(":") ? `item:${card.referenceId}` : card.referenceId;
                 if (lab.sources.some((item) => item.key === key)) placeOnBench(key);

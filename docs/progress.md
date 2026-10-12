@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-10-12 — Illustrated hands-on lab surface
+
+- Added an inspected, low-detail forensic tray behind the existing seeded lab tasks. The tray uses a decorative image layer, so pointer coordinates and the 224px work area do not change. The outer bench frame steps aside only while a task is open to avoid nested frames.
+- Checked the powder and UV tasks in a signed-in Chrome room. The UV task still accepts Enter, spent the same 5 game minutes, and revealed its stored report.
+- All 176 tests across 39 files, TypeScript, and focused lint passed after this change.
+
 ## 2026-10-12 — Reopen during travel and interior readability
 
 - In a fresh solo Chrome room (`OIHZYA`), closed the only tab during a 22-minute trip from St. Clare Clinic to Pier 9 Warehouse. On reopening after the due time, the player arrived at Pier 9 at Day 2 · 10:52 and the shared clock stayed paused. This verifies the browser return path in addition to the server test.

@@ -9,7 +9,7 @@ bureau-noir, menu-noir, archive-room, interview-room, lab-room, records-room, re
 
 **Interview update:** transcript paper, table/chair foreground, three blank stamp frames, and deterministic portrait expressions are now in use.
 
-**Lab update:** all eight tool sprites, the bench, sealed/open evidence bags, and a blank report sheet are now in use. Per-task visuals remain open.
+**Lab update:** all eight tool sprites, the bench, sealed/open evidence bags, a blank report sheet, and a quiet illustrated work tray behind the hands-on tasks are now in use. Specific fingerprint/UV/bullet/footprint imagery remains procedural so it matches the seeded interactions.
 
 **Board/device update:** dark felt, four blank card variants, raster board controls, image pin, phone/laptop shells, illustrated keypad, message bubble tails, and incoming/outgoing call icons are in use. No missed-call type exists in stored phone data.
 

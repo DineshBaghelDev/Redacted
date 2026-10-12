@@ -33,7 +33,7 @@ function local(event: ReactPointerEvent) {
   return { x: event.clientX - rect.left, y: event.clientY - rect.top, width: rect.width, height: rect.height };
 }
 
-const AREA = "relative h-56 w-full touch-none select-none overflow-hidden border border-[#6f9f98]/30";
+const AREA = "lab-task-tray relative h-56 w-full touch-none select-none overflow-hidden";
 type Game = { seed: string; onDone: () => void; say: (note: string) => void };
 
 /**
