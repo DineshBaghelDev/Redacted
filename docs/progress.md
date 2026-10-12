@@ -1,5 +1,12 @@
 # Progress
 
+## 2026-10-12 — Unknown people in the notebook
+
+- People tab: **+ Someone you can't name yet** adds a placeholder ("Man in red jacket") with a note. Drag its ? onto camera sightings, or pick it from "Who is it?". Its card lists every sighting tagged with it.
+- **This is…** picks a known person: the tagged sightings move to them and the note is added to that person's note. Edit and Remove (which clears its tags) are on the card.
+- Known people can now carry a note too. Unknown people can't be pinned to the clueboard or used as proof in the report.
+- New `unknownPeople` table and functions, `cctvLabels` can point at either kind, shared helpers in `convex/lib/sightingLabels.ts`; test in `convex/unknownPeople.test.ts`.
+
 ## 2026-10-12 — Playtest fixes
 
 - Your marker on the city map and in building rooms is about twice as big; the partner marker is bigger too.

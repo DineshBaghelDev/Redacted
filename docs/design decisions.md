@@ -1,5 +1,10 @@
 # Design Decisions
 
+## 2026-10-12 — Unknown people are the player's own placeholder
+
+- Players asked for a "dummy character" that fills itself in. The game must not deduce for them (rule 5), so the placeholder holds only what the team writes and tags, and the team decides who it was. Nothing is ever revealed or checked automatically.
+- Kept off the clueboard and report so they never stand in for real evidence or a named suspect.
+
 ## 2026-10-12 — Playtest fixes
 
 - Shortcut keys toggle their screen. The case file is a quick reference, so closing it returns you to where you were rather than the bureau.

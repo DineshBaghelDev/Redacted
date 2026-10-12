@@ -812,7 +812,9 @@ Player claims must remain claims, not canonical facts.
 - `sessionKnownPeople` (`by_sessionId_and_npcId`): people named in interview replies, with where they were first heard of.
 - `accusations.submittedGameTime`: case time when the report was filed, used for the result's time taken.
 - `caseItems` with `scatter/` evidence IDs: everyday objects placed by seeded code in every searchable room.
-- `cctvLabels` (`by_sessionId_and_recordEvidenceId`): who the team thinks a sighting shows; reasoning only.
+- `cctvLabels` (`by_sessionId_and_recordEvidenceId`): who the team thinks a sighting shows (`npcId` or `unknownPersonId`); reasoning only.
+- `unknownPeople` (`by_sessionId`): the team's own placeholder for someone they cannot name yet (name, note). Never filled in by the game; "identify" moves its marks and note to a known person and deletes it.
+- `notebookNotes` also holds the team's note on a known person (`referenceId` = npc id).
 - `caseItems` with `code/` evidence IDs: the clue to a found device's code (note, backwards scrap, birthday card, or keyring), placed in the device's room by seeded code.
 - `caseItems.collectible` is no longer used as a gate; every found object can be collected.
 

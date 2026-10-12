@@ -260,7 +260,11 @@ coop.get({ roomCode })                     // partner place/activity + recent pi
 coop.ping({ roomCode, text })              // "look at this" to the partner
 caseClose.giveUp({ roomCode })             // ends the room for both, reveals the epilogue
 investigation.readDevice({ roomCode, itemId, code?, crack? })  // code: 5 min; crack: 60 min
-cases.labelSighting({ roomCode, recordId, npcId | null })      // "looks like" mark on a camera sighting
+cases.labelSighting({ roomCode, recordId, npcId | null, unknownPersonId? })      // "looks like" mark on a camera sighting
+unknownPeople.list({ roomCode })                                 // the team's unnamed people with the sightings they tagged
+unknownPeople.add / update({ roomCode, [id], name, note })       // player-written placeholder, never filled in by the game
+unknownPeople.remove({ roomCode, id })                           // also clears its sighting marks
+unknownPeople.identify({ roomCode, id, npcId })                  // team decides who it was: marks and note move to that person
 forensics.readyCount({ roomCode })         // unread ready lab results, from anywhere
 caseClose.getEpilogue({ roomCode })        // canonical account + timeline, only after scoring or giving up
 ```
