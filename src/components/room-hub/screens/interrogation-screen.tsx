@@ -121,6 +121,14 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
     lastMissed.current = missed;
   }, [interview]);
 
+  // Choosing "Interview" brings them in straight away; the button below stays for when that fails.
+  const broughtIn = useRef(false);
+  useEffect(() => {
+    if (broughtIn.current || !interview || interview.bureauPresent || !interview.canTalkHere) return;
+    broughtIn.current = true;
+    void callToBureau({ roomCode, npcId: person.id }).then(() => play("door")).catch((caught: unknown) => setError(errorText(caught, "Could not bring them in.")));
+  }, [callToBureau, interview, person.id, roomCode]);
+
   function run(action: Promise<unknown>, after?: () => void) {
     setWorking(true);
     setError("");
@@ -182,7 +190,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
       </aside>
 
       <section aria-label={`Interview with ${person.name}`} className="flex min-h-0 flex-col border border-[#6f9f98]/30 bg-[#09191c]/95 text-[#e4e6d8]">
-        <FirstTimeTip id="interview" title="Questioning">Type a question; each takes 3 minutes. Ask where they were to take their statement. To catch a lie: Show evidence, pick what proves them wrong, then Confront.</FirstTimeTip>
+        <FirstTimeTip id="interview" title="Questioning">Type a question and press Enter; each takes 3 minutes. Ask where they were to take their statement. To catch a lie: Show evidence, pick what proves them wrong, then Confront.</FirstTimeTip>
         {interview?.threadId ? <ConversationMessages name={person.name} roomCode={roomCode} threadId={interview.threadId} /> : <div className="flex min-h-0 flex-1 items-center justify-center p-4 text-center text-sm text-[#c8d8d2]/60">{present ? `${person.name} is shown in and sits down.` : "The chair across the table is empty."}</div>}
         {waiting ? <p className="px-4 py-2 text-sm italic text-[#e8ac51]" role="status">{person.name} is thinking<span className="animate-pulse">...</span></p> : null}
         {interview?.turns.at(-1)?.status === "failed" ? <div className="px-4 py-2 text-sm text-red-200" role="alert"><p>That answer was lost. Asking again costs no time.</p><button className="mt-2 min-h-10 border border-red-400 px-3 text-xs uppercase disabled:opacity-50" disabled={working} onClick={() => run(retryFailed({ roomCode, npcId: person.id }))} type="button">Ask again</button></div> : null}
@@ -199,7 +207,7 @@ function InterviewPanel({ roomCode, person, people }: { roomCode: string; person
             </div>
             {shown ? <div className="mb-2 flex items-start justify-between gap-2 border-l-2 border-[#e8ac51] bg-[#1c2d2d] px-3 py-2 text-xs"><span className="min-w-0 break-words"><span className="uppercase text-[#e8ac51]">Showing · </span>{shown.label}. Press Confront.</span><button className="shrink-0 text-[#e8ac51]" onClick={() => setShown(null)} type="button">Take back</button></div> : null}
             <label className="sr-only" htmlFor="interview-question">Ask a question</label>
-            <textarea className="min-h-16 w-full resize-y border border-[#45635d] bg-[#102326] p-3 text-base text-[#e4e6d8] outline-none focus:border-[#e8ac51]" id="interview-question" maxLength={500} onChange={(event) => setQuestion(event.target.value)} placeholder={shown ? "Add what you want to say (optional)..." : `Ask ${person.name.split(" ")[0]} anything...`} value={question} />
+            <textarea className="min-h-16 w-full resize-y border border-[#45635d] bg-[#102326] p-3 text-base text-[#e4e6d8] outline-none focus:border-[#e8ac51]" id="interview-question" maxLength={500} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (canAsk) event.currentTarget.form?.requestSubmit(); } }} placeholder={shown ? "Add what you want to say (optional)..." : `Ask ${person.name.split(" ")[0]} anything...`} value={question} />
             <TypeAhead names={knownNames} onPick={setQuestion} value={question} />
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button aria-expanded={trayOpen} className="game-control-button flex min-h-11 items-center gap-2 px-4 text-xs uppercase text-[#f1c987]" onClick={() => { play("open"); setTrayOpen(!trayOpen); }} title="Show something you found" type="button"><GameIcon className="size-6" name="records" />Show evidence</button>
