@@ -91,6 +91,11 @@ describe("can the case be solved", () => {
     expect(facts.decisiveIds).toEqual(expect.arrayContaining(["forensic/overcoat/blood", "item/ledger"]));
   });
 
+  it("fails when players could only learn the killer's name from one interview", () => {
+    const s = without((id) => /\bVictor\b/i.test(`${set.evidence.find((e) => e.id === id)!.title} ${set.evidence.find((e) => e.id === id)!.summary}`) && !id.startsWith("witness/"));
+    expect(validate(s).join(" | ")).toMatch(/Players can come across the killer's name: Only 0 piece/);
+  });
+
   it("fails when nothing puts the killer at the scene", () => {
     const s = without((id) => id.startsWith("forensic/") || id.startsWith("cctv/"));
     expect(validate(s).join("\n")).toMatch(/place Victor Hale at the scene/);

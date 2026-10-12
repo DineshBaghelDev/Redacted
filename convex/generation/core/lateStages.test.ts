@@ -118,7 +118,7 @@ describe("evidence plan", () => {
     const plan = evidencePlan(city, crimeCore, "easy");
     expect(plan.needed).toBe(2);
     expect(plan.decisive.join(" | ")).toMatch(/blood on the killer's clothing/);
-    expect(plan.routes.map((r) => r.checkId)).toEqual(["culprit", "weapon"]);
+    expect(plan.routes.map((r) => r.checkId)).toEqual(["culprit", "culprit-named", "herring", "weapon"]);
     const wiped = evidencePlan(city, { ...crimeCore, coverUp: ["wipe-prints"], weapon: { ...crimeCore.weapon, category: "firearm" } } as typeof crimeCore, "hard");
     expect(wiped.needed).toBe(1);
     expect(wiped.decisive.join(" | ")).not.toMatch(/prints on the weapon|blood on the killer's clothing/);
@@ -212,7 +212,7 @@ describe("a fall has no weapon item", () => {
   it("drops the weapon routes and asks for no weapon item", () => {
     const fall = { ...crimeCore, weapon: { ...crimeCore.weapon, category: "fall" as const } };
     const plan = evidencePlan(city, fall, "normal");
-    expect(plan.routes.map((r) => r.checkId)).toEqual(["culprit"]);
+    expect(plan.routes.map((r) => r.checkId)).toEqual(["culprit", "culprit-named"]);
     expect(plan.decisive.join(" | ")).not.toMatch(/weapon/);
     expect(storyRules(fall).join(" | ")).toMatch(/A fall has no weapon/);
     expect(storyProblems(city, fall, cast, story, "normal", 1234).join(" | ")).toMatch(/remove the item with id "weapon"/);

@@ -70,6 +70,22 @@ export function validateCase(
         e.end! >= crime.crimeTime - 15,
     ),
   ];
+  // The killer's name must turn up in things players find on their own, not only from the one witness who knows it.
+  const culpritFirst = escape(nameOf(crime.culpritId).split(" ")[0]);
+  const namesCulprit = set.evidence.filter((e) =>
+    e.access.tool !== "interrogation" && e.access.tool !== "cctv" && e.type !== "device" &&
+    !(e.access.tool === "phone" && e.access.deviceId === `phone:${crime.culpritId}`) &&
+    !(e.access.tool === "records" && e.aboutIds.every((id) => id === crime.culpritId)) &&
+    new RegExp(`\\b${culpritFirst}\\b`, "i").test(`${e.title} ${e.summary}`) && reachable(e.id),
+  );
+  const namedNeeded = difficulty === "hard" ? 1 : 2;
+
+  // Easy: an innocent seen near the scene just before the crime must be clearable, or the red herring outweighs the real trail.
+  const scenePlace = crime.sceneRoomId.split(":")[0];
+  const seenNear = (id: string) => set.evidence.find((e) =>
+    (e.type === "cctv" || e.type === "card" || e.type === "witness") && e.aboutIds.includes(id) && reachable(e.id) &&
+    (e.data as { placeId?: string }).placeId === scenePlace && e.time !== undefined && e.time >= crime.crimeTime - 60 && e.time <= crime.crimeTime);
+
   const decisiveKinds = [...kind.decisiveKinds, `the ${w.culprit} on the scene room's camera at the ${w.crimeTime}`, `something taken from the scene found in the ${w.culprit}'s home`];
 
   const checks = [
@@ -97,6 +113,17 @@ export function validateCase(
         }),
       ),
     ),
+    check("culprit-named", `Players can come across the ${w.culprit}'s name`, namesCulprit.map((e) => e.id), namesCulprit.length >= namedNeeded ? [] : [
+      `Only ${namesCulprit.length} piece(s) of evidence players can find without the right interview name ${nameOf(crime.culpritId)}; need ${namedNeeded}. Add a call or message between the ${w.culprit} and the victim (it is on the victim's phone), or a document, item or another person's record that names them.`,
+    ]),
+    ...(difficulty === "easy"
+      ? [check("herring", "Red herrings can be cleared", [], innocents.flatMap((c) => {
+          const seen = seenNear(c.id);
+          return seen && !fact(`alibi:${c.id}`).some(reachable)
+            ? [`${c.name} (${c.id}) is seen near the scene shortly before the ${w.crimeTime} ("${seen.title}") and nothing proves they were elsewhere at the ${w.crimeTime}. On easy, give them a provable alibi at the ${w.crimeTime} (a camera, a card purchase or a public event at another place), or move their visit more than an hour earlier.`]
+            : [];
+        }))]
+      : []),
     ...(crime.accomplice
       ? [check("accomplice", "Accomplice can be linked", fact("accomplice-link"), atLeast(fact("accomplice-link"), 1, "linking the accomplice"))]
       : []),
