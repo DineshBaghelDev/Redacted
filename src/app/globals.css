@@ -997,6 +997,9 @@
 .epilogue-rivet { background: url('/assets/timeline-rivet.png') center / contain no-repeat; image-rendering: pixelated; }
 
 @media (max-width: 639px) {
+  .city-map-viewport { scrollbar-width: none; }
+  .city-map-viewport::-webkit-scrollbar { display: none; }
+
   .game-icon-mobile.game-control-button, .game-icon-mobile.clue-board-button {
     width: 2.75rem;
     min-width: 2.75rem;
