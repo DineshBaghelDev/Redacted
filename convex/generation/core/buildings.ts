@@ -117,7 +117,9 @@ export function apartment(
     floors: number;
     unitsPerFloor: number;
     unitLabel: "Flat" | "Room";
-    /** Local keys: "lobby", "lift", "stairs", "service-door", "corridors". */
+    /** Extra ground-floor rooms off the lobby (a hotel's reception and kitchen), as [key, name, kind]. */
+    ground?: [string, string, RoomKind][];
+    /** Local keys: "lobby", "lift", "stairs", "service-door", "corridors" or any ground room key. */
     cameras: string[];
   },
 ): Building {
@@ -127,6 +129,11 @@ export function apartment(
   const lift = makeRoom(placeId, "lift", "Lift", "lift");
   const rooms: Room[] = [lobby, service, stairs, lift];
   const doors: Door[] = [door(lobby, stairs), door(lobby, lift), door(service, stairs)];
+  for (const [key, name, kind] of opts.ground ?? []) {
+    const room = makeRoom(placeId, key, name, kind);
+    rooms.push(room);
+    doors.push(door(lobby, room));
+  }
   const homeUnits: HomeUnit[] = [];
 
   for (let floor = 1; floor <= opts.floors; floor++) {
@@ -194,15 +201,17 @@ export function shop(
   opts: {
     /** Extra rooms off the back room, as [key, name, kind, isEntrance?]. */
     extras?: [string, string, RoomKind, boolean?][];
+    /** What this business calls its rooms (a bar's counter is the bar). Room ids never change. */
+    names?: Partial<Record<"front" | "counter" | "back-room" | "office", string>>;
     /** Local keys: "front", "counter", "back-door" or any extra room key. */
     cameras: string[];
   },
 ): Building {
-  const front = makeRoom(placeId, "front", "Front", "entrance", 0, true);
-  const counter = makeRoom(placeId, "counter", "Counter", "shopfloor");
+  const front = makeRoom(placeId, "front", opts.names?.front ?? "Front", "entrance", 0, true);
+  const counter = makeRoom(placeId, "counter", opts.names?.counter ?? "Counter", "shopfloor");
   const restroom = makeRoom(placeId, "restroom", "Restroom", "bathroom");
-  const backRoom = makeRoom(placeId, "back-room", "Back room", "storage");
-  const officeRoom = makeRoom(placeId, "office", "Office", "office");
+  const backRoom = makeRoom(placeId, "back-room", opts.names?.["back-room"] ?? "Back room", "storage");
+  const officeRoom = makeRoom(placeId, "office", opts.names?.office ?? "Office", "office");
   const back = makeRoom(placeId, "back-door", "Back door", "entrance", 0, true);
   const rooms: Room[] = [front, counter, restroom, backRoom, officeRoom, back];
   const doors: Door[] = [
