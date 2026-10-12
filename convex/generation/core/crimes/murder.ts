@@ -320,11 +320,16 @@ export const murder: CrimeKind<MurderCore> = {
     const victim = person(crime.victimId);
     const finder = person(crime.discovery.byId);
     const weapon = weaponInPlainSight(crime, story);
+    // How the body was found, from the story itself, so the brief never invents why the finder came in.
+    const found = story.events
+      .filter((e) => e.roomId === crime.sceneRoomId && e.actors.includes(crime.discovery.byId))
+      .sort((a, b) => Math.abs(a.start - crime.discovery.time) - Math.abs(b.start - crime.discovery.time))[0];
     return [
       `victim: ${victim ? `${victim.name}, ${victim.age}, ${victim.job ? victim.job.title : "no job"}` : crime.victimId}`,
       `body found at: ${scene ? `${scene.place.name}, ${scene.room.name}` : crime.sceneRoomId}`,
       `found at: ${formatTime(crime.discovery.time)}`,
       `reported by: ${finder?.name ?? crime.discovery.byId} (${finder?.relationshipToVictim ?? ""})`,
+      ...(found ? [`how it was found: ${found.action}`] : []),
       weapon ? `left at the scene: ${weapon}` : "no weapon was found at the scene",
     ];
   },
