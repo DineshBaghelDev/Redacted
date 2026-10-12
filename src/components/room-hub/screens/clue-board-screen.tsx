@@ -224,7 +224,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
         </details>
         {savedNodes?.length === 0 ? (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
-            <div className="max-w-sm rotate-[-1.5deg] bg-[#f3e6c4] p-5 text-center text-[#2b1d16] shadow-[4px_6px_0_rgb(0_0_0/45%)]">
+            <div className="board-card board-card--note max-w-sm rotate-[-1.5deg] p-5 text-center text-[#2b1d16] shadow-[4px_6px_0_rgb(0_0_0/45%)]">
               <p className="text-xs uppercase tracking-[0.2em] text-red-800">The board is empty</p>
               <p className="mt-2 text-sm leading-relaxed">Open the notebook (N) and pin the people and evidence that matter. Then tie strings between them to build your theory.</p>
             </div>
@@ -240,7 +240,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
         ) : null}
         {inspected ? (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#080605]/75 p-4">
-            <section aria-labelledby="board-detail-title" aria-modal="true" className="max-h-[80vh] w-full max-w-lg overflow-y-auto border-2 border-[#b4a06d] bg-[#cbbd9d] p-5 text-[#292014] shadow-[8px_10px_0_rgba(0,0,0,0.55)] [overflow-wrap:anywhere]" role="dialog">
+            <section aria-labelledby="board-detail-title" aria-modal="true" className={`board-card board-card--${boardPaper(inspected.type)} max-h-[80vh] w-full max-w-lg overflow-y-auto px-8 py-5 text-[#292014] shadow-[8px_10px_0_rgba(0,0,0,0.55)] [overflow-wrap:anywhere]`} role="dialog">
               <div className="flex items-start justify-between gap-4 border-b border-[#7a5636]/35 pb-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-[#7a5636]">{boardLabel(inspected.type)}</p>
@@ -249,7 +249,7 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
                 <button
                   aria-label="Close board item"
                   autoFocus
-                  className="p-2 hover:text-red-800"
+                  className="flex size-11 items-center justify-center hover:text-red-800"
                   onClick={() => setInspectingNode(null)}
                   onKeyDown={(event) => {
                     if (event.key === "Escape") setInspectingNode(null);
@@ -271,9 +271,9 @@ export function ClueBoardScreen({ roomCode, onBack }: { roomCode: string; onBack
 
 function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
   const label = boardLabel(data.kind);
-  const paper = data.kind === "npc" ? "person" : data.kind === "forensic" ? "lab" : data.kind === "note" ? "note" : "record";
+  const paper = boardPaper(data.kind);
   return (
-    <article className={`board-card board-card--${paper} relative w-52 rotate-[-1deg] p-3 pb-9 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(0,0,0,0.45)] [overflow-wrap:anywhere] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
+    <article className={`board-card board-card--${paper} relative w-52 rotate-[-1deg] p-3 pb-14 pt-5 text-[#292014] shadow-[5px_6px_9px_rgba(0,0,0,0.45)] [overflow-wrap:anywhere] ${selected ? "outline-2 outline-[#fff2b6]" : ""}`}>
       <Handle
         className="clue-pin"
         position={Position.Top}
@@ -297,7 +297,7 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
       )}
       <button
         aria-label="Inspect board item"
-        className="nodrag absolute bottom-1 left-1 p-1 text-[#775d42] hover:text-[#292014] focus-visible:outline-2 focus-visible:outline-[#292014]"
+        className="nodrag absolute bottom-0 left-0 flex size-14 items-center justify-center text-[#775d42] hover:text-[#292014] focus-visible:outline-2 focus-visible:outline-[#292014]"
         onClick={() => data.onOpen(id as Id<"clueBoardNodes">)}
         title="Inspect board item"
         type="button"
@@ -306,7 +306,7 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
       </button>
       <button
         aria-label="Remove board item"
-        className="nodrag absolute bottom-1 right-1 p-1 text-[#775d42] hover:text-red-800 focus-visible:outline-2 focus-visible:outline-red-800"
+        className="nodrag absolute bottom-0 right-0 flex size-14 items-center justify-center text-[#775d42] hover:text-red-800 focus-visible:outline-2 focus-visible:outline-red-800"
         onClick={() => data.onDelete(id as Id<"clueBoardNodes">)}
         title="Remove board item"
         type="button"
@@ -319,6 +319,10 @@ function BoardCard({ id, data, selected }: NodeProps<BoardNode>) {
 
 function boardLabel(kind: BoardData["kind"]) {
   return kind === "npc" ? "Person" : kind === "cctv" ? "Camera record" : kind === "place" ? "Place" : kind === "public_record" ? "Public record" : kind === "item" ? "Found object" : kind === "forensic" ? "Lab report" : kind === "device_file" ? "Device file" : kind === "call" ? "Call" : kind === "message" ? "Message" : kind === "statement" ? "Statement" : "Note";
+}
+
+function boardPaper(kind: BoardData["kind"]) {
+  return kind === "npc" ? "person" : kind === "forensic" ? "lab" : kind === "note" ? "note" : "record";
 }
 
 function BoardIcon({ name }: { name: "add" | "link" | "remove" | "inspect" | "close" }) {

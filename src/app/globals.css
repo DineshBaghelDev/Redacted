@@ -697,7 +697,7 @@
   .board-icon--close { background-position: 100% 50%; }
 
   .board-card {
-    background: #eee2c8 url('/assets/clueboard-cards.png') no-repeat 0 0 / 200% 200%;
+    background: url('/assets/clueboard-cards.png') no-repeat 0 0 / 200% 200%;
     image-rendering: pixelated;
   }
   .board-card--record { background-position: 100% 0; }

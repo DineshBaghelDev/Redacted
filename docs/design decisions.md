@@ -7,6 +7,7 @@
 ## 2026-10-12 — Clueboard view controls
 
 - Keep zoom and fit actions available to keyboard and touch users behind one pixel-art view control. Scroll and pinch still zoom the board directly; the default graph toolbar and attribution do not belong in the game scene.
+- The board's empty note and full-detail view use its existing paper card art. Card action icons stay unboxed, with larger invisible tap areas on phones.
 - Keep the interview roster's guidance short enough for the first character card to appear quickly on a phone; name discovery and bureau-only interviews remain explained.
 - On phones, the city map keeps touch panning and Find a place while its browser scrollbar is hidden so the scene reaches the edge cleanly.
 

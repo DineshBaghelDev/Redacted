@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-10-12 — Asset-only handoff
+
+- Wrote `docs/audit/ASSET_HANDOFF.md` with a checked inventory of all 65 public PNGs and three metadata exports, their use/status, the remaining optional asset work, and the non-art checks for the next implementer. The artwork assignment is stopping here at the user's request.
+
+## 2026-10-12 — Populated clueboard check
+
+- Pinned two read records in a signed-in test room and inspected the board at 390px. The cards and their full-detail view are reachable. The full-detail view and empty-board note now reuse the matching illustrated board paper instead of plain CSS sheets, and each card's inspect/remove tap area is larger while its icon stays unboxed.
+
 ## 2026-10-12 — Camera transport controls
 
 - A signed-in 390px pass of the case file, records search/results, and security desk found readable scrolling and no document-wide overflow. The camera tape's four plain outlined transport buttons now use the existing illustrated control plate; camera records remain text only.
